@@ -49,12 +49,15 @@ export type Member = {
     name: string,
     phone: string,
     email: string,
+    accountname: string,
     password: string,
     image: string,
     shortdescription: string,
     usertype: string,
     subscription: [Subscription],
     cards: [Card],
+    followers: [Member],
+    following: [Member],
 }
 
 export enum Usertype {

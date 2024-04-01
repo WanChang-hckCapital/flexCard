@@ -9,6 +9,7 @@ const memberSchema = new Schema<Member>({
         required: true,
         unique: true,
     },
+    accountname: { type: String, default: null },
     password: { type: String, default: null },
     phone: { type: String, default: null },
     shortdescription: { type: String, default: null },
@@ -25,6 +26,18 @@ const memberSchema = new Schema<Member>({
             ref: "Card",
         },
     ],
+    followers:[
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Member",
+        },
+    ],
+    following:[
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Member",
+        },
+    ]
 }, {
     timestamps: true
 })

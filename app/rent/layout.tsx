@@ -1,4 +1,4 @@
-import Header from '@/components/header'
+import Header from '@/components/shared/header'
 import MaxWContainer from '@/components/max-w-container'
 import React from 'react'
 

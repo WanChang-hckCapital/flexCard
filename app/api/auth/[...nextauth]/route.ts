@@ -24,7 +24,7 @@ export const authOptions: AuthOptions = {
     secret: process.env.AUTH_SECRET,
     adapter: MongoDBAdapter(clientPromise() as Promise<MongoClient>) as Adapter,
     pages: {
-        signIn: '/auth/sign-in'
+        signIn: '/sign-in'
     },
     providers: [
         GoogleProvider({

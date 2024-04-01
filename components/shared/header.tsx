@@ -2,23 +2,24 @@ import { cn } from '@/lib/utils'
 import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
-import { buttonVariants } from './ui/button'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu'
+import { buttonVariants } from '../ui/button'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu'
 import { Menu } from 'lucide-react'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
-import SignInButton from './signin-button'
-import SignOutButton from './signout-button'
-import Searchbar from './Searchbar'
+import SignInButton from '../signin-button'
+import SignOutButton from '../signout-button'
+import Searchbar from '../Searchbar'
 
 async function Header() {
 
     const session = await getServerSession(authOptions)
+    const user = session?.user;
     console.log("image: " + JSON.stringify(session));
 
     return (
         <header className='fixed w-full z-50'>
-            <nav className="bg-primary flex item-center justify-between p-4 lg:px-8">
+            <nav className="topbar">
                 {/* logo */}
                 <div className="flex">
                     <Link href="/">
@@ -98,7 +99,7 @@ async function Header() {
                                             <DropdownMenuItem className='justify-center'>
                                                 <Link
                                                     className='flex font-bold'
-                                                    href={`${session ? '/my-card' : 'api/auth/signin'}`}>My Card</Link>
+                                                    href={`${session ? `/profile/${user?.id}` : 'api/auth/signin'}`}>My Card</Link>
                                             </DropdownMenuItem>
                                         }
                                         {session &&

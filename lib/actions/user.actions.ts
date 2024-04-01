@@ -57,8 +57,8 @@ export async function createMember(userId: string) {
 
         if (!existingMember) {
 
-            console.log("userId" + userId);
-            
+            console.log("user: " + userId);
+
             const newMember = new Member({
                 user: userId,
             });
@@ -73,18 +73,17 @@ export async function createMember(userId: string) {
     }
 }
 
-// export async function fetchUser(userId: string) {
-//   try {
-//     connectToDB();
+export async function fetchMember(userId: string) {
+    try {
+        const member = await Member.findOne({ user: userId });
+        
+        console.log("Member: " + member);
 
-//     return await User.findOne({ id: userId }).populate({
-//       path: "communities",
-//       model: Community,
-//     });
-//   } catch (error: any) {
-//     throw new Error(`Failed to fetch user: ${error.message}`);
-//   }
-// }
+        return member;
+    } catch (error: any) {
+        throw new Error(`Failed to fetch Member: ${error.message}`);
+    }
+}
 
 interface Params {
     userId: string;
