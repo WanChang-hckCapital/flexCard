@@ -1,6 +1,6 @@
 import Rating from '@/components/rating'
-import { BookingModel } from '@/schemas/booking'
-import { UserModel } from '@/schemas/user'
+import { BookingModel } from '@/lib/models/booking'
+import { UserModel } from '@/lib/models/member'
 import { Booking, BookingStatus, User } from '@/types'
 import { format } from 'date-fns'
 import React from 'react'

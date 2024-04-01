@@ -9,17 +9,17 @@ import Link from 'next/link'
 
 export default function Home() {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen dark:bg-black">
 
       {/* Header */}
       <Header />
 
       {/* hero */}
-      <Hero />
+      {/* <Hero /> */}
       <MaxWContainer>
 
         {/* how it works */}
-        <HowItWorks />
+        {/* <HowItWorks /> */}
 
         <div className="py-4"></div>
         <h3 className="mb-16 mt-16 text-center text-xl sm:text-4xl px-2 py-8 sm:py-16 bg-primary">
@@ -37,7 +37,7 @@ export default function Home() {
       </MaxWContainer>
 
       {/* footer */}
-      <Footer />
+      {/* <Footer /> */}
     </div>
   )
 }

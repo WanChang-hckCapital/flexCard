@@ -1,3 +1,4 @@
+import { StringLike } from '@firebase/util'
 import { Document } from 'mongoose'
 
 export interface Item extends Document {
@@ -43,13 +44,53 @@ export type Price = {
     hourly: number
 }
 
-export type User = {
-    id: string,
+export type Member = {
+    user: {},
     name: string,
-    image: string,
-    emailVerified: Date,
     phone: string,
     email: string,
+    password: string,
+    image: string,
+    shortdescription: string,
+    usertype: string,
+    subscription: [Subscription],
+    cards: [Card],
+}
+
+export enum Usertype {
+    PERSONAL = 'PERSONAL',
+    PREMIUM = 'PREMIUM',
+    EXPERT = 'EXPERT',
+    ELITE = 'ELITE',
+    ORGANIZATION = 'ORGANIZATION',
+    BUSINESS = 'BUSINESS',
+    ENTERPRISE = 'ENTERPRISE',
+}
+
+export type Card = {
+    id: string,
+    name: string,
+    status: string,
+    description: string,
+    categories: [],
+    components: [],
+}
+
+export type Subscription = {
+    id: string,
+    planStarted: Date,
+    estimatedEndDate: Date,
+    autoRenew: boolean,
+    paidTerms: number,
+    plan: Product,
+}
+
+export type Product = {
+    id: string,
+    name: string,
+    description: string,
+    price: number,
+    limitedCard: number,
 }
 
 export enum ItemStatus {

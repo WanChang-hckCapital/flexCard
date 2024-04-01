@@ -7,7 +7,7 @@ import { signIn } from 'next-auth/react'
 function SignInButton() {
   return (
     <Button
-    className='px-0'
+    className='px-3 w-full '
     variant='ghost'
     onClick={() => signIn()}
     >Sign in</Button>

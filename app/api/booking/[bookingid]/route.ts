@@ -1,5 +1,5 @@
 import { connectToDB } from "@/lib/mongodb";
-import { BookingModel } from "@/schemas/booking";
+import { BookingModel } from "@/lib/models/booking";
 import { Booking, BookingStatus } from "@/types";
 import { NextResponse } from "next/server";
 

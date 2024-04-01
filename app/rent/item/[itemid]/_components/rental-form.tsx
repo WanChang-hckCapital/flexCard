@@ -12,7 +12,7 @@ import * as z from 'zod'
 import RentStart from './rent-start'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { createCheckoutSession } from '@/app/actions/stripe'
+import { createCheckoutSession } from '@/lib/actions/stripe'
 
 export const FormSchema = z.object({
     rentalstart: z.date({

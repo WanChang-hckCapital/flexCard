@@ -1,6 +1,6 @@
 import { storageRef } from "@/lib/firebase";
 import { connectToDB } from "@/lib/mongodb";
-import { ItemModel } from "@/schemas/item";
+import { ItemModel } from "@/lib/models/item";
 import { Item, ItemStatus } from "@/types";
 import { deleteObject } from "firebase/storage";
 import { NextResponse } from "next/server";

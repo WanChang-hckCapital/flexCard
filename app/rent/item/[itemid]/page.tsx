@@ -1,6 +1,6 @@
 import { connectToDB } from '@/lib/mongodb'
-import { ItemModel } from '@/schemas/item'
-import { UserModel } from '@/schemas/user'
+import { ItemModel } from '@/lib/models/item'
+import { UserModel } from '@/lib/models/member'
 import { Booking, BookingStatus, Item, User } from '@/types'
 import React from 'react'
 import {
@@ -13,7 +13,7 @@ import {
 import Image from 'next/image'
 import RentalForm from './_components/rental-form'
 import ItemRatingAndReview from './_components/item-rating-and-review'
-import { BookingModel } from '@/schemas/booking'
+import { BookingModel } from '@/lib/models/booking'
 import { addDays } from 'date-fns'
 
 const getBookedDates = (startdate: Date, numberOfDays: number): Date[] => {

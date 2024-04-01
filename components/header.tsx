@@ -9,77 +9,120 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 import SignInButton from './signin-button'
 import SignOutButton from './signout-button'
+import Searchbar from './Searchbar'
 
 async function Header() {
 
     const session = await getServerSession(authOptions)
+    console.log("image: " + JSON.stringify(session));
 
     return (
         <header className='fixed w-full z-50'>
             <nav className="bg-primary flex item-center justify-between p-4 lg:px-8">
                 {/* logo */}
-                <div className="flex lg:flex-1">
+                <div className="flex">
                     <Link href="/">
-                        <span className='sr-only'>Logo</span>
-                        <Image
-                            width={40}
-                            height={40}
-                            className='w-auto h-auto'
-                            src='/logo.png' alt='logo'
-                        />
+                        <span className='head-text font-bold'>flexCard</span>
                     </Link>
                 </div>
 
-                <div className="flex items-center">
+                <Searchbar routeType={''} />
 
-                    <Link href={
-                        `${session ? '/my-listings' : '/api/auth/signin'}`
-                    }
-                        className={cn(buttonVariants({ variant: 'outline' }),
-                            "shadow hidden md:flex md:mr-2"
-                        )}
-                    >Switch to host</Link>
+                <div className="flex items-center gap-4 w-50">
+                    <Link href="/create-card">
+                        <Image width={24} height={24}
+                            className=""
+                            src='assets/new-card-dark.svg'
+                            alt='icon create' />
+                    </Link>
+
+                    <Link href="/notifications">
+                        <Image width={24} height={24}
+                            className=""
+                            src='assets/heart.svg'
+                            alt='icon heart' />
+                    </Link>
 
                     {/* drop down menu*/}
                     <DropdownMenu>
                         <DropdownMenuTrigger>
-                            <div className="flex text-slate-500">
+                            <div className="flex">
                                 <Menu />
-                                {
+                                {/* {
                                     session?.user &&
                                     <p>{session.user.name?.split(' ')[0]}</p>
-                                }
+                                } */}
                             </div>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent>
+                        <DropdownMenuContent className='mt-3'>
                             {session &&
-                                <DropdownMenuItem>
+                                <DropdownMenuItem className='justify-center'>
                                     <Link
-                                        className='flex md:hidden'
-                                        href={`${session ? '/my-listings' : 'api/auth/signin'}`}>Switch to host</Link>
+                                        className='flex font-bold'
+                                        href={`${session ? '/other' : 'api/auth/signin'}`}>Other</Link>
                                 </DropdownMenuItem>
                             }
                             {session &&
-                            <>
-                                <DropdownMenuItem>
-                                    <Link className='font-bold'
-                                        href={`${session ? '/my-rented-items' : 'api/auth/signin'}`}>
-                                        Rented items
-                                    </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator></DropdownMenuSeparator>
+                                <>
+                                    <DropdownMenuItem className='justify-center'>
+                                        <Link className='font-bold'
+                                            href={`${session ? '/other' : 'api/auth/signin'}`}>
+                                            Ohter
+                                        </Link>
+                                    </DropdownMenuItem>
                                 </>
                             }
-                            
-                            <DropdownMenuItem className='flex text-left py-0'>
-                                {
-                                    session ? <SignOutButton /> : <SignInButton />
-                                }
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator></DropdownMenuSeparator>
-                            <DropdownMenuItem>How it works?</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
+
+                    <div className="">
+                        {
+                            session ?
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger>
+                                        <div>
+                                            {session?.user?.image ? (
+                                                <Image
+                                                    width={32}
+                                                    height={32}
+                                                    className="rounded-full"
+                                                    src={session.user.image}
+                                                    alt='icon heart' />
+                                            ) : (
+                                                <p>{session.user.name?.split(' ')[0]}</p>
+                                            )}
+                                        </div>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className='mt-3'>
+                                        {session &&
+                                            <DropdownMenuItem className='justify-center'>
+                                                <Link
+                                                    className='flex font-bold'
+                                                    href={`${session ? '/my-card' : 'api/auth/signin'}`}>My Card</Link>
+                                            </DropdownMenuItem>
+                                        }
+                                        {session &&
+                                            <>
+                                                <DropdownMenuItem className='justify-center'>
+                                                    <Link className='font-bold'
+                                                        href={`${session ? '/setting' : 'api/auth/signin'}`}>
+                                                        Settings
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator></DropdownMenuSeparator>
+                                            </>
+                                        }
+
+                                        <DropdownMenuItem className='flex text-left py-0 w-full'>
+                                            {
+                                                session ? <SignOutButton /> : <SignInButton />
+                                            }
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu> :
+                                <SignInButton />
+                        }
+                    </div>
                 </div>
             </nav>
         </header>

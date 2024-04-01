@@ -1,5 +1,5 @@
 import { connectToDB } from "@/lib/mongodb"
-import { ItemModel } from "@/schemas/item"
+import { ItemModel } from "@/lib/models/item"
 import { Item } from "@/types"
 import { NextResponse } from "next/server"
 import { describe } from "node:test"

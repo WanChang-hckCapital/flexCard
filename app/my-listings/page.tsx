@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
 import ListYourItemComponent from './_component/list-your-item-component'
-import { ItemModel } from '@/schemas/item'
+import { ItemModel } from '@/lib/models/item'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../api/auth/[...nextauth]/route'
 import SingleListing from './_component/single-listing'

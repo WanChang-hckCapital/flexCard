@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth'
 import React from 'react'
 import { authOptions } from '../api/auth/[...nextauth]/route'
-import { BookingModel } from '@/schemas/booking'
+import { BookingModel } from '@/lib/models/booking'
 import { ObjectId } from 'mongodb'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BookingStatus } from '@/types'

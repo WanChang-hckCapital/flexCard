@@ -10,8 +10,8 @@ export const fontSans = FontSans({
   variable: "--font-sans",
 })
 export const metadata: Metadata = {
-  title: 'EZ Rental',
-  description: 'Rent your items and earn instant cash',
+  title: 'Flex Card',
+  description: 'Build you own Flex Card...',
 }
 
 export default function RootLayout({
@@ -23,7 +23,7 @@ export default function RootLayout({
     <html lang="en">
       <body         
       className={cn(
-          "min-h-screen flex flex-col bg-background font-sans antialiased",
+          "min-h-screen flex flex-col bg-dark-1 justify-center text-white font-sans antialiased",
           fontSans.variable
         )}>
           <AuthSessionProvider>
