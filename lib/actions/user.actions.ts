@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import User from "../models/member";
 import { connectToDB } from "../mongodb";
 import Member from "../models/member";
+import Card from "../models/card";
 
 export async function authenticateUser(email: string, password: string) {
     try {
@@ -76,12 +77,24 @@ export async function createMember(userId: string) {
 export async function fetchMember(userId: string) {
     try {
         const member = await Member.findOne({ user: userId });
-        
+
         console.log("Member: " + member);
 
         return member;
     } catch (error: any) {
         throw new Error(`Failed to fetch Member: ${error.message}`);
+    }
+}
+
+export async function fetchUser(userId: string) {
+    try {
+        const user = await User.findOne({ user: userId });
+
+        console.log("User123: " + user);
+
+        return user;
+    } catch (error: any) {
+        throw new Error(`Failed to fetch User: ${error.message}`);
     }
 }
 
@@ -125,37 +138,60 @@ export async function updateUser({
     }
 }
 
-// export async function fetchUserPosts(userId: string) {
-//   try {
-//     connectToDB();
+export async function fetchPersonalCards(userId: string) {
+    try {
+        connectToDB();
 
-//     // Find all threads authored by the user with the given userId
-//     const threads = await User.findOne({ id: userId }).populate({
-//       path: "threads",
-//       model: Thread,
-//       populate: [
-//         {
-//           path: "community",
-//           model: Community,
-//           select: "name id image _id", // Select the "name" and "_id" fields from the "Community" model
-//         },
-//         {
-//           path: "children",
-//           model: Thread,
-//           populate: {
-//             path: "author",
-//             model: User,
-//             select: "name image id", // Select the "name" and "_id" fields from the "User" model
-//           },
-//         },
-//       ],
-//     });
-//     return threads;
-//   } catch (error) {
-//     console.error("Error fetching user threads:", error);
-//     throw error;
-//   }
-// }
+        const user = await Member.findOne({ user: userId }).populate({
+            path: "cards",
+            model: Card,
+            populate: [
+                {
+                    path: "creator",
+                    model: Member,
+                    select: "accountname user",
+                    populate: {
+                        path: "user",
+                        model: User,
+                        select: "image",
+                    },
+                },
+                {
+                    path: "likes",
+                    model: Member,
+                    select: "accountname user",
+                    populate: {
+                        path: "user",
+                        model: User,
+                        select: "image",
+                    },
+                },
+                {
+                    path: "followers",
+                    model: Member,
+                    select: "accountname user",
+                    populate: {
+                        path: "user",
+                        model: User,
+                        select: "image",
+                    },
+                },
+            ],
+        });
+
+        if (!user) {
+            throw new Error(`User with ID ${userId} not found.`);
+        }
+
+        console.log("db User: " + user);
+        console.log("db cards: " + user.cards);
+
+        return user;
+    } catch (error) {
+        console.error("Error fetching user cards:", error);
+        throw error;
+    }
+}
 
 // // Almost similar to Thead (search + pagination) and Community (search + pagination)
 // export async function fetchUsers({

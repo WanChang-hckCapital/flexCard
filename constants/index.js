@@ -26,14 +26,13 @@ export const sidebarLinks = [
   },
 ];
 
-export const profileTabs = [
-  { value: "threads", label: "Threads", icon: "/assets/reply.svg" },
-  { value: "replies", label: "Replies", icon: "/assets/members.svg" },
-  { value: "tagged", label: "Tagged", icon: "/assets/tag.svg" },
+export const personalTabs = [
+  { value: "flexCard", label: "CARDS", icon: "/assets/grid-dark.svg" },
+  { value: "saved", label: "SAVED", icon: "/assets/saved-dark.svg" },
 ];
 
-export const communityTabs = [
-  { value: "threads", label: "Threads", icon: "/assets/reply.svg" },
-  { value: "members", label: "Members", icon: "/assets/members.svg" },
-  { value: "requests", label: "Requests", icon: "/assets/request.svg" },
+export const organizationTabs = [
+  { value: "flexCard", label: "CARDS", icon: "/assets/grid.svg" },
+  { value: "about", label: "ABOUT", icon: "/assets/members.svg" },
+  { value: "save", label: "SAVED", icon: "/assets/saved-dark.svg" },
 ];

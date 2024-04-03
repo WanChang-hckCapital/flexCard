@@ -71,10 +71,12 @@ export enum Usertype {
 }
 
 export type Card = {
-    id: string,
-    name: string,
+    creator: {},
+    title: string,
     status: string,
     description: string,
+    likes:[],
+    followers:[],
     categories: [],
     components: [],
 }

@@ -2,7 +2,7 @@ import Image from "next/image";
 // import { currentUser } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
 
-import { profileTabs } from "@/constants";
+import { personalTabs } from "@/constants";
 
 // import ThreadsTab from "@/components/shared/ThreadsTab";
 // import ProfileHeader from "@/components/shared/ProfileHeader";
@@ -12,17 +12,13 @@ import { fetchMember } from "@/lib/actions/user.actions";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import ProfileHeader from "@/components/shared/ProfileHeader";
+import CardsTab from "@/components/shared/CardsTab";
 
 async function Page({ params }: { params: { id: string } }) {
     const session = await getServerSession(authOptions)
     const user = session?.user;
 
-
-
     if (!user) return null;
-
-    console.log("Profile: " + user);
-    console.log("Params: " + params.id);
 
     const userInfo = await fetchMember(params.id);
     // if (!userInfo?.onboarded) redirect("/onboarding");
@@ -30,7 +26,7 @@ async function Page({ params }: { params: { id: string } }) {
     return (
         <section>
             <ProfileHeader
-                accountId={userInfo.user.id}
+                accountId={userInfo.user}
                 authUserId={user.id}
                 accountName={userInfo.accountName}
                 imgUrl={user.image}
@@ -42,10 +38,10 @@ async function Page({ params }: { params: { id: string } }) {
 
             />
 
-            {/* <div className='mt-9'>
-                <Tabs defaultValue='threads' className='w-full'>
-                    <TabsList className='tab'>
-                        {profileTabs.map((tab) => (
+            <div className=''>
+                <Tabs defaultValue='flexCard' className='w-full'>
+                    <TabsList className='tab mx-36'>
+                        {personalTabs.map((tab) => (
                             <TabsTrigger key={tab.label} value={tab.value} className='tab'>
                                 <Image
                                     src={tab.icon}
@@ -56,29 +52,29 @@ async function Page({ params }: { params: { id: string } }) {
                                 />
                                 <p className='max-sm:hidden'>{tab.label}</p>
 
-                                {tab.label === "Threads" && (
+                                {tab.label === "CARDS" && (
                                     <p className='ml-1 rounded-sm bg-light-4 px-2 py-1 !text-tiny-medium text-light-2'>
-                                        {userInfo.threads.length}
+                                        {userInfo.cards.length}
                                     </p>
                                 )}
                             </TabsTrigger>
                         ))}
                     </TabsList>
-                    {profileTabs.map((tab) => (
+                    {personalTabs.map((tab) => (
                         <TabsContent
                             key={`content-${tab.label}`}
                             value={tab.value}
                             className='w-full text-light-1'
                         >
-                            <ThreadsTab
+                            <CardsTab
                                 currentUserId={user.id}
-                                accountId={userInfo.id}
-                                accountType='User'
+                                accountId={params.id}
+                                userType='PERSONAL'
                             />
                         </TabsContent>
                     ))}
                 </Tabs>
-            </div> */}
+            </div>
         </section>
     );
 }

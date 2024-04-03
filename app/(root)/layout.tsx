@@ -3,6 +3,7 @@ import { Inter as FontSans } from "next/font/google"
 import '../globals.css'
 import { cn } from '@/lib/utils'
 import AuthSessionProvider from '../(auth)/auth-session-provider'
+import Favicon from '/public/favicon.ico';
 import { Toaster } from "@/components/ui/sonner"
 import Header from '@/components/shared/header'
 import Footer from '@/components/shared/footer'
@@ -17,6 +18,7 @@ export const fontSans = FontSans({
 export const metadata: Metadata = {
   title: 'Flex Card',
   description: 'Build you own Flex Card...',
+  icons: [{ rel: 'icon', url: Favicon.src }],
 }
 
 export default async function RootLayout({
@@ -40,7 +42,7 @@ export default async function RootLayout({
             <Header />
             <LeftSidebar session={session}/>
             <section className='main-container'>
-              <div className='w-full max-w-4xl'>{children}</div>
+              <div className='w-full'>{children}</div>
             </section>
           </main>
           <Toaster />

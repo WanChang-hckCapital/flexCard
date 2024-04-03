@@ -45,7 +45,7 @@ function LeftSidebar({ session }: LeftSidebarProps) {
                 height={24}
               />
 
-              <p className='text-light-1 max-lg:hidden'>{link.label}</p>
+              <p className='text-light-1'>{link.label}</p>
             </Link>
           );
         })}
@@ -64,7 +64,7 @@ function LeftSidebar({ session }: LeftSidebarProps) {
                   className="rounded-full"
                   src={session.user.image}
                   alt='user image' />
-                <p className='align-center text-light-1 max-lg:hidden'>{session.user.name?.split(' ')[0]}</p>
+                <p className='align-center text-light-1'>{session.user.name?.split(' ')[0]}</p>
               </Link>
             ) : (
               <p className='align-center'>{session.user.name?.split(' ')[0]}</p>

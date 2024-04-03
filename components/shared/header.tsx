@@ -33,14 +33,14 @@ async function Header() {
                     <Link href="/create-card">
                         <Image width={24} height={24}
                             className=""
-                            src='assets/new-card-dark.svg'
+                            src='/assets/new-card-dark.svg'
                             alt='icon create' />
                     </Link>
 
                     <Link href="/notifications">
                         <Image width={24} height={24}
                             className=""
-                            src='assets/heart.svg'
+                            src='/assets/heart.svg'
                             alt='icon heart' />
                     </Link>
 

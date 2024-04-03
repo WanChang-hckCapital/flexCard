@@ -3,19 +3,32 @@ import { Card } from "../../types";
 
 
 const cardSchema = new Schema<Card>({
-    id: {
-        type: String,
+    creator: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Member",
         required: true,
     },
-    name: {
+    title: {
         type: String,
         required: true,
     },
     status: {
         type: String,
-        default: "public",
+        default: "PUBLIC",
     },
     description: String,
+    likes:[
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Member",
+        }
+    ],
+    followers:[
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Member",
+        }
+    ],
     categories: [
         {
             type: String,
