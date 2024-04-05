@@ -8,7 +8,7 @@ import { personalTabs } from "@/constants";
 // import ProfileHeader from "@/components/shared/ProfileHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import { fetchMember } from "@/lib/actions/user.actions";
+import { fetchMember, fetchUser } from "@/lib/actions/user.actions";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import ProfileHeader from "@/components/shared/ProfileHeader";
@@ -18,23 +18,30 @@ async function Page({ params }: { params: { id: string } }) {
     const session = await getServerSession(authOptions)
     const user = session?.user;
 
+    const tempUrl = "https://hckcapital.net";
+
     if (!user) return null;
 
     const userInfo = await fetchMember(params.id);
-    // if (!userInfo?.onboarded) redirect("/onboarding");
+    const userImageInfo = await fetchUser(userInfo);
+
+    // const userimgUrl = userImageInfo ? userImageInfo.image : '';
+    if (!userInfo?.onboarded) redirect("/onboarding");
 
     return (
         <section>
             <ProfileHeader
-                accountId={userInfo.user}
-                authUserId={user.id}
-                accountName={userInfo.accountName}
+                accountId={userInfo.user.toString()}
+                authUserId={user.id.toString()}
+                accountName={userInfo.accountname}
                 imgUrl={user.image}
                 shortdescription={userInfo.shortdescription}
                 usertype={userInfo.usertype}
                 cards={userInfo.cards.length}
-                followers={userInfo.followers.length}
-                following={userInfo.following.length}
+                followers={userInfo.followers}
+                following={userInfo.following}
+                // webUrl={userInfo.organization.webUrl}
+                webUrl={tempUrl}
 
             />
 

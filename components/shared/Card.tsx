@@ -36,7 +36,7 @@ function Card({
 
   return (
     <article
-      className={`flex w-full flex-col rounded-xl ${likes ? "px-0 xs:px-1 xs:py-1" : "bg-dark-2 p-7"
+      className={`relative flex w-full flex-col rounded-xl ${likes ? "px-0 xs:px-1 xs:py-1" : "bg-dark-2 p-7"
         }`}
     >
       <div

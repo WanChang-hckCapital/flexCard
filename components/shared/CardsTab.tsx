@@ -39,9 +39,9 @@ async function CardsTab({ currentUserId, accountId, userType }: Props) {
   // if (userType === "ORGANIZATION") {
   //   // result = await fetchCommunityPosts(accountId);
   // } else {
-    // result = await fetchPersonalCards(accountId);
+  // result = await fetchPersonalCards(accountId);
 
-    // console.log("return: " + result);
+  // console.log("return: " + result);
   // }
 
   if (process.env.NODE_ENV === "development") {
@@ -57,10 +57,14 @@ async function CardsTab({ currentUserId, accountId, userType }: Props) {
 
   if (!result) {
     redirect("/");
-  } 
+  }
 
   return (
-    <section className='mt-9 grid auto-rows-auto max-sm:grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 2xl:grid-cols-7 gap-2'>
+    // <section className='mt-9 grid auto-rows-auto max-sm:grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 max-xl:grid-cols-6 2xl:grid-cols-7 gap-2'>
+    <section className='mt-7 px-2 md:px-5
+      columns-2 md:columns-3
+      lg:columns-4 mb-4
+      xl:columns-5 space-y-6 mx-auto'>
       {result.cards.map((card) => (
         <Card
           key={card._id}
@@ -69,12 +73,12 @@ async function CardsTab({ currentUserId, accountId, userType }: Props) {
           title={card.title}
           creator={
             userType === "PERSONAL"
-            ? { username: card.creator.accountname, image: card.creator.image, id: card.creator.id }
-            : {
-              username: card.creator.accountname,
-              image: card.creator.image,
-              id: card.creator.id,
-            }}
+              ? { username: card.creator.accountname, image: card.creator.image, id: card.creator.id }
+              : {
+                username: card.creator.accountname,
+                image: card.creator.image,
+                id: card.creator.id,
+              }}
           createdAt={card.createdAt}
           likes={card.likes}
           status={card.status}

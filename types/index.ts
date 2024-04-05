@@ -46,18 +46,26 @@ export type Price = {
 
 export type Member = {
     user: {},
-    name: string,
-    phone: string,
-    email: string,
     accountname: string,
-    password: string,
     image: string,
+    email: string,
+    password: string,
+    phone: string,
     shortdescription: string,
     usertype: string,
+    onboarded: boolean,
     subscription: [Subscription],
     cards: [Card],
     followers: [Member],
     following: [Member],
+    organization: {},
+}
+
+export type Organization = {
+    organizationID: {},
+    document: [],
+    employees: [Member],
+    webUrl: string,
 }
 
 export enum Usertype {

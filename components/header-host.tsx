@@ -7,8 +7,8 @@ import React from 'react'
 import { buttonVariants } from './ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu'
 import { Menu } from 'lucide-react'
-import SignInButton from './signin-button'
-import SignOutButton from './signout-button'
+import SignInButton from './buttons/signin-button'
+import SignOutButton from './buttons/signout-button'
 
 async function HeaderHost() {
 

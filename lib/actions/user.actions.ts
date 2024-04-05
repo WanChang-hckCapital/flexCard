@@ -1,19 +1,21 @@
 "use server";
 
 import bcrypt from "bcrypt";
-import { FilterQuery, SortOrder } from "mongoose";
+import mongoose, { FilterQuery, SortOrder } from "mongoose";
+import { GridFSBucket } from 'mongodb';
 import { revalidatePath } from "next/cache";
 
-import User from "../models/member";
 import { connectToDB } from "../mongodb";
 import Member from "../models/member";
 import Card from "../models/card";
+import Organization from "../models/organization";
+import { Readable } from "stream";
 
 export async function authenticateUser(email: string, password: string) {
     try {
         connectToDB();
 
-        const user = await User.findOne({ email });
+        const user = await Member.findOne({ email });
         if (!user) {
             return null;
         }
@@ -35,14 +37,14 @@ export async function createUser(email: string, username: string, password: stri
     try {
         connectToDB();
 
-        const existingUser = await User.findOne({ email });
+        const existingUser = await Member.findOne({ email });
         if (existingUser) {
             throw new Error("User with this email already exists.");
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const newUser = await User.create({ email, username, password: hashedPassword });
+        const newUser = await Member.create({ email, username, password: hashedPassword });
 
         return newUser;
     } catch (error: any) {
@@ -86,44 +88,199 @@ export async function fetchMember(userId: string) {
     }
 }
 
+// not working 
 export async function fetchUser(userId: string) {
     try {
-        const user = await User.findOne({ user: userId });
+        await connectToDB();
 
-        console.log("User123: " + user);
+        const db = mongoose.connection.getClient().db();
+        const testCollection = db.collection('test');
 
-        return user;
+        const cursor = testCollection.find({ 'users.user': userId });
+        const userArray = await cursor.toArray();
+
+        console.log("User123: " + JSON.stringify(userArray));
+
+        return userArray;
     } catch (error: any) {
         throw new Error(`Failed to fetch User: ${error.message}`);
     }
 }
-
 interface Params {
+    authUserId: string,
+    accountId: string,
+    method: string
+}
+
+export async function updateMemberFollow(params: Params): Promise<void> {
+    try {
+        connectToDB();
+
+        const { authUserId, accountId, method } = params;
+        const currentMember = await Member.findOne({ user: authUserId });
+        const accountMember = await Member.findOne({ user: accountId });
+
+        if (!currentMember) {
+            throw new Error("Current member not found");
+        }
+
+        let updatedFollowing: string[] = [...currentMember.following];
+        let updateFollower: string[] = [...accountMember.follower]
+
+        if (method.toUpperCase() === "FOLLOW") {
+            if (!updatedFollowing.includes(accountId)) {
+                updatedFollowing.push(accountId);
+            }
+            if (!updateFollower.includes(authUserId)) {
+                updateFollower.push(authUserId);
+            }
+        } else if (method.toUpperCase() === "UNFOLLOW") {
+            updatedFollowing = updatedFollowing.filter(id => id !== accountId);
+            updateFollower = updateFollower.filter(id => id !== authUserId);
+        }
+
+        await Promise.all([
+            Member.findByIdAndUpdate(currentMember._id, { following: updatedFollowing }),
+            Member.findByIdAndUpdate(accountMember._id, { followers: updateFollower })
+        ]);
+
+    } catch (error: any) {
+        throw new Error(`Failed to create/update user: ${error.message}`);
+    }
+}
+interface ParamsUpdWebURL {
+    authUserId: string,
+    url: string,
+}
+
+export async function updateOrganizationUrl(params: ParamsUpdWebURL): Promise<void> {
+    try {
+        connectToDB();
+
+        const { authUserId, url } = params;
+        const currentMember = await Member.findOne({ user: authUserId });
+
+        if (!currentMember) {
+            throw new Error("Current member not found");
+        }
+
+        if (currentMember.usertype.toUpperCase() !== 'ORGANIZATION') {
+            throw new Error("Current member isn't Organization owner.");
+        }
+
+        const organization = await Organization.findOne({ organizationID: currentMember._id });
+
+        if (!organization) {
+            throw new Error("Organization not found");
+        }
+
+        organization.webUrl = url;
+
+        await organization.save();
+
+    } catch (error: any) {
+        throw new Error(`Failed to update weburl: ${error.message}`);
+    }
+}
+
+export async function uploadImageToGridFS(imageData: Buffer, filename: string): Promise<string> {
+    try {
+        await connectToDB();
+
+        const db = mongoose.connection.getClient().db();
+        const bucket = new GridFSBucket(db);
+
+        const readableStream = new Readable();
+        readableStream.push(imageData);
+        readableStream.push(null);
+
+        const uploadStream = bucket.openUploadStream(filename);
+        const uploadPromise = new Promise<string>((resolve, reject) => {
+            uploadStream.once('finish', () => {
+                resolve(uploadStream.id.toString());
+            });
+            uploadStream.once('error', (err) => {
+                reject("Something went wrong: " + err);
+            });
+        });
+
+        readableStream.pipe(uploadStream);
+
+        return await uploadPromise;
+    } catch (error: any) {
+        throw new Error(`Failed to upload image to GridFS: ${error.message}`);
+    }
+}
+
+// export async function uploadImageToGridFS(imageData: File, filename: string): Promise<string> {
+//     try {
+//         await connectToDB();
+
+//         const db = mongoose.connection.getClient().db();
+//         const bucket = new GridFSBucket(db);
+
+//         const readableStream = new Readable();
+//         readableStream.push(imageData);
+//         readableStream.push(null);
+
+//         const uploadStream = bucket.openUploadStream(filename);
+//         const uploadPromise = new Promise<string>((resolve, reject) => {
+//             uploadStream.once('finish', () => {
+//                 resolve(uploadStream.id.toString());
+//             });
+//             uploadStream.once('error', (err) => {
+//                 reject("something when wrong: " + err);
+//             });
+//         });
+
+//         readableStream.pipe(uploadStream);
+
+//         return await uploadPromise;
+//     } catch (error:any) {
+//         throw new Error(`Failed to upload image to GridFS: ${error.message}`);
+//     }
+// }
+
+interface ParamsMemberDetails {
     userId: string;
-    username: string;
-    name: string;
-    bio: string;
+    accountname: string;
+    email: string;
+    password: string;
+    phone: string;
+    shortdescription: string;
     image: string;
     path: string;
 }
 
-export async function updateUser({
+
+export async function updateMemberDetails({
     userId,
-    bio,
-    name,
-    path,
-    username,
+    accountname,
+    email,
+    password,
+    phone,
+    shortdescription,
     image,
-}: Params): Promise<void> {
+    path,
+}: ParamsMemberDetails): Promise<void> {
     try {
         connectToDB();
 
-        await User.findOneAndUpdate(
-            { id: userId },
+        const existingUser = await Member.findOne({ email });
+        if (existingUser) {
+            throw new Error("User with this email already exists.");
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        await Member.findOneAndUpdate(
+            { user: userId },
             {
-                username: username.toLowerCase(),
-                name,
-                bio,
+                accountname: accountname,
+                email,
+                password: hashedPassword,
+                phone,
+                shortdescription,
                 image,
                 onboarded: true,
             },
@@ -137,6 +294,37 @@ export async function updateUser({
         throw new Error(`Failed to create/update user: ${error.message}`);
     }
 }
+
+// export async function updateUser({
+//     userId,
+//     bio,
+//     name,
+//     path,
+//     username,
+//     image,
+// }: Params): Promise<void> {
+//     try {
+//         connectToDB();
+
+//         await User.findOneAndUpdate(
+//             { id: userId },
+//             {
+//                 username: username.toLowerCase(),
+//                 name,
+//                 bio,
+//                 image,
+//                 onboarded: true,
+//             },
+//             { upsert: true }
+//         );
+
+//         if (path === "/profile/edit") {
+//             revalidatePath(path);
+//         }
+//     } catch (error: any) {
+//         throw new Error(`Failed to create/update user: ${error.message}`);
+//     }
+// }
 
 export async function fetchPersonalCards(userId: string) {
     try {
@@ -152,7 +340,7 @@ export async function fetchPersonalCards(userId: string) {
                     select: "accountname user",
                     populate: {
                         path: "user",
-                        model: User,
+                        model: Member,
                         select: "image",
                     },
                 },
@@ -162,7 +350,7 @@ export async function fetchPersonalCards(userId: string) {
                     select: "accountname user",
                     populate: {
                         path: "user",
-                        model: User,
+                        model: Member,
                         select: "image",
                     },
                 },
@@ -172,7 +360,7 @@ export async function fetchPersonalCards(userId: string) {
                     select: "accountname user",
                     populate: {
                         path: "user",
-                        model: User,
+                        model: Member,
                         select: "image",
                     },
                 },

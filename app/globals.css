@@ -5,12 +5,12 @@
 @layer components {
   /* main */
   .main-container {
-    @apply flex min-h-screen flex-1 flex-col items-center bg-dark-1 px-14 pb-10 pt-28 max-md:pb-32 sm:px-28;
+    @apply flex min-h-screen flex-1 flex-col items-center bg-dark-1 px-14 pb-10 pt-28 max-md:pb-32 sm:px-24 xl:px-28;
   }
 
   /* Head Text */
   .head-text {
-    @apply text-heading2-bold text-light-1;
+    @apply text-heading3-bold text-light-1;
   }
 
   /* Activity */

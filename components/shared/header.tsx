@@ -7,8 +7,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Menu } from 'lucide-react'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
-import SignInButton from '../signin-button'
-import SignOutButton from '../signout-button'
+import SignInButton from '../buttons/signin-button'
+import SignOutButton from '../buttons/signout-button'
 import Searchbar from '../Searchbar'
 
 async function Header() {

@@ -10,10 +10,16 @@ const memberSchema = new Schema<Member>({
         unique: true,
     },
     accountname: { type: String, default: null },
+    image: { type: String, default: null },
+    email: { type: String, default: null },
     password: { type: String, default: null },
     phone: { type: String, default: null },
     shortdescription: { type: String, default: null },
     usertype: { type: String, default: Usertype.PERSONAL },
+    onboarded: {
+        type: Boolean,
+        default: false,
+    },
     subscription: [
         {
             type: mongoose.Schema.Types.ObjectId,
@@ -26,18 +32,23 @@ const memberSchema = new Schema<Member>({
             ref: "Card",
         },
     ],
-    followers:[
+    followers: [
         {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Member",
         },
     ],
-    following:[
+    following: [
         {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Member",
         },
-    ]
+    ],
+    organization: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Organization",
+        default: null
+    },
 }, {
     timestamps: true
 })
