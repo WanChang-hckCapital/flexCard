@@ -29,7 +29,6 @@ interface Props {
     accountname: string;
     image: string;
     email: string;
-    password: string;
     phone: string;
     shortdescription: string;
   };
@@ -39,119 +38,54 @@ interface Props {
 const MemberProfile = ({ user, btnTitle }: Props) => {
   const router = useRouter();
   const pathname = usePathname();
-  // const { startUpload } = useUploadThing("media");
 
-  const [files, setFiles] = useState<File[]>([]);
+  const [file, setFiles] = useState<File | null>(null);
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof UserValidation>>({
     resolver: zodResolver(UserValidation),
     defaultValues: {
       accountname: user?.accountname ? user.accountname : "",
-      profile_image: user?.image ? user.image : "",
+      profile_image: user?.image ? user.image: "",
       email: user?.email ? user.email : "",
-      password: user?.password ? user.password : "",
       phone: user?.phone ? user.phone : "",
       shortdescription: user?.shortdescription ? user.shortdescription : "",
     },
   });
 
   const onSubmit = async (values: z.infer<typeof UserValidation>) => {
-    // const blob = values.profile_image;
 
-    // const hasImageChanged = isBase64Image(blob);
-    // if (hasImageChanged) {
-    //   const imageUrl = await uploadImageToGridFS(files[0], "something");
-
-    //   if (imageUrl) {
-    //     values.profile_image = imageUrl;
-    //   }
-    // }
-
-    // const blob = values.profile_image;
-
-    // const hasImageChanged = isBase64Image(blob);
-    // if (hasImageChanged) {
-    //   const imgRes = await uploadImageToGridFS(files);
-
-    //   if (imgRes && imgRes[0].fileUrl) {
-    //     values.profile_image = imgRes[0].fileUrl;
-    //   }
-    // }
-
-    try {
-      const imageData = files[0] as File;
-      const fileId = await uploadImageMetadataToServer(imageData.name);
-      console.log("ImageId: " + fileId);
-  
-      await updateMemberDetails({
-        userId: user.userId,
-        accountname: values.accountname,
-        email: values.email,
-        password: values.password,
-        phone: values.phone,
-        shortdescription: values.shortdescription,
-        image: fileId,
-        path: pathname,
-      });
-  
-      if (pathname === "/profile/edit") {
-        router.back();
-      } else {
-        router.push("/");
-      }
-    } catch (error: any) {
-      console.error(`Failed to submit form: ${error.message}`);
+    if (!file) {
+      console.error('Check empty: No file selected');
+      return;
     }
 
-    // await updateMemberDetails({
-    //   userId: user.userId,
-    //   accountname: values.accountname,
-    //   email: values.email,
-    //   password: values.password,
-    //   phone: values.phone,
-    //   shortdescription: values.shortdescription,
-    //   image: values.profile_image,
-    //   path: pathname,
-    // });
-
-    // form.setValue("profile_image", imageUrl);
-
-    // if (pathname === "/profile/edit") {
-    //   router.back();
-    // } else {
-    //   router.push("/");
-    // }
-  };
-
-  const uploadImageMetadataToServer = async (filename: string): Promise<string> => {
-    try {
-      const response = await fetch('/api/image', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ filename }),
-      });
-  
-      const data = await response.json();
-      return data.fileId;
-    } catch (error:any) {
-      throw new Error(`Failed to upload image metadata to the server: ${error.message}`);
+    if (!fileUrl) {
+      console.error('No fileUrl available');
+      return;
     }
-  };
 
-  // const formDataToBuffer = async (formData: FormData): Promise<Buffer> => {
-  //   return new Promise((resolve, reject) => {
-  //     const reader = new FileReader();
-  //     reader.onload = () => {
-  //       const arrayBuffer = reader.result as ArrayBuffer;
-  //       const buffer = Buffer.from(arrayBuffer);
-  //       resolve(buffer);
-  //     };
-  //     reader.onerror = reject;
-  //     reader.readAsArrayBuffer(formData.get('image') as Blob);
-  //   });
-  // };
+    await updateMemberDetails({
+      userId: user.userId,
+      accountname: values.accountname,
+      email: values.email,
+      password: values.password,
+      phone: values.phone,
+      shortdescription: values.shortdescription,
+      image: {
+        binaryCode: fileUrl, 
+        name: file.name, 
+      },
+      path: pathname,
+    });
+
+    if (pathname === "/profile/edit") {
+      router.back();
+    } else {
+      router.push("/");
+    }
+    
+  };
 
   const handleImage = (
     e: ChangeEvent<HTMLInputElement>,
@@ -163,13 +97,16 @@ const MemberProfile = ({ user, btnTitle }: Props) => {
 
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-      setFiles(Array.from(e.target.files));
+      setFiles(file);
 
       if (!file.type.includes("image")) return;
+
+      console.log("Convert Image Selected: " + JSON.stringify(file.name));
 
       fileReader.onload = async (event) => {
         const imageDataUrl = event.target?.result?.toString() || "";
         fieldChange(imageDataUrl);
+        setFileUrl(imageDataUrl);
       };
 
       fileReader.readAsDataURL(file);
@@ -331,7 +268,7 @@ const MemberProfile = ({ user, btnTitle }: Props) => {
               </FormLabel>
               <FormControl>
                 <Textarea
-                  rows={8}
+                  rows={6}
                   className='account-form_input no-focus'
                   {...field}
                 />

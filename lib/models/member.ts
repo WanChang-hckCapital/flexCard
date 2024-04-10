@@ -10,7 +10,13 @@ const memberSchema = new Schema<Member>({
         unique: true,
     },
     accountname: { type: String, default: null },
-    image: { type: String, default: null },
+    image: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Image",
+            default: null,
+        },
+    ],
     email: { type: String, default: null },
     password: { type: String, default: null },
     phone: { type: String, default: null },

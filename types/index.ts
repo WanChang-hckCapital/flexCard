@@ -83,10 +83,15 @@ export type Card = {
     title: string,
     status: string,
     description: string,
-    likes:[],
-    followers:[],
+    likes: [],
+    followers: [],
     categories: [],
     components: [],
+}
+
+export type UserImage = {
+    binaryCode: {},
+    name: string,
 }
 
 export type Subscription = {
@@ -110,3 +115,5 @@ export enum ItemStatus {
     LISTED = 'listed',
     UNLISTED = 'unlisted'
 }
+
+// workspace

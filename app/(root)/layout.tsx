@@ -10,6 +10,7 @@ import Footer from '@/components/shared/footer'
 import LeftSidebar from '@/components/shared/LeftSidebar'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../api/auth/[...nextauth]/route'
+import { fetchMember, fetchMemberImage } from '@/lib/actions/user.actions'
 
 export const fontSans = FontSans({
   subsets: ["latin"],
@@ -27,6 +28,18 @@ export default async function RootLayout({
   children: React.ReactNode
 }) {
   const session = await getServerSession(authOptions)
+  const user = session?.user;
+
+  let userInfo = null;
+  let userImage = null;
+  if (!user){
+    userInfo = null;
+  }else{
+    userInfo = await fetchMember(user.id);
+    userImage = await fetchMemberImage(userInfo.image);
+  }
+
+  
 
   return (
     <AuthSessionProvider>
@@ -37,17 +50,15 @@ export default async function RootLayout({
             fontSans.variable
           )}>
 
-          
           <main className='flex flex-row'>
-            <Header />
-            <LeftSidebar session={session}/>
+            <Header session={session} userInfoImage={userImage} />
+            <LeftSidebar session={session} userInfoImage={userImage}/>
             <section className='main-container'>
               <div className='w-full'>{children}</div>
             </section>
           </main>
           <Toaster />
           {/* <Footer /> */}
-
         </body>
       </html>
     </AuthSessionProvider>

@@ -8,6 +8,7 @@ import { revalidatePath } from "next/cache";
 import { connectToDB } from "../mongodb";
 import Member from "../models/member";
 import Card from "../models/card";
+import Image from "../models/image";
 import Organization from "../models/organization";
 import { Readable } from "stream";
 
@@ -80,11 +81,19 @@ export async function fetchMember(userId: string) {
     try {
         const member = await Member.findOne({ user: userId });
 
-        console.log("Member: " + member);
-
         return member;
     } catch (error: any) {
         throw new Error(`Failed to fetch Member: ${error.message}`);
+    }
+}
+
+export async function fetchMemberImage(imageId: string) {
+    try {
+        const imageUrl = await Image.findOne({ _id: imageId });
+
+        return imageUrl;
+    } catch (error: any) {
+        throw new Error(`Failed to fetch Image: ${error.message}`);
     }
 }
 
@@ -248,10 +257,12 @@ interface ParamsMemberDetails {
     password: string;
     phone: string;
     shortdescription: string;
-    image: string;
+    image: {
+        binaryCode: string;
+        name: string;
+    };
     path: string;
 }
-
 
 export async function updateMemberDetails({
     userId,
@@ -265,13 +276,19 @@ export async function updateMemberDetails({
 }: ParamsMemberDetails): Promise<void> {
     try {
         connectToDB();
-
+        
         const existingUser = await Member.findOne({ email });
-        if (existingUser) {
+        if (existingUser && path != '/profile/edit') {
             throw new Error("User with this email already exists.");
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
+
+        const savedImage = await Image.create({
+            binaryCode: image.binaryCode,
+            name: image.name,
+        });
+        const imageId = savedImage._id;
 
         await Member.findOneAndUpdate(
             { user: userId },
@@ -281,7 +298,7 @@ export async function updateMemberDetails({
                 password: hashedPassword,
                 phone,
                 shortdescription,
-                image,
+                image: imageId,
                 onboarded: true,
             },
             { upsert: true }

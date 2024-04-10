@@ -1,14 +1,10 @@
 import Image from "next/image";
-// import { currentUser } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
 
 import { personalTabs } from "@/constants";
-
-// import ThreadsTab from "@/components/shared/ThreadsTab";
-// import ProfileHeader from "@/components/shared/ProfileHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import { fetchMember, fetchUser } from "@/lib/actions/user.actions";
+import { fetchMember, fetchMemberImage } from "@/lib/actions/user.actions";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import ProfileHeader from "@/components/shared/ProfileHeader";
@@ -23,9 +19,8 @@ async function Page({ params }: { params: { id: string } }) {
     if (!user) return null;
 
     const userInfo = await fetchMember(params.id);
-    const userImageInfo = await fetchUser(userInfo);
+    const userImage = await fetchMemberImage(userInfo.image);
 
-    // const userimgUrl = userImageInfo ? userImageInfo.image : '';
     if (!userInfo?.onboarded) redirect("/onboarding");
 
     return (
@@ -34,7 +29,7 @@ async function Page({ params }: { params: { id: string } }) {
                 accountId={userInfo.user.toString()}
                 authUserId={user.id.toString()}
                 accountName={userInfo.accountname}
-                imgUrl={user.image}
+                imgUrl={userImage.binaryCode}
                 shortdescription={userInfo.shortdescription}
                 usertype={userInfo.usertype}
                 cards={userInfo.cards.length}

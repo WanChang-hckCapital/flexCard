@@ -2,20 +2,29 @@ import { cn } from '@/lib/utils'
 import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
-import { buttonVariants } from '../ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu'
 import { Menu } from 'lucide-react'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { Session } from 'next-auth'
 import SignInButton from '../buttons/signin-button'
 import SignOutButton from '../buttons/signout-button'
 import Searchbar from '../Searchbar'
+import { UserImage } from '@/types'
 
-async function Header() {
+interface HeaderProps {
+    session: Session | null;
+    userInfoImage: UserImage | null;
+}
 
-    const session = await getServerSession(authOptions)
+async function Header({ session, userInfoImage }: HeaderProps) {
+
     const user = session?.user;
-    console.log("image: " + JSON.stringify(session));
+
+    let userImage = null;
+    if (userInfoImage != null) {
+        userImage = userInfoImage.binaryCode.toString();
+    } else {
+        userImage = user?.image;
+    }
 
     return (
         <header className='fixed w-full z-50'>
@@ -60,15 +69,15 @@ async function Header() {
                                 <DropdownMenuItem className='justify-center'>
                                     <Link
                                         className='flex font-bold'
-                                        href={`${session ? '/other' : 'api/auth/signin'}`}>Other</Link>
+                                        href={`${session ? '/product' : 'api/auth/signin'}`}>Subscription</Link>
                                 </DropdownMenuItem>
                             }
                             {session &&
                                 <>
                                     <DropdownMenuItem className='justify-center'>
                                         <Link className='font-bold'
-                                            href={`${session ? '/other' : 'api/auth/signin'}`}>
-                                            Ohter
+                                            href={`${session ? '/profile/66130a65d4a3f7e94e358f28' : 'api/auth/signin'}`}>
+                                            Other User
                                         </Link>
                                     </DropdownMenuItem>
                                 </>
@@ -76,18 +85,17 @@ async function Header() {
                         </DropdownMenuContent>
                     </DropdownMenu>
 
-                    <div className="">
+                    <div className={`${session ? 'w-8 h-8' : 'none'}`}>
                         {
                             session ?
                                 <DropdownMenu>
                                     <DropdownMenuTrigger>
-                                        <div>
-                                            {session?.user?.image ? (
+                                        <div className='relative w-8 h-8 object-cover'>
+                                            {userImage ? (
                                                 <Image
-                                                    width={32}
-                                                    height={32}
-                                                    className="rounded-full"
-                                                    src={session.user.image}
+                                                    fill
+                                                    className="rounded-full object-cover"
+                                                    src={userImage}
                                                     alt='icon heart' />
                                             ) : (
                                                 <p>{session.user.name?.split(' ')[0]}</p>
@@ -106,7 +114,7 @@ async function Header() {
                                             <>
                                                 <DropdownMenuItem className='justify-center'>
                                                     <Link className='font-bold'
-                                                        href={`${session ? '/setting' : 'api/auth/signin'}`}>
+                                                        href={`${session ? '/profile/edit' : 'api/auth/signin'}`}>
                                                         Settings
                                                     </Link>
                                                 </DropdownMenuItem>

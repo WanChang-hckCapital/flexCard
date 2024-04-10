@@ -5,21 +5,29 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 import { sidebarLinks } from "@/constants";
-import { Session, getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { Session } from "next-auth";
 import SignOutButton from "../buttons/signout-button";
 import SignInButton from "../buttons/signin-button";
+import { Member, UserImage } from "@/types";
 
 interface LeftSidebarProps {
   session: Session | null;
+  userInfoImage: UserImage | null;
 }
 
-function LeftSidebar({ session }: LeftSidebarProps) {
+function LeftSidebar({ session, userInfoImage }: LeftSidebarProps) {
 
   const router = useRouter();
   const pathname = usePathname();
 
   const userId = session?.user.id;
+  
+  let userImage = null;
+  if (userInfoImage != null){
+      userImage = userInfoImage?.binaryCode.toString();
+  }else{
+      userImage = session?.user.image;
+  }
 
   return (
     // leftsidebar'>
@@ -56,13 +64,13 @@ function LeftSidebar({ session }: LeftSidebarProps) {
           session ? 
           <div className="text-center">
             {
-              session?.user?.image ? (
+              userImage ? (
               <Link className="leftsidebar_link" href={""}>
                 <Image
                   width={28}
                   height={28}
                   className="rounded-full"
-                  src={session.user.image}
+                  src={userImage}
                   alt='user image' />
                 <p className='align-center text-light-1'>{session.user.name?.split(' ')[0]}</p>
               </Link>

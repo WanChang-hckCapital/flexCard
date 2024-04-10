@@ -1,4 +1,3 @@
-import Link from "next/link";
 import Image from "next/image";
 import FollowButton from "../buttons/follow-button";
 import UnFollowButton from "../buttons/unfollow-button";
@@ -41,7 +40,7 @@ function ProfileHeader({
             {
               imgUrl ? (
                 <Image
-                  src={imgUrl}
+                  src={imgUrl.toString()}
                   alt='User Profile Image'
                   fill
                   className='rounded-full object-cover shadow-2xl'
