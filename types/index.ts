@@ -87,6 +87,8 @@ export type Card = {
     followers: [],
     categories: [],
     components: [],
+    updatedAt: Date,
+    createdAt: Date,
 }
 
 export type UserImage = {

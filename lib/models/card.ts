@@ -43,6 +43,6 @@ const cardSchema = new Schema<Card>({
     timestamps: true
 })
 
-const Card = mongoose.models.Card || mongoose.model("Card", cardSchema);
+const CardMongodb = mongoose.models.Card || mongoose.model("Card", cardSchema);
 
-export default Card;
+export default CardMongodb;

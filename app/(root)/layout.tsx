@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import AuthSessionProvider from '../(auth)/auth-session-provider'
 import Favicon from '/public/favicon.ico';
 import { Toaster } from "@/components/ui/sonner"
+import { Toaster as SonnarToaster } from '@/components/ui/sonner'
 import Header from '@/components/shared/header'
 import Footer from '@/components/shared/footer'
 import LeftSidebar from '@/components/shared/LeftSidebar'
@@ -58,6 +59,7 @@ export default async function RootLayout({
             </section>
           </main>
           <Toaster />
+          <SonnarToaster position="bottom-left" />
           {/* <Footer /> */}
         </body>
       </html>

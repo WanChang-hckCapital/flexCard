@@ -76,7 +76,8 @@ async function Header({ session, userInfoImage }: HeaderProps) {
                                 <>
                                     <DropdownMenuItem className='justify-center'>
                                         <Link className='font-bold'
-                                            href={`${session ? '/profile/66130a65d4a3f7e94e358f28' : 'api/auth/signin'}`}>
+                                            href={`${session ? '/cards' : 'api/auth/signin'}`} >
+                                            {/* href={`${session ? '/profile/66130a65d4a3f7e94e358f28' : 'api/auth/signin'}`} */}
                                             Other User
                                         </Link>
                                     </DropdownMenuItem>
