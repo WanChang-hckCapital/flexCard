@@ -1,9 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import Card from "../models/card";
+import CardMongodb from "../models/card";
 import Member from "../models/member";
 import { connectToDB } from "../mongodb";
+import { Card } from "@/types";
+import { title } from "process";
+import { v4 as uuidv4 } from 'uuid';
+import ComponentModel from "../models/component";
 
 
 export async function fetchCardsByAccountId(accountId: string) {
@@ -31,7 +35,7 @@ export async function fetchCardDetails(cardId: string) {
     try {
         connectToDB();
 
-        const card = await Card.findOne({ _id: cardId });
+        const card = await CardMongodb.findOne({ _id: cardId });
 
         return card;
     } catch (error: any) {
@@ -39,46 +43,92 @@ export async function fetchCardDetails(cardId: string) {
     }
 }
 
-export async function upsertCardContent(authaccountId: string, cardContent: object, cardId: string) {
-    if (!authaccountId || !cardId) return;
+export async function upsertCardContent(authaccountId: string, cardDetails: Card, cardContent: string, cardId: string) {
+    // if (!authaccountId || !cardId) return;
     
     try {
-      const response = await Card.findOneAndUpdate(
+      connectToDB();
+
+      if (!cardId) {
+        const cardComponent = {
+          componentID: generateCustomID(),
+          content: cardContent,
+        };
+
+        const newCardComponent = new ComponentModel(cardComponent);
+        await newCardComponent.save();
+
+
+        const newCardContent = {
+            cardID: generateCustomID(),
+            creator: authaccountId,
+            title: cardDetails.title,
+            status: cardDetails.status,
+            description: cardDetails.description,
+            components: newCardComponent._id,
+                // ? cardContent
+                // : JSON.stringify([
+                //     {
+                //         components: [],
+                //         id: '__body',
+                //         name: 'Body',
+                //         styles: { backgroundColor: 'white' },
+                //         type: '__body',
+                //     },
+                // ]), need to fix this
+        };
+        const newCard = new CardMongodb(newCardContent);
+        await newCard.save();
+
+        const currentMember = await Member.findOne({ user: authaccountId });
+
+        if (currentMember) {
+            currentMember.cards.push(newCard);
+            await currentMember.save();
+        }
+
+        return newCard;
+      }
+      
+      const response = await CardMongodb.findOneAndUpdate(
         { _id: cardId },
-        { $set: { ...cardContent } },
+        { $set: { ...cardDetails } },
         { upsert: true, new: true }
       );
   
-      if (!response) {
-        const newCardContent = {
-          ...cardContent,
-          content: cardContent
-            ? cardContent
-            : JSON.stringify([
-                {
-                  content: [],
-                  id: '__body',
-                  name: 'Body',
-                  styles: { backgroundColor: 'white' },
-                  type: '__body',
-                },
-              ]),
-          cardId,
-        };
+      // if (!response) {
+      //   const newCardContent = {
+      //     ...cardContent,
+      //     content: cardContent
+      //       ? cardContent
+      //       : JSON.stringify([
+      //           {
+      //             content: [],
+      //             id: '__body',
+      //             name: 'Body',
+      //             styles: { backgroundColor: 'white' },
+      //             type: '__body',
+      //           },
+      //         ]),
+      //     cardId,
+      //   };
   
-        const newCard = new Card(newCardContent);
-        await newCard.save();
-        return newCard;
-      }
+      //   const newCard = new Card(newCardContent);
+      //   await newCard.save();
+      //   return newCard;
+      // }
   
-      revalidatePath(`/${authaccountId}/card/${cardId}`, 'page');
-  
+      // revalidatePath(`/${authaccountId}/card/${cardId}`, 'page');
       return response;
     } catch (error: any) {
       throw new Error(`Error upserting card content: ${error.message}`);
     }
   }
   
+
+function generateCustomID() {
+  return uuidv4();
+}
 //   export const updateFunnelProducts = async (
 //     products: string,
 //     funnelId: string

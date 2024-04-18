@@ -1,10 +1,8 @@
 'use client'
 import {
   Sheet,
-  SheetClose,
   SheetContent,
   SheetDescription,
-  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
@@ -18,10 +16,10 @@ import ComponentsTab from './tabs/components-tab'
 import { useEditor } from '@/lib/editor/editor-provider'
 
 type Props = {
-  subaccountId: string
+  authaccountId: string
 }
 
-const FunnelEditorSidebar = ({ subaccountId }: Props) => {
+const CardEditorSidebar = ({ authaccountId }: Props) => {
   const { state, dispatch } = useEditor()
 
   return (
@@ -30,14 +28,14 @@ const FunnelEditorSidebar = ({ subaccountId }: Props) => {
       modal={false}
     >
       <Tabs
-        className="w-full "
-        defaultValue="Settings"
+        className="w-full"
+        defaultValue="Components"
       >
         <SheetContent
           showX={false}
           side="right"
           className={clsx(
-            'mt-[97px] w-16 z-[80] shadow-none  p-0 focus:border-none transition-all overflow-hidden',
+            'mt-[97px] w-16 z-[80] shadow-none p-0 focus:border-none transition-all overflow-hidden',
             { hidden: state.editor.previewMode }
           )}
         >
@@ -53,7 +51,7 @@ const FunnelEditorSidebar = ({ subaccountId }: Props) => {
         >
           <div className="grid gap-4 h-full pb-36 overflow-scroll">
             <TabsContent value="Settings">
-              <SheetHeader className="text-left p-6">
+              <SheetHeader className="text-left p-4">
                 <SheetTitle>Styles</SheetTitle>
                 <SheetDescription>
                   Show your creativity! You can customize every component as you
@@ -62,11 +60,11 @@ const FunnelEditorSidebar = ({ subaccountId }: Props) => {
               </SheetHeader>
               <SettingsTab />
             </TabsContent>
-            <TabsContent value="Media">
+            {/* <TabsContent value="Media">
               <MediaBucketTab subaccountId={subaccountId} />
-            </TabsContent>
+            </TabsContent> */}
             <TabsContent value="Components">
-              <SheetHeader className="text-left p-6 ">
+              <SheetHeader className="text-left p-4 ">
                 <SheetTitle>Components</SheetTitle>
                 <SheetDescription>
                   You can drag and drop components on the canvas
@@ -81,4 +79,4 @@ const FunnelEditorSidebar = ({ subaccountId }: Props) => {
   )
 }
 
-export default FunnelEditorSidebar
+export default CardEditorSidebar

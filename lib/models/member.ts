@@ -59,6 +59,6 @@ const memberSchema = new Schema<Member>({
     timestamps: true
 })
 
-const Member = mongoose.models.Member || mongoose.model("Member", memberSchema);
+const MemberModel = mongoose.models.Member || mongoose.model("Member", memberSchema);
 
-export default Member;
+export default MemberModel;

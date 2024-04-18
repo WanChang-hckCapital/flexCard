@@ -86,12 +86,12 @@ const SettingsTab = (props: Props) => {
   return (
     <Accordion
       type="multiple"
-      className="w-full"
+      className="w-full px-4"
       defaultValue={['Typography', 'Dimensions', 'Decorations', 'Flexbox']}
     >
       <AccordionItem
         value="Custom"
-        className="px-6 py-0  "
+        className="py-0  "
       >
         <AccordionTrigger className="!no-underline">Custom</AccordionTrigger>
         <AccordionContent>
@@ -111,7 +111,7 @@ const SettingsTab = (props: Props) => {
       </AccordionItem>
       <AccordionItem
         value="Typography"
-        className="px-6 py-0  border-y-[1px]"
+        className="py-0  border-y-[1px]"
       >
         <AccordionTrigger className="!no-underline">
           Typography
@@ -214,7 +214,7 @@ const SettingsTab = (props: Props) => {
       </AccordionItem>
       <AccordionItem
         value="Dimensions"
-        className=" px-6 py-0 "
+        className="py-0 "
       >
         <AccordionTrigger className="!no-underline">
           Dimensions
@@ -338,7 +338,7 @@ const SettingsTab = (props: Props) => {
       </AccordionItem>
       <AccordionItem
         value="Decorations"
-        className="px-6 py-0 "
+        className="py-0 "
       >
         <AccordionTrigger className="!no-underline">
           Decorations
@@ -496,7 +496,7 @@ const SettingsTab = (props: Props) => {
       </AccordionItem>
       <AccordionItem
         value="Flexbox"
-        className="px-6 py-0  "
+        className="py-0  "
       >
         <AccordionTrigger className="!no-underline">Flexbox</AccordionTrigger>
         <AccordionContent>

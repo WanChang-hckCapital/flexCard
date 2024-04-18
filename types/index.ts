@@ -1,36 +1,4 @@
-import { StringLike } from '@firebase/util'
-import { Document } from 'mongoose'
-
-export interface Item extends Document {
-    name: string,
-    hostid?: string,
-    price: Price,
-    photos: string[],
-    description: string,
-    status: string,
-    category: string,
-    numberOfBookings?: number
-}
-
-export interface Booking extends Document {
-    itemid?: string,
-    guestid?: string,
-    rentstart: Date,
-    rentend: Date,
-    duration: number        // number of days or hours
-    durationtype: string    // hourly or daily
-    amount: number
-    comment: string,
-    rating: number          // out of 5
-    stripeid?: string,
-    status: BookingStatus
-    /*
-        pending // item to pickup in future
-        rented  // currently guest has item
-        returned // when an item is returned
-        
-    */
-}
+import { UUID } from "mongodb"
 
 export enum BookingStatus {
     PENDING = 'PENDING',
@@ -79,16 +47,22 @@ export enum Usertype {
 }
 
 export type Card = {
-    creator: {},
+    cardID: string,
+    creator: string,
     title: string,
     status: string,
     description: string,
     likes: [],
     followers: [],
     categories: [],
-    components: [],
+    components: {},
     updatedAt: Date,
     createdAt: Date,
+}
+
+export type Component = {
+    ComponentID: string,
+    content: {},
 }
 
 export type UserImage = {

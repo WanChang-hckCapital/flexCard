@@ -3,9 +3,13 @@ import { Card } from "../../types";
 
 
 const cardSchema = new Schema<Card>({
+    cardID: {
+        type: String,
+        required: true,
+        unique: true,
+    },
     creator: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Member",
+        type: String,
         required: true,
     },
     title: {
@@ -34,11 +38,12 @@ const cardSchema = new Schema<Card>({
             type: String,
         }
     ],
-    components: [
+    components: 
         {
-            type: String,
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Component",
         }
-    ],
+    ,
 }, {
     timestamps: true
 })

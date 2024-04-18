@@ -47,18 +47,18 @@ const ComponentsTab = (props: Props) => {
       id: 'video',
       group: 'elements',
     },
-    {
-      Component: <ContactFormComponentPlaceholder />,
-      label: 'Contact',
-      id: 'contactForm',
-      group: 'elements',
-    },
-    {
-      Component: <CheckoutPlaceholder />,
-      label: 'Checkout',
-      id: 'paymentForm',
-      group: 'elements',
-    },
+    // {
+    //   Component: <ContactFormComponentPlaceholder />,
+    //   label: 'Contact',
+    //   id: 'contactForm',
+    //   group: 'elements',
+    // },
+    // {
+    //   Component: <CheckoutPlaceholder />,
+    //   label: 'Checkout',
+    //   id: 'paymentForm',
+    //   group: 'elements',
+    // },
     {
       Component: <LinkPlaceholder />,
       label: 'Link',
@@ -70,12 +70,12 @@ const ComponentsTab = (props: Props) => {
   return (
     <Accordion
       type="multiple"
-      className="w-full"
+      className="w-full px-4"
       defaultValue={['Layout', 'Elements']}
     >
       <AccordionItem
         value="Layout"
-        className="px-6 py-0 border-y-[1px]"
+        className="py-0 border-y-[1px]"
       >
         <AccordionTrigger className="!no-underline">Layout</AccordionTrigger>
         <AccordionContent className="flex flex-wrap gap-2 ">
@@ -94,7 +94,7 @@ const ComponentsTab = (props: Props) => {
       </AccordionItem>
       <AccordionItem
         value="Elements"
-        className="px-6 py-0 "
+        className="py-0 "
       >
         <AccordionTrigger className="!no-underline">Elements</AccordionTrigger>
         <AccordionContent className="flex flex-wrap gap-2 ">

@@ -1,15 +1,21 @@
 'use client'
 import { Button } from '@/components/ui/button'
-import { getFunnelPageDetails } from '@/lib/queries'
+// import { getFunnelPageDetails } from '@/lib/queries'
 import clsx from 'clsx'
 import { EyeOff } from 'lucide-react'
 import React, { useEffect } from 'react'
-import Recursive from './funnel-editor-components/recursive'
 import { useEditor } from '@/lib/editor/editor-provider'
+import Recursive from './card-editor-components/recursive'
 
-type Props = { funnelPageId: string; liveMode?: boolean }
+type Props = {
+  // funnelPageId: string; CardEditor
+  liveMode?: boolean 
+}
 
-const FunnelEditor = ({ funnelPageId, liveMode }: Props) => {
+const CardEditor = ({ 
+  // funnelPageId, 
+  liveMode 
+}: Props) => {
   const { dispatch, state } = useEditor()
 
   useEffect(() => {
@@ -22,21 +28,21 @@ const FunnelEditor = ({ funnelPageId, liveMode }: Props) => {
   }, [liveMode])
 
   //CHALLENGE: make this more performant
-  useEffect(() => {
-    const fetchData = async () => {
-      const response = await getFunnelPageDetails(funnelPageId)
-      if (!response) return
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     const response = await getFunnelPageDetails(funnelPageId)
+  //     if (!response) return
 
-      dispatch({
-        type: 'LOAD_DATA',
-        payload: {
-          elements: response.content ? JSON.parse(response?.content) : '',
-          withLive: !!liveMode,
-        },
-      })
-    }
-    fetchData()
-  }, [funnelPageId])
+  //     dispatch({
+  //       type: 'LOAD_DATA',
+  //       payload: {
+  //         elements: response.content ? JSON.parse(response?.content) : '',
+  //         withLive: !!liveMode,
+  //       },
+  //     })
+  //   }
+  //   fetchData()
+  // }, [funnelPageId])
 
   const handleClick = () => {
     dispatch({
@@ -84,4 +90,4 @@ const FunnelEditor = ({ funnelPageId, liveMode }: Props) => {
   )
 }
 
-export default FunnelEditor
+export default CardEditor

@@ -55,13 +55,13 @@ const CardEditorNavigation = ({
   ) => {
     if (event.target.value === cardDetails.title) return
     if (event.target.value) {
-      await upsertCardContent(
-        authaccountId,
-        {
-          title: event.target.value,
-        },
-        cardId
-      )
+      // await upsertCardContent(
+      //   authaccountId,
+      //   {
+      //     title: event.target.value,
+      //   },
+      //   cardId
+      // )
 
       toast('Success', {
         description: 'Saved Card title',

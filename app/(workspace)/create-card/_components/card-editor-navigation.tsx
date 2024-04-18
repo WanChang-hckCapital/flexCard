@@ -1,7 +1,6 @@
 'use client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import {
   Tooltip,
@@ -30,13 +29,11 @@ import React, { FocusEventHandler, useEffect } from 'react'
 import { toast } from 'sonner'
 
 type Props = {
-  cardId: string
   cardDetails: Card
   authaccountId: string
 }
 
 const CardEditorNavigation = ({
-  cardId,
   cardDetails,
   authaccountId,
 }: Props) => {
@@ -55,13 +52,13 @@ const CardEditorNavigation = ({
   ) => {
     if (event.target.value === cardDetails.title) return
     if (event.target.value) {
-      await upsertCardContent(
-        authaccountId,
-        {
-          title: event.target.value,
-        },
-        cardId
-      )
+      // await upsertCardContent(
+      //   authaccountId,
+      //   {
+      //     title: event.target.value,
+      //   },
+      //   cardId
+      // )
 
       toast('Success', {
         description: 'Saved Card title',
@@ -88,31 +85,32 @@ const CardEditorNavigation = ({
     dispatch({ type: 'REDO' })
   }
 
-  // const handleOnSave = async () => {
-  //   const content = JSON.stringify(state.editor.elements)
-  //   try {
-  //     const response = await upsertFunnelPage(
-  //       subaccountId,
-  //       {
-  //         ...funnelPageDetails,
-  //         content,
-  //       },
-  //       funnelId
-  //     )
-  //     await saveActivityLogsNotification({
-  //       agencyId: undefined,
-  //       description: `Updated a card page | ${response?.name}`,
-  //       subaccountId: subaccountId,
-  //     })
-  //     toast('Success', {
-  //       description: 'Saved Editor',
-  //     })
-  //   } catch (error) {
-  //     toast('Oppse!', {
-  //       description: 'Could not save editor',
-  //     })
-  //   }
-  // }
+  const handleOnSave = async () => {
+    const content = JSON.stringify(state.editor.elements)
+    try {
+      console.log("content: ", content);
+      const response = await upsertCardContent(
+        authaccountId,
+        {
+          ...cardDetails,
+        },
+        content,
+        cardDetails.cardID
+      )
+      // await saveActivityLogsNotification({
+      //   agencyId: undefined,
+      //   description: `Updated a card page | ${response?.name}`,
+      //   authaccountId: authaccountId,
+      // })
+      toast('Success', {
+        description: 'Saved Editor',
+      })
+    } catch (error) {
+      toast('Oppse!', {
+        description: 'Could not save editor',
+      })
+    }
+  }
 
   return (
     <TooltipProvider>
@@ -123,13 +121,13 @@ const CardEditorNavigation = ({
         )}
       >
         <aside className="flex items-center gap-4 max-w-[260px] w-[300px]">
-          <Link href={`/${authaccountId}/cards/${cardId}`}>
+          <Link href={`/`}>
             <ArrowLeftCircle />
           </Link>
           <div className="flex flex-col w-full ">
             <Input
               defaultValue={cardDetails.title}
-              className="border-none h-5 m-0 p-0 text-lg"
+              className="border-none h-5 m-0 p-0 text-lg text-black"
               onBlur={handleOnBlurTitleChange}
             />
             <span className="text-sm text-muted-foreground">
@@ -222,19 +220,11 @@ const CardEditorNavigation = ({
             <Redo2 />
           </Button>
           <div className="flex flex-col item-center mr-4">
-            <div className="flex flex-row items-center gap-4">
-              Draft
-              <Switch
-                disabled
-                defaultChecked={true}
-              />
-              Publish
-            </div>
             <span className="text-muted-foreground text-sm">
-              Last updated {cardDetails.updatedAt.toLocaleDateString()}
+              Last updated: {cardDetails.updatedAt.toLocaleDateString()}
             </span>
           </div>
-          {/* <Button onClick={handleOnSave}>Save</Button> */}
+          <Button onClick={handleOnSave}>Save</Button>
         </aside>
       </nav>
     </TooltipProvider>

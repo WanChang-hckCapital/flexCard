@@ -5,6 +5,9 @@ import CardEditorSidebar from './_components/card-editor-sidebar'
 import CardEditor from './_components/card-editor'
 import EditorProvider from '@/lib/editor/editor-provider'
 import { fetchCardDetails } from '@/lib/actions/workspace.actions'
+import { Card } from '@/types'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 
 type Props = {
   params: { 
@@ -13,33 +16,48 @@ type Props = {
   }
 }
 
-const newCardData = {
-  cardId: "",
-  cardDetails: null as any,
-};
-
 const Page = async ({ params }: Props) => {
   // const cardDetails = await fetchCardDetails(params.cardId)
   // if (!cardDetails)
   //   return redirect(`/${params.userId}/cards`)
 
+  const session = await getServerSession(authOptions)
+  const user = session?.user;
+
+  if (!user) return null;
+
+  const authaccountId = user.id;
+
+  const newCardData: Card = {
+    cardID: "",
+    creator: authaccountId,
+    title: "Temp Card",
+    status: "Developing",
+    description: "",
+    likes: [],
+    followers: [],
+    categories: [],
+    components: [],
+    updatedAt: new Date,
+    createdAt: new Date,
+};
+
   return (
     <div className="fixed top-0 bottom-0 left-0 right-0 z-[20] bg-background overflow-hidden">
       <EditorProvider
-        authaccountId={params.authaccountId}
-        cardId={newCardData.cardId}
-        cardDetails={newCardData.cardDetails}
+        authaccountId={authaccountId}
+        cardId={""}
+        cardDetails={newCardData}
       >
         <CardEditorNavigation
-          cardId={newCardData.cardId}
-          cardDetails={newCardData.cardDetails}
-          authaccountId={params.authaccountId}
+          cardDetails={newCardData}
+          authaccountId={authaccountId}
         />
-        {/* <div className="h-full flex justify-center">
-          <CardEditor cardPageId={params.cardPageId} />
+        <div className="h-full flex justify-center">
+          <CardEditor />
         </div>
 
-        <CardEditorSidebar authaccountId={params.authaccountId} /> */}
+        <CardEditorSidebar authaccountId={authaccountId} />
       </EditorProvider>
     </div>
   )

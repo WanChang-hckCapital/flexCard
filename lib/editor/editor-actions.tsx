@@ -59,8 +59,8 @@ export type EditorAction =
       }
     }
   | {
-      type: 'SET_FUNNELPAGE_ID'
+      type: 'SET_CARD_ID'
       payload: {
-        funnelPageId: string
+        CardId: string
       }
     }

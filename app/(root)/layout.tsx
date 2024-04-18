@@ -40,8 +40,6 @@ export default async function RootLayout({
     userImage = await fetchMemberImage(userInfo.image);
   }
 
-  
-
   return (
     <AuthSessionProvider>
       <html lang="en">
