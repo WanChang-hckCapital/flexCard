@@ -7,7 +7,7 @@ type Props = {}
 const VideoPlaceholder = (props: Props) => {
   const handleDragStart = (e: React.DragEvent, type: EditorBtns) => {
     if (type === null) return
-    e.dataTransfer.setData('componentType', type)
+    e.dataTransfer.setData('elementType', type)
   }
   return (
     <div

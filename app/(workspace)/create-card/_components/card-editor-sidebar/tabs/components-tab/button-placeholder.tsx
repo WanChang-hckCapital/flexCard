@@ -1,10 +1,10 @@
 import { EditorElementsBtns } from '@/lib/constants'
-import { TypeIcon } from 'lucide-react'
+import { CircleDashed } from 'lucide-react'
 import React from 'react'
 
 type Props = {}
 
-const TextPlaceholder = (props: Props) => {
+const ButtonPlaceholder = (props: Props) => {
   const handleDragState = (e: React.DragEvent, type: EditorElementsBtns) => {
     if (type === null) return
     e.dataTransfer.setData('elementType', type)
@@ -14,11 +14,11 @@ const TextPlaceholder = (props: Props) => {
     <div
       draggable
       onDragStart={(e) => {
-        handleDragState(e, 'text')
+        handleDragState(e, 'button')
       }}
       className=" h-14 w-14 bg-muted rounded-lg flex items-center justify-center"
     >
-      <TypeIcon
+      <CircleDashed
         size={40}
         className="text-muted-foreground"
       />
@@ -26,4 +26,4 @@ const TextPlaceholder = (props: Props) => {
   )
 }
 
-export default TextPlaceholder
+export default ButtonPlaceholder

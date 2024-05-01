@@ -10,7 +10,7 @@ type Props = {
   element: EditorElement
 }
 
-const VideoComponent = (props: Props) => {
+const VideoElement = (props: Props) => {
   const { dispatch, state } = useEditor()
   const styles = props.element.styles
 
@@ -83,4 +83,4 @@ const VideoComponent = (props: Props) => {
   )
 }
 
-export default VideoComponent
+export default VideoElement

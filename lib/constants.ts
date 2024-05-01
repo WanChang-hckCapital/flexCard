@@ -19,3 +19,19 @@ export const defaultStyles: React.CSSProperties = {
   textAlign: 'left',
   opacity: '100%',
 }
+
+export type EditorElementsBtns =
+  | 'box'
+  | 'image'
+  | 'text'
+  | 'button'
+  | 'separator'
+  | 'video'
+  | 'bubble'
+  | 'carousel'
+  | null
+
+export type EditorComponentsBtns =
+  | 'bubble'
+  | 'carousel'
+  | null

@@ -1,23 +1,26 @@
-import { DeviceTypes, EditorElement } from './editor-provider'
+import { DeviceTypes, EditorComponent, EditorElement } from './editor-provider'
 
 export type EditorAction =
   | {
       type: 'ADD_ELEMENT'
       payload: {
-        containerId: string
+        sectionId: string
+        targetId?: string
         elementDetails: EditorElement
       }
     }
   | {
       type: 'UPDATE_ELEMENT'
       payload: {
+        sectionId: string
         elementDetails: EditorElement
       }
     }
   | {
       type: 'DELETE_ELEMENT'
       payload: {
-        elementDetails: EditorElement
+        sectionId: string
+        elementId: string
       }
     }
   | {
@@ -27,10 +30,9 @@ export type EditorAction =
           | EditorElement
           | {
               id: ''
-              content: []
-              name: ''
-              styles: {}
+              contents: []
               type: null
+              layout: ''
             }
       }
     }
@@ -59,8 +61,8 @@ export type EditorAction =
       }
     }
   | {
-      type: 'SET_CARD_ID'
+      type: 'ADD_COMPONENT'
       payload: {
-        CardId: string
-      }
+        componentDetails: EditorComponent;
+      };
     }

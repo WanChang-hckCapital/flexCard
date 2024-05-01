@@ -1,5 +1,5 @@
 import { EditorElementsBtns } from '@/lib/constants'
-import { TypeIcon } from 'lucide-react'
+import { Minus } from 'lucide-react'
 import React from 'react'
 
 type Props = {}
@@ -14,11 +14,11 @@ const TextPlaceholder = (props: Props) => {
     <div
       draggable
       onDragStart={(e) => {
-        handleDragState(e, 'text')
+        handleDragState(e, 'separator')
       }}
       className=" h-14 w-14 bg-muted rounded-lg flex items-center justify-center"
     >
-      <TypeIcon
+      <Minus
         size={40}
         className="text-muted-foreground"
       />

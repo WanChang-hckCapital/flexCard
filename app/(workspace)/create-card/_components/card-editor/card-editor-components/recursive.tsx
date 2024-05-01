@@ -1,28 +1,32 @@
 import { EditorElement } from '@/lib/editor/editor-provider'
 import React from 'react'
-import TextComponent from './text'
+import TextElement from './text'
 import Container from './container'
-import VideoComponent from './video'
+import VideoElement from './video'
 import LinkComponent from './link-component'
+import BubbleComponent from './bubble'
+import ButtonElement from './button'
+import Separator from './separator'
 
 type Props = {
   element: EditorElement
+  sectionId: string
 }
 
-const Recursive = ({ element }: Props) => {
+const Recursive = ({ element, sectionId }: Props) => {
   switch (element.type) {
     case 'text':
-      return <TextComponent element={element} />
-    case 'container':
-      return <Container element={element} />
+      return <TextElement element={element} sectionId={sectionId}/>
+    case 'box':
+      return <Container element={element} sectionId={sectionId}/>
+    case 'separator':
+      return <Separator element={element} sectionId={sectionId} />
+    case 'button':
+      return <ButtonElement element={element} />
     case 'video':
-      return <VideoComponent element={element} />
-    case '2Col':
-      return <Container element={element} />
-    case '__body':
-      return <Container element={element} />
-    case 'link':
-      return <LinkComponent element={element} />
+      return <VideoElement element={element} />
+    case 'bubble':
+      return <BubbleComponent element={element} sectionId={sectionId} />
     default:
       return null
   }

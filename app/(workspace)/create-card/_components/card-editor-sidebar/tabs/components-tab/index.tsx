@@ -4,15 +4,15 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
-import { EditorBtns } from '@/lib/constants'
+import { EditorElementsBtns } from '@/lib/constants'
 import React from 'react'
 import TextPlaceholder from './text-placeholder'
 import ContainerPlaceholder from './container-placeholder'
 import VideoPlaceholder from './video-placeholder'
-import TwoColumnsPlaceholder from './two-columns-placeholder'
 import LinkPlaceholder from './link-placeholder'
-import ContactFormComponentPlaceholder from './contact-form-placeholder'
-import CheckoutPlaceholder from './checkout-placeholder'
+import BubblePlaceholder from './bubble-placeholder'
+import ButtonPlaceholder from './button-placeholder'
+import SeparatorPlaceholder from './separator-placeholder'
 
 type Props = {}
 
@@ -20,9 +20,15 @@ const ComponentsTab = (props: Props) => {
   const elements: {
     Component: React.ReactNode
     label: string
-    id: EditorBtns
+    id: EditorElementsBtns
     group: 'layout' | 'elements'
   }[] = [
+    {
+      Component: <ContainerPlaceholder />,
+      label: 'Box',
+      id: 'box',
+      group: 'elements',
+    },
     {
       Component: <TextPlaceholder />,
       label: 'Text',
@@ -30,41 +36,35 @@ const ComponentsTab = (props: Props) => {
       group: 'elements',
     },
     {
-      Component: <ContainerPlaceholder />,
-      label: 'Container',
-      id: 'container',
+      Component: <BubblePlaceholder />,
+      label: 'Bubble',
+      id: 'bubble',
       group: 'layout',
     },
-    {
-      Component: <TwoColumnsPlaceholder />,
-      label: '2 Columns',
-      id: '2Col',
-      group: 'layout',
-    },
-    {
-      Component: <VideoPlaceholder />,
-      label: 'Video',
-      id: 'video',
-      group: 'elements',
-    },
     // {
-    //   Component: <ContactFormComponentPlaceholder />,
-    //   label: 'Contact',
-    //   id: 'contactForm',
-    //   group: 'elements',
-    // },
-    // {
-    //   Component: <CheckoutPlaceholder />,
-    //   label: 'Checkout',
-    //   id: 'paymentForm',
+    //   Component: <VideoPlaceholder />,
+    //   label: 'Video',
+    //   id: 'video',
     //   group: 'elements',
     // },
     {
-      Component: <LinkPlaceholder />,
-      label: 'Link',
-      id: 'link',
+      Component: <ButtonPlaceholder />,
+      label: 'Button',
+      id: 'button',
       group: 'elements',
     },
+    {
+      Component: <SeparatorPlaceholder />,
+      label: 'Separator',
+      id: 'separator',
+      group: 'elements',
+    },
+    // {
+    //   Component: <LinkPlaceholder />,
+    //   label: 'Link',
+    //   id: 'link',
+    //   group: 'elements',
+    // },
   ]
 
   return (
