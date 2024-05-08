@@ -5,10 +5,11 @@ import { EditorElement } from '@/lib/editor/editor-provider';
 import { Settings } from 'lucide-react'
 
 type AddBoxDropdownProps = {
-  heroSectionId: string; 
+  heroSectionId: string;
+  bubbleId: string;
 };
 
-const AddBoxDropdown: React.FC<AddBoxDropdownProps> = ({ heroSectionId }) => {
+const AddBoxDropdown: React.FC<AddBoxDropdownProps> = ({ heroSectionId, bubbleId }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { dispatch, state } = useEditor();
   const [canAddBox, setCanAddBox] = useState(true);
@@ -32,6 +33,7 @@ const AddBoxDropdown: React.FC<AddBoxDropdownProps> = ({ heroSectionId }) => {
     dispatch({
       type: 'ADD_ELEMENT',
       payload: {
+        bubbleId: bubbleId,
         sectionId: heroSectionId,
         elementDetails: newBox
       }
@@ -41,7 +43,7 @@ const AddBoxDropdown: React.FC<AddBoxDropdownProps> = ({ heroSectionId }) => {
   };
 
   return (
-    <div className="dropdown relative text-end">
+    <div className="dropdown relative text-end mr-[10px] -mb-[10px]">
       <button onClick={() => setIsOpen(!isOpen)} className="dropdown-button">
         {/* ⚙️ */}
         <Settings size={20}

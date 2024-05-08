@@ -4,6 +4,7 @@ export type EditorAction =
   | {
       type: 'ADD_ELEMENT'
       payload: {
+        bubbleId: string
         sectionId: string
         targetId?: string
         elementDetails: EditorElement
@@ -12,6 +13,7 @@ export type EditorAction =
   | {
       type: 'UPDATE_ELEMENT'
       payload: {
+        bubbleId: string
         sectionId: string
         elementDetails: EditorElement
       }
@@ -19,6 +21,7 @@ export type EditorAction =
   | {
       type: 'DELETE_ELEMENT'
       payload: {
+        bubbleId: string
         sectionId: string
         elementId: string
       }
@@ -26,6 +29,8 @@ export type EditorAction =
   | {
       type: 'CHANGE_CLICKED_ELEMENT'
       payload: {
+        bubbleId: string
+        sectionId: string
         elementDetails?:
           | EditorElement
           | {

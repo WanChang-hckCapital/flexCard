@@ -1,20 +1,35 @@
 'use client'
 import { Badge } from '@/components/ui/badge'
-import { EditorBtns } from '@/lib/constants'
+import { Button } from '@/components/ui/button'
+import { EditorElementsBtns } from '@/lib/constants'
 import { EditorElement, useEditor } from '@/lib/editor/editor-provider'
 import clsx from 'clsx'
 import { Trash } from 'lucide-react'
-import React from 'react'
+import React, { useState } from 'react'
 
 type Props = {
-  element: EditorElement
+  element: EditorElement,
+  sectionId: string,
+  bubbleId: string
 }
 
 const VideoElement = (props: Props) => {
-  const { dispatch, state } = useEditor()
-  const styles = props.element.styles
+  const { dispatch, state } = useEditor();
 
-  const handleDragStart = (e: React.DragEvent, type: EditorBtns) => {
+  const [mouseIsOver, setMouseIsOver] = useState<boolean>(false);
+
+  const formatYouTubeUrl = (url: string) => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+
+    if (match && match[2].length === 11) {
+      return `https://www.youtube.com/embed/${match[2]}`;
+    }
+
+    return url;
+  }
+
+  const handleDragStart = (e: React.DragEvent, type: EditorElementsBtns) => {
     if (type === null) return
     e.dataTransfer.setData('componentType', type)
   }
@@ -25,6 +40,8 @@ const VideoElement = (props: Props) => {
       type: 'CHANGE_CLICKED_ELEMENT',
       payload: {
         elementDetails: props.element,
+        bubbleId: props.bubbleId,
+        sectionId: props.sectionId
       },
     })
   }
@@ -32,18 +49,23 @@ const VideoElement = (props: Props) => {
   const handleDeleteElement = () => {
     dispatch({
       type: 'DELETE_ELEMENT',
-      payload: { elementDetails: props.element },
+      payload: { elementId: props.element.id, sectionId: props.sectionId, bubbleId: props.bubbleId },
     })
   }
 
   return (
     <div
-      style={styles}
       draggable
       onDragStart={(e) => handleDragStart(e, 'video')}
       onClick={handleOnClick}
+      onMouseEnter={() => {
+        setMouseIsOver(true);
+      }}
+      onMouseLeave={() => {
+        setMouseIsOver(false);
+      }}
       className={clsx(
-        'p-[2px] w-full m-[5px] relative text-[16px] transition-all flex items-center justify-center',
+        'p-[2px] w-full relative text-[16px] transition-all flex items-center justify-center',
         {
           '!border-blue-500':
             state.editor.selectedElement.id === props.element.id,
@@ -55,28 +77,32 @@ const VideoElement = (props: Props) => {
       {state.editor.selectedElement.id === props.element.id &&
         !state.editor.liveMode && (
           <Badge className="absolute -top-[23px] -left-[1px] rounded-none rounded-t-lg ">
-            {state.editor.selectedElement.name}
+            <div className='text-slate-700'>
+              <p className='text-xs'>{state.editor.selectedElement.type?.toUpperCase()}</p>
+            </div>
           </Badge>
         )}
 
-      {!Array.isArray(props.element.content) && (
+      {!Array.isArray(props.element.src) && (
         <iframe
-          width={props.element.styles.width || '560'}
-          height={props.element.styles.height || '315'}
-          src={props.element.content.src}
+          width={props.element.width || '200'}
+          height={props.element.height || '115'}
+          src={formatYouTubeUrl(props.element.src || '')}
           title="YouTube video player"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allow="accelerometer;"
         />
       )}
 
-      {state.editor.selectedElement.id === props.element.id &&
+      {mouseIsOver && state.editor.selectedElement.id === props.element.id &&
         !state.editor.liveMode && (
-          <div className="absolute bg-primary px-2.5 py-1 text-xs font-bold  -top-[25px] -right-[1px] rounded-none rounded-t-lg !text-white">
-            <Trash
-              className="cursor-pointer"
-              size={16}
+          <div className="absolute -top-[28px] -right-[3px]">
+            <Button
+              className="flex justify-center h-full border rounded-md bg-red-500"
+              variant={"outline"}
               onClick={handleDeleteElement}
-            />
+            >
+              <Trash className="h-3 w-3" />
+            </Button>
           </div>
         )}
     </div>

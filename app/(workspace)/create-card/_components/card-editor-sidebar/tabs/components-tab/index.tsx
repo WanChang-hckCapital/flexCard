@@ -41,12 +41,12 @@ const ComponentsTab = (props: Props) => {
       id: 'bubble',
       group: 'layout',
     },
-    // {
-    //   Component: <VideoPlaceholder />,
-    //   label: 'Video',
-    //   id: 'video',
-    //   group: 'elements',
-    // },
+    {
+      Component: <VideoPlaceholder />,
+      label: 'Video',
+      id: 'video',
+      group: 'elements',
+    },
     {
       Component: <ButtonPlaceholder />,
       label: 'Button',

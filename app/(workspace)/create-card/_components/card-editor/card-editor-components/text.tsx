@@ -1,22 +1,26 @@
 'use client'
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { EditorElement, useEditor } from '@/lib/editor/editor-provider';
 import clsx from 'clsx';
 import { Trash } from 'lucide-react';
-import React from 'react';
+import React, { useState } from 'react';
 
 type Props = {
   element: EditorElement;
   sectionId: string;
+  bubbleId: string;
 }
 
 const TextElement = (props: Props) => {
   const { dispatch, state } = useEditor();
 
+  const [mouseIsOver, setMouseIsOver] = useState<boolean>(false);
+
   const handleDeleteElement = () => {
     dispatch({
       type: 'DELETE_ELEMENT',
-      payload: { elementId: props.element.id, sectionId: props.sectionId },
+      payload: { elementId: props.element.id, sectionId: props.sectionId, bubbleId: props.bubbleId },
     });
   };
 
@@ -26,6 +30,8 @@ const TextElement = (props: Props) => {
       type: 'CHANGE_CLICKED_ELEMENT',
       payload: {
         elementDetails: props.element,
+        bubbleId: props.bubbleId,
+        sectionId: props.sectionId
       },
     });
   };
@@ -36,6 +42,7 @@ const TextElement = (props: Props) => {
       dispatch({
         type: 'UPDATE_ELEMENT',
         payload: {
+          bubbleId: props.bubbleId,
           sectionId: props.sectionId,
           elementDetails: {
             ...props.element,
@@ -54,26 +61,39 @@ const TextElement = (props: Props) => {
         'border-dashed border-[1px] border-slate-300': !state.editor.liveMode,
       })}
       onClick={handleOnClickBody}
+      onMouseEnter={() => {
+        setMouseIsOver(true);
+      }}
+      onMouseLeave={() => {
+        setMouseIsOver(false);
+      }}
     >
       {state.editor.selectedElement.id === props.element.id && !state.editor.liveMode && (
-        <Badge className="absolute -top-[23px] -left-[1px] rounded-none rounded-t-lg">
-          {state.editor.selectedElement.type}
+        <Badge className="absolute -top-[25px] -left-[10px] rounded-none rounded-t-lg">
+          <div className='text-slate-700'>
+            <p>{state.editor.selectedElement.type?.toUpperCase()}</p>
+          </div>
+
         </Badge>
       )}
       <span
+        className="text-black"
         contentEditable={!state.editor.liveMode}
         onBlur={handleTextUpdate}
         suppressContentEditableWarning={true}
       >
         {props.element.text}
       </span>
-      {state.editor.selectedElement.id === props.element.id && !state.editor.liveMode && (
-        <div className="absolute bg-primary px-2.5 py-1 text-xs font-bold -top-[25px] -right-[1px] rounded-none rounded-t-lg !text-white">
-          <Trash
-            className="cursor-pointer"
-            size={16}
+
+      {mouseIsOver && state.editor.selectedElement.id === props.element.id && !state.editor.liveMode && (
+        <div className="absolute -top-[28px] -right-[3px]">
+          <Button
+            className="flex justify-center h-full border rounded-md bg-red-500"
+            variant={"outline"}
             onClick={handleDeleteElement}
-          />
+          >
+            <Trash className="h-3 w-3" />
+          </Button>
         </div>
       )}
     </div>

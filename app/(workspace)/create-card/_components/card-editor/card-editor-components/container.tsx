@@ -1,21 +1,25 @@
 'use client'
+
 import { Badge } from '@/components/ui/badge'
 import { EditorElementsBtns, defaultStyles } from '@/lib/constants'
 import { EditorElement, useEditor } from '@/lib/editor/editor-provider'
 import clsx from 'clsx'
-import React from 'react'
+import React, { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid';
 import Recursive from './recursive'
 import { Trash } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
-type Props = { element: EditorElement, sectionId: string}
+type Props = { element: EditorElement, sectionId: string, bubbleId: string }
 
-const Container = ({ element, sectionId }: Props) => {
+const Container = ({ element, sectionId, bubbleId }: Props) => {
   // const { id, type, layout, contents, position, flex, spacing, margin, width, height, maxWidth,
   //   maxHeight, backgroundColor, borderRadius, cornerRadius, justifyContent, alignItems,
   //   offsetTop, offsetBottom, offsetStart, offsetEnd, paddingAll, paddingTop, paddingBottom,
   //   paddingStart, paddingEnd } = element
   const { dispatch, state } = useEditor()
+
+  const [mouseIsOver, setMouseIsOver] = useState<boolean>(false);
 
   const strElementType = element.type?.toString() || 'initial';
 
@@ -29,10 +33,11 @@ const Container = ({ element, sectionId }: Props) => {
 
     switch (elementType) {
       case 'text':
-        if (element.type === 'box'){
+        if (element.type === 'box') {
           dispatch({
             type: 'ADD_ELEMENT',
             payload: {
+              bubbleId: bubbleId,
               sectionId: sectionId,
               targetId: element.id,
               elementDetails: {
@@ -45,10 +50,11 @@ const Container = ({ element, sectionId }: Props) => {
         }
         break
       case 'button':
-        if (element.type === 'box'){
+        if (element.type === 'box') {
           dispatch({
             type: 'ADD_ELEMENT',
             payload: {
+              bubbleId: bubbleId,
               sectionId: sectionId,
               targetId: element.id,
               elementDetails: {
@@ -62,10 +68,11 @@ const Container = ({ element, sectionId }: Props) => {
         }
         break
       case 'separator':
-        if (element.type === 'box'){
+        if (element.type === 'box') {
           dispatch({
             type: 'ADD_ELEMENT',
             payload: {
+              bubbleId: bubbleId,
               sectionId: sectionId,
               targetId: element.id,
               elementDetails: {
@@ -76,27 +83,29 @@ const Container = ({ element, sectionId }: Props) => {
           });
         }
         break
-      // case 'video':
-      //   dispatch({
-      //     type: 'ADD_ELEMENT',
-      //     payload: {
-      //       containerId: id,
-      //       elementDetails: {
-      //         content: {
-      //           src: 'https://www.youtube.com/embed/A3l6YYkXzzg?si=zbcCeWcpq7Cwf8W1',
-      //         },
-      //         id: v4(),
-      //         name: 'Video',
-      //         styles: {},
-      //         type: 'video',
-      //       },
-      //     },
-      //   })
-      //   break
+      case 'video':
+        if (element.type === 'box') {
+          dispatch({
+            type: 'ADD_ELEMENT',
+            payload: {
+              bubbleId: bubbleId,
+              sectionId: sectionId,
+              targetId: element.id,
+              elementDetails: {
+                id: uuidv4(),
+                type: elementType,
+                // src: 'https://youtu.be/DmLcO5_khdU?si=1VjeuUJbNotQ0cGw',
+                src: 'https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2FEducationLittleBee%2Fvideos%2F2330858577109358%2F&show_text=false&t=0'
+              },
+            },
+          });
+        }
+        break
       case 'box':
         dispatch({
           type: 'ADD_ELEMENT',
           payload: {
+            bubbleId: bubbleId,
             sectionId: sectionId,
             targetId: element.id,
             elementDetails: {
@@ -168,14 +177,18 @@ const Container = ({ element, sectionId }: Props) => {
       type: 'CHANGE_CLICKED_ELEMENT',
       payload: {
         elementDetails: element,
+        bubbleId: bubbleId,
+        sectionId: sectionId
       },
     })
   }
 
   const handleDeleteElement = () => {
+    console.log('handleDeleteElement', element.id);
     dispatch({
       type: 'DELETE_ELEMENT',
       payload: {
+        bubbleId: bubbleId,
         sectionId: sectionId,
         elementId: element.id,
       },
@@ -216,10 +229,16 @@ const Container = ({ element, sectionId }: Props) => {
       draggable={strElementType !== 'initial'}
       onClick={handleOnClickBody}
       onDragStart={handleDragStart}
+      onMouseEnter={() => {
+        setMouseIsOver(true);
+      }}
+      onMouseLeave={() => {
+        setMouseIsOver(false);
+      }}
     >
       <Badge
         className={clsx(
-          'absolute -top-[23px] -left-[1px] rounded-none rounded-t-lg hidden',
+          'absolute -top-[25px] -left-[10px] rounded-none rounded-t-lg hidden',
           {
             block:
               state.editor.selectedElement.id === element.id &&
@@ -227,17 +246,36 @@ const Container = ({ element, sectionId }: Props) => {
           }
         )}
       >
-        {strElementType}
+        <div className='text-slate-700'>
+          <p>{strElementType.toUpperCase()} Element</p>
+        </div>
       </Badge>
 
       {element.contents && element.contents.map((childElement) => (
-        <Recursive key={childElement.id} element={childElement} sectionId={sectionId}/>
+        <Recursive key={childElement.id} element={childElement} sectionId={sectionId} bubbleId={bubbleId} />
       ))}
 
-      {state.editor.selectedElement.id === element.id && !state.editor.liveMode && (
-        <div className="absolute top-0 right-0 bg-primary px-2.5 py-1 text-xs font-bold rounded-none rounded-t-lg">
+      {/* {state.editor.selectedElement.id === element.id && !state.editor.liveMode && (
+        <div className="absolute -top-[23px] -right-[5px] bg-primary px-2.5 py-1 text-xs font-bold rounded-none rounded-t-lg">
           <Trash size={16} onClick={handleDeleteElement} className="text-white cursor-pointer" />
         </div>
+      )} */}
+
+      {mouseIsOver && state.editor.selectedElement.id === element.id && !state.editor.liveMode && (
+        <>
+          <div className="absolute -top-[25px] -right-[5px]">
+            <Button
+              className="flex justify-center h-full border rounded-md bg-red-500"
+              variant={"outline"}
+              onClick={handleDeleteElement}
+            >
+              <Trash className="h-3 w-3" />
+            </Button>
+          </div>
+          <div className="text-center animate-pulse">
+            <p className="text-slate-700 text-xs">Click for properties</p>
+          </div>
+        </>
       )}
     </div>
   )
