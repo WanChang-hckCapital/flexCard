@@ -39,14 +39,20 @@ async function Header({ session, userInfoImage }: HeaderProps) {
                 <Searchbar routeType={''} />
 
                 <div className="flex items-center gap-4 w-50">
-                    <Link href="/create-card">
+                    <Link href="/workspace/create-card">
                         <Image width={24} height={24}
                             className=""
                             src='/assets/new-card-dark.svg'
                             alt='icon create' />
                     </Link>
 
-                    <Link href="/notifications">
+                    {/* <Link href="/notifications">
+                        <Image width={24} height={24}
+                            className=""
+                            src='/assets/heart.svg'
+                            alt='icon heart' />
+                    </Link> */}
+                    <Link href="/workspace/663fc7ed54952239d2dec72f">
                         <Image width={24} height={24}
                             className=""
                             src='/assets/heart.svg'

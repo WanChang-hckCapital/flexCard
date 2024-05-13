@@ -3,10 +3,14 @@ import { Component } from "../../types";
 
 
 const componentSchema = new Schema<Component>({
-    ComponentID: {
+    componentID: {
         type: String,
         required: true,
         unique: true,
+    },
+    componentType: {
+        type: String,
+        required: true,
     },
     content: {
         type: String,

@@ -16,7 +16,7 @@ export const sidebarLinks = [
   },
   {
     imgURL: "/assets/create.svg",
-    route: "/create-card",
+    route: "/workspace/create-card",
     label: "Create Card",
   },
   {

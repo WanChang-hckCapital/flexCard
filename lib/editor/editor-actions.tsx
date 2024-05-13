@@ -30,7 +30,7 @@ export type EditorAction =
       type: 'CHANGE_CLICKED_ELEMENT'
       payload: {
         bubbleId: string
-        sectionId: string
+        sectionId?: string
         elementDetails?:
           | EditorElement
           | {
@@ -61,7 +61,7 @@ export type EditorAction =
   | {
       type: 'LOAD_DATA'
       payload: {
-        elements: EditorElement[]
+        component: EditorComponent
         withLive: boolean
       }
     }

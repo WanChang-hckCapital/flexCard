@@ -16,12 +16,15 @@ export const defaultStyles: React.CSSProperties = {
   backgroundPosition: 'center',
   objectFit: 'cover',
   backgroundRepeat: 'no-repeat',
-  textAlign: 'left',
+  textAlign: 'start',
   opacity: '100%',
+  color: 'black',
+
 }
 
 export type EditorElementsBtns =
   | 'box'
+  | 'icon'
   | 'image'
   | 'text'
   | 'button'

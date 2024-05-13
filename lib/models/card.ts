@@ -21,13 +21,13 @@ const cardSchema = new Schema<Card>({
         default: "PUBLIC",
     },
     description: String,
-    likes:[
+    likes: [
         {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Member",
         }
     ],
-    followers:[
+    followers: [
         {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Member",
@@ -38,12 +38,14 @@ const cardSchema = new Schema<Card>({
             type: String,
         }
     ],
-    components: 
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Component",
-        }
-    ,
+    components:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Component",
+    },
+    lineFormatComponent: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Component",
+    },
 }, {
     timestamps: true
 })

@@ -43,42 +43,61 @@ export async function fetchCardDetails(cardId: string) {
     }
 }
 
-export async function upsertCardContent(authaccountId: string, cardDetails: Card, cardContent: string, cardId: string) {
-    // if (!authaccountId || !cardId) return;
+export async function fetchComponent(componentId: string) {
+  try {
+      connectToDB();
+
+      const component = await ComponentModel.findOne({ _id: componentId });
+
+      return component;
+  } catch (error: any) {
+      throw new Error(`Error getting component: ${error.message}`);
+  }
+}
+
+function generateCustomID() {
+  return uuidv4();
+}
+
+export async function upsertCardContent(authaccountId: string, cardDetails: Card, cardContent: string, lineFormatCard: string, cardId: string) {
+    if (!authaccountId) return;
     
     try {
       connectToDB();
 
-      if (!cardId) {
+      if (cardId === "") {
         const cardComponent = {
           componentID: generateCustomID(),
+          componentType: "flexCard",
           content: cardContent,
         };
 
         const newCardComponent = new ComponentModel(cardComponent);
         await newCardComponent.save();
 
+        const lineFormatCardComponent = {
+          componentID: generateCustomID(),
+          componentType: "line",
+          content: lineFormatCard,
+        };
+
+        const newLineFormatCard = new ComponentModel(lineFormatCardComponent);
+        await newLineFormatCard.save();
 
         const newCardContent = {
-            cardID: generateCustomID(),
-            creator: authaccountId,
-            title: cardDetails.title,
-            status: cardDetails.status,
-            description: cardDetails.description,
-            components: newCardComponent._id,
-                // ? cardContent
-                // : JSON.stringify([
-                //     {
-                //         components: [],
-                //         id: '__body',
-                //         name: 'Body',
-                //         styles: { backgroundColor: 'white' },
-                //         type: '__body',
-                //     },
-                // ]), need to fix this
+          cardID: generateCustomID(),
+          creator: authaccountId,
+          title: cardDetails.title,
+          status: cardDetails.status,
+          description: cardDetails.description,
+          components: newCardComponent._id,
+          lineFormatComponent: newLineFormatCard._id,
         };
+
         const newCard = new CardMongodb(newCardContent);
         await newCard.save();
+
+        console.log("newCard: ", newCard);
 
         const currentMember = await Member.findOne({ user: authaccountId });
 
@@ -88,47 +107,77 @@ export async function upsertCardContent(authaccountId: string, cardDetails: Card
         }
 
         return newCard;
-      }
-      
-      const response = await CardMongodb.findOneAndUpdate(
-        { _id: cardId },
-        { $set: { ...cardDetails } },
-        { upsert: true, new: true }
-      );
-  
-      // if (!response) {
-      //   const newCardContent = {
-      //     ...cardContent,
-      //     content: cardContent
-      //       ? cardContent
-      //       : JSON.stringify([
-      //           {
-      //             content: [],
-      //             id: '__body',
-      //             name: 'Body',
-      //             styles: { backgroundColor: 'white' },
-      //             type: '__body',
-      //           },
-      //         ]),
-      //     cardId,
-      //   };
-  
-      //   const newCard = new Card(newCardContent);
-      //   await newCard.save();
-      //   return newCard;
-      // }
+      } 
+      else 
+      {
+        const existingCard = await CardMongodb.findOne({ cardID: cardId });
+        if (!existingCard) {
+            throw new Error("Card not found.");
+        }
+
+        const title = cardDetails.title;
+        const description = cardDetails.description;
+
+        const componentID = existingCard.components;
+        const lineFormatComponentID = existingCard.lineFormatComponent;
+
+        const existingComponent = await ComponentModel.findOne({ _id: componentID });
+        if (!existingComponent) {
+            throw new Error("Component not found.");
+        }
+
+        existingComponent.content = cardContent;
+        await existingComponent.save();
+
+        const existingLineFormatComponent = await ComponentModel.findOne({ _id: lineFormatComponentID });
+        if (!existingLineFormatComponent) {
+            throw new Error("Line format component not found.");
+        }
+
+        existingLineFormatComponent.content = lineFormatCard;
+        await existingLineFormatComponent.save();
+
+        const response = await CardMongodb.updateOne(
+          { cardID: cardId }, 
+          { $set: { title: title, description: description } 
+        });
+
+        console.log("done update Line: ", existingLineFormatComponent.content);
+
+        return response;
+    }
   
       // revalidatePath(`/${authaccountId}/card/${cardId}`, 'page');
-      return response;
+      
     } catch (error: any) {
       throw new Error(`Error upserting card content: ${error.message}`);
     }
-  }
-  
-
-function generateCustomID() {
-  return uuidv4();
 }
+
+export async function updateCardTitle(authaccountId: string, cardId: string, newTitle: string) {
+  try {
+    connectToDB();
+
+    const existingCard = await CardMongodb.findOne({ cardID: cardId });
+    if (!existingCard) {
+        throw new Error("Card not found.");
+    }
+
+    if(authaccountId !== existingCard.creator) {
+      return new Error("Unauthorized to update card title.");
+    }
+
+    const updatedCard = await CardMongodb.updateOne(
+      { cardID: cardId }, 
+      { $set: { title: newTitle} 
+    });
+
+    return updatedCard;
+  } catch (error: any) {
+      throw new Error(`Error updating title of card: ${error.message}`);
+  }
+}
+  
 //   export const updateFunnelProducts = async (
 //     products: string,
 //     funnelId: string

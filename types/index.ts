@@ -56,12 +56,14 @@ export type Card = {
     followers: [],
     categories: [],
     components: {},
+    lineFormatComponent: {},
     updatedAt: Date,
     createdAt: Date,
 }
 
 export type Component = {
-    ComponentID: string,
+    componentID: string,
+    componentType: string,
     content: {},
 }
 

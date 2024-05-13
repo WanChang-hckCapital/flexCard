@@ -13,7 +13,9 @@ export type Workspace = {
 
 export type EditorElement = {
   id: string
+  direction?: string
   type: EditorElementsBtns
+  description?: string
   layout?: string
   contents?: EditorElement[]
   position?: string // for box
@@ -29,7 +31,7 @@ export type EditorElement = {
   borderColor?: string
   cornerRadius?: string
   justifyContent?: string
-  alignItems?: string 
+  alignItems?: string // box
   offsetTop?: string
   offsetBottom?: string
   offsetStart?: string
@@ -49,14 +51,23 @@ export type EditorElement = {
   style?: string //(Normal/Italic)
   decoration?: string //(line-through/Underline)
   wrap?: string
-  uri?: string // for image
+  url?: string
+  imageAlt?: string // need to exclude while export to line flex message json
+  aspectMode?: string
+  action?: ElementAction
+}
+
+export type ElementAction = {
+  id?: string
+  type?: string
   label?: string
-  src?: string
+  uri?: string
+  text?: string
 }
 
 export type EditorComponent = {
-  id: string
-  type: EditorComponentsBtns
+  id?: string
+  type?: EditorComponentsBtns
   direction?: string
   size?: string
   contents?: EditorComponent[]
@@ -76,7 +87,7 @@ export type Editor = {
   component: EditorComponent
   elements: EditorElement[]
   selectedElementBubbleId: string
-  selectedElementSectionId: string
+  selectedElementSectionId?: string
   selectedElement: EditorElement
   device: DeviceTypes
   previewMode: boolean
@@ -95,7 +106,8 @@ export type EditorState = {
 const initialBoxElement: EditorElement = {
   id: 'initial_box',
   type: 'box',
-  layout: 'vetical',
+  layout: 'vertical',
+  description: 'Expand your creativity by using me!',
   contents: []
 }
 
@@ -146,60 +158,6 @@ const initialState: EditorState = {
   history: initialHistoryState,
 }
 
-// const addElementToNestedElement = (
-//   component: EditorComponent,
-//   action: EditorAction
-// ): EditorComponent => {
-//   if (action.type !== 'ADD_ELEMENT') {
-//     throw new Error('Invalid action type');
-//   }
-
-//   const { bubbleId, sectionId, targetId, elementDetails } = action.payload;
-
-//   const addElementRecursively = (elements: EditorElement[], targetId?: string): EditorElement[] => {
-//     return elements.map(element => {
-//       if (element.id === targetId && element.contents) {
-//         return {
-//           ...element,
-//           contents: [...element.contents, elementDetails]
-//         };
-//       } else if (element.contents) {
-//         return {
-//           ...element,
-//           contents: addElementRecursively(element.contents, targetId)
-//         };
-//       }
-//       return element;
-//     });
-//   };
-
-//   const updateSection = (section: EditorSection, targetId?: string): EditorSection => {
-//     if (section.id === sectionId) {
-//       if (targetId) {
-//         return {
-//           ...section,
-//           contents: addElementRecursively(section.contents, targetId)
-//         };
-//       } else {
-//         return {
-//           ...section,
-//           contents: [...section.contents, elementDetails]
-//         };
-//       }
-//     }
-//     return section;
-//   };
-
-//   // Update the appropriate section if the ID matches
-//   return {
-//     ...component,
-//     header: component.header && updateSection(component.header, targetId),
-//     hero: component.hero && updateSection(component.hero, targetId),
-//     body: component.body && updateSection(component.body, targetId),
-//     footer: component.footer && updateSection(component.footer, targetId)
-//   };
-// };
-
 const addElementToNestedElement = (
   component: EditorComponent,
   action: EditorAction
@@ -221,7 +179,7 @@ const addElementToNestedElement = (
         footer: currentComponent.footer && currentComponent.footer.id === sectionId ? updateSection(currentComponent.footer, targetId) : currentComponent.footer,
       };
     }
-  
+
     if (currentComponent.type === 'carousel') {
       const updatedContents = currentComponent.contents?.map(subComponent => {
         if (subComponent.id === bubbleId) {
@@ -283,70 +241,6 @@ const addElementToNestedElement = (
   return updateComponent(component);
 };
 
-// Usage
-// const updatedComponent = addElementToNestedElement(editorComponent, {
-//   type: 'ADD_ELEMENT',
-//   payload: {
-//     sectionId: 'section-id', 
-//     targetId: null,  
-//     elementDetails: {}
-//   }
-// });
-
-const addComponentToWorkspace = (
-  workspace: Workspace,
-  action: EditorAction
-): Workspace => {
-  if (action.type !== 'ADD_COMPONENT') {
-    throw new Error('Invalid action type');
-  }
-
-  const { componentDetails } = action.payload;
-
-  return {
-    ...workspace,
-    components: [...workspace.components, componentDetails]
-  };
-};
-
-// Usage 
-// const updatedWorkspace = addComponentToWorkspace(workspace, {
-//   type: 'ADD_COMPONENT',
-//   payload: {
-//     componentDetails: {
-//       id: 'new-bubble-id',
-//       type: 'bubble', 
-//       contents: [] 
-//     }
-//   }
-// });
-
-
-// const addAnElement = (
-//   component: EditorComponent,
-//   elementArray: EditorElement[],
-//   action: EditorAction
-// ): EditorElement[] => {
-//   if (action.type !== 'ADD_ELEMENT')
-//     throw Error(
-//       'You sent the wrong action type to the Add Element editor State'
-//     )
-//   return elementArray.map((item) => {
-//     if (action.payload.sectionId === component.body.id && Array.isArray(item.contents)) {
-//       return {
-//         ...item,
-//         contents: [...item.contents, action.payload.elementDetails],
-//       }
-//     } else if (item.contents && Array.isArray(item.contents)) {
-//       return {
-//         ...item,
-//         content: addAnElement(component, item.contents, action),
-//       }
-//     }
-//     return item
-//   })
-// }
-
 function handleSectionOperation(
   component: EditorComponent,
   sectionId: string,
@@ -373,8 +267,6 @@ function handleSectionOperation(
 function updateElementRecursively(contents: EditorElement[], elementDetails: EditorElement): EditorElement[] {
   return contents.map(element => {
     if (element.id === elementDetails.id) {
-      console.log('Updating Element:', element);
-      console.log('New Details:', elementDetails);
       return { ...element, ...elementDetails };
     }
     if (element.contents) {
@@ -390,15 +282,16 @@ function updateElementRecursively(contents: EditorElement[], elementDetails: Edi
 function updateElementInSection(currentComponent: EditorComponent, elementDetails: EditorElement, sectionId: string, bubbleId: string) {
   let updatedComponent = { ...currentComponent };
 
-  if (updatedComponent.id === bubbleId) {
+  if (!sectionId) {
+    updatedComponent = updateBubbleComponent(updatedComponent, elementDetails, bubbleId);
+  } else if (updatedComponent.id === bubbleId) {
+
     const updateElement = (section: EditorSection) => {
-      console.log('Original Section:', section);
       const updatedContents = updateElementRecursively(section.contents, elementDetails);
-      console.log('Updated Contents:', updatedContents);
-  
-      return { 
-        ...section, 
-        contents: updatedContents 
+
+      return {
+        ...section,
+        contents: updatedContents
       };
     };
 
@@ -407,20 +300,23 @@ function updateElementInSection(currentComponent: EditorComponent, elementDetail
 
   if (updatedComponent.type === 'carousel') {
     const updatedContents = (updatedComponent.contents || []).map(subComponent => {
-      if (subComponent.id === bubbleId) {
+      if (subComponent.type === 'bubble' && !sectionId) {
+        if (subComponent.id === bubbleId) {
+          return updateBubbleComponent(subComponent, elementDetails, bubbleId);
+        }
+      } else if (subComponent.id === bubbleId) {
         const updateElement = (section: EditorSection) => {
-          console.log('Original Section:', section);
           const updatedContents = updateElementRecursively(section.contents, elementDetails);
-          console.log('Updated Contents:', updatedContents);
-      
-          return { 
-            ...section, 
-            contents: updatedContents 
+
+          return {
+            ...section,
+            contents: updatedContents
           };
         };
 
         return handleSectionOperation(subComponent, sectionId, updateElement);
       }
+
       return subComponent;
     });
 
@@ -430,7 +326,20 @@ function updateElementInSection(currentComponent: EditorComponent, elementDetail
     };
   }
 
-  console.log('Updated Component after section update:', updatedComponent);
+  return updatedComponent;
+}
+
+function updateBubbleComponent(currentComponent: EditorComponent, elementDetails: EditorElement, bubbleId: string): EditorComponent {
+  let updatedComponent = { ...currentComponent };
+
+  if (updatedComponent.id === bubbleId) {
+    updatedComponent = {
+      ...updatedComponent,
+      size: elementDetails.size,
+      direction: elementDetails.direction,
+    };
+  }
+
   return updatedComponent;
 }
 
@@ -438,20 +347,22 @@ function deleteElementRecursively(contents: EditorElement[], elementId: string):
   return contents.reduce((updatedContents: EditorElement[], element) => {
     if (element.id === elementId) {
       if (element.id !== 'initial_box') {
-        updatedContents = updatedContents.filter(el => el.id !== elementId);
         toast('Deleted Successfully!');
       } else {
-        updatedContents.push(element);
         toast('You need at least one element in the Body!');
+        updatedContents.push(element);
       }
-    } else if (element.contents) {
-      const updatedNestedContents = deleteElementRecursively(element.contents, elementId);
-      updatedContents.push({
-        ...element,
-        contents: updatedNestedContents
-      });
-    } 
-    
+    } else {
+      if (element.contents) {
+        const updatedNestedContents = deleteElementRecursively(element.contents, elementId);
+        updatedContents.push({
+          ...element,
+          contents: updatedNestedContents
+        });
+      } else {
+        updatedContents.push(element);
+      }
+    }
     return updatedContents;
   }, []);
 }
@@ -524,20 +435,15 @@ const editorReducer = (
         },
       }
 
-      console.log('New Editor State:', newEditorState);
-
       return newEditorState
 
     case 'UPDATE_ELEMENT':
-      console.log('Updating element with details:', action.payload.elementDetails);
       const updatedComponentAfterUpdate = updateElementInSection(
         state.editor.component,
         action.payload.elementDetails,
         action.payload.sectionId,
         action.payload.bubbleId
       );
-
-      console.log('updatedComponentAfterUpdate', updatedComponentAfterUpdate);
 
       const UpdatedElementIsSelected =
         action.payload.elementDetails.id === state.editor.selectedElement.id ? action.payload.elementDetails : state.editor.selectedElement
@@ -615,6 +521,7 @@ const editorReducer = (
         },
       }
       return clickedState
+
     case 'CHANGE_DEVICE':
       const changedDeviceState = {
         ...state,
@@ -684,10 +591,11 @@ const editorReducer = (
         ...initialState,
         editor: {
           ...initialState.editor,
-          elements: action.payload.elements || initialEditorState.elements,
+          component: action.payload.component || initialEditorState.component,
           liveMode: !!action.payload.withLive,
         },
       }
+
     case 'ADD_COMPONENT': {
       const { componentDetails } = action.payload;
 
@@ -708,8 +616,6 @@ const editorReducer = (
           { ...updatedEditorState },
         ];
 
-        console.log('ExistingCarousel', updatedContents);
-
         return {
           ...state,
           editor: updatedEditorState,
@@ -725,8 +631,6 @@ const editorReducer = (
           type: 'carousel' as EditorComponentsBtns,
           contents: [state.editor.component, componentDetails]
         };
-
-        console.log('newCarousel', newCarousel);
 
         const updatedEditorState = {
           ...state.editor,
@@ -749,29 +653,6 @@ const editorReducer = (
         };
       }
     }
-
-    // case 'SET_FUNNELPAGE_ID':
-    //   const { funnelPageId } = action.payload
-    //   const updatedEditorStateWithFunnelPageId = {
-    //     ...state.editor,
-    //     funnelPageId,
-    //   }
-
-    //   const updatedHistoryWithFunnelPageId = [
-    //     ...state.history.history.slice(0, state.history.currentIndex + 1),
-    //     { ...updatedEditorStateWithFunnelPageId }, 
-    //   ]
-
-    //   const funnelPageIdState = {
-    //     ...state,
-    //     editor: updatedEditorStateWithFunnelPageId,
-    //     history: {
-    //       ...state.history,
-    //       history: updatedHistoryWithFunnelPageId,
-    //       currentIndex: updatedHistoryWithFunnelPageId.length - 1,
-    //     },
-    //   }
-    //   return funnelPageIdState
 
     default:
       return state
