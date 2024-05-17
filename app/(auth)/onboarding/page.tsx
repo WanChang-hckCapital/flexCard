@@ -1,7 +1,6 @@
 
 import { redirect } from "next/navigation";
-
-import { fetchMember } from "@/lib/actions/user.actions";
+import { fetchMember } from "@/lib/actions/admin.actions";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import MemberProfile from "@/components/forms/member-profile";
@@ -12,7 +11,11 @@ async function Page() {
 
   if (!user) return null;
 
-  const userInfo = await fetchMember(user.id);
+  let userInfo = await fetchMember(user.id);
+  if (userInfo && typeof userInfo.toObject === 'function') {
+    userInfo = userInfo.toObject();
+  }
+
   if (userInfo?.onboarded) redirect("/");
 
   const userData = {

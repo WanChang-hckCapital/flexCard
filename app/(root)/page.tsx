@@ -1,17 +1,19 @@
 import BrowseItems from '@/components/browse-items'
-import Footer from '@/components/shared/footer'
-import Header from '@/components/shared/header'
-import Hero from '@/components/hero'
-import HowItWorks from '@/components/how-it-works'
 import MaxWContainer from '@/components/max-w-container'
-import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { authOptions } from '../api/auth/[...nextauth]/route'
 import { getServerSession } from 'next-auth'
-import { fetchMember } from '@/lib/actions/user.actions'
-import { redirect } from 'next/navigation'
+import { updateLastLoginDate } from '@/lib/actions/user.actions'
 
-function Home() {
+async function Home() {
+
+  const session = await getServerSession(authOptions)
+
+  if(session){  
+    const user = session?.user;
+    const updateLoginStatus = await updateLastLoginDate(user.id);
+  }
+
   return (
     <div className="flex flex-col min-h-screen dark:bg-black">
       <MaxWContainer>

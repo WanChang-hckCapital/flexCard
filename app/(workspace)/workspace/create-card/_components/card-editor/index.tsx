@@ -43,8 +43,6 @@ const CardEditor: React.FC<Props> = ({ liveMode }) => {
     e.stopPropagation()
     const componentType = e.dataTransfer.getData('componentType') as EditorComponentsBtns
 
-    console.log('componentType', componentType);
-
     switch (componentType) {
       case 'bubble':
         const newBubbleComponent = {

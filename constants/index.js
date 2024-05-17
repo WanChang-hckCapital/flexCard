@@ -37,4 +37,35 @@ export const organizationTabs = [
   { value: "save", label: "SAVED", icon: "/assets/saved-dark.svg" },
 ];
 
-
+export const adminSidebarLinks = [
+  {
+    icon: "Home",
+    route: "/dashboard",
+    label: "Dashboard",
+  },
+  {
+    icon: "Users",
+    route: "/dashboard/members",
+    label: "Member",
+  },
+  {
+    icon: "Package",
+    route: "/dashboard/products",
+    label: "Products",
+  },
+  {
+    icon: "PiggyBank",
+    route: "/dashboard/transactions",
+    label: "Transactions",
+  },
+  {
+    icon: "LineChart",
+    route: "/dashboard/analytics",
+    label: "Analytics",
+  },
+  {
+    icon: "Settings",
+    route: "/dashboard/settings",
+    label: "Settings",
+  },
+]

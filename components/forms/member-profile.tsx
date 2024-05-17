@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
 import { UserValidation } from "@/lib/validations/user";
-import { updateMemberDetails, uploadImageToGridFS } from "@/lib/actions/user.actions";
+import { updateMemberDetails } from "@/lib/actions/user.actions";
 import { isBase64Image } from "@/lib/utils";
 
 interface Props {

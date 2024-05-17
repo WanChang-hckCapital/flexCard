@@ -7,8 +7,9 @@ import Favicon from '/public/favicon.ico';
 import { Toaster as SonnarToaster } from '@/components/ui/sonner'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../api/auth/[...nextauth]/route'
-import { fetchMember, fetchMemberImage } from '@/lib/actions/user.actions'
+import { fetchMemberImage } from '@/lib/actions/user.actions'
 import Header from '@/components/shared/header'
+import { fetchMember } from '@/lib/actions/admin.actions'
 
 export const fontSans = FontSans({
   subsets: ["latin"],
@@ -30,11 +31,18 @@ export default async function WorkspaceLayout({
 
   let userInfo = null;
   let userImage = null;
-  if (!user){
-    userInfo = null;
-  }else{
+  if (user) {
     userInfo = await fetchMember(user.id);
-    userImage = await fetchMemberImage(userInfo.image);
+    if (userInfo && typeof userInfo.toObject === 'function') {
+      userInfo = userInfo.toObject();
+    }
+
+    if (userInfo.image) {
+      userImage = await fetchMemberImage(userInfo.image);
+      if (userImage && typeof userImage.toObject === 'function') {
+        userImage = userImage.toObject();
+      }
+    }
   }
 
   return (

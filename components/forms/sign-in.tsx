@@ -18,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-import { authenticateUser, updateUser } from "@/lib/actions/user.actions";
+import { authenticateUser } from "@/lib/actions/user.actions";
 import { SignInValidation } from "@/lib/validations/sign-in";
 import { signIn } from "next-auth/react";
 

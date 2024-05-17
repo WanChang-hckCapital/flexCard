@@ -97,7 +97,7 @@ export async function upsertCardContent(authaccountId: string, cardDetails: Card
         const newCard = new CardMongodb(newCardContent);
         await newCard.save();
 
-        console.log("newCard: ", newCard);
+        console.log("New card created: ", newCard);
 
         const currentMember = await Member.findOne({ user: authaccountId });
 
@@ -141,8 +141,6 @@ export async function upsertCardContent(authaccountId: string, cardDetails: Card
           { cardID: cardId }, 
           { $set: { title: title, description: description } 
         });
-
-        console.log("done update Line: ", existingLineFormatComponent.content);
 
         return response;
     }

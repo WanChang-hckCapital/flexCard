@@ -4,11 +4,12 @@ import { redirect } from "next/navigation";
 import { personalTabs } from "@/constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import { fetchMember, fetchMemberImage } from "@/lib/actions/user.actions";
+import { fetchMemberImage } from "@/lib/actions/user.actions";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import ProfileHeader from "@/components/shared/ProfileHeader";
 import CardsTab from "@/components/shared/CardsTab";
+import { fetchMember } from "@/lib/actions/admin.actions";
 
 async function Page({ params }: { params: { id: string } }) {
     const session = await getServerSession(authOptions)
@@ -18,8 +19,15 @@ async function Page({ params }: { params: { id: string } }) {
 
     if (!user) return null;
 
-    const userInfo = await fetchMember(params.id);
-    const userImage = await fetchMemberImage(userInfo.image);
+    let userInfo = await fetchMember(params.id);
+    if (userInfo && typeof userInfo.toObject === 'function') {
+        userInfo = userInfo.toObject();
+      }
+
+    let userImage = await fetchMemberImage(userInfo.image);
+    if (userImage && typeof userImage.toObject === 'function') {
+        userImage = userImage.toObject();
+    }
 
     if (!userInfo?.onboarded) redirect("/onboarding");
 

@@ -17,7 +17,7 @@ const buttonVariants = cva(
         sky:
           "bg-sky-800 text-slate-50 hover:bg-sky-500/90 dark:bg-sky-900 dark:text-sky-50 dark:hover:bg-sky-900/90",
         outline:
-          "border border-slate-200 bg-white hover:bg-slate-400 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:hover:bg-slate-800 dark:hover:text-slate-50",
+          "border border-slate-200 bg-white text-black hover:bg-slate-400 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:hover:bg-slate-800 dark:hover:text-slate-50",
         secondary:
           "bg-slate-100 text-slate-900 hover:bg-slate-100/80 dark:bg-slate-800 dark:text-slate-50 dark:hover:bg-slate-800/80",
         ghost: "hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-50",

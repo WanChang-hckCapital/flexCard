@@ -28,7 +28,7 @@ async function Header({ session, userInfoImage }: HeaderProps) {
 
     return (
         <header className='fixed w-full z-50'>
-            <nav className="topbar">
+            <nav className="topbar border-b border-neutral-600 shadow-xl">
                 {/* logo */}
                 <div className="flex">
                     <Link href="/">
@@ -123,6 +123,12 @@ async function Header({ session, userInfoImage }: HeaderProps) {
                                                     <Link className='font-bold'
                                                         href={`${session ? '/profile/edit' : 'api/auth/signin'}`}>
                                                         Settings
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem className='justify-center'>
+                                                    <Link className='font-bold'
+                                                        href={`${session ? '/dashboard' : 'api/auth/signin'}`}>
+                                                        Dashboard
                                                     </Link>
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator></DropdownMenuSeparator>

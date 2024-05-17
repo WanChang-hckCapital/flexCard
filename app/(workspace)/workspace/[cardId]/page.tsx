@@ -25,7 +25,10 @@ const Page = async ({ params }: Props) => {
 
   const authaccountId = user.id;
 
-  const cardDetails = await fetchCardDetails(params.cardId);
+  let cardDetails = await fetchCardDetails(params.cardId);
+  if (cardDetails && typeof cardDetails.toObject === 'function') {
+    cardDetails = cardDetails.toObject();
+  }
   cardDetails.status = "Modifying";
 
   if (!cardDetails) {

@@ -26,7 +26,7 @@ import { useRouter } from 'next/navigation'
 import { zodResolver } from '@hookform/resolvers/zod'
 // import FileUpload from '../global/file-upload'
 import Loading from '../shared/loading'
-import { useModal } from '@/lib/modal-provider'
+import { useModal } from '@/lib/providers/modal-provider'
 import { CreateCardFormSchema } from '@/lib/workspace/types'
 
 interface CreateCardProps {

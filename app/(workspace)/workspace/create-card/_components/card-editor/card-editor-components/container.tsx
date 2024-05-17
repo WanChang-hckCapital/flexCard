@@ -25,10 +25,6 @@ const Container = ({ element, sectionId, bubble }: Props) => {
     e.stopPropagation()
     const elementType = e.dataTransfer.getData('elementType') as EditorElementsBtns
 
-    console.log('elementType', elementType);
-    console.log('element', element);
-    console.log('sectionId', sectionId);
-
     switch (elementType) {
       case 'text':
         if (element.type === 'box') {

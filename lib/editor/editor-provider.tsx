@@ -66,7 +66,7 @@ export type ElementAction = {
 }
 
 export type EditorComponent = {
-  id?: string
+  id: string
   type?: EditorComponentsBtns
   direction?: string
   size?: string

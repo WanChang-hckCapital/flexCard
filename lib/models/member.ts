@@ -55,6 +55,9 @@ const memberSchema = new Schema<Member>({
         ref: "Organization",
         default: null
     },
+    lastlogin: {
+        type: Date,
+    }
 }, {
     timestamps: true
 })

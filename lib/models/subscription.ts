@@ -31,6 +31,12 @@ const subscriptionSchema = new Schema<Subscription>({
             ref: "ProductPlan",
         },
     ],
+    transaction: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Transaction",
+        },
+    ],
 }, {
     timestamps: true
 })

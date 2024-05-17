@@ -1,3 +1,4 @@
+
 import { UUID } from "mongodb"
 
 export enum BookingStatus {
@@ -22,17 +23,18 @@ export type Member = {
     shortdescription: string,
     usertype: string,
     onboarded: boolean,
-    subscription: [Subscription],
-    cards: [Card],
-    followers: [Member],
-    following: [Member],
+    subscription: Subscription[],
+    cards: Card[],
+    followers: Member[],
+    following: Member[],
     organization: {},
+    lastlogin: Date,
 }
 
 export type Organization = {
     organizationID: {},
     document: [],
-    employees: [Member],
+    employees: Member[],
     webUrl: string,
 }
 
@@ -44,6 +46,8 @@ export enum Usertype {
     ORGANIZATION = 'ORGANIZATION',
     BUSINESS = 'BUSINESS',
     ENTERPRISE = 'ENTERPRISE',
+    SUPERUSER = 'SUPERUSER',
+    FLEXADMIN = 'FLEXADMIN',
 }
 
 export type Card = {
@@ -79,14 +83,37 @@ export type Subscription = {
     autoRenew: boolean,
     paidTerms: number,
     plan: Product,
+    transaction: Transaction,
+}
+
+export type Transaction = {
+    id: string,
+    transactionDate: Date,
+    transactionFees: number,
+    IP_Address: string,
+    payment_types: string,
 }
 
 export type Product = {
-    id: string,
     name: string,
     description: string,
     price: number,
+    availablePromo: string,
+    features: string[],
+    limitedIP: number,
     limitedCard: number,
+}
+
+export type Promotion = {
+    id: string,
+    name: string,
+    code: string,
+    discount: number,
+    dateRange: {
+        startDate: Date,
+        endDate: Date,
+    },
+    limitedQuantity: number,
 }
 
 export enum ItemStatus {

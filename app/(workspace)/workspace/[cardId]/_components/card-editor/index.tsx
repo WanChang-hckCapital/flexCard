@@ -33,8 +33,13 @@ const CardEditor: React.FC<Props> = ({ liveMode, componentId }) => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const component = await fetchComponent(componentId.toString());
-      if (!component) {
+      let component = await fetchComponent(componentId.toString());
+
+      if (component && typeof component.toObject === 'function') {
+        component = component.toObject();
+      }
+      
+      if(!component){
         toast.error('Component not found');
         redirect(`/`);
       }

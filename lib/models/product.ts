@@ -3,10 +3,6 @@ import { Product } from "../../types";
 
 
 const productSchema = new Schema<Product>({
-    id: {
-        type: String,
-        required: true,
-    },
     name: {
         type: String,
         unique: true,
@@ -20,15 +16,37 @@ const productSchema = new Schema<Product>({
         type: Number,
         required: true,
     },
+    availablePromo: {
+        type: String,
+    },
+    // availablePromo: [
+    //     {
+    //         type: mongoose.Schema.Types.ObjectId,
+    //         ref: "Promotion",
+    //     },
+    // ],
+    features: [
+        {
+            name: {
+                type: String,
+                required: true,
+            }
+        }
+    ],
     limitedCard: {
         type: Number,
         required: true,
         default: 10,
     },
+    limitedIP: {
+        type: Number,
+        required: true,
+        default: 9999,
+    },
 }, {
     timestamps: true
 })
 
-const ProductModel = mongoose.models.User || mongoose.model("Product", productSchema);
+const ProductModel = mongoose.models.Product || mongoose.model("Product", productSchema);
 
 export default ProductModel;

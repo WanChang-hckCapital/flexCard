@@ -8,7 +8,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { updateCardTitle, upsertCardContent } from '@/lib/actions/workspace.actions'
+import { upsertCardContent } from '@/lib/actions/workspace.actions'
 import { DeviceTypes, useEditor } from '@/lib/editor/editor-provider'
 import { Card } from '@/types'
 import clsx from 'clsx'
@@ -38,29 +38,17 @@ const CardEditorNavigation = ({
   const router = useRouter()
   const { state, dispatch } = useEditor()
 
-  // useEffect(() => {
-  //   dispatch({
-  //     type: 'SET_FUNNELPAGE_ID',
-  //     payload: { funnelPageId: cardDetails.id },
-  //   })
-  // }, [cardDetails])
-
-  const handleOnBlurTitleChange: FocusEventHandler<HTMLInputElement> = async (
+  const handleOnBlurTitleChange: FocusEventHandler<HTMLInputElement> = (
     event
   ) => {
     if (event.target.value === cardDetails.title) return
     if (event.target.value) {
-      
-      // await updateCardTitle(
-      //   authaccountId,
-      //   cardDetails.cardID,
-      //   event.target.value,
-      // )
 
-      cardDetails.title = event.target.value,
+      const value = event.target.value;
+      cardDetails.title = value,
 
       toast.success('Card title updated successfully.')
-      router.refresh()
+      // router.refresh()
     } else {
       toast.error('Oppse! You need to have a title, Please try again later.')
       event.target.value = cardDetails.title
@@ -91,11 +79,29 @@ const CardEditorNavigation = ({
     console.log('strLineFlexMessage', strLineFlexMessage);
     cardDetails.status = 'Public';
 
+
+    if (cardDetails.title === '' || cardDetails.title === "Temp Card") {
+      console.log('cardDetails.title', cardDetails.title);
+      toast.error('Oppse! You need to have a title, Please try again later.')
+      return;
+    }
+
     try {
-      const response = await upsertCardContent(
+      await upsertCardContent(
         authaccountId,
         {
-          ...cardDetails,
+          cardID: cardDetails.cardID,
+          title: cardDetails.title,
+          status: cardDetails.status,
+          description: cardDetails.description,
+          likes: cardDetails.likes,
+          followers: cardDetails.followers,
+          components: cardDetails.components,
+          lineFormatComponent: cardDetails.lineFormatComponent,
+          creator: cardDetails.creator,
+          categories: [],
+          updatedAt: new Date(),
+          createdAt: new Date(),
         },
         strWorkspaceFormat,
         strLineFlexMessage,
@@ -112,7 +118,7 @@ const CardEditorNavigation = ({
     if (element) {
       delete element.id;
       delete element.description;
-  
+
       if (element.type === 'carousel') {
         element.contents.forEach((subElement: any) => {
           removeIdsAndDescriptions(subElement);
@@ -134,7 +140,7 @@ const CardEditorNavigation = ({
           delete element.footer.id;
           delete element.footer.description;
         }
-  
+
         const removePropsRecursive = (contents: any) => {
           if (Array.isArray(contents)) {
             contents.forEach((subElement: any) => {
@@ -143,12 +149,12 @@ const CardEditorNavigation = ({
             });
           }
         };
-  
+
         removePropsRecursive(element.header?.contents);
         removePropsRecursive(element.hero?.contents);
         removePropsRecursive(element.body?.contents);
         removePropsRecursive(element.footer?.contents);
-  
+
         if (element.action) {
           delete element.action.id;
           delete element.action.description;
@@ -156,7 +162,7 @@ const CardEditorNavigation = ({
       }
     }
   };
-  
+
   const removeEmptySections = (component: any) => {
     if (component) {
       if (component.type === 'carousel') {
@@ -169,19 +175,19 @@ const CardEditorNavigation = ({
         } else if (!component.header.contents.length) {
           delete component.header;
         }
-  
+
         if (component.hero && component.hero.contents && component.hero.contents.length === 1) {
           component.hero = component.hero.contents[0];
         } else if (!component.hero.contents.length) {
           delete component.hero;
         }
-  
+
         if (component.body && component.body.contents && component.body.contents.length === 1) {
           component.body = component.body.contents[0];
         } else if (!component.body.contents.length) {
           delete component.body;
         }
-  
+
         if (component.footer && component.footer.contents && component.footer.contents.length === 1) {
           component.footer = component.footer.contents[0];
         } else if (!component.footer.contents.length) {
@@ -189,7 +195,7 @@ const CardEditorNavigation = ({
         }
       }
     }
-  };  
+  };
 
   return (
     <TooltipProvider>

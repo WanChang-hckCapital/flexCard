@@ -11,6 +11,8 @@ import Card from "../models/card";
 import Image from "../models/image";
 import Organization from "../models/organization";
 import { Readable } from "stream";
+import SubscriptionModel from "../models/subscription";
+import ProductModel from "../models/product";
 
 export async function authenticateUser(email: string, password: string) {
     try {
@@ -61,8 +63,6 @@ export async function createMember(userId: string) {
 
         if (!existingMember) {
 
-            console.log("user: " + userId);
-
             const newMember = new Member({
                 user: userId,
             });
@@ -77,13 +77,32 @@ export async function createMember(userId: string) {
     }
 }
 
-export async function fetchMember(userId: string) {
+export async function updateLastLoginDate(userId: string) {
     try {
+        connectToDB();
+
         const member = await Member.findOne({ user: userId });
 
-        return member;
+        if (!member) {
+            throw new Error("Member not found");
+        }
+
+        const lastLoginDateTime = new Date();
+
+        await Member.findOneAndUpdate(
+            { user: userId },
+            {
+                lastlogin: lastLoginDateTime,
+            },
+            { upsert: true }
+        );
+
+        console.log("Last login date updated: " + lastLoginDateTime);
+
+        return true;
+
     } catch (error: any) {
-        throw new Error(`Failed to fetch Member: ${error.message}`);
+        throw new Error(`Failed to update last login date: ${error.message}`);
     }
 }
 
@@ -115,6 +134,7 @@ export async function fetchUser(userId: string) {
         throw new Error(`Failed to fetch User: ${error.message}`);
     }
 }
+
 interface Params {
     authUserId: string,
     accountId: string,
@@ -157,6 +177,7 @@ export async function updateMemberFollow(params: Params): Promise<void> {
         throw new Error(`Failed to create/update user: ${error.message}`);
     }
 }
+
 interface ParamsUpdWebURL {
     authUserId: string,
     url: string,
@@ -221,35 +242,6 @@ export async function uploadImageToGridFS(imageData: Buffer, filename: string): 
     }
 }
 
-// export async function uploadImageToGridFS(imageData: File, filename: string): Promise<string> {
-//     try {
-//         await connectToDB();
-
-//         const db = mongoose.connection.getClient().db();
-//         const bucket = new GridFSBucket(db);
-
-//         const readableStream = new Readable();
-//         readableStream.push(imageData);
-//         readableStream.push(null);
-
-//         const uploadStream = bucket.openUploadStream(filename);
-//         const uploadPromise = new Promise<string>((resolve, reject) => {
-//             uploadStream.once('finish', () => {
-//                 resolve(uploadStream.id.toString());
-//             });
-//             uploadStream.once('error', (err) => {
-//                 reject("something when wrong: " + err);
-//             });
-//         });
-
-//         readableStream.pipe(uploadStream);
-
-//         return await uploadPromise;
-//     } catch (error:any) {
-//         throw new Error(`Failed to upload image to GridFS: ${error.message}`);
-//     }
-// }
-
 interface ParamsMemberDetails {
     userId: string;
     accountname: string;
@@ -276,7 +268,7 @@ export async function updateMemberDetails({
 }: ParamsMemberDetails): Promise<void> {
     try {
         connectToDB();
-        
+
         const existingUser = await Member.findOne({ email });
         if (existingUser && path != '/profile/edit') {
             throw new Error("User with this email already exists.");

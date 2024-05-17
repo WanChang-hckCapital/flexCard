@@ -1,4 +1,4 @@
-'use client'
+"use client"
 import React from 'react'
 
 import {
@@ -18,12 +18,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { useModal } from '@/providers/modal-provider'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import CustomModal from '@/components/global/custom-modal'
+import { useModal } from '@/lib/providers/modal-provider'
+import CustomModal from '@/components/custom-modal'
+import { toast } from 'sonner'
 
-interface FunnelsDataTableProps<TData, TValue> {
+interface MemberDataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   filterValue: string
@@ -31,14 +32,15 @@ interface FunnelsDataTableProps<TData, TValue> {
   modalChildren?: React.ReactNode
 }
 
-export default function FunnelsDataTable<TData, TValue>({
+export default function MemberDataTable<TData, TValue>({
   columns,
   data,
   filterValue,
   modalChildren,
   actionButtonText,
-}: FunnelsDataTableProps<TData, TValue>) {
-  const { isOpen, setOpen, setClose } = useModal()
+
+}: MemberDataTableProps<TData, TValue>) {
+  // const { isOpen, setOpen, setClose } = useModal()
 
   const table = useReactTable({
     data,
@@ -46,13 +48,14 @@ export default function FunnelsDataTable<TData, TValue>({
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
   })
+
   return (
     <>
-      <div className="flex items-center justify-between">
+      {/* <div className="flex items-center justify-between">
         <div className="flex items-center py-4 gap-2">
           <Search />
           <Input
-            placeholder="Search funnel name..."
+            placeholder="Search member email..."
             value={
               (table.getColumn(filterValue)?.getFilterValue() as string) ?? ''
             }
@@ -63,7 +66,7 @@ export default function FunnelsDataTable<TData, TValue>({
           />
         </div>
         <Button
-          className="flex- gap-2"
+          className="flex gap-2"
           onClick={() => {
             if (modalChildren)
               setOpen(
@@ -78,7 +81,7 @@ export default function FunnelsDataTable<TData, TValue>({
         >
           {actionButtonText}
         </Button>
-      </div>
+      </div> */}
       <div className=" border bg-background rounded-lg">
         <Table className="">
           <TableHeader>
@@ -86,13 +89,21 @@ export default function FunnelsDataTable<TData, TValue>({
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead key={header.id}
+                      className={
+                        header.column.id === 'cards'
+                          ? 'hidden md:table-cell text-center'
+                          : header.column.id === 'usertype' || header.column.id === 'subscription'
+                          ? 'hidden sm:table-cell text-center'
+                          : 'text-center'
+                      }
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </TableHead>
                   )
                 })}
@@ -107,7 +118,15 @@ export default function FunnelsDataTable<TData, TValue>({
                   data-state={row.getIsSelected() && 'selected'}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id}
+                      className={
+                        cell.column.id === 'cards'
+                          ? 'hidden md:table-cell text-center'
+                          : cell.column.id === 'usertype' || cell.column.id === 'subscription'
+                          ? 'hidden sm:table-cell text-center'
+                          : 'text-center'
+                      }
+                    >
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()

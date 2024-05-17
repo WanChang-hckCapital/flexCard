@@ -1,32 +1,16 @@
 
 import { redirect } from "next/navigation";
-import { fetchMember, fetchMemberImage, fetchUser } from "@/lib/actions/user.actions";
+import { fetchMemberImage, fetchUser } from "@/lib/actions/user.actions";
 import MemberProfile from "@/components/forms/member-profile";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { fetchMember } from "@/lib/actions/admin.actions";
 
 
 async function Page() {
-    //   const user = await currentUser();
-    //   if (!user) return null;
-
-    //   const userInfo = await fetchUser(user.id);
-    //   if (!userInfo?.onboarded) redirect("/onboarding");
-
-    //   const userData = {
-    //     id: user.id,
-    //     objectId: userInfo?._id,
-    //     username: userInfo ? userInfo?.username : user.username,
-    //     name: userInfo ? userInfo?.name : user.firstName ?? "",
-    //     bio: userInfo ? userInfo?.bio : "",
-    //     image: userInfo ? userInfo?.image : user.imageUrl,
-    //   };
 
     const session = await getServerSession(authOptions)
     const user = session?.user;
-
-
-    console.log("edit: " + user);
 
     if (!user) return null;
 
@@ -36,6 +20,9 @@ async function Page() {
     let userImage = null;
     if (userInfo.image != null) {
         userImage = await fetchMemberImage(userInfo.image);
+        if (typeof userImage.toObject === 'function') {
+            userImage = userImage.toObject();
+        }
     } else {
         userImage = user?.image;
     }
