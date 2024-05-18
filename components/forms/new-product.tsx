@@ -17,24 +17,41 @@ import { Button } from "@/components/ui/button";
 
 import { ProductValidation } from "@/lib/validations/product";
 import { toast } from "sonner";
-import { InsertNewProduct } from "@/lib/actions/admin.actions";
+import { InsertNewProduct, UpdateProduct } from "@/lib/actions/admin.actions";
+import { usePathname, useRouter } from "next/navigation";
 
 interface Props {
   btnTitle: string;
   authenticatedUserId: string;
+  productDetails?: {
+    id: string;
+    name: string;
+    price: number;
+    description: string;
+    availablePromo: string;
+    limitedCard: number;
+    limitedIP: number;
+    features: { name: string }[];
+  };
 }
 
-const AddNewProduct = ({ btnTitle, authenticatedUserId }: Props) => {
+const AddNewProduct = ({ btnTitle, authenticatedUserId, productDetails }: Props) => {
+  const router = useRouter();
+  const pathname = usePathname();
+  const isEditMode = Boolean(productDetails);
+
   const form = useForm<z.infer<typeof ProductValidation>>({
     resolver: zodResolver(ProductValidation),
     defaultValues: {
-      name: '',
-      price: 0,
-      description: '',
-      availablePromo: '',
-      limitedCard: 10,
-      limitedIP: 1,
-      features: [{ name: '' }],
+      name: productDetails?.name ? productDetails.name : '',
+      price: productDetails?.price ? productDetails.price : 0,
+      description: productDetails?.description ? productDetails.description : '',
+      availablePromo: productDetails?.availablePromo ? productDetails.availablePromo : '',
+      limitedCard: productDetails?.limitedCard ? productDetails.limitedCard : 10,
+      limitedIP: productDetails?.limitedIP ? productDetails.limitedIP : 1,
+      features: productDetails?.features?.map(feature => (
+        { name: feature.name }
+      )) || [{ name: '' }],
     },
   });
 
@@ -45,29 +62,40 @@ const AddNewProduct = ({ btnTitle, authenticatedUserId }: Props) => {
     name: 'features',
   });
 
+  function clearField(result: any) {
+    resetField("name");
+    resetField("price");
+    resetField("description");
+    resetField("availablePromo");
+    resetField("limitedCard");
+    resetField("limitedIP");
+    resetField("features");
+  }
+
   const onSubmit = async (values: z.infer<typeof ProductValidation>) => {
-    const result = await InsertNewProduct({
-      name: values.name,
-      price: values.price,
-      description: values.description,
-      availablePromo: values.availablePromo,
-      limitedCard: values.limitedCard,
-      limitedIP: values.limitedIP,
-      features: values.features,
-      authenticatedUserId,
-    });
+    let result;
+    if (isEditMode && productDetails) {
+      result = await UpdateProduct({
+        ...values,
+        productId: productDetails.id,
+        authenticatedUserId,
+        path: pathname,
+      });
+    } else {
+      result = await InsertNewProduct({
+        ...values,
+        authenticatedUserId,
+        path: pathname,
+      });
+    }
+
+    clearField(result);
 
     if (result.success) {
-      resetField("name");
-      resetField("price");
-      resetField("description");
-      resetField("availablePromo");
-      resetField("limitedCard");
-      resetField("limitedIP");
-      resetField("features");
-      toast.success("Product added successfully");
-    }else{
-      toast.error("Failed to add product: " + result.message);
+      toast.success(`Product ${productDetails?.name} ${isEditMode ? 'updated'  : 'added'} successfully!`);
+      router.push("/dashboard/products");
+    } else {
+      toast.error(`Failed to ${isEditMode ? 'update' : 'add'} product: ${result.message}`);
     }
   };
 

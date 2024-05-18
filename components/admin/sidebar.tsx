@@ -10,6 +10,7 @@ import {
     ShoppingCart,
     Users,
     PiggyBank,
+    Ticket,
     Settings,
 } from "lucide-react"
 
@@ -57,6 +58,8 @@ function SideBar() {
                                         <ShoppingCart className="h-5 w-5" />
                                     ) : link.icon === 'Package' ? (
                                         <Package className="h-5 w-5" />
+                                    ) :link.icon === 'Ticket' ? (
+                                        <Ticket className="h-5 w-5" />
                                     ) : link.icon === 'Users' ? (
                                         <Users className="h-5 w-5" />
                                     ) : link.icon === 'LineChart' ? (

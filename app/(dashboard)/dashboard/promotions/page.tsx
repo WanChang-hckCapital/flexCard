@@ -1,16 +1,17 @@
 
 import NavigateRouteButton from "@/components/buttons/navigate-button"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
-import { fetchAllProduct } from "@/lib/actions/admin.actions"
+import { fetchAllPromotion } from "@/lib/actions/admin.actions"
+import { format } from "date-fns"
 import { PackageOpen, Pencil } from "lucide-react"
 import Link from "next/link"
 import * as React from "react"
 
 async function Products() {
 
-    const products = await fetchAllProduct();
-    
-    const mainClassName = (products && products.length > 5) ? 
+    const promotions = await fetchAllPromotion();
+
+    const mainClassName = (promotions && promotions.length > 5) ? 
         "flex flex-1 flex-col gap-4 p-4 lg:p-6 bg-neutral-900" : 
         "flex flex-1 flex-col gap-4 p-4 lg:p-6 bg-neutral-900 h-screen";
 
@@ -27,41 +28,37 @@ async function Products() {
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
                             <BreadcrumbLink asChild>
-                                <Link href="/dashboard/products">Product Plans</Link>
+                                <Link href="/dashboard/promotions">Promotions</Link>
                             </BreadcrumbLink>
                         </BreadcrumbItem>
                     </BreadcrumbList>
                 </Breadcrumb>
             </div>
 
-            {(products && products.length > 0) ? (
+            {(promotions && promotions.length > 0) ? (
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {products.map((product, index) => (
+                    {promotions.map((promotion, index) => (
                         <div key={index} className="flex flex-col gap-4 p-4 bg-black border border-neutral-600 rounded-lg">
                             <div className="flex row justify-between">
-                                <h3 className="text-lg font-bold">{product.name}</h3>
-                                <Link href={`/dashboard/products/${product.id}`}>
+                                <h3 className="text-lg font-bold">{promotion.name}</h3>
+                                <Link href={`/dashboard/promotions/${promotion.id}`}>
                                     <Pencil className="w-5 h-5" />
                                 </Link>
                             </div>
-                            <p className="text-sm text-slate-300">{product.description}</p>
                             <div className="flex flex-col gap-2">
-                                <span className="text-sm text-slate-300">Price: ${product.price}</span>
-                                {(product.features) && (
-                                    product.features.map((feature: any, index: any) => (
-                                        <li key={index} className="text-sm text-slate-300">{feature.name}</li>
-                                    ))
-                                )}
-                                <span className="text-sm text-slate-300">Features: {product.price}</span>
-                                <span className="text-sm text-slate-300">Card Available: {product.limitedCard}</span>
-                                <span className="text-sm text-slate-300">IP Available: {product.limitedIP}</span>
+                                <span className="text-sm text-slate-300">Promo Code: {promotion.code}</span>
+                                <span className="text-sm text-slate-300">Discount Rate: {promotion.discount}</span>
+                                <span className="text-sm text-slate-300">Start Date: {format(new Date(promotion.dateRange.startDate), 'PPP')}</span>
+                                <span className="text-sm text-slate-300">End Date: {format(new Date(promotion.dateRange.endDate), 'PPP')}</span>
+                                <span className="text-sm text-slate-300">Available Pax: {promotion.limitedQuantity}</span>
+                                <span className="text-sm text-slate-300">Pax Remain: {promotion.limitedQuantity}</span>
                             </div>
                         </div>
                     ))}
                     <div className="flex flex-col gap-4 p-4 bg-black border border-neutral-600 rounded-lg text-center justify-center">
-                        <h3 className="text-lg font-bold">New Product</h3>
-                        <p className="text-sm text-slate-300">Add some new product here.</p>
-                        <NavigateRouteButton url={"/dashboard/products/add-new-plans"} btnName={"Add New Product"} />
+                        <h3 className="text-lg font-bold">New Promotion</h3>
+                        <p className="text-sm text-slate-300">Add some new pormotion here.</p>
+                        <NavigateRouteButton url={"/dashboard/promotions/add-new-promotions"} btnName={"Add New Promotion"} />
                     </div>
                 </div>
             ) : (
@@ -71,12 +68,12 @@ async function Products() {
                     <div className="flex flex-col items-center gap-1 text-center">
                         <PackageOpen className="w-24 h-24 max-sm:hidden" />
                         <h3 className="max-sm:text-[21px] max-md:text-[26px] lg:text-[32px] font-bold tracking-tight">
-                            You have no products
+                            You have no promotions
                         </h3>
                         <p className="text-sm text-slate-300">
-                            You can start selling as soon as you add a product.
+                            You can start celebrate event as soon as you add a promotion.
                         </p>
-                        <NavigateRouteButton url={"/dashboard/products/add-new-plans"} btnName={"Add New Product"} />
+                        <NavigateRouteButton url={"/dashboard/promotions/add-new-promotions"} btnName={"Add New Promotion"} />
                     </div>
                 </div>
             )}

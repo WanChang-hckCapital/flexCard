@@ -13,7 +13,7 @@ async function Page() {
   if (!user) return null;
   
   return (
-    <main className="flex flex-1 flex-col gap-4 p-4 lg:p-6 bg-neutral-900">
+    <main className="flex flex-1 flex-col gap-4 p-4 lg:p-6 bg-neutral-900 h-screen">
       <div className="flex items-center">
         <Breadcrumb className="hidden md:flex pb-3 px-6">
           <BreadcrumbList>

@@ -11,7 +11,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,52 +20,86 @@ import { Calendar } from "../ui/calendar";
 import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
 
 import { PromotionValidation } from "@/lib/validations/promotion";
-import { InsertNewPromotion } from "@/lib/actions/admin.actions";
+import { InsertNewPromotion, UpdatePromotion } from "@/lib/actions/admin.actions";
 import { toast } from "sonner";
 import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 
 interface Props {
   btnTitle: string;
   authenticatedUserId: string;
+  promoDetails?: {
+    id: string;
+    name: string;
+    code: string;
+    discount: number;
+    dateRange: {
+      startDate: Date;
+      endDate: Date;
+    };
+    limitedQuantity: number;
+  };
 }
 
-const AddNewPromotion = ({ btnTitle, authenticatedUserId }: Props) => {
+const AddNewPromotion = ({ btnTitle, authenticatedUserId, promoDetails }: Props) => {
+  const router = useRouter();
+  const pathname = usePathname();
+  const isEditMode = Boolean(promoDetails);
+
   const form = useForm<z.infer<typeof PromotionValidation>>({
     resolver: zodResolver(PromotionValidation),
     defaultValues: {
-      name: '',
-      code: '',
-      discount: 0,
-      dateRange: { startDate: new Date(), endDate: new Date() },
-      limitedQuantity: 1,
-    },
+      name: promoDetails?.name || '',
+      code: promoDetails?.code || '',
+      discount: promoDetails?.discount || 0,
+      dateRange: {
+        startDate: promoDetails?.dateRange.startDate,
+        endDate: promoDetails?.dateRange.endDate
+      },
+      limitedQuantity: promoDetails?.limitedQuantity || 1
+    }
   });
 
   const { control, handleSubmit, resetField, setValue } = form;
 
+  function clearField(result: any) {
+    resetField("name");
+    resetField("code");
+    resetField("discount");
+    resetField("dateRange");
+    resetField("limitedQuantity");
+  }
+
   const onSubmit = async (values: z.infer<typeof PromotionValidation>) => {
-    const result = await InsertNewPromotion({
-      name: values.name,
-      code: values.code,
-      discount: values.discount,
-      dateRange: {
-        startDate: values.dateRange.startDate,
-        endDate: values.dateRange.endDate,
-      },
-      limitedQuantity: values.limitedQuantity,
-      authenticatedUserId: authenticatedUserId,
-    });
+    let result;
+    if (isEditMode && promoDetails) {
+      result = await UpdatePromotion({
+        ...values,
+        promoId: promoDetails.id,
+        authenticatedUserId,
+        path: pathname,
+      });
+    } else {
+      result = await InsertNewPromotion({
+        name: values.name,
+        code: values.code,
+        discount: values.discount,
+        dateRange: {
+          startDate: values.dateRange.startDate,
+          endDate: values.dateRange.endDate,
+        },
+        limitedQuantity: values.limitedQuantity,
+        authenticatedUserId: authenticatedUserId,
+      });
+    }
+
+    clearField(result);
 
     if (result.success) {
-      resetField("name");
-      resetField("code");
-      resetField("discount");
-      resetField("dateRange");
-      resetField("limitedQuantity");
-      
-      toast.success("Promotion added successfully");
-    }else{
-      toast.error("Failed to add Promotion: " + result.message);
+      toast.success(`Promotion ${promoDetails?.name} ${isEditMode ? 'updated' : 'added'} successfully!`);
+      router.push("/dashboard/promotions");
+    } else {
+      toast.error(`Failed to ${isEditMode ? 'update' : 'add'} promotion: ${result.message}`);
     }
   };
 

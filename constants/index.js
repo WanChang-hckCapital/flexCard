@@ -54,6 +54,11 @@ export const adminSidebarLinks = [
     label: "Products",
   },
   {
+    icon: "Ticket",
+    route: "/dashboard/promotions",
+    label: "Promotions",
+  },
+  {
     icon: "PiggyBank",
     route: "/dashboard/transactions",
     label: "Transactions",

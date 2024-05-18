@@ -11,6 +11,7 @@ import {
     Package,
     Package2,
     PiggyBank,
+    Ticket,
     Search,
     Settings,
     ShoppingCart,
@@ -64,7 +65,7 @@ function Header({ session, userInfoImage }: HeaderProps) {
                     <nav className="grid gap-6 text-lg font-medium">
                         {adminSidebarLinks.map((link) => {
                             const isActive =
-                                (pathname.includes(link.route) && link.route.length > 1) ||
+                                (pathname.includes(link.route) && link.route.length > 10) ||
                                 pathname === link.route;
 
                             // if (link.route === "/profile") link.route = `${link.route}/${userId}`;
@@ -81,6 +82,8 @@ function Header({ session, userInfoImage }: HeaderProps) {
                                         <ShoppingCart className="h-5 w-5" />
                                     ) : link.icon === 'Package' ? (
                                         <Package className="h-5 w-5" />
+                                    ) :link.icon === 'Ticket' ? (
+                                        <Ticket className="h-5 w-5" />
                                     ) : link.icon === 'Users' ? (
                                         <Users2 className="h-5 w-5" />
                                     ) : link.icon === 'LineChart' ? (
