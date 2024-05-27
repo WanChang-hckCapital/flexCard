@@ -26,6 +26,9 @@ const memberSchema = new Schema<Member>({
         type: Boolean,
         default: false,
     },
+    ip_address: { type: String, default: null },
+    country: { type: String, default: null },
+    countrycode: { type: String, default: null },
     subscription: [
         {
             type: mongoose.Schema.Types.ObjectId,

@@ -1,31 +1,26 @@
 import { redirect } from "next/navigation";
 import Card from "./Card";
 import { fetchPersonalCards } from "@/lib/actions/user.actions";
-import sampleData from "@/lib/sampleData";
 
-// import { fetchCommunityPosts } from "@/lib/actions/community.actions";
-// import { fetchUserPosts } from "@/lib/actions/user.actions";
-
-interface Result {
-  id: string;
-  cards: {
-    _id: string;
-    title: string;
-    status: string;
-    creator: {
-      id: string;
-      accountname: string;
-      image: string;
-    };
-    likes: {
-      id: string;
-      image: string;
-      name: string;
-    }[];
-    components: string;
-    createdAt: string;
+type Result = {
+  cardId: string;
+  title: string;
+  creator: {
+    accountname: string;
+    image: string;
+  };
+  likes: {
+    accountname: string;
+    binarycode: string;
   }[];
-}
+  followers: {
+    accountname: string;
+    // image: any;
+  }[];
+  components: {
+    content: string;
+  };
+}[];
 
 interface Props {
   currentUserId: string;
@@ -44,16 +39,16 @@ async function CardsTab({ currentUserId, accountId, userType }: Props) {
   // console.log("return: " + result);
   // }
 
-  if (process.env.NODE_ENV === "development") {
-    result = {
-      id: "",
-      cards: sampleData
-        .filter(data => data.cards.some(card => card.creator.id === accountId))
-        .flatMap(data => data.cards)
-    };
-  } else {
-    result = await fetchPersonalCards(accountId);
-  }
+  // if (process.env.NODE_ENV === "development") {
+  //   result = {
+  //     id: "",
+  //     cards: sampleData
+  //       .filter(data => data.cards.some(card => card.creator.id === accountId))
+  //       .flatMap(data => data.cards)
+  //   };
+  // } else {
+  result = await fetchPersonalCards(accountId);
+  // }
 
   if (!result) {
     redirect("/");
@@ -65,24 +60,17 @@ async function CardsTab({ currentUserId, accountId, userType }: Props) {
       columns-2 md:columns-3
       lg:columns-4 mb-4
       xl:columns-5 space-y-6 mx-auto'>
-      {result.cards.map((card) => (
+      {result.map((card) => (
         <Card
-          key={card._id}
-          id={card._id}
+          key={card.cardId}
+          id={card.cardId}
           currentUserId={currentUserId}
           title={card.title}
-          creator={
-            userType === "PERSONAL"
-              ? { username: card.creator.accountname, image: card.creator.image, id: card.creator.id }
-              : {
-                username: card.creator.accountname,
-                image: card.creator.image,
-                id: card.creator.id,
-              }}
-          createdAt={card.createdAt}
+          creator={card.creator}
           likes={card.likes}
-          status={card.status}
-          components={card.components}
+          // followers={[{accountname: card.followers.accountname, image: card.creator.image}]}
+          followers={[]}
+          components={card.components.content}
         />
       ))}
     </section>

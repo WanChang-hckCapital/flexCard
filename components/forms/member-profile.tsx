@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
 import { UserValidation } from "@/lib/validations/user";
-import { updateMemberDetails } from "@/lib/actions/user.actions";
+import { getIPCountryInfo, updateMemberDetails } from "@/lib/actions/user.actions";
 import { isBase64Image } from "@/lib/utils";
 
 interface Props {
@@ -65,6 +65,8 @@ const MemberProfile = ({ user, btnTitle }: Props) => {
       return;
     }
 
+    const geoInfo = await getIPCountryInfo();
+
     await updateMemberDetails({
       userId: user.userId,
       accountname: values.accountname,
@@ -72,6 +74,9 @@ const MemberProfile = ({ user, btnTitle }: Props) => {
       password: values.password,
       phone: values.phone,
       shortdescription: values.shortdescription,
+      ip_address: geoInfo.ip,
+      country: geoInfo.country,
+      countrycode: geoInfo.countryCode,
       image: {
         binaryCode: fileUrl, 
         name: file.name, 

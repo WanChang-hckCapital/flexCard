@@ -3,36 +3,52 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { formatDateString } from "@/lib/utils";
 import { useState } from "react";
+import { updateCardLikes } from "@/lib/actions/user.actions";
 
 interface Props {
   id: string;
   title: string;
   currentUserId: string;
-  status: string;
   creator: {
-    username: string;
+    accountname: string;
     image: string;
-    id: string;
   };
-  likes: {
+  likes: Like[];
+  followers: {
+    accountname: string;
     image: string;
   }[];
   components: string;
-  createdAt: string;
+}
+
+interface Like {
+  accountname: string;
+  binarycode: string;
 }
 
 function Card({
   id,
   title,
   currentUserId,
-  status,
+  creator,
   likes,
   components,
-  createdAt,
 }: Props) {
   const [isHovered, setIsHovered] = useState(false);
+  const [likesData, setLikesData] = useState<Like[]>(likes);
+
+  const handleUpdateLikeButtonClick = async () => {
+    try {
+      // need to add condition if user spamming
+      const updatedCard = await updateCardLikes({ authUserId: currentUserId, cardId: id });
+      if (updatedCard.success) {
+        setLikesData(updatedCard.data || []);
+      }
+    } catch (error) {
+      console.error('Error updating member likes:', error);
+    }
+  };
 
   return (
     <article
@@ -67,7 +83,9 @@ function Card({
                               className='cursor-pointer object-contain'
                             />
                           </div>
-                          <div className="rounded-full bg-white p-1">
+                          <div
+                            onClick={handleUpdateLikeButtonClick}
+                            className="rounded-full bg-white p-1">
                             <Image
                               src='/assets/heart-gray.svg'
                               alt='heart'
@@ -78,8 +96,29 @@ function Card({
                           </div>
                         </div>
                         <div className="flex justify-start pl-2 pb-2 absolute bottom-0 left-0">
+                          {likesData.slice(-5).map((like, index) => (
+                            <Image
+                              key={index}
+                              src={like.binarycode}
+                              alt={like.accountname}
+                              width={24}
+                              height={24}
+                              className="rounded-full"
+                            />
+                          ))}
+                          {/* {creator.image ? (
+                            <Image
+                              src={creator.image}
+                              alt={creator.accountname}
+                              width={24}
+                              height={24}
+                              className="rounded-full object-cover"
+                            />
+                          ) : (
+                            <p>No image available</p>
+                          )} */}
                           <p className='mt-1 text-subtle-medium text-white-1'>
-                            {likes.length} lik{likes.length > 1 ? "es" : "e"}
+                            {likesData.length} lik{likesData.length > 1 ? "es" : "e"}
                           </p>
                         </div>
                       </div>

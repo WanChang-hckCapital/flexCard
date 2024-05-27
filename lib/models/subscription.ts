@@ -28,7 +28,7 @@ const subscriptionSchema = new Schema<Subscription>({
     plan: [
         {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "ProductPlan",
+            ref: "Product",
         },
     ],
     transaction: [

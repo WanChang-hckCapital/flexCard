@@ -9,7 +9,8 @@ const cardSchema = new Schema<Card>({
         unique: true,
     },
     creator: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Member',
         required: true,
     },
     title: {
@@ -38,7 +39,7 @@ const cardSchema = new Schema<Card>({
             type: String,
         }
     ],
-    components:{
+    components: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Component",
     },
@@ -46,6 +47,30 @@ const cardSchema = new Schema<Card>({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Component",
     },
+    totalViews: {
+        type: Number,
+        default: 0,
+    },
+    viewDetails: [
+        {
+            viewerId: {
+                type: String,
+            },
+            viewedAt: {
+                type: Date,
+                default: Date.now
+            },
+        }
+    ],
+    dailyViews: [
+        {
+            date: Date,
+            count: {
+                type: Number,
+                default: 0
+            }
+        }
+    ],
 }, {
     timestamps: true
 })

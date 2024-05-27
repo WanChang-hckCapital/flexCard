@@ -1,11 +1,18 @@
 import * as React from "react"
 import Link from "next/link"
 import {
+    File,
+} from "lucide-react"
+
+import { Badge } from "@/components/ui/badge"
+import {
     Breadcrumb,
     BreadcrumbItem,
     BreadcrumbLink,
     BreadcrumbList,
+    BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
+import { Button } from "@/components/ui/button"
 import {
     Card,
     CardContent,
@@ -14,35 +21,75 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
+import {
+    DropdownMenu,
+    DropdownMenuCheckboxItem,
+    DropdownMenuContent,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+} from "@/components/ui/pagination"
 import { Progress } from "@/components/ui/progress"
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table"
+import {
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger,
+} from "@/components/ui/tabs"
+import MemberDataTable from "./data-table"
+import { columns } from "./columns"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
-import GenerateSPButton from "@/components/buttons/generate-subscription"
-import { fetchAllMember } from "@/lib/actions/admin.actions"
-import { ChartCard } from "@/components/chart/chart-card"
-import { SubscriptionsByDayChart } from "@/components/chart/admin-analysis/subscription-day-chart"
-import { RANGE_OPTIONS, getRangeOption } from "@/lib/rangeOptions"
-import { MembersByDayChart } from "@/components/chart/admin-analysis/member-day-chart"
-import { MembersTotalByTypeChart } from "@/components/chart/admin-analysis/member-totaltype-chart"
-import { MembersCountryTypeChart } from "@/components/chart/admin-analysis/member-country-chart"
+import { fetchAllMember, fetchSubscriptionById } from "@/lib/actions/admin.actions"
+import { fetchMemberImage } from "@/lib/actions/user.actions"
+import FilterDropdown from "@/components/buttons/filter-dropdown-button"
 
-interface DashboardProps {
-    searchParams: {
-        totalSubscriptionRange?: string
-        totalSubscriptionRangeFrom?: string
-        totalSubscriptionRangeTo?: string
-        newMembersRange?: string
-        newMembersRangeFrom?: string
-        newMembersRangeTo?: string
-        totalMembersRangeType?: string
-        totalMembersRangeTypeFrom?: string
-        totalMembersRangeTypeTo?: string
-    }
+async function fetchAllSubscriptions(members: any[]) {
+
+    const updatedMembers = await Promise.all(members.map(async member => {
+        let userImages = [];
+
+        if (Array.isArray(member.image) && member.image.length > 0) {
+            userImages = await Promise.all(member.image.map(async (imageId: any) => {
+                const fetchedImage = await fetchMemberImage(imageId);
+                const fetchedImageUrl = fetchedImage.binaryCode.toString();
+                return fetchedImageUrl && typeof fetchedImageUrl.toObject === 'function' ? fetchedImageUrl.toObject() : fetchedImageUrl;
+            }));
+
+            let userImage = userImages.length > 0 ? userImages[0] : null;
+
+            member.image = userImage;
+        }
+
+        if (member.subscription.length > 0) {
+            const lastSubscriptionId = member.subscription[member.subscription.length - 1];
+            const subscriptionDetails = await fetchSubscriptionById(lastSubscriptionId);
+            member.subscription = subscriptionDetails.toJSON ? subscriptionDetails.toJSON() : subscriptionDetails;
+            return { ...member};
+        }
+
+        return member;
+    }));
+
+    return updatedMembers.map(member => {
+        return typeof member.toObject === 'function' ? member.toObject() : member;
+    });
 }
 
-async function Dashboard({
-    searchParams,
-}: DashboardProps) {
+async function Dashboard() {
 
     const session = await getServerSession(authOptions)
     const user = session?.user;
@@ -50,22 +97,22 @@ async function Dashboard({
     if (!user) return null;
     const authenticatedUserId = user.id;
 
-    const totalSubscriptionRangeOption =
-        getRangeOption(searchParams.totalSubscriptionRange, searchParams.totalSubscriptionRangeFrom, searchParams.totalSubscriptionRangeTo) ||
-        RANGE_OPTIONS.last_7_days
-
-    const newMembersRangeOption =
-        getRangeOption(searchParams.newMembersRange, searchParams.newMembersRangeFrom, searchParams.newMembersRangeTo) ||
-        RANGE_OPTIONS.last_7_days
-
-    const totalMembersRangeType =
-        getRangeOption(searchParams.totalMembersRangeType, searchParams.totalMembersRangeTypeFrom, searchParams.totalMembersRangeTypeTo) ||
-        RANGE_OPTIONS.last_7_days
-
-    let members = await fetchAllMember(authenticatedUserId);
-
+    let members = await fetchAllMember(authenticatedUserId)
     if (!members) return null;
+
     members = members.map(member => member.toJSON ? member.toJSON() : member);
+
+    const membersWithSubscriptions = await fetchAllSubscriptions(members);
+    const membersWithFreeVersion = membersWithSubscriptions.filter(member => 
+        (member.usertype === 'PERSONAL' || member.usertype === 'ORGANIZATION') && 
+        (member.subscription.length == 0) );
+    const membersWithProfessional = membersWithSubscriptions.filter(member => 
+        (member.usertype === 'PREMIUM' ||  member.usertype === 'EXPERT' || member.usertype === 'ELITE') &&
+        (member.subscription.length !== 0) );
+    const membersOrganization = membersWithSubscriptions.filter(member => 
+        (member.usertype === 'ORGANIZATION' ||  member.usertype === 'BUSINESS' || member.usertype === 'ENTERPRISE'));
+    const membersAdmin = membersWithSubscriptions.filter(member => member.usertype === 'FLEXADMIN');
+    const membersSuperUser = membersWithSubscriptions.filter(member => member.usertype === 'SUPERUSER');
 
     return (
         <div className="flex min-h-screen w-full flex-col bg-neutral-900 gap-4 p-4 lg:gap-6 lg:p-6">
@@ -77,28 +124,21 @@ async function Dashboard({
                                 <Link href="/dashboard">Dashboard</Link>
                             </BreadcrumbLink>
                         </BreadcrumbItem>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>
+                            <BreadcrumbLink asChild>
+                                <Link href="/dashboard/members">Members</Link>
+                            </BreadcrumbLink>
+                        </BreadcrumbItem>
                     </BreadcrumbList>
                 </Breadcrumb>
                 <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8 lg:grid-cols-3 xl:grid-cols-3">
                     <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
-                        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
-                            <Card
-                                className="sm:col-span-2"
-                            >
-                                <CardHeader className="pb-3">
-                                    <CardTitle>Super Account</CardTitle>
-                                    <CardDescription className="max-w-lg text-balance leading-relaxed">
-                                        Create New SuperType Account for User, free to use, hold for life.
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardFooter>
-                                    <GenerateSPButton />
-                                </CardFooter>
-                            </Card>
+                        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3">
                             <Card>
                                 <CardHeader className="pb-2">
-                                    <CardDescription className="text-slate-300">This Week</CardDescription>
-                                    <CardTitle className="text-[32px]">$1,329</CardTitle>
+                                    <CardDescription className="text-slate-300">General Members</CardDescription>
+                                    <CardTitle className="text-[32px]">14</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="text-[12px] text-slate-300">
@@ -111,47 +151,125 @@ async function Dashboard({
                             </Card>
                             <Card>
                                 <CardHeader className="pb-2">
-                                    <CardDescription className="text-slate-300">This Month</CardDescription>
-                                    <CardTitle className="text-[32px]">$5,329</CardTitle>
+                                    <CardDescription className="text-slate-300">Professional Users</CardDescription>
+                                    <CardTitle className="text-[32px]">45</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="text-[12px] text-slate-300">
-                                        +10% from last month
+                                        +35% from last month
                                     </div>
                                 </CardContent>
                                 <CardFooter>
-                                    <Progress value={12} aria-label="12% increase" />
+                                    <Progress value={35} aria-label="35% increase" />
+                                </CardFooter>
+                            </Card>
+                            <Card>
+                                <CardHeader className="pb-2">
+                                    <CardDescription className="text-slate-300">Organizations</CardDescription>
+                                    <CardTitle className="text-[32px]">6</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-[12px] text-slate-300">
+                                        +55% from last week
+                                    </div>
+                                </CardContent>
+                                <CardFooter>
+                                    <Progress value={55} aria-label="55% increase" />
                                 </CardFooter>
                             </Card>
                         </div>
-                        <div>
-                            <ChartCard
-                                title="Total Subscriptions"
-                                queryKey="totalSubscriptionRange"
-                                selectedRangeLabel={totalSubscriptionRangeOption.label}
-                            >
-                                <SubscriptionsByDayChart startDate={totalSubscriptionRangeOption.startDate} endDate={totalSubscriptionRangeOption.endDate} />
-                            </ChartCard>
-                            <ChartCard
-                                title="New Members"
-                                queryKey="newMembersRange"
-                                selectedRangeLabel={newMembersRangeOption.label}
-                            >
-                                <MembersByDayChart startDate={newMembersRangeOption.startDate} endDate={newMembersRangeOption.endDate} />
-                            </ChartCard>
-                            <ChartCard
-                                title="Total Members"
-                                queryKey="totalMembersRangeType"
-                                selectedRangeLabel={totalMembersRangeType.label}
-                            >
-                                <MembersTotalByTypeChart startDate={totalMembersRangeType.startDate} endDate={totalMembersRangeType.endDate} />
-                            </ChartCard>
-                            <ChartCard
-                                title="Anaylsis by Country"
-                            >
-                                <MembersCountryTypeChart authenticatedUserId={user.id} />
-                            </ChartCard>
-                        </div>
+                        <Tabs defaultValue="all">
+                            <div className="px-4 pb-2 text-[18px] font-bold">
+                                All Members ({members.length})
+                            </div>
+                            <div className="flex items-center">
+                                <TabsList className="text-[14px]">
+                                    <TabsTrigger value="all">View All</TabsTrigger>
+                                    <TabsTrigger value="general">General</TabsTrigger>
+                                    <TabsTrigger value="professional">Professional</TabsTrigger>
+                                    <TabsTrigger value="organization">Organization</TabsTrigger>
+                                    <TabsTrigger value="admin">Admin</TabsTrigger>
+                                    <TabsTrigger value="superuser">Super User</TabsTrigger>
+                                </TabsList>
+                                <div className="ml-auto flex items-center gap-2">
+                                    <FilterDropdown />
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-7 gap-1 text-[14px]"
+                                    >
+                                        <File className="h-3.5 w-3.5" />
+                                        <span className="sr-only sm:not-sr-only">Export</span>
+                                    </Button>
+                                </div>
+                            </div>
+                            <TabsContent value="all">
+                                <Card>
+                                    <CardContent>
+                                        <MemberDataTable
+                                            filterValue="email"
+                                            columns={columns}
+                                            data={membersWithSubscriptions}
+                                        />
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+                            <TabsContent value="general">
+                                <Card>
+                                    <CardContent>
+                                        <MemberDataTable
+                                            filterValue="email"
+                                            columns={columns}
+                                            data={membersWithFreeVersion}
+                                        />
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+                            <TabsContent value="professional">
+                                <Card>
+                                    <CardContent>
+                                        <MemberDataTable
+                                            filterValue="email"
+                                            columns={columns}
+                                            data={membersWithProfessional}
+                                        />
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+                            <TabsContent value="organization">
+                                <Card>
+                                    <CardContent>
+                                        <MemberDataTable
+                                            filterValue="email"
+                                            columns={columns}
+                                            data={membersOrganization}
+                                        />
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+                            <TabsContent value="admin">
+                                <Card>
+                                    <CardContent>
+                                        <MemberDataTable
+                                            filterValue="email"
+                                            columns={columns}
+                                            data={membersAdmin}
+                                        />
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+                            <TabsContent value="superuser">
+                                <Card>
+                                    <CardContent>
+                                        <MemberDataTable
+                                            filterValue="email"
+                                            columns={columns}
+                                            data={membersSuperUser}
+                                        />
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+                        </Tabs>
                     </div>
                     {/* <div>
                         <Card
@@ -311,6 +429,9 @@ async function Dashboard({
                 </main>
             </div>
         </div>
+        // <div>
+        //     <h1>Dashboard</h1>
+        // </div>
     )
 }
 

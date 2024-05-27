@@ -1,0 +1,28 @@
+[
+    {
+        "cardId": "665124264a34e4d57fcc506e",
+        "title": "Hiello world",
+        "creator": {
+            "accountname": "Meow Meow"
+        },
+        "likes": [],
+        "followers": [],
+        "components": {
+            "_id": "665124264a34e4d57fcc5068",
+            "content": "{\"id\":\"initial\",\"type\":\"bubble\",\"header\":{\"id\":\"inital_header\",\"contents\":[]},\"hero\":{\"id\":\"inital_hero\",\"contents\":[]},\"body\":{\"id\":\"inital_body\",\"contents\":[{\"id\":\"initial_box\",\"type\":\"box\",\"layout\":\"vertical\",\"description\":\"Expand your creativity by using me!\",\"contents\":[{\"id\":\"6f969f4b-5de4-4376-a869-6b4c55665f53\",\"type\":\"button\",\"action\":{\"id\":\"92ca6322-c938-4f41-b102-0304b1db150b\",\"type\":\"uri\",\"label\":\"New Button\",\"uri\":\"https://www.google.com\"},\"description\":\"A button explore your route magic!\",\"color\":\"#880808\"}]}]},\"footer\":{\"id\":\"inital_footer\",\"contents\":[]}}"
+        }
+    },
+    {
+        "cardId": "66515a342d6e82d3298a04d7",
+        "title": "Sembodeeeeee",
+        "creator": {
+            "accountname": "Meow Meow"
+        },      
+        "likes": [],
+        "followers": [],
+        "components": {
+            "_id": "66515a332d6e82d3298a04d3",
+            "content": "{\"id\":\"initial\",\"type\":\"bubble\",\"header\":{\"id\":\"inital_header\",\"contents\":[]},\"hero\":{\"id\":\"inital_hero\",\"contents\":[]},\"body\":{\"id\":\"inital_body\",\"contents\":[{\"id\":\"initial_box\",\"type\":\"box\",\"layout\":\"vertical\",\"description\":\"Expand your creativity by using me!\",\"contents\":[{\"id\":\"e511532f-12b9-46f5-b137-ce3d1a7fe69d\",\"type\":\"button\",\"action\":{\"id\":\"2700c103-5ca4-4bd9-8626-72013c9b19b9\",\"type\":\"uri\",\"label\":\"Like a Semboooooodeeeee\",\"uri\":\"https://www.google.com\"},\"description\":\"A button explore your route magic!\",\"color\":\"#880808\"}]}]},\"footer\":{\"id\":\"inital_footer\",\"contents\":[]}}"
+        }
+    }
+]

@@ -1,17 +1,25 @@
 
+import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import DeleteConfirmationButton from "@/components/buttons/delete-confirmation-button"
 import NavigateRouteButton from "@/components/buttons/navigate-button"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 import { fetchAllPromotion } from "@/lib/actions/admin.actions"
 import { format } from "date-fns"
-import { PackageOpen, Pencil } from "lucide-react"
+import { Delete, PackageOpen, Pencil } from "lucide-react"
+import { getServerSession } from "next-auth"
 import Link from "next/link"
 import * as React from "react"
 
 async function Products() {
 
+    const session = await getServerSession(authOptions)
+    const user = session?.user;
+
+    if (!user) return null;
+
     const promotions = await fetchAllPromotion();
 
-    const mainClassName = (promotions && promotions.length > 5) ? 
+    const mainClassName = (promotions.data && promotions.data.length > 5) ? 
         "flex flex-1 flex-col gap-4 p-4 lg:p-6 bg-neutral-900" : 
         "flex flex-1 flex-col gap-4 p-4 lg:p-6 bg-neutral-900 h-screen";
 
@@ -35,15 +43,16 @@ async function Products() {
                 </Breadcrumb>
             </div>
 
-            {(promotions && promotions.length > 0) ? (
+            {(promotions.data && promotions.data.length > 0) ? (
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {promotions.map((promotion, index) => (
+                    {promotions.data.map((promotion, index) => (
                         <div key={index} className="flex flex-col gap-4 p-4 bg-black border border-neutral-600 rounded-lg">
                             <div className="flex row justify-between">
                                 <h3 className="text-lg font-bold">{promotion.name}</h3>
                                 <Link href={`/dashboard/promotions/${promotion.id}`}>
                                     <Pencil className="w-5 h-5" />
                                 </Link>
+                                <DeleteConfirmationButton promoId={promotion.id} authenticatedUserId={user.id}/>
                             </div>
                             <div className="flex flex-col gap-2">
                                 <span className="text-sm text-slate-300">Promo Code: {promotion.code}</span>
@@ -57,7 +66,7 @@ async function Products() {
                     ))}
                     <div className="flex flex-col gap-4 p-4 bg-black border border-neutral-600 rounded-lg text-center justify-center">
                         <h3 className="text-lg font-bold">New Promotion</h3>
-                        <p className="text-sm text-slate-300">Add some new pormotion here.</p>
+                        <p className="text-sm text-slate-300">Add some new promotion here.</p>
                         <NavigateRouteButton url={"/dashboard/promotions/add-new-promotions"} btnName={"Add New Promotion"} />
                     </div>
                 </div>

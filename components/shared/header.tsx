@@ -82,9 +82,19 @@ async function Header({ session, userInfoImage }: HeaderProps) {
                                 <>
                                     <DropdownMenuItem className='justify-center'>
                                         <Link className='font-bold'
-                                            href={`${session ? '/cards' : 'api/auth/signin'}`} >
+                                            href={`${session ? '/cards/665124264a34e4d57fcc506e' : 'api/auth/signin'}`} >
                                             {/* href={`${session ? '/profile/66130a65d4a3f7e94e358f28' : 'api/auth/signin'}`} */}
-                                            Other User
+                                            cards testing
+                                        </Link>
+                                    </DropdownMenuItem>
+                                </>
+                            }
+                            {session &&
+                                <>
+                                    <DropdownMenuItem className='justify-center'>
+                                        <Link className='font-bold'
+                                            href={`${session ? '/profile/66511403ce0e911348378718' : 'api/auth/signin'}`} >
+                                            other user test
                                         </Link>
                                     </DropdownMenuItem>
                                 </>
@@ -97,7 +107,7 @@ async function Header({ session, userInfoImage }: HeaderProps) {
                             session ?
                                 <DropdownMenu>
                                     <DropdownMenuTrigger>
-                                        <div className='relative w-8 h-8 object-cover'>
+                                    <div className={`relative ${userImage ? 'w-8 h-8' : 'h-8'} object-cover content-center`}>
                                             {userImage ? (
                                                 <Image
                                                     fill

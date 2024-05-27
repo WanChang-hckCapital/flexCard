@@ -17,8 +17,9 @@ import { Button } from "@/components/ui/button";
 
 import { ProductValidation } from "@/lib/validations/product";
 import { toast } from "sonner";
-import { InsertNewProduct, UpdateProduct } from "@/lib/actions/admin.actions";
 import { usePathname, useRouter } from "next/navigation";
+import { fetchAllPromotion, insertNewProduct, updateProduct } from "@/lib/actions/admin.actions";
+import { useEffect, useState } from "react";
 
 interface Props {
   btnTitle: string;
@@ -35,10 +36,39 @@ interface Props {
   };
 }
 
+interface Promotion {
+  name: string;
+  code: string;
+  discount: number;
+  dateRange: {
+    startDate: Date;
+    endDate: Date;
+  };
+  limitedQuantity: number;
+}
+
 const AddNewProduct = ({ btnTitle, authenticatedUserId, productDetails }: Props) => {
   const router = useRouter();
   const pathname = usePathname();
   const isEditMode = Boolean(productDetails);
+
+  const [promotions, setPromotions] = useState<Promotion[]>([]);
+
+  useEffect(() => {
+    const loadPromotions = async () => {
+      try {
+        const result = await fetchAllPromotion();
+        if (result.success) {
+          setPromotions(result.data || []);
+        } else {
+          toast.error("Failed to fetch promotions.");
+        }
+      } catch (error: any) {
+        toast.error("Error loading promotions: " + error.message);
+      }
+    };
+    loadPromotions();
+  }, []);
 
   const form = useForm<z.infer<typeof ProductValidation>>({
     resolver: zodResolver(ProductValidation),
@@ -75,15 +105,21 @@ const AddNewProduct = ({ btnTitle, authenticatedUserId, productDetails }: Props)
   const onSubmit = async (values: z.infer<typeof ProductValidation>) => {
     let result;
     if (isEditMode && productDetails) {
-      result = await UpdateProduct({
+      result = await updateProduct({
         ...values,
         productId: productDetails.id,
         authenticatedUserId,
         path: pathname,
       });
     } else {
-      result = await InsertNewProduct({
-        ...values,
+      result = await insertNewProduct({
+        name: values.name,
+        price: values.price,
+        description: values.description,
+        availablePromo: values.availablePromo,
+        limitedCard: values.limitedCard,
+        limitedIP: values.limitedIP,
+        features: values.features,
         authenticatedUserId,
         path: pathname,
       });
@@ -92,7 +128,7 @@ const AddNewProduct = ({ btnTitle, authenticatedUserId, productDetails }: Props)
     clearField(result);
 
     if (result.success) {
-      toast.success(`Product ${productDetails?.name} ${isEditMode ? 'updated'  : 'added'} successfully!`);
+      toast.success(`Product ${productDetails?.name} ${isEditMode ? 'updated' : 'added'} successfully!`);
       router.push("/dashboard/products");
     } else {
       toast.error(`Failed to ${isEditMode ? 'update' : 'add'} product: ${result.message}`);
@@ -177,12 +213,16 @@ const AddNewProduct = ({ btnTitle, authenticatedUserId, productDetails }: Props)
                 Promotion
               </FormLabel>
               <FormControl>
-                <Input
-                  type='string'
-                  className='account-form_input no-focus'
-                  placeholder="Promotion"
-                  {...field}
-                />
+                <select {...field} className="account-form_input no-focus">
+                  <option value="">Select a Promotion</option>
+                  {promotions.length > 0 ? (
+                    promotions.map((promo) => (
+                      <option key={promo.name} value={promo.name}>{promo.name}</option>
+                    ))
+                  ) : (
+                    <option value="" disabled>No Promotions Available</option>
+                  )}
+                </select>
               </FormControl>
               <FormMessage />
             </FormItem>

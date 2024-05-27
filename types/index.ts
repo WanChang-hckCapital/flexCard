@@ -23,6 +23,9 @@ export type Member = {
     shortdescription: string,
     usertype: string,
     onboarded: boolean,
+    ip_address: string,
+    country: string,
+    countrycode: string,
     subscription: Subscription[],
     cards: Card[],
     followers: Member[],
@@ -52,7 +55,7 @@ export enum Usertype {
 
 export type Card = {
     cardID: string,
-    creator: string,
+    creator: {},
     title: string,
     status: string,
     description: string,
@@ -61,9 +64,20 @@ export type Card = {
     categories: [],
     components: {},
     lineFormatComponent: {},
-    updatedAt: Date,
-    createdAt: Date,
+    totalViews: number,
+    viewDetails: CardViewDetail[];
+    dailyViews: CardDailyView[];
 }
+
+export type CardViewDetail = {
+    viewerId: string;
+    viewedAt: Date;
+};
+
+export type CardDailyView = {
+    date: Date;
+    count: number;
+};
 
 export type Component = {
     componentID: string,
@@ -90,7 +104,7 @@ export type Transaction = {
     id: string,
     transactionDate: Date,
     transactionFees: number,
-    IP_Address: string,
+    ip_address: string,
     payment_types: string,
 }
 

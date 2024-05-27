@@ -19,12 +19,6 @@ const productSchema = new Schema<Product>({
     availablePromo: {
         type: String,
     },
-    // availablePromo: [
-    //     {
-    //         type: mongoose.Schema.Types.ObjectId,
-    //         ref: "Promotion",
-    //     },
-    // ],
     features: [
         {
             name: {

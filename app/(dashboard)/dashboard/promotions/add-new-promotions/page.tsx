@@ -25,7 +25,7 @@ async function Page() {
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link href="/dashboard/products">Product Plans</Link>
+                <Link href="/dashboard/promotions">Promotions</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />

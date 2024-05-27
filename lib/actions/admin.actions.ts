@@ -6,6 +6,29 @@ import SubscriptionModel from "../models/subscription";
 import ProductModel from "../models/product";
 import PromotionModel from "../models/promotion";
 import { revalidatePath } from "next/cache";
+import TransactionModel from "../models/transaction";
+import MemberModel from "../models/member";
+import { endOfDay, startOfDay } from "date-fns";
+
+export async function authorizationAdmin(
+    authenticatedUserId: string
+):Promise<{ success: boolean; message?: string }> {
+    try {
+
+        connectToDB();
+
+        const admin = await Member.findOne({ user: authenticatedUserId });
+
+        if (admin.usertype.toUpperCase() !== 'FLEXADMIN') {
+            return {success: false, message: "You has no authorization to do this action."};
+        }
+
+        return {success: true};
+
+    } catch (error: any) {
+        return { success: false, message: error.message };
+    }
+}
 
 export async function fetchAllMember(authenticatedUserId: string) {
     try {
@@ -40,6 +63,33 @@ export async function fetchMember(userId: string) {
     }
 }
 
+export async function fetchMemberByDateRange(
+    startDate: Date | null, endDate: Date | null
+): Promise<any> {
+    try {
+        connectToDB();
+
+        if (startDate) startDate = startOfDay(new Date(startDate));
+        if (endDate) {
+            endDate = endOfDay(new Date(endDate));
+        }else{
+            endDate = endOfDay(new Date());
+        }
+
+        console.log("M date range start: ", startDate);
+        console.log("M date range end: ", endDate);
+
+        const members = await MemberModel.find({
+            createdAt: { $gte: startDate, $lte: endDate }
+        }).sort({ createdAt: 'asc' });
+
+        return members;
+    } catch (error: any) {
+        console.error(`Failed to fetch Members by range: ${error.message}`);
+        return null;
+    }
+}
+
 export async function generateSubscription() {
     try {
 
@@ -57,7 +107,7 @@ export async function generateSubscription() {
 
         const savedSubscription = await dummySubscription.save();
 
-        const member = await Member.findOne({ user: "664599b296183879f95b32b5" });
+        const member = await Member.findOne({ user: "66471e695f42161352af80d0" });
 
         if (!member) {
             throw new Error("Current member not found");
@@ -66,7 +116,7 @@ export async function generateSubscription() {
         const updatedSubscription = [...member.subscription, savedSubscription._id];
 
         await Member.findOneAndUpdate(
-            { user: "664599b296183879f95b32b5" },
+            { user: "66471e695f42161352af80d0" },
             {
                 subscription: updatedSubscription,
             },
@@ -92,6 +142,42 @@ export async function fetchSubscriptionById(subscriptionId: string) {
     }
 }
 
+export async function fetchSubscriptionByDateRange(
+    startDate: Date | null, endDate: Date | null
+): Promise<any> {
+    try {
+        connectToDB();
+
+        if (startDate) startDate = startOfDay(new Date(startDate));
+        if (endDate) {
+            endDate = endOfDay(new Date(endDate));
+        }else{
+            endDate = endOfDay(new Date());
+        }
+
+        const subscription = await SubscriptionModel.find({
+            "transaction.transactionDate": {
+                $gte: startDate || new Date(0),
+                $lte: endDate || new Date()
+            }
+        }).populate({
+            path: 'transaction',
+            model: TransactionModel,
+            match: {
+                transactionDate: {
+                    $gte: startDate || new Date(0),
+                    $lte: endDate || new Date()
+                }
+            }
+        });
+
+        return subscription;
+    } catch (error: any) {
+        console.error(`Failed to fetch Subscription by range: ${error.message}`);
+        return null;
+    }
+}
+
 interface ParamsProductDetails {
     name: string;
     description: string;
@@ -104,7 +190,7 @@ interface ParamsProductDetails {
     path: string;
 }
 
-export async function InsertNewProduct({
+export async function insertNewProduct({
     name,
     description,
     price,
@@ -159,7 +245,7 @@ export async function fetchAllProduct() {
     }
 }
 
-export async function fetchProductById(productId: string): Promise<any>{
+export async function fetchProductById(productId: string): Promise<any> {
     try {
         const product = await ProductModel.findOne({ _id: productId });
 
@@ -186,7 +272,7 @@ interface ParamsUpdate {
     path: string;
 }
 
-export async function UpdateProduct({
+export async function updateProduct({
     name,
     description,
     price,
@@ -230,7 +316,27 @@ export async function UpdateProduct({
     }
 }
 
+export async function deleteProduct({ productId, authenticatedUserId }
+    : { productId: string; authenticatedUserId: string }
+): Promise<{ success: boolean; message?: string }> {
+    try {
+        connectToDB();
+
+        const user = await Member.findOne({ user: authenticatedUserId });
+        if (user.usertype.toUpperCase() !== "FLEXADMIN") {
+            throw new Error("User is not authorized to delete product");
+        }
+
+        await ProductModel.deleteOne({ _id: productId });
+
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, message: error.message };
+    }
+}
+
 interface ParamsPromotionDetails {
+    id: string;
     name: string;
     code: string;
     discount: number;
@@ -242,7 +348,7 @@ interface ParamsPromotionDetails {
     authenticatedUserId: string;
 }
 
-export async function InsertNewPromotion({
+export async function insertNewPromotion({
     name,
     code,
     discount,
@@ -274,21 +380,20 @@ export async function InsertNewPromotion({
     }
 }
 
-export async function fetchAllPromotion() {
+export async function fetchAllPromotion(): Promise<{ success: boolean; data?: ParamsPromotionDetails[]; message?: string }> {
     try {
 
         connectToDB();
 
         const promotions = await PromotionModel.find();
 
-        return promotions;
+        return { success: true, data: promotions };
     } catch (error: any) {
-        console.error(`Failed to fetch Promotions: ${error.message}`);
-        return null;
+        return { success: false, message: error.message };
     }
 }
 
-export async function fetchPromoById(promoId: string): Promise<any>{
+export async function fetchPromoById(promoId: string): Promise<any> {
     try {
         const promotion = await PromotionModel.findOne({ _id: promoId });
 
@@ -304,7 +409,6 @@ export async function fetchPromoById(promoId: string): Promise<any>{
 
 interface ParamsPromoUpdate {
     name: string;
-    code: string;
     discount: number;
     dateRange: {
         startDate: Date;
@@ -316,9 +420,8 @@ interface ParamsPromoUpdate {
     path: string;
 }
 
-export async function UpdatePromotion({
+export async function updatePromotion({
     name,
-    code,
     discount,
     dateRange,
     limitedQuantity,
@@ -338,7 +441,6 @@ export async function UpdatePromotion({
             { _id: promoId },
             {
                 name,
-                code,
                 discount,
                 dateRange,
                 limitedQuantity,
@@ -355,3 +457,24 @@ export async function UpdatePromotion({
         return { success: false, message: error.message };
     }
 }
+
+export async function deletePromotion({ promoId, authenticatedUserId }
+    : { promoId: string; authenticatedUserId: string }
+): Promise<{ success: boolean; message?: string }> {
+    try {
+        connectToDB();
+
+        const user = await Member.findOne({ user: authenticatedUserId });
+        if (user.usertype.toUpperCase() !== "FLEXADMIN") {
+            throw new Error("User is not authorized to delete promotion");
+        }
+
+        await PromotionModel.deleteOne({ _id: promoId });
+
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, message: error.message };
+    }
+}
+
+

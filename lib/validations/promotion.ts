@@ -5,10 +5,6 @@ export const PromotionValidation = z.object({
     .string()
     .min(3, { message: "Minimum 3 characters." })
     .max(20, { message: "Maximum 20 caracters." }),
-  code: z
-    .string()
-    .min(8, { message: "Minimum 8 characters." })
-    .max(20, { message: "Maximum 20 caracters." }),
   discount: z
     .number()
     .min(0, { message: "Minimum 0% discount." })

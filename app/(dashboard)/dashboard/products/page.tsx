@@ -1,16 +1,27 @@
 
+import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import DeleteConfirmationButton from "@/components/buttons/delete-confirmation-button"
 import NavigateRouteButton from "@/components/buttons/navigate-button"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 import { fetchAllProduct } from "@/lib/actions/admin.actions"
 import { PackageOpen, Pencil } from "lucide-react"
+import { getServerSession } from "next-auth"
 import Link from "next/link"
+import { redirect } from "next/navigation"
 import * as React from "react"
 
 async function Products() {
 
+    const session = await getServerSession(authOptions)
+    const user = session?.user;
+
+    if (!user) {
+        redirect("/sign-in");
+    };
+
     const products = await fetchAllProduct();
     
-    const mainClassName = (products && products.length > 5) ? 
+    const mainClassName = (products && products.length > 5) ?
         "flex flex-1 flex-col gap-4 p-4 lg:p-6 bg-neutral-900" : 
         "flex flex-1 flex-col gap-4 p-4 lg:p-6 bg-neutral-900 h-screen";
 
@@ -40,9 +51,12 @@ async function Products() {
                         <div key={index} className="flex flex-col gap-4 p-4 bg-black border border-neutral-600 rounded-lg">
                             <div className="flex row justify-between">
                                 <h3 className="text-lg font-bold">{product.name}</h3>
-                                <Link href={`/dashboard/products/${product.id}`}>
-                                    <Pencil className="w-5 h-5" />
-                                </Link>
+                                <div className="flex flex-row gap-3">
+                                    <Link href={`/dashboard/products/${product.id}`}>
+                                        <Pencil className="w-5 h-5" />
+                                    </Link>
+                                    <DeleteConfirmationButton productId={product.id} authenticatedUserId={user.id}/>
+                                </div>
                             </div>
                             <p className="text-sm text-slate-300">{product.description}</p>
                             <div className="flex flex-col gap-2">
@@ -53,6 +67,9 @@ async function Products() {
                                     ))
                                 )}
                                 <span className="text-sm text-slate-300">Features: {product.price}</span>
+                                {(product.availablePromo) && (
+                                    <span className="text-sm text-slate-300">Available Promotion: {product.availablePromo}</span>
+                                )}
                                 <span className="text-sm text-slate-300">Card Available: {product.limitedCard}</span>
                                 <span className="text-sm text-slate-300">IP Available: {product.limitedIP}</span>
                             </div>

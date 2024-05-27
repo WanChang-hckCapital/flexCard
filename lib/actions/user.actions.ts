@@ -1,7 +1,7 @@
 "use server";
 
 import bcrypt from "bcrypt";
-import mongoose, { FilterQuery, SortOrder } from "mongoose";
+import mongoose from "mongoose";
 import { GridFSBucket } from 'mongodb';
 import { revalidatePath } from "next/cache";
 
@@ -11,8 +11,10 @@ import Card from "../models/card";
 import Image from "../models/image";
 import Organization from "../models/organization";
 import { Readable } from "stream";
-import SubscriptionModel from "../models/subscription";
-import ProductModel from "../models/product";
+import { headers } from "next/headers";
+import { startOfDay, subMinutes } from "date-fns";
+import ComponentModel from "../models/component";
+import MemberModel from "../models/member";
 
 export async function authenticateUser(email: string, password: string) {
     try {
@@ -77,7 +79,53 @@ export async function createMember(userId: string) {
     }
 }
 
-export async function updateLastLoginDate(userId: string) {
+export async function getIPCountryInfo() {
+    if (process.env.NODE_ENV === 'development') {
+        // const ip = "2001:f40:983:ca54:11c7:d9be:7e0c:eab1" // MY IP address for testing
+        const ip = '103.123.240.66'; // TW IP address for testing
+        return fetch(`http://ip-api.com/json/${ip}`)
+            .then(response => response.json())
+            .then(data => {
+                return {
+                    ip: data.query,
+                    country: data.country,
+                    countryCode: data.countryCode,
+                    region: data.regionName,
+                    city: data.city
+                };
+            });
+    } else {
+        const headersList = headers()
+        const ip = headersList.get('request-ip');
+        return fetch(`http://ip-api.com/json/${ip}`)
+            .then(response => response.json())
+            .then(data => {
+                return {
+                    ip: data.query,
+                    country: data.country,
+                    countryCode: data.countryCode,
+                    region: data.regionName,
+                    city: data.city
+                };
+            });
+    }
+}
+
+export async function getGeoInfoByIP(ipAddress: string) {
+    return fetch(`http://ip-api.com/json/${ipAddress}`)
+        .then(response => response.json())
+        .then(data => {
+            return {
+                ip: data.query,
+                country: data.country,
+                countryCode: data.countryCode,
+                region: data.regionName,
+                city: data.city
+            };
+        });
+}
+
+export async function updateLastLoginDateAndIP(userId: string, ipAddress: string) {
     try {
         connectToDB();
 
@@ -89,18 +137,35 @@ export async function updateLastLoginDate(userId: string) {
 
         const lastLoginDateTime = new Date();
 
-        await Member.findOneAndUpdate(
-            { user: userId },
-            {
-                lastlogin: lastLoginDateTime,
-            },
-            { upsert: true }
-        );
+        if (member.ip_address !== ipAddress) {
+            const oldGeoInfo = await getGeoInfoByIP(member.ip_address);
+            const newGeoInfo = await getGeoInfoByIP(ipAddress);
 
-        console.log("Last login date updated: " + lastLoginDateTime);
+            if (!oldGeoInfo || !newGeoInfo || oldGeoInfo.city !== newGeoInfo.city) {
+                await Member.findOneAndUpdate(
+                    { user: userId },
+                    {
+                        lastlogin: lastLoginDateTime,
+                        ip_address: ipAddress
+                    },
+                    { upsert: true }
+                );
+            } else {
+                await Member.findOneAndUpdate(
+                    { user: userId },
+                    { lastlogin: lastLoginDateTime },
+                    { upsert: true }
+                );
+            }
+        } else {
+            await Member.findOneAndUpdate(
+                { user: userId },
+                { lastlogin: lastLoginDateTime },
+                { upsert: true }
+            );
+        }
 
         return true;
-
     } catch (error: any) {
         throw new Error(`Failed to update last login date: ${error.message}`);
     }
@@ -178,6 +243,60 @@ export async function updateMemberFollow(params: Params): Promise<void> {
     }
 }
 
+interface ParamsCardLikes {
+    authUserId: string,
+    cardId: string,
+}
+
+export async function updateCardLikes(params: ParamsCardLikes): Promise<{success: boolean; data?: any[]; message?: string}> {
+    try {
+        connectToDB();
+
+        const { authUserId, cardId } = params;
+        const card = await Card.findById(cardId);
+
+        if (!card) {
+            throw new Error("Card not found");
+        }
+
+        let update;
+        const userHasLiked = card.likes.includes(authUserId);
+
+        if (userHasLiked) {
+            update = { $pull: { likes: authUserId } };
+        } else {
+            update = { $addToSet: { likes: authUserId } };
+        }
+
+        const updatedCard = await Card.findByIdAndUpdate(cardId, update, { new: true });
+
+        if (!updatedCard) {
+            throw new Error("Update failed");
+        }
+
+        // update and return likes after fetch user image
+        const likesDetails = await Promise.all(updatedCard.likes.map(async (likeId: any) => {
+            const likeUser = await MemberModel.findOne({ user: likeId }).select('accountname image');
+            if (likeUser && likeUser.image) {
+                const imageDoc = await Image.findById(likeUser.image).select('binaryCode');
+                return {
+                    accountname: likeUser.accountname,
+                    binarycode: imageDoc ? imageDoc.binaryCode : undefined
+                };
+            }
+            return {
+                accountname: likeUser ? likeUser.accountname : "Unknown",
+                binarycode: undefined
+            };
+        }));
+
+        return { success: true, data: likesDetails};
+    }
+    catch (error: any) {
+        return { success: false, message: `Failed to update card likes: ${error.message}` };
+    }
+}
+
 interface ParamsUpdWebURL {
     authUserId: string,
     url: string,
@@ -249,12 +368,28 @@ interface ParamsMemberDetails {
     password: string;
     phone: string;
     shortdescription: string;
+    ip_address: string;
+    country?: string;
+    countrycode?: string;
     image: {
         binaryCode: string;
         name: string;
     };
     path: string;
 }
+
+type UpdateMemberData = {
+    accountname: string;
+    email: string;
+    password: string;
+    phone: string;
+    shortdescription: string;
+    ip_address: string;
+    image: any;
+    onboarded: boolean;
+    country?: string;
+    countrycode?: string;
+};
 
 export async function updateMemberDetails({
     userId,
@@ -263,6 +398,9 @@ export async function updateMemberDetails({
     password,
     phone,
     shortdescription,
+    ip_address,
+    country,
+    countrycode,
     image,
     path,
 }: ParamsMemberDetails): Promise<void> {
@@ -282,17 +420,25 @@ export async function updateMemberDetails({
         });
         const imageId = savedImage._id;
 
+        const updateData: UpdateMemberData = {
+            accountname: accountname,
+            email: email,
+            password: hashedPassword,
+            phone: phone,
+            shortdescription: shortdescription,
+            ip_address: ip_address,
+            image: imageId,
+            onboarded: true,
+        };
+
+        if (path !== "/profile/edit") {
+            updateData.country = country;
+            updateData.countrycode = countrycode;
+        }
+
         await Member.findOneAndUpdate(
             { user: userId },
-            {
-                accountname: accountname,
-                email,
-                password: hashedPassword,
-                phone,
-                shortdescription,
-                image: imageId,
-                onboarded: true,
-            },
+            updateData,
             { upsert: true }
         );
 
@@ -304,176 +450,197 @@ export async function updateMemberDetails({
     }
 }
 
-// export async function updateUser({
-//     userId,
-//     bio,
-//     name,
-//     path,
-//     username,
-//     image,
-// }: Params): Promise<void> {
-//     try {
-//         connectToDB();
+interface ParamsUpdateCardViewData {
+    userId?: string;
+    cardId: string;
+}
 
-//         await User.findOneAndUpdate(
-//             { id: userId },
-//             {
-//                 username: username.toLowerCase(),
-//                 name,
-//                 bio,
-//                 image,
-//                 onboarded: true,
-//             },
-//             { upsert: true }
-//         );
+export async function updateCardViewData({
+    userId, cardId
+}: ParamsUpdateCardViewData) {
+    const now = new Date();
+    const threeMinutesAgo = subMinutes(now, 3);
 
-//         if (path === "/profile/edit") {
-//             revalidatePath(path);
-//         }
-//     } catch (error: any) {
-//         throw new Error(`Failed to create/update user: ${error.message}`);
-//     }
-// }
+    try {
+        const card = await Card.findById(cardId);
+        if (!card) {
+            throw new Error("Card not found");
+        }
+
+        const lastView = card.viewDetails.find((v: {
+            viewerId: { toString: () => string | undefined; };
+        }) => v.viewerId.toString() === userId);
+        if (lastView && lastView.viewedAt > threeMinutesAgo) {
+            console.log(`${userId} view ${cardId} considered spam and not recorded.`);
+            return null;
+        }
+
+        const today = startOfDay(new Date());
+        const result = await Card.findByIdAndUpdate(
+            cardId,
+            {
+                $inc: { "totalViews": 1 },
+                $push: {
+                    "viewDetails": {
+                        viewerId: userId,
+                        viewedAt: now
+                    }
+                },
+                $addToSet: {
+                    "dailyViews": {
+                        $each: [],
+                        $not: { $elemMatch: { date: today } }
+                    }
+                }
+            },
+            {
+                new: true,
+                upsert: true
+            }
+        );
+
+        if (!result.dailyViews.some((e: {
+            date: { toISOString: () => string; };
+        }) => e.date.toISOString() === today.toISOString())) {
+            result.dailyViews.push({ date: today, count: 1 });
+            await result.save();
+        } else {
+            await Card.updateOne(
+                { _id: cardId, "dailyViews.date": today },
+                { $inc: { "dailyViews.$.count": 1 } }
+            );
+        }
+
+        return result;
+    } catch (error) {
+        console.error("Failed to update card view data:", error);
+        throw error;
+    }
+}
+
+export async function fetchCardViewDetails(
+    cardId: string, startDate: Date | null, endDate: Date | null
+): Promise<{success: boolean; data?: any[]; message?: string}> {
+    try {
+        connectToDB();
+
+        if (endDate === null) {
+            endDate = new Date();
+        }
+
+        const query = { _id: cardId, 'viewDetails.viewedAt': { $gte: startDate, $lte: endDate } };
+        const card = await Card.findOne(query).select('viewDetails');
+
+        if (!card) {
+            throw new Error("Card not found");
+        }
+
+        const views = card.viewDetails;
+        const dayMap = new Map();
+
+        views.forEach((view: { viewedAt: string | number | Date; }) => {
+            const date = new Date(view.viewedAt).toISOString().slice(0, 10);
+            dayMap.set(date, (dayMap.get(date) || 0) + 1);
+        });
+
+        const chartData = Array.from(dayMap).map(([date, count]) => ({
+            date, totalViews: count
+        }));
+
+        return { success: true, data: chartData };
+    } catch (error: any) {
+        return { success: false, message: `Failed to fetch card view details: ${error.message}` };
+    }
+}
+
+export async function fetchOnlyCardId(userId: string) {
+    try {
+        connectToDB();
+
+        const cardId = await Member.findOne({ user: userId }).select('cards');
+        const cardWithTitle = await Card.find({ '_id': { $in: cardId.cards } }).select('title');
+        
+        return cardWithTitle;
+    } catch (error) {
+        console.error("Error fetching cards:", error);
+        throw error;
+    }
+}
 
 export async function fetchPersonalCards(userId: string) {
     try {
         connectToDB();
 
-        const user = await Member.findOne({ user: userId }).populate({
-            path: "cards",
-            model: Card,
-            populate: [
-                {
-                    path: "creator",
-                    model: Member,
-                    select: "accountname user",
-                    populate: {
-                        path: "user",
-                        model: Member,
-                        select: "image",
-                    },
-                },
-                {
-                    path: "likes",
-                    model: Member,
-                    select: "accountname user",
-                    populate: {
-                        path: "user",
-                        model: Member,
-                        select: "image",
-                    },
-                },
-                {
-                    path: "followers",
-                    model: Member,
-                    select: "accountname user",
-                    populate: {
-                        path: "user",
-                        model: Member,
-                        select: "image",
-                    },
-                },
-            ],
-        });
+        const member = await Member.findOne({ user: userId });
 
-        if (!user) {
-            throw new Error(`User with ID ${userId} not found.`);
+        if (!member) {
+            throw new Error(`Member with ID ${userId} not found.`);
         }
 
-        console.log("db User: " + user);
-        console.log("db cards: " + user.cards);
+        if (!member.cards) {
+            throw new Error(`Member with ID ${userId} has no cards.`);
+        }
 
-        return user;
+        const cards = await Card.find({
+            '_id': { $in: member.cards }
+        });
+
+
+        const cardsData = await Promise.all(cards.map(async (card) => {
+
+            const creator = await MemberModel.findOne({ user: card.creator }).select('accountname image');
+            const creatorImage = await Image.findOne({ _id: creator.image }).select('binaryCode');
+            const creatorData = {
+                accountname: creator ? creator.accountname : "Unknown",
+                image: creator && creatorImage ? creatorImage.binaryCode : undefined
+            };
+
+            const componentInCard = await Card.findOne({ _id: card }).select('components');
+
+            const likesDetails = await Promise.all(card.likes.map(async (likeId: any) => {
+                const likeUser = await MemberModel.findOne({ user: likeId }).select('accountname image');
+                if (likeUser && likeUser.image) {
+                    const imageDoc = await Image.findById(likeUser.image).select('binaryCode');
+                    return {
+                        accountname: likeUser.accountname,
+                        binarycode: imageDoc ? imageDoc.binaryCode : undefined
+                    };
+                }
+                return {
+                    accountname: likeUser ? likeUser.accountname : "Unknown",
+                    binarycode: undefined
+                };
+            }));
+
+            const followers = await Promise.all(card.followers.map((id: any) => MemberModel.find({ user: id }).select('accountname')));
+            // const followersImage = await Promise.all(card.followers.map((id: any) => MemberModel.findById(id).select('image')));
+            // const followersImageBinary = await Promise.all(followersImage.map((image: any) => Image.find(image.image).select('binaryCode')));
+            const components = await ComponentModel.findOne({ _id: componentInCard.components }).select('content');
+
+            // console.log("Like Image: " + JSON.stringify(likesImage));
+            // console.log("likes image binary: " + JSON.stringify(likesImageBinary)); 
+            // console.log("likes image: " + likesImageBinary);
+            // console.log("followers image: " + followersImageBinary);
+
+            return {
+                cardId: card._id,
+                title: card.title,
+                creator: creatorData,
+                likes: likesDetails,
+                followers: followers.map(follower => ({ accountname: follower.accountname })),
+                components: {
+                    content: components ? components.content : undefined,
+                },
+            };
+        }));
+
+        // console.log("cardsData: " + JSON.stringify(cardsData));
+
+        return cardsData;
     } catch (error) {
-        console.error("Error fetching user cards:", error);
+        console.error("Error fetching personal cards:", error);
         throw error;
     }
 }
 
-// // Almost similar to Thead (search + pagination) and Community (search + pagination)
-// export async function fetchUsers({
-//   userId,
-//   searchString = "",
-//   pageNumber = 1,
-//   pageSize = 20,
-//   sortBy = "desc",
-// }: {
-//   userId: string;
-//   searchString?: string;
-//   pageNumber?: number;
-//   pageSize?: number;
-//   sortBy?: SortOrder;
-// }) {
-//   try {
-//     connectToDB();
 
-//     // Calculate the number of users to skip based on the page number and page size.
-//     const skipAmount = (pageNumber - 1) * pageSize;
-
-//     // Create a case-insensitive regular expression for the provided search string.
-//     const regex = new RegExp(searchString, "i");
-
-//     // Create an initial query object to filter users.
-//     const query: FilterQuery<typeof User> = {
-//       id: { $ne: userId }, // Exclude the current user from the results.
-//     };
-
-//     // If the search string is not empty, add the $or operator to match either username or name fields.
-//     if (searchString.trim() !== "") {
-//       query.$or = [
-//         { username: { $regex: regex } },
-//         { name: { $regex: regex } },
-//       ];
-//     }
-
-//     // Define the sort options for the fetched users based on createdAt field and provided sort order.
-//     const sortOptions = { createdAt: sortBy };
-
-//     const usersQuery = User.find(query)
-//       .sort(sortOptions)
-//       .skip(skipAmount)
-//       .limit(pageSize);
-
-//     // Count the total number of users that match the search criteria (without pagination).
-//     const totalUsersCount = await User.countDocuments(query);
-
-//     const users = await usersQuery.exec();
-
-//     // Check if there are more users beyond the current page.
-//     const isNext = totalUsersCount > skipAmount + users.length;
-
-//     return { users, isNext };
-//   } catch (error) {
-//     console.error("Error fetching users:", error);
-//     throw error;
-//   }
-// }
-
-// export async function getActivity(userId: string) {
-//   try {
-//     connectToDB();
-
-//     // Find all threads created by the user
-//     const userThreads = await Thread.find({ author: userId });
-
-//     // Collect all the child thread ids (replies) from the 'children' field of each user thread
-//     const childThreadIds = userThreads.reduce((acc, userThread) => {
-//       return acc.concat(userThread.children);
-//     }, []);
-
-//     // Find and return the child threads (replies) excluding the ones created by the same user
-//     const replies = await Thread.find({
-//       _id: { $in: childThreadIds },
-//       author: { $ne: userId }, // Exclude threads authored by the same user
-//     }).populate({
-//       path: "author",
-//       model: User,
-//       select: "name image _id",
-//     });
-
-//     return replies;
-//   } catch (error) {
-//     console.error("Error fetching replies: ", error);
-//     throw error;
-//   }
-// }

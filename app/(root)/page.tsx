@@ -3,7 +3,8 @@ import MaxWContainer from '@/components/max-w-container'
 import Link from 'next/link'
 import { authOptions } from '../api/auth/[...nextauth]/route'
 import { getServerSession } from 'next-auth'
-import { updateLastLoginDate } from '@/lib/actions/user.actions'
+import { getIPCountryInfo, updateLastLoginDateAndIP } from '@/lib/actions/user.actions'
+import {headers} from "next/headers";
 
 async function Home() {
 
@@ -11,7 +12,8 @@ async function Home() {
 
   if(session){  
     const user = session?.user;
-    const updateLoginStatus = await updateLastLoginDate(user.id);
+    const geoInfo = await getIPCountryInfo();
+    await updateLastLoginDateAndIP(user.id, geoInfo.ip);
   }
 
   return (
@@ -23,7 +25,6 @@ async function Home() {
           Why buy when you can rent! Choose from thousand of items available to rent.
         </h3>
 
-        {/* browse the items*/}
         <BrowseItems />
 
         <div className="py-4"></div>

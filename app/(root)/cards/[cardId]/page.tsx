@@ -1,55 +1,50 @@
-import BlurPage from '@/components/workspace/blur-page'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import React from 'react'
-import FunnelSettings from './_components/funnel-settings'
-import FunnelSteps from './_components/funnel-steps'
 import { fetchCardDetails } from '@/lib/actions/workspace.actions'
+import { getIPCountryInfo, updateCardViewData } from '@/lib/actions/user.actions'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { ArrowLeft } from 'lucide-react'
 
 type Props = {
-  params: { cardId: string; userId: string, authaccountId: string }
+  params: { cardId: string }
 }
 
-const CardPage = async ({ params }: Props) => {
+const CardDetails = async ({ params }: Props) => {
   const cardDetails = await fetchCardDetails(params.cardId)
   if (!cardDetails)
-    return redirect(`/${params.userId}/cards`)
+    return redirect(`/profile/${cardDetails.creator}`)
+
+  const session = await getServerSession(authOptions);
+
+  if (session) {
+    const user = session?.user;
+    await updateCardViewData({ userId: user.id, cardId: params.cardId });
+  } else {
+    const geoInfo = await getIPCountryInfo();
+    await updateCardViewData({ userId: geoInfo.ip, cardId: params.cardId });
+  }
 
   return (
-    <BlurPage>
-      <Link
-        href={`/${params.userId}/cards`}
-        className="flex justify-between gap-4 mb-4 text-muted-foreground"
-      >
-        Back
-      </Link>
-      <h1 className="text-3xl mb-8">{cardDetails.name}</h1>
-      {/* <Tabs
-        defaultValue="steps"
-        className="w-full"
-      >
-        <TabsList className="grid  grid-cols-2 w-[50%] bg-transparent ">
-          <TabsTrigger value="steps">Steps</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-        </TabsList>
-        <TabsContent value="steps">
-          <FunnelSteps
-            funnel={cardPages}
-            authaccountId={params.authuserId}
-            pages={cardPages.FunnelPages}
-            cardId={params.cardId}
-          />
-        </TabsContent>
-        <TabsContent value="settings">
-          <FunnelSettings
-            authaccountId={params.authuserId}
-            defaultData={funnelPages}
-          />
-        </TabsContent>
-      </Tabs> */}
-    </BlurPage>
+    <>
+      {cardDetails ?
+        <div className=' bg-white p-3 md:p-12 rounded-2xl md:px-24 lg:px-36'>
+          <ArrowLeft className='text-[60px] font-bold ml-[-50px] 
+       cursor-pointer hover:bg-gray-200 rounded-full p-2 '
+            // onClick={() => router.back()} 
+            />
+          <div className='grid grid-cols-1 lg:grid-cols-2 md:gap-10 shadow-lg
+      rounded-2xl p-3 md:p-7 lg:p-12 xl:pd-16 '
+          >
+
+            {/* <PinImage pinDetail={pinDetail} />
+            <div className="">
+              <PinInfo pinDetail={pinDetail} />
+            </div> */}
+          </div>
+        </div> : null}
+    </>
   )
 }
 
-export default CardPage
+export default CardDetails

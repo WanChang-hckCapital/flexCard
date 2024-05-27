@@ -20,10 +20,10 @@ import { Calendar } from "../ui/calendar";
 import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
 
 import { PromotionValidation } from "@/lib/validations/promotion";
-import { InsertNewPromotion, UpdatePromotion } from "@/lib/actions/admin.actions";
 import { toast } from "sonner";
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { insertNewPromotion, updatePromotion } from "@/lib/actions/admin.actions";
 
 interface Props {
   btnTitle: string;
@@ -50,7 +50,6 @@ const AddNewPromotion = ({ btnTitle, authenticatedUserId, promoDetails }: Props)
     resolver: zodResolver(PromotionValidation),
     defaultValues: {
       name: promoDetails?.name || '',
-      code: promoDetails?.code || '',
       discount: promoDetails?.discount || 0,
       dateRange: {
         startDate: promoDetails?.dateRange.startDate,
@@ -64,25 +63,34 @@ const AddNewPromotion = ({ btnTitle, authenticatedUserId, promoDetails }: Props)
 
   function clearField(result: any) {
     resetField("name");
-    resetField("code");
     resetField("discount");
     resetField("dateRange");
     resetField("limitedQuantity");
   }
 
+  function generateRandomCode(length: number) {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return result;
+  }  
+
   const onSubmit = async (values: z.infer<typeof PromotionValidation>) => {
     let result;
     if (isEditMode && promoDetails) {
-      result = await UpdatePromotion({
+      result = await updatePromotion({
         ...values,
         promoId: promoDetails.id,
         authenticatedUserId,
         path: pathname,
       });
     } else {
-      result = await InsertNewPromotion({
+      const randomCode = generateRandomCode(6);
+      result = await insertNewPromotion({
         name: values.name,
-        code: values.code,
+        code: randomCode,
         discount: values.discount,
         dateRange: {
           startDate: values.dateRange.startDate,
@@ -142,27 +150,6 @@ const AddNewPromotion = ({ btnTitle, authenticatedUserId, promoDetails }: Props)
                   type='text'
                   className='account-form_input no-focus'
                   placeholder="Name"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={control}
-          name='code'
-          render={({ field }) => (
-            <FormItem className='flex w-full flex-col gap-2'>
-              <FormLabel className='text-base-semibold text-light-2'>
-                Promo Code
-              </FormLabel>
-              <FormControl>
-                <Input
-                  type='text'
-                  className='account-form_input no-focus'
-                  placeholder="Change Later"
                   {...field}
                 />
               </FormControl>
