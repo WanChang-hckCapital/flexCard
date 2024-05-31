@@ -25,6 +25,7 @@ type ChartCardProps = {
   queryKey?: string
   selectedRangeLabel?: string
   userId?: string
+  type?: string
   children: ReactNode
 }
 
@@ -33,6 +34,7 @@ export function ChartCard({
   children,
   queryKey,
   userId,
+  type,
   selectedRangeLabel,
 }: ChartCardProps) {
   const searchParams = useSearchParams();
@@ -87,7 +89,7 @@ export function ChartCard({
         <div className="flex gap-4 justify-between items-center">
           <CardTitle>{title}</CardTitle>
           <div className="flex gap-2">
-            {userId !== undefined && cardDetails && (
+            {(userId !== undefined && cardDetails && type === "card") && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline">

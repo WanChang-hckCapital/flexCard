@@ -63,30 +63,144 @@ export async function fetchMember(userId: string) {
     }
 }
 
-export async function fetchMemberByDateRange(
+// export async function fetchMemberByDateRange(
+//     startDate: Date | null, endDate: Date | null
+// ): Promise<any> {
+//     try {
+//         connectToDB();
+
+//         if (startDate) startDate = startOfDay(new Date(startDate));
+//         if (endDate) {
+//             endDate = endOfDay(new Date(endDate));
+//         }else{
+//             endDate = endOfDay(new Date());
+//         }
+
+//         console.log("M date range start: ", startDate);
+//         console.log("M date range end: ", endDate);
+
+//         const members = await MemberModel.find({
+//             createdAt: { $gte: startDate, $lte: endDate }
+//         }).sort({ createdAt: 'asc' });
+
+//         return members;
+//     } catch (error: any) {
+//         console.error(`Failed to fetch Members by range: ${error.message}`);
+//         return null;
+//     }
+// }
+
+export async function fetchCountMemberByDateRange(
     startDate: Date | null, endDate: Date | null
-): Promise<any> {
+): Promise<{ success: boolean; data?: { date: string; totalMembers: number }[]; message?: string }> {
     try {
         connectToDB();
 
-        if (startDate) startDate = startOfDay(new Date(startDate));
+        let modifiedEndDate = endDate || new Date();
         if (endDate) {
-            endDate = endOfDay(new Date(endDate));
-        }else{
-            endDate = endOfDay(new Date());
+            modifiedEndDate = endOfDay(new Date(endDate));
         }
 
-        console.log("M date range start: ", startDate);
-        console.log("M date range end: ", endDate);
-
         const members = await MemberModel.find({
-            createdAt: { $gte: startDate, $lte: endDate }
+            createdAt: { $gte: startDate, $lte: modifiedEndDate }
         }).sort({ createdAt: 'asc' });
 
-        return members;
+        const dayArray: { date: string; totalMembers: number }[] = [];
+
+        if (members && members.length > 0) {
+            let currentDate = startDate || (members.length ? startOfDay(members[0].createdAt) : new Date());
+            while (currentDate <= modifiedEndDate) {
+                dayArray.push({
+                    date: currentDate.toISOString().slice(0, 10),
+                    totalMembers: 0
+                });
+                currentDate = new Date(currentDate.setDate(currentDate.getDate() + 1));
+            }
+
+            members.forEach((member: { createdAt: Date }) => {
+                const memberDateStr = member.createdAt.toISOString().slice(0, 10);
+                const day = dayArray.find(day => day.date === memberDateStr);
+                if (day) {
+                    day.totalMembers += 1;
+                }
+            });
+        }
+
+        return { success: true, data: dayArray };
     } catch (error: any) {
-        console.error(`Failed to fetch Members by range: ${error.message}`);
-        return null;
+        return { success: false, message: error.message };
+    }
+}
+
+export async function fetchTotalMemberByDateRange(
+    startDate: Date | null, endDate: Date | null
+): Promise<{ success: boolean; data?: any[]; message?: string }> {
+    try {
+        connectToDB();
+
+        let modifiedEndDate = endDate || new Date();
+        if (endDate) {
+            modifiedEndDate = endOfDay(new Date(endDate));
+        }
+
+        const members = await MemberModel.find({
+            createdAt: { $gte: startDate, $lte: modifiedEndDate }
+        }).sort({ createdAt: 'asc' });
+
+        const dayArray: { date: string; totalMembers: number; totalPersonal: number; totalOrganization: number }[] = [];
+
+        let totalMembers = 0;
+        let totalPersonal = 0;
+        let totalOrganization = 0;
+
+        let currentDate = startDate || (members.length ? startOfDay(members[0].createdAt) : new Date());
+
+        while (currentDate <= modifiedEndDate) {
+            dayArray.push({
+                date: currentDate.toISOString().slice(0, 10),
+                totalMembers: 0,
+                totalPersonal: 0,
+                totalOrganization: 0
+            });
+            currentDate = new Date(currentDate.setDate(currentDate.getDate() + 1));
+        }
+
+        members.forEach((member: { createdAt: Date, usertype: string }) => {
+            const memberDateStr = member.createdAt.toISOString().slice(0, 10);
+            const day = dayArray.find(day => day.date === memberDateStr);
+
+            if (day) {
+                day.totalMembers += 1;
+                totalMembers += 1;
+
+                if (member.usertype === 'PERSONAL') {
+                    day.totalPersonal += 1;
+                    totalPersonal += 1;
+                } else if (member.usertype === 'ORGANIZATION') {
+                    day.totalOrganization += 1;
+                    totalOrganization += 1;
+                }
+            }
+        });
+
+        dayArray.reduce((acc, day) => {
+            day.totalMembers = acc.totalMembers + day.totalMembers;
+            day.totalPersonal = acc.totalPersonal + day.totalPersonal;
+            day.totalOrganization = acc.totalOrganization + day.totalOrganization;
+
+            return {
+                totalMembers: day.totalMembers,
+                totalPersonal: day.totalPersonal,
+                totalOrganization: day.totalOrganization
+            };
+        }, { totalMembers: 0, totalPersonal: 0, totalOrganization: 0 });
+
+        return {
+            success: true,
+            data: dayArray,
+        };
+    } catch (error: any) {
+        return { success: false, message: error.message };
     }
 }
 

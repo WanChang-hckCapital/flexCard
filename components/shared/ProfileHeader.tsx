@@ -1,11 +1,17 @@
+"use client"
+
 import Image from "next/image";
-import FollowButton from "../buttons/follow-button";
-import UnFollowButton from "../buttons/unfollow-button";
 import VisitWebButton from "../buttons/visitweb-button";
+import { fetchMember } from "@/lib/actions/admin.actions";
+import { useEffect, useState } from "react";
+import { Button } from "../ui/button";
+import { toast } from "sonner";
+import { updateMemberFollow } from "@/lib/actions/user.actions";
+import { RiUserUnfollowLine } from "react-icons/ri";
 
 interface Props {
   accountId: string;
-  authUserId: string;
+  authUserId?: string;
   accountName: string;
   imgUrl?: string;
   shortdescription?: string;
@@ -14,6 +20,7 @@ interface Props {
   followers: string[];
   following: string[];
   webUrl: string; //changelater
+  initialFollowingStatus: boolean;
 }
 
 function ProfileHeader({
@@ -26,11 +33,39 @@ function ProfileHeader({
   cards,
   followers,
   following,
-  webUrl
+  webUrl,
+  initialFollowingStatus
 }: Props) {
-  const isFollowing = following.includes(accountId);
+
+  const [isFollowing, setIsFollowing] = useState<boolean>(initialFollowingStatus);
+  const [followersLength, setFollowersLength] = useState<number>(followers.length);
+
   const isDifferentUser = accountId !== authUserId;
   const isOrganization = usertype.toUpperCase() == 'ORGANIZATION';
+
+  const handleButtonClick = async (method: 'FOLLOW' | 'UNFOLLOW') => {
+    if (!authUserId) {
+      toast.error('You need to login first before action.');
+      return;
+    }
+
+    try {
+      const response = await updateMemberFollow({ authUserId, accountId, method });
+      if (response.success === true){
+        const { updatedFollowing, updateFollower } = response.data;
+        if (method === "FOLLOW" && updatedFollowing.includes(accountId.toString())) {
+          setIsFollowing(true);
+        }else{
+          setIsFollowing(false);
+        }
+        setFollowersLength(updateFollower.length);
+      }else{
+        toast.error(response.message);
+      }
+    } catch (error) {
+      toast.error('Failed to do action, please try again.');
+    }
+  };
 
   return (
     <div className='flex w-full flex-col justify-center'>
@@ -100,7 +135,7 @@ function ProfileHeader({
                 {cards.toString()} Card
               </p>
               <p>
-                {followers.length.toString()} Followers
+                {followersLength.toString()} Followers
               </p>
               <p>
                 {following.length.toString()} Following
@@ -128,11 +163,33 @@ function ProfileHeader({
             <div className="flex row gap-3 pt-5">
               {isDifferentUser && (
                 !isFollowing ? (
-                  <FollowButton authUserId={authUserId} accountId={accountId} method="FOLLOW" />
+                  // <FollowButton authUserId={authUserId} accountId={accountId} method="FOLLOW" />
+                  <Button
+                    className='px-3 w-full '
+                    variant='sky'
+                    onClick={() => handleButtonClick('FOLLOW')}
+                  >
+                    <Image
+                      width={16}
+                      height={16}
+                      className="rounded-full mr-3"
+                      src='/assets/user.svg'
+                      alt='profile icon'
+                    />
+                    Follow
+                  </Button>
                 )
-                 : (
-                  <UnFollowButton authUserId={authUserId} accountId={accountId} method="UNFOLLOW" />
-                )
+                  : (
+                    // <UnFollowButton authUserId={authUserId} accountId={accountId} method="UNFOLLOW" />
+                    <Button
+                      className="px-3 w-full"
+                      variant="ghost"
+                      onClick={() => handleButtonClick('UNFOLLOW')}
+                    >
+                      <RiUserUnfollowLine className='mr-3' />
+                      Unfollow
+                    </Button>
+                  )
               )}
               {isDifferentUser && isOrganization && (
                 <VisitWebButton url={webUrl} />

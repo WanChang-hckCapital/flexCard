@@ -31,6 +31,9 @@ export type Member = {
     followers: Member[],
     following: Member[],
     organization: {},
+    totalViews: number,
+    viewDetails: ViewDetail[];
+    updateHistory: [],
     lastlogin: Date,
 }
 
@@ -65,18 +68,13 @@ export type Card = {
     components: {},
     lineFormatComponent: {},
     totalViews: number,
-    viewDetails: CardViewDetail[];
-    dailyViews: CardDailyView[];
+    viewDetails: ViewDetail[];
+    updateHistory: [],
 }
 
-export type CardViewDetail = {
+export type ViewDetail = {
     viewerId: string;
     viewedAt: Date;
-};
-
-export type CardDailyView = {
-    date: Date;
-    count: number;
 };
 
 export type Component = {

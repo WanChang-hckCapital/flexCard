@@ -14,12 +14,7 @@ type SubscriptionsByDayChartProps = {
 
 async function getSubscriptionSalesData(startDate: Date | null, endDate: Date | null) {
 
-    console.log("startDate: ", startDate);
-    console.log("endDate: ", endDate);
-
     const subscriptions = await fetchSubscriptionByDateRange(startDate, endDate);
-
-    console.log("subscriptions: ", subscriptions);
 
     const dayArray: { date: any; totalSales: number }[] = [];
     let totalSales = 0;

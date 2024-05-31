@@ -1,10 +1,9 @@
 import Image from "next/image";
 import { redirect } from "next/navigation";
-
 import { personalTabs } from "@/constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import { fetchMemberImage } from "@/lib/actions/user.actions";
+import { fetchMemberImage, getIPCountryInfo, updateProfileViewData } from "@/lib/actions/user.actions";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import ProfileHeader from "@/components/shared/ProfileHeader";
@@ -12,30 +11,39 @@ import CardsTab from "@/components/shared/CardsTab";
 import { fetchMember } from "@/lib/actions/admin.actions";
 
 async function Page({ params }: { params: { id: string } }) {
-    const session = await getServerSession(authOptions)
-    const user = session?.user;
+    const session = await getServerSession(authOptions);
+
+    if (session) {
+        const user = session?.user;
+        const authUserId = user.id.toString();
+        await updateProfileViewData({ userId: params.id, authUserId: authUserId });
+    } else {
+        const geoInfo = await getIPCountryInfo();
+        await updateProfileViewData({ userId: params.id, authUserId: geoInfo.ip });
+    }
 
     const tempUrl = "https://hckcapital.net";
-
-    if (!user) return null;
 
     let userInfo = await fetchMember(params.id);
     if (userInfo && typeof userInfo.toObject === 'function') {
         userInfo = userInfo.toObject();
-      }
+    }
+
+    const followersIds = userInfo.followers.map((follower: { followersId: { toString: () => string } }) => follower.followersId.toString());
+    const isFollowing = followersIds.includes(session?.user.id.toString());
 
     let userImage = await fetchMemberImage(userInfo.image);
     if (userImage && typeof userImage.toObject === 'function') {
         userImage = userImage.toObject();
     }
 
-    if (!userInfo?.onboarded) redirect("/onboarding");
+    if (session?.user.id.toString() === params.id && !userInfo?.onboarded) redirect("/onboarding");
 
     return (
         <section>
             <ProfileHeader
                 accountId={userInfo.user.toString()}
-                authUserId={user.id.toString()}
+                authUserId={session?.user.id.toString()}
                 accountName={userInfo.accountname}
                 imgUrl={userImage.binaryCode}
                 shortdescription={userInfo.shortdescription}
@@ -45,6 +53,7 @@ async function Page({ params }: { params: { id: string } }) {
                 following={userInfo.following}
                 // webUrl={userInfo.organization.webUrl}
                 webUrl={tempUrl}
+                initialFollowingStatus={isFollowing}
 
             />
 
@@ -77,7 +86,7 @@ async function Page({ params }: { params: { id: string } }) {
                             className='w-full text-light-1'
                         >
                             <CardsTab
-                                currentUserId={user.id}
+                                authenticatedUserId={session?.user.id.toString()}
                                 accountId={params.id}
                                 userType='PERSONAL'
                             />

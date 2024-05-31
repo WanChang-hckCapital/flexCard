@@ -21,33 +21,24 @@ type Props = {
 
 const CardEditorSidebar = ({ authaccountId }: Props) => {
   const { state, dispatch } = useEditor();
-  const [selectedElement, setSelectedElement] = useState<EditorElement | null>(state.editor.selectedElement);
-  const [selectedElementBubbleId, setSelectedElementBubbleId] = useState<string>(state.editor.selectedElementBubbleId);
-  const [selectedElementSectionId, setSelectedElementSectionId] = useState<string>(state.editor.selectedElementSectionId || '');
+  // const [selectedElement, setSelectedElement] = useState<EditorElement | null>(state.editor.selectedElement);
+  // const [selectedElementBubbleId, setSelectedElementBubbleId] = useState<string>(state.editor.selectedElementBubbleId);
+  // const [selectedElementSectionId, setSelectedElementSectionId] = useState<string>(state.editor.selectedElementSectionId || '');
 
-  useEffect(() => {
-    setSelectedElement(state.editor.selectedElement);
-    setSelectedElementBubbleId(state.editor.selectedElementBubbleId);
-    setSelectedElementSectionId(state.editor.selectedElementSectionId || '');
-  }, [state.editor.selectedElement, state.editor.selectedElementBubbleId, state.editor.selectedElementSectionId]);
+  // useEffect(() => {
+  //   setSelectedElement(state.editor.selectedElement);
+  //   setSelectedElementBubbleId(state.editor.selectedElementBubbleId);
+  //   setSelectedElementSectionId(state.editor.selectedElementSectionId || '');
+  // }, [state.editor.selectedElement, state.editor.selectedElementBubbleId, state.editor.selectedElementSectionId]);
 
-  const handleElementSelect = (element: EditorElement | null) => {
-    setSelectedElement(element || null);
-    dispatch({ type: 'CHANGE_CLICKED_ELEMENT', payload: {
-      elementDetails: element || undefined,
-      bubbleId: '',
-      sectionId: ''
-    } });
-  };
-
-  const handleDeselect = () => {
-    setSelectedElement(null);
-    dispatch({ type: 'CHANGE_CLICKED_ELEMENT', payload: {
-      elementDetails: undefined,
-      bubbleId: '',
-      sectionId: ''
-    } });
-  };
+  // const handleElementSelect = (element: EditorElement | null) => {
+  //   setSelectedElement(element || null);
+  //   dispatch({ type: 'CHANGE_CLICKED_ELEMENT', payload: {
+  //     elementDetails: element || undefined,
+  //     bubbleId: '',
+  //     sectionId: ''
+  //   } });
+  // };
 
   return (
     <Sheet open={true} modal={false}>
@@ -73,21 +64,21 @@ const CardEditorSidebar = ({ authaccountId }: Props) => {
         >
           <div className="grid gap-4 h-full pb-36 overflow-scroll">
             <TabsContent value="Components">
-              {selectedElement && selectedElement.type !== null ? (
-                console.log('selectedElement', selectedElement),
-                console.log('selectedElementBubbleId', selectedElementBubbleId),
-                console.log('selectedElementSectionId', selectedElementSectionId),
+              {state.editor.selectedElement && state.editor.selectedElement.type !== null ? (
+                console.log('selectedElement', state.editor.selectedElement),
+                console.log('selectedElementBubbleId', state.editor.selectedElementBubbleId),
+                console.log('selectedElementSectionId', state.editor.selectedElementSectionId),
                 <React.Fragment>
                   <SheetHeader className="text-left p-4">
-                    <SheetTitle><b>{selectedElement.type.toUpperCase()}</b></SheetTitle>
+                    <SheetTitle><b>{state.editor.selectedElement.type.toUpperCase()}</b></SheetTitle>
                     <SheetDescription>
-                      {selectedElement.description || 'Explore your imagination by just few step!'}
+                      {state.editor.selectedElement.description || 'Explore your imagination by just few step!'}
                     </SheetDescription>
                   </SheetHeader>
                   <SettingsTab 
-                    selectedBubbleId={selectedElementBubbleId} 
-                    selectedSectionId={selectedElementSectionId} 
-                    selectedElement={selectedElement} />
+                    selectedBubbleId={state.editor.selectedElementBubbleId} 
+                    selectedSectionId={state.editor.selectedElementSectionId || ''} 
+                    selectedElement={state.editor.selectedElement} />
                 </React.Fragment>
               ) : (
                 <React.Fragment>

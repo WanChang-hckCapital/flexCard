@@ -23,8 +23,8 @@ import { ChartCard } from "@/components/chart/chart-card"
 import { SubscriptionsByDayChart } from "@/components/chart/admin-analysis/subscription-day-chart"
 import { RANGE_OPTIONS, getRangeOption } from "@/lib/rangeOptions"
 import { MembersByDayChart } from "@/components/chart/admin-analysis/member-day-chart"
-import { MembersTotalByTypeChart } from "@/components/chart/admin-analysis/member-totaltype-chart"
 import { MembersCountryTypeChart } from "@/components/chart/admin-analysis/member-country-chart"
+import { MembersTotalByTypeChart } from "@/components/chart/admin-analysis/member-totaltype-chart"
 
 interface DashboardProps {
     searchParams: {
@@ -149,7 +149,7 @@ async function Dashboard({
                             <ChartCard
                                 title="Anaylsis by Country"
                             >
-                                <MembersCountryTypeChart authenticatedUserId={user.id} />
+                                <MembersCountryTypeChart members = {members} />
                             </ChartCard>
                         </div>
                     </div>

@@ -45,28 +45,32 @@ const SettingsTab = (props: Props) => {
   const { state, dispatch } = useEditor()
 
   const handleOnChanges = (e: any) => {
-    // const styleSettings = e.target.id
-    // let value = e.target.value
-    // const styleObject = {
-    //   [styleSettings]: value,
-    // }
 
     const { id, value } = e.target;
     let processedValue = value;
 
-    console.log("bubbleId: ", props.selectedBubbleId);
-    console.log("sectionId: ", props.selectedSectionId);
-    console.log("elementDetails: ", state.editor.selectedElement);
+    let elementDetails: EditorElement = {
+      ...state.editor.selectedElement,
+    };
+  
+    if (processedValue !== "" && processedValue !== null && processedValue !== undefined) {
+      elementDetails = {
+        ...state.editor.selectedElement,
+        [id]: processedValue,
+      };
+    }else{
+      const keyToRemove: keyof EditorElement = id; 
+      const { [keyToRemove]: _, ...newElementDetails } = elementDetails;
+
+      elementDetails = newElementDetails as EditorElement;
+    }
 
     dispatch({
       type: 'UPDATE_ELEMENT',
       payload: {
         bubbleId: props.selectedBubbleId,
         sectionId: props.selectedSectionId,
-        elementDetails: {
-          ...state.editor.selectedElement,
-          [id]: processedValue,
-        },
+        elementDetails: elementDetails,
       },
     })
     

@@ -43,9 +43,15 @@ const memberSchema = new Schema<Member>({
     ],
     followers: [
         {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Member",
-        },
+            followersId: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Member",
+            },
+            followedAt: {
+                type: Date,
+                default: Date.now
+            },
+        }
     ],
     following: [
         {
@@ -58,6 +64,32 @@ const memberSchema = new Schema<Member>({
         ref: "Organization",
         default: null
     },
+    totalViews: {
+        type: Number,
+        default: 0,
+    },
+    viewDetails: [
+        {
+            viewerId: {
+                type: String,
+            },
+            viewedAt: {
+                type: Date,
+                default: Date.now
+            },
+        }
+    ],
+    updateHistory: [
+        {
+            userId: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Member',
+            },
+            timestamp: {
+                type: Date,
+            }
+        }
+    ],
     lastlogin: {
         type: Date,
     }

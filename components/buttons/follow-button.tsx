@@ -4,19 +4,25 @@ import React from 'react';
 import Image from 'next/image';
 import { updateMemberFollow } from '@/lib/actions/user.actions';
 import { Button } from '../ui/button';
+import { toast } from 'sonner';
 
 interface Props {
-  authUserId: string;
+  authUserId?: string;
   accountId: string;
-  method: string;
+  method: "FOLLOW" | "UNFOLLOW";
 }
 
 function FollowButton({ authUserId, accountId, method }: Props) {
   const handleButtonClick = async () => {
+    if(!authUserId){
+      toast.error('You need to login first before action.');
+      return;
+    }
+
     try {
       await updateMemberFollow({ authUserId, accountId, method });
     } catch (error) {
-      console.error('Error updating member following:', error);
+      toast.error('Failed to do action, please try again.');
     }
   };
 

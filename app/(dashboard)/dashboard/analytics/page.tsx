@@ -53,11 +53,11 @@ import {
 } from "@/components/ui/tabs"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
-import { fetchAllMember, fetchSubscriptionById } from "@/lib/actions/admin.actions"
-import { fetchMemberImage } from "@/lib/actions/user.actions"
 import { ChartCard } from "@/components/chart/chart-card"
 import { TotalViewCardsByCardIdChart } from "@/components/chart/member-analysis-chart/total-card-views"
 import { RANGE_OPTIONS, getRangeOption } from "@/lib/rangeOptions"
+import { TotalViewProfileByDate } from "@/components/chart/member-analysis-chart/total-profile-views"
+import { TotalFollowersByDate } from "@/components/chart/member-analysis-chart/total-follower-views"
 
 interface DashboardProps {
     searchParams: {
@@ -65,6 +65,12 @@ interface DashboardProps {
         viewDetailsCardRange?: string
         viewDetailsCardRangeFrom?: string
         viewDetailsCardRangeTo?: string
+        profileViewDetailsRange?: string
+        profileViewDetailsRangeFrom?: string
+        profileViewDetailsRangeTo?: string
+        followersByDateRange?: string
+        followersByDateRangeFrom?: string
+        followersByDateRangeTo?: string
     }
 }
 
@@ -79,7 +85,15 @@ async function Dashboard({
     const authenticatedUserId = user.id;
 
     const viewDetailsCardRangeOption =
-        getRangeOption(searchParams.viewDetailsCardRange, searchParams.viewDetailsCardRange, searchParams.viewDetailsCardRange) ||
+        getRangeOption(searchParams.viewDetailsCardRange, searchParams.viewDetailsCardRangeFrom, searchParams.viewDetailsCardRangeTo) ||
+        RANGE_OPTIONS.last_7_days
+
+    const profileViewDetailsRangeOption =
+        getRangeOption(searchParams.profileViewDetailsRange, searchParams.profileViewDetailsRangeFrom, searchParams.profileViewDetailsRangeTo) ||
+        RANGE_OPTIONS.last_7_days
+
+    const followersByDateRangeOption =
+        getRangeOption(searchParams.followersByDateRange, searchParams.followersByDateRangeFrom, searchParams.followersByDateRangeTo) ||
         RANGE_OPTIONS.last_7_days
 
 
@@ -152,9 +166,26 @@ async function Dashboard({
                                 title="Total Views"
                                 queryKey="viewDetailsCardRange"
                                 userId={authenticatedUserId}
+                                type="card"
                                 selectedRangeLabel={viewDetailsCardRangeOption.label}
                             >
                                 <TotalViewCardsByCardIdChart cardId={searchParams.cardId || null}  startDate={viewDetailsCardRangeOption.startDate} endDate={viewDetailsCardRangeOption.endDate}/>
+                            </ChartCard>
+                            <ChartCard
+                                title="Profile Views"
+                                queryKey="profileViewDetailsRange"
+                                userId={authenticatedUserId}
+                                selectedRangeLabel={profileViewDetailsRangeOption.label}
+                            >
+                                <TotalViewProfileByDate userId={authenticatedUserId} startDate={profileViewDetailsRangeOption.startDate} endDate={profileViewDetailsRangeOption.endDate}/>
+                            </ChartCard>
+                            <ChartCard
+                                title="Total Followers"
+                                queryKey="followersByDateRange"
+                                userId={authenticatedUserId}
+                                selectedRangeLabel={followersByDateRangeOption.label}
+                            >
+                                <TotalFollowersByDate userId={authenticatedUserId} startDate={followersByDateRangeOption.startDate} endDate={followersByDateRangeOption.endDate}/>
                             </ChartCard>
                         </div>
                     </div>

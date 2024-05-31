@@ -52,7 +52,8 @@ async function Header({ session, userInfoImage }: HeaderProps) {
                             src='/assets/heart.svg'
                             alt='icon heart' />
                     </Link> */}
-                    <Link href="/workspace/663fc7ed54952239d2dec72f">
+                    {/* <Link href="/workspace/6657da7c793f3b540da23a34"> */}
+                    <Link href="/workspace/66553fdbdc409a6c8af6e439">
                         <Image width={24} height={24}
                             className=""
                             src='/assets/heart.svg'
@@ -78,22 +79,24 @@ async function Header({ session, userInfoImage }: HeaderProps) {
                                         href={`${session ? '/product' : 'api/auth/signin'}`}>Subscription</Link>
                                 </DropdownMenuItem>
                             }
-                            {session &&
+                            {
                                 <>
                                     <DropdownMenuItem className='justify-center'>
                                         <Link className='font-bold'
-                                            href={`${session ? '/cards/665124264a34e4d57fcc506e' : 'api/auth/signin'}`} >
-                                            {/* href={`${session ? '/profile/66130a65d4a3f7e94e358f28' : 'api/auth/signin'}`} */}
+                                            // href={`${session ? '/cards/665124264a34e4d57fcc506e' : 'api/auth/signin'}`} >
+                                            href={'/cards/665124264a34e4d57fcc506e'} >
                                             cards testing
                                         </Link>
                                     </DropdownMenuItem>
                                 </>
                             }
-                            {session &&
+                            {
                                 <>
                                     <DropdownMenuItem className='justify-center'>
                                         <Link className='font-bold'
-                                            href={`${session ? '/profile/66511403ce0e911348378718' : 'api/auth/signin'}`} >
+                                            // href={`${session ? '/profile/66511403ce0e911348378718' : 'api/auth/signin'}`} >
+                                            // href={'/profile/6651901f2dc11fd640957e8a'} >
+                                            href={'/profile/66511403ce0e911348378718'} >
                                             other user test
                                         </Link>
                                     </DropdownMenuItem>

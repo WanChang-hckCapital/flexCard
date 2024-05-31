@@ -32,13 +32,15 @@ const Page = async ({ params }: Props) => {
   cardDetails.status = "Modifying";
 
   if (!cardDetails) {
-    toast.error('Card not found');
     redirect(`/`);
   }
 
   if (!cardDetails) return null;
-  if (cardDetails.creator !== authaccountId) {
-    toast.error('You are not authorized to edit this card');
+
+  console.log("workspacecard: " + cardDetails.creator);
+  console.log("auth: " + authaccountId.toString());
+
+  if (cardDetails.creator.toString() !== authaccountId.toString()) {
     redirect(`/`);
   };
 

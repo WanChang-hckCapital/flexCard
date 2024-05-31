@@ -61,7 +61,7 @@ const CardEditor: React.FC<Props> = ({ liveMode, componentId }) => {
   const initialBoxElement: EditorElement = {
     id: 'initial_box',
     type: 'box',
-    layout: 'vetical',
+    layout: 'vertical',
     description: 'Expand your creativity by using me!',
     contents: []
   }

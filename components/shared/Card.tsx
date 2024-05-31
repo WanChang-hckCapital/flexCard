@@ -5,11 +5,13 @@ import Link from "next/link";
 
 import { useState } from "react";
 import { updateCardLikes } from "@/lib/actions/user.actions";
+import { toast } from "sonner";
+import ShareDialog from "./share-dialog";
 
 interface Props {
   id: string;
   title: string;
-  currentUserId: string;
+  authenticatedUserId?: string;
   creator: {
     accountname: string;
     image: string;
@@ -20,6 +22,7 @@ interface Props {
     image: string;
   }[];
   components: string;
+  lineComponents: string;
 }
 
 interface Like {
@@ -30,20 +33,38 @@ interface Like {
 function Card({
   id,
   title,
-  currentUserId,
+  authenticatedUserId,
   creator,
   likes,
   components,
+  lineComponents
 }: Props) {
   const [isHovered, setIsHovered] = useState(false);
   const [likesData, setLikesData] = useState<Like[]>(likes);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const shareUrl = process.env.NEXT_PUBLIC_BASE_URL + `/card/${id}`;
+
+  const handleShareClick = () => {
+    setIsDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+  };
 
   const handleUpdateLikeButtonClick = async () => {
+    if (!authenticatedUserId) {
+      toast.error("You need to login first before actions.");
+      return;
+    }
+
     try {
-      // need to add condition if user spamming
-      const updatedCard = await updateCardLikes({ authUserId: currentUserId, cardId: id });
-      if (updatedCard.success) {
+      const updatedCard = await updateCardLikes({ authUserId: authenticatedUserId, cardId: id });
+      if (updatedCard.success === true) {
         setLikesData(updatedCard.data || []);
+      }else{
+        toast.error(updatedCard.message);
       }
     } catch (error) {
       console.error('Error updating member likes:', error);
@@ -74,7 +95,9 @@ function Card({
                       <div className="absolute inset-0 bg-black opacity-30 flex flex-col justify-between">
                         <p className="text-base text-light-2 px-3 py-2">{title}</p>
                         <div className="flex justify-end pr-2 pb-2">
-                          <div className="rounded-full bg-white p-1 mr-1">
+                          <div 
+                            onClick={handleShareClick}
+                            className="rounded-full bg-white p-1 mr-1">
                             <Image
                               src='/assets/share.svg'
                               alt='heart'
@@ -123,6 +146,7 @@ function Card({
                         </div>
                       </div>
                     )}
+                    {isDialogOpen && <ShareDialog url={shareUrl} lineComponents={lineComponents} userImageUrl={creator.image} onClose={handleCloseDialog} />}
                   </div>
                 </>
               ) : (

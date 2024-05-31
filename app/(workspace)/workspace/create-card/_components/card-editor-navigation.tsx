@@ -69,19 +69,17 @@ const CardEditorNavigation = ({
   }
 
   const handleOnSave = async () => {
-    const workspaceFormat = JSON.parse(JSON.stringify(state.editor.component));
+    const workspaceFormat = state.editor.component;
     const strWorkspaceFormat = JSON.stringify(workspaceFormat);
 
     removeIdsAndDescriptions(workspaceFormat);
     removeEmptySections(workspaceFormat);
 
     const strLineFlexMessage = JSON.stringify(workspaceFormat);
-    console.log('strLineFlexMessage', strLineFlexMessage);
     cardDetails.status = 'Public';
 
 
     if (cardDetails.title === '' || cardDetails.title === "Temp Card") {
-      console.log('cardDetails.title', cardDetails.title);
       toast.error('Oppse! You need to have a title, Please try again later.')
       return;
     }
@@ -127,39 +125,40 @@ const CardEditorNavigation = ({
         if (element.header) {
           delete element.header.id;
           delete element.header.description;
+          removePropsRecursive(element.header.contents);
         }
         if (element.hero) {
           delete element.hero.id;
           delete element.hero.description;
+          removePropsRecursive(element.hero.contents);
         }
         if (element.body) {
           delete element.body.id;
           delete element.body.description;
+          removePropsRecursive(element.body.contents);
         }
         if (element.footer) {
           delete element.footer.id;
           delete element.footer.description;
+          removePropsRecursive(element.footer.contents);
         }
-
-        const removePropsRecursive = (contents: any) => {
-          if (Array.isArray(contents)) {
-            contents.forEach((subElement: any) => {
-              removeIdsAndDescriptions(subElement);
-              removePropsRecursive(subElement.contents);
-            });
-          }
-        };
-
-        removePropsRecursive(element.header?.contents);
-        removePropsRecursive(element.hero?.contents);
-        removePropsRecursive(element.body?.contents);
-        removePropsRecursive(element.footer?.contents);
 
         if (element.action) {
           delete element.action.id;
           delete element.action.description;
         }
       }
+    }
+  };
+
+  const removePropsRecursive = (contents: any) => {
+    if (Array.isArray(contents)) {
+      contents.forEach((subElement: any) => {
+        removeIdsAndDescriptions(subElement);
+        if (subElement.contents) {
+          removePropsRecursive(subElement.contents);
+        }
+      });
     }
   };
 
@@ -170,28 +169,36 @@ const CardEditorNavigation = ({
           removeEmptySections(subComponent);
         });
       } else {
-        if (component.header && component.header.contents && component.header.contents.length === 1) {
-          component.header = component.header.contents[0];
-        } else if (!component.header.contents.length) {
-          delete component.header;
+        if (component.header && component.header.contents) {
+          if (component.header.contents.length === 1) {
+            component.header = component.header.contents[0];
+          } else if (component.header.contents.length === 0) {
+            delete component.header;
+          }
         }
 
-        if (component.hero && component.hero.contents && component.hero.contents.length === 1) {
-          component.hero = component.hero.contents[0];
-        } else if (!component.hero.contents.length) {
-          delete component.hero;
+        if (component.hero && component.hero.contents) {
+          if (component.hero.contents.length === 1) {
+            component.hero = component.hero.contents[0];
+          } else if (component.hero.contents.length === 0) {
+            delete component.hero;
+          }
         }
 
-        if (component.body && component.body.contents && component.body.contents.length === 1) {
-          component.body = component.body.contents[0];
-        } else if (!component.body.contents.length) {
-          delete component.body;
+        if (component.body && component.body.contents) {
+          if (component.body.contents.length === 1) {
+            component.body = component.body.contents[0];
+          } else if (component.body.contents.length === 0) {
+            delete component.body;
+          }
         }
 
-        if (component.footer && component.footer.contents && component.footer.contents.length === 1) {
-          component.footer = component.footer.contents[0];
-        } else if (!component.footer.contents.length) {
-          delete component.footer;
+        if (component.footer && component.footer.contents) {
+          if (component.footer.contents.length === 1) {
+            component.footer = component.footer.contents[0];
+          } else if (component.footer.contents.length === 0) {
+            delete component.footer;
+          }
         }
       }
     }

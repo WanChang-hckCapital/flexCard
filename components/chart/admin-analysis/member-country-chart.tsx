@@ -2,23 +2,22 @@
 
 import React, { useEffect, useState } from 'react';
 import {  Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { fetchAllMember } from '@/lib/actions/admin.actions';
+import { Member } from '@/types';
 
 
 type MembersCountryChartProps = {
-    authenticatedUserId: string;
+    members: Member[];
 }
 
-async function getMembersCountry(authenticatedUserId: string) {
+async function getMembersCountry(members: Member[]) {
     try {
-        const members = await fetchAllMember(authenticatedUserId);
         const countryCount: any = {};
 
         if (!members) {
             return [];
         }
 
-        members.forEach(member => {
+        members.forEach((member: Member) => {
             const country = member.country || 'Unknown';
             countryCount[country] = (countryCount[country] || 0) + 1;
         });
@@ -36,18 +35,18 @@ async function getMembersCountry(authenticatedUserId: string) {
 }
 
 
-export function MembersCountryTypeChart({ authenticatedUserId }: MembersCountryChartProps) {
+export function MembersCountryTypeChart({ members }: MembersCountryChartProps) {
 
     const [chartData, setChartData] = useState<any[]>([]);
 
     useEffect(() => {
         const fetchData = async () => {
-            const response = await getMembersCountry(authenticatedUserId);
+            const response = await getMembersCountry(members);
             setChartData(response);
         }
 
         fetchData();
-    }, [authenticatedUserId]);
+    }, [members]);
     
     const COLORS = ['#0088FE', '#8884d8', '#82ca9d', '#FFBB28', '#FF8042'];
 

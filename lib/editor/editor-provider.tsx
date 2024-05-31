@@ -264,18 +264,29 @@ function handleSectionOperation(
   return newComponent;
 }
 
+function removeInvalidKeys(obj: EditorElement): EditorElement {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([key, value]) => value !== "" && value !== null && value !== undefined)
+  ) as EditorElement;
+}
+
+
 function updateElementRecursively(contents: EditorElement[], elementDetails: EditorElement): EditorElement[] {
+
+  const cleanedElementDetails = removeInvalidKeys(elementDetails);
+
   return contents.map(element => {
-    if (element.id === elementDetails.id) {
-      return { ...element, ...elementDetails };
+    console.log("updateElementRecursively element: " + JSON.stringify(removeInvalidKeys(element)));
+    if (element.id === cleanedElementDetails.id) {
+      return { ...cleanedElementDetails };
     }
     if (element.contents) {
       return {
-        ...element,
-        contents: updateElementRecursively(element.contents, elementDetails)
+        ...removeInvalidKeys(element),
+        contents: updateElementRecursively(element.contents, cleanedElementDetails)
       };
     }
-    return element;
+    return removeInvalidKeys(element);
   });
 }
 
@@ -444,6 +455,10 @@ const editorReducer = (
         action.payload.sectionId,
         action.payload.bubbleId
       );
+
+      console.log("update provider elementDetails: " + JSON.stringify(action.payload.elementDetails));
+
+      console.log("update provider: " + JSON.stringify(updatedComponentAfterUpdate));
 
       const UpdatedElementIsSelected =
         action.payload.elementDetails.id === state.editor.selectedElement.id ? action.payload.elementDetails : state.editor.selectedElement

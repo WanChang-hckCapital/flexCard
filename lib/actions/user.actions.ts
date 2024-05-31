@@ -12,9 +12,11 @@ import Image from "../models/image";
 import Organization from "../models/organization";
 import { Readable } from "stream";
 import { headers } from "next/headers";
-import { startOfDay, subMinutes } from "date-fns";
+import { addMinutes, startOfDay, subMinutes } from "date-fns";
 import ComponentModel from "../models/component";
 import MemberModel from "../models/member";
+
+const axios = require('axios');
 
 export async function authenticateUser(email: string, password: string) {
     try {
@@ -181,6 +183,138 @@ export async function fetchMemberImage(imageId: string) {
     }
 }
 
+interface ParamsUpdateProfileViewData {
+    userId?: string;
+    authUserId: string;
+}
+
+export async function updateProfileViewData({
+    userId, authUserId
+}: ParamsUpdateProfileViewData) {
+    const now = new Date();
+    const threeMinutesAgo = subMinutes(now, 3);
+
+    try {
+        connectToDB();
+
+        if (userId === authUserId) {
+            console.log(`${authUserId} view ${userId} considered same user and not recorded.`);
+            return null;
+        }
+
+        const member = await Member.findOne({ user: userId });
+        if (!member) {
+            throw new Error("Member not found");
+        }
+
+        const lastView = member.viewDetails.find((v: {
+            viewerId: { toString: () => string | undefined; };
+        }) => v.viewerId.toString() === authUserId);
+        if (lastView && lastView.viewedAt > threeMinutesAgo) {
+            console.log(`${authUserId} view ${authUserId} considered spam and not recorded.`);
+            return null;
+        }
+
+        const result = await Member.findOneAndUpdate(
+            { user: userId },
+            {
+                $inc: { "totalViews": 1 },
+                $push: {
+                    "viewDetails": {
+                        viewerId: authUserId,
+                        viewedAt: now
+                    }
+                },
+            },
+            {
+                new: true,
+                upsert: true
+            }
+        );
+
+        return result;
+    } catch (error) {
+        console.error("Failed to update Profile view data:", error);
+        throw error;
+    }
+}
+
+export async function fetchProfileViewDetails(
+    authenticatedUserId: string, startDate: Date | null, endDate: Date | null
+): Promise<{ success: boolean; data?: any[]; message?: string }> {
+    try {
+        connectToDB();
+
+        if (endDate === null) {
+            endDate = new Date();
+        }
+
+        const query = { user: authenticatedUserId, 'viewDetails.viewedAt': { $gte: startDate, $lte: endDate } };
+        const member = await Member.findOne(query).select('viewDetails');
+
+        if (!member) {
+            throw new Error("Member not found");
+        }
+
+        const views = member.viewDetails;
+        const dayMap = new Map();
+
+        views.forEach((view: { viewedAt: string | number | Date; }) => {
+            const date = new Date(view.viewedAt).toISOString().slice(0, 10);
+            dayMap.set(date, (dayMap.get(date) || 0) + 1);
+        });
+
+        const chartData = Array.from(dayMap).map(([date, count]) => ({
+            date, totalViews: count
+        }));
+
+        return { success: true, data: chartData };
+    } catch (error: any) {
+        return { success: false, message: `Failed to fetch profile view details: ${error.message}` };
+    }
+}
+
+export async function fetchFollowersByDateRange(
+    authenticatedUserId: string, startDate: Date | null, endDate: Date | null
+): Promise<{ success: boolean; data?: any[]; message?: string }> {
+    try {
+        connectToDB();
+
+        if (endDate === null) {
+            endDate = new Date();
+        }
+
+        console.log("authenticatedUserId: " + authenticatedUserId);
+
+        const query = { user: authenticatedUserId, 'followers.followedAt': { $gte: startDate, $lte: endDate } };
+        const member = await Member.findOne(query).select('followers');
+
+        if (!member) {
+            throw new Error("Member not found");
+        }
+
+        const followers = member.followers;
+
+        console.log("Followers: " + JSON.stringify(followers));
+        const dayMap = new Map();
+
+        followers.forEach((follower: { followedAt: string | number | Date; }) => {
+            const date = new Date(follower.followedAt).toISOString().slice(0, 10);
+            dayMap.set(date, (dayMap.get(date) || 0) + 1);
+        });
+
+        const chartData = Array.from(dayMap).map(([date, count]) => ({
+            date, totalFollowedUser: count
+        }));
+
+        console.log("chartData: " + JSON.stringify(chartData));
+
+        return { success: true, data: chartData };
+    } catch (error: any) {
+        return { success: false, message: `Failed to fetch Follower details: ${error.message}` };
+    }
+}
+
 // not working 
 export async function fetchUser(userId: string) {
     try {
@@ -200,46 +334,72 @@ export async function fetchUser(userId: string) {
     }
 }
 
-interface Params {
-    authUserId: string,
-    accountId: string,
-    method: string
+interface ParamUpdateMemberFollowData {
+    authUserId: string;
+    accountId: string;
+    method: 'FOLLOW' | 'UNFOLLOW';
 }
 
-export async function updateMemberFollow(params: Params): Promise<void> {
+export async function updateMemberFollow({
+    authUserId, accountId, method
+}: ParamUpdateMemberFollowData): Promise<{ success: boolean; data?: any; message?: string }> {
     try {
         connectToDB();
 
-        const { authUserId, accountId, method } = params;
+        const now = new Date();
+        const threeMinutesAgo = subMinutes(now, 3);
+
         const currentMember = await Member.findOne({ user: authUserId });
         const accountMember = await Member.findOne({ user: accountId });
 
-        if (!currentMember) {
+        if (!currentMember || !accountMember) {
             throw new Error("Current member not found");
         }
 
-        let updatedFollowing: string[] = [...currentMember.following];
-        let updateFollower: string[] = [...accountMember.follower]
+        const userUpdateTimestamps = accountMember.updateHistory?.filter((update: any) => update.userId.toString() === authUserId) || [];
+        const recentUpdatesCount = userUpdateTimestamps.filter((update: any) => update.timestamp > threeMinutesAgo).length;
+
+        if (recentUpdatesCount >= 5) {
+            const nextAvailableTime = addMinutes(userUpdateTimestamps[0].timestamp, 3).toLocaleTimeString();
+            return {
+                success: false,
+                message: `Although We know you like this profile so much but unfortunately You have reach the modify limits for follow this profile, Please Try again in ${nextAvailableTime}.`
+            };
+        }
+
+        let updatedFollowing: string[] = currentMember.following.map((f: { toString: () => any; }) => f.toString());
+        let updateFollower = [...accountMember.followers];
 
         if (method.toUpperCase() === "FOLLOW") {
-            if (!updatedFollowing.includes(accountId)) {
-                updatedFollowing.push(accountId);
+            if (!updatedFollowing.includes(accountId.toString())) {
+                updatedFollowing.push(accountId.toString());
             }
-            if (!updateFollower.includes(authUserId)) {
-                updateFollower.push(authUserId);
+            if (!updateFollower.some(follower => follower.followersId.toString() === authUserId)) {
+                updateFollower.push({
+                    followersId: authUserId,
+                    followedAt: new Date()
+                });
             }
         } else if (method.toUpperCase() === "UNFOLLOW") {
             updatedFollowing = updatedFollowing.filter(id => id !== accountId);
-            updateFollower = updateFollower.filter(id => id !== authUserId);
+            updateFollower = updateFollower.filter(follower => follower.followersId.toString() !== authUserId);
         }
 
         await Promise.all([
             Member.findByIdAndUpdate(currentMember._id, { following: updatedFollowing }),
-            Member.findByIdAndUpdate(accountMember._id, { followers: updateFollower })
+            Member.findByIdAndUpdate(accountMember._id, { followers: updateFollower }),
+            Member.findByIdAndUpdate(accountMember._id, { $push: { updateHistory: { userId: authUserId, timestamp: now } } })
         ]);
 
+        const safeUpdatedFollower = updateFollower.map(follower => ({
+            followersId: follower.followersId.toString(),
+            followedAt: follower.followedAt
+        }));
+
+        return { success: true, data: { updatedFollowing, updateFollower: safeUpdatedFollower } };
+
     } catch (error: any) {
-        throw new Error(`Failed to create/update user: ${error.message}`);
+        return { success: false, message: `Failed to follow/unfollow user: ${error.message}` };
     }
 }
 
@@ -248,9 +408,14 @@ interface ParamsCardLikes {
     cardId: string,
 }
 
-export async function updateCardLikes(params: ParamsCardLikes): Promise<{success: boolean; data?: any[]; message?: string}> {
+export async function updateCardLikes(
+    params: ParamsCardLikes
+): Promise<{ success: boolean; data?: any[]; message?: string }> {
     try {
         connectToDB();
+
+        const now = new Date();
+        const threeMinutesAgo = subMinutes(now, 3);
 
         const { authUserId, cardId } = params;
         const card = await Card.findById(cardId);
@@ -259,13 +424,25 @@ export async function updateCardLikes(params: ParamsCardLikes): Promise<{success
             throw new Error("Card not found");
         }
 
+        const userUpdateTimestamps = card.updateHistory?.filter((update: any) => update.userId.toString() === authUserId) || [];
+
+        const recentUpdatesCount = userUpdateTimestamps.filter((update: any) => update.timestamp > threeMinutesAgo).length;
+
+        if (recentUpdatesCount >= 5) {
+            const nextAvailableTime = addMinutes(userUpdateTimestamps[0].timestamp, 3).toLocaleTimeString();
+            return {
+                success: false,
+                message: `Although We know you like this card so much but unfortunately You have reach the like limits for this card, Please Try again in ${nextAvailableTime}.`
+            };
+        }
+
         let update;
         const userHasLiked = card.likes.includes(authUserId);
 
         if (userHasLiked) {
-            update = { $pull: { likes: authUserId } };
+            update = { $pull: { likes: authUserId }, $push: { updateHistory: { userId: authUserId, timestamp: now } } };
         } else {
-            update = { $addToSet: { likes: authUserId } };
+            update = { $addToSet: { likes: authUserId }, $push: { updateHistory: { userId: authUserId, timestamp: now } } };
         }
 
         const updatedCard = await Card.findByIdAndUpdate(cardId, update, { new: true });
@@ -290,7 +467,7 @@ export async function updateCardLikes(params: ParamsCardLikes): Promise<{success
             };
         }));
 
-        return { success: true, data: likesDetails};
+        return { success: true, data: likesDetails };
     }
     catch (error: any) {
         return { success: false, message: `Failed to update card likes: ${error.message}` };
@@ -486,30 +663,12 @@ export async function updateCardViewData({
                         viewedAt: now
                     }
                 },
-                $addToSet: {
-                    "dailyViews": {
-                        $each: [],
-                        $not: { $elemMatch: { date: today } }
-                    }
-                }
             },
             {
                 new: true,
                 upsert: true
             }
         );
-
-        if (!result.dailyViews.some((e: {
-            date: { toISOString: () => string; };
-        }) => e.date.toISOString() === today.toISOString())) {
-            result.dailyViews.push({ date: today, count: 1 });
-            await result.save();
-        } else {
-            await Card.updateOne(
-                { _id: cardId, "dailyViews.date": today },
-                { $inc: { "dailyViews.$.count": 1 } }
-            );
-        }
 
         return result;
     } catch (error) {
@@ -520,7 +679,7 @@ export async function updateCardViewData({
 
 export async function fetchCardViewDetails(
     cardId: string, startDate: Date | null, endDate: Date | null
-): Promise<{success: boolean; data?: any[]; message?: string}> {
+): Promise<{ success: boolean; data?: any[]; message?: string }> {
     try {
         connectToDB();
 
@@ -559,7 +718,7 @@ export async function fetchOnlyCardId(userId: string) {
 
         const cardId = await Member.findOne({ user: userId }).select('cards');
         const cardWithTitle = await Card.find({ '_id': { $in: cardId.cards } }).select('title');
-        
+
         return cardWithTitle;
     } catch (error) {
         console.error("Error fetching cards:", error);
@@ -596,6 +755,7 @@ export async function fetchPersonalCards(userId: string) {
             };
 
             const componentInCard = await Card.findOne({ _id: card }).select('components');
+            const lineComponents = await Card.findOne({ _id: card }).select('lineFormatComponent');
 
             const likesDetails = await Promise.all(card.likes.map(async (likeId: any) => {
                 const likeUser = await MemberModel.findOne({ user: likeId }).select('accountname image');
@@ -616,11 +776,7 @@ export async function fetchPersonalCards(userId: string) {
             // const followersImage = await Promise.all(card.followers.map((id: any) => MemberModel.findById(id).select('image')));
             // const followersImageBinary = await Promise.all(followersImage.map((image: any) => Image.find(image.image).select('binaryCode')));
             const components = await ComponentModel.findOne({ _id: componentInCard.components }).select('content');
-
-            // console.log("Like Image: " + JSON.stringify(likesImage));
-            // console.log("likes image binary: " + JSON.stringify(likesImageBinary)); 
-            // console.log("likes image: " + likesImageBinary);
-            // console.log("followers image: " + followersImageBinary);
+            const lineFormatComponent = await ComponentModel.findOne({ _id: lineComponents.lineFormatComponent }).select('content');
 
             return {
                 cardId: card._id,
@@ -631,6 +787,9 @@ export async function fetchPersonalCards(userId: string) {
                 components: {
                     content: components ? components.content : undefined,
                 },
+                lineComponents: {
+                    content: lineFormatComponent ? lineFormatComponent.content : undefined,
+                }
             };
         }));
 
@@ -640,6 +799,53 @@ export async function fetchPersonalCards(userId: string) {
     } catch (error) {
         console.error("Error fetching personal cards:", error);
         throw error;
+    }
+}
+
+interface ParamsSendFlexMessage {
+    userId: string;
+    flexContent: string;
+}
+
+export async function sendFlexMessageThruOA({
+    userId, flexContent
+}: ParamsSendFlexMessage): Promise<{ success: boolean; message: string }> {
+    const url = 'https://api.line.me/v2/bot/message/push';
+    const channelAccessToken = process.env.MESSAGING_LINE_CHANNEL_AT;
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${channelAccessToken}`
+    };
+
+    if (typeof flexContent === 'string') {
+        try {
+            flexContent = JSON.parse(flexContent);
+        } catch (error) {
+            console.error('Error parsing flexContent:', error);
+            return { success: false, message: 'Something went wrong, Please try again later.' };
+        }
+    }
+
+    const data = {
+        to: userId,
+        messages: [
+            {
+                type: 'flex',
+                altText: 'This is a Flex Message',
+                contents: flexContent
+            }
+        ]
+    };
+
+    const JSONData = JSON.stringify(data);
+
+    try {
+        const response = await axios.post(url, JSONData, { headers });
+        // console.log('Message sent:', response.data);
+        return { success: true, message: 'Card has been shared successfully, Please check your LINE.'};
+    } catch (error: any) {
+        console.error('Error sharing Card Line:', error.response ? error.response.data : error.message);
+        return { success: false, message: 'Failed to share card to LINE, Please try again later.'};
     }
 }
 

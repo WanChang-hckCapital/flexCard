@@ -20,15 +20,18 @@ type Result = {
   components: {
     content: string;
   };
+  lineComponents: {
+    content: string;
+  };
 }[];
 
 interface Props {
-  currentUserId: string;
+  authenticatedUserId?: string;
   accountId: string;
   userType: string;
 }
 
-async function CardsTab({ currentUserId, accountId, userType }: Props) {
+async function CardsTab({ authenticatedUserId, accountId, userType }: Props) {
   let result: Result | undefined;
 
   // if (userType === "ORGANIZATION") {
@@ -64,13 +67,14 @@ async function CardsTab({ currentUserId, accountId, userType }: Props) {
         <Card
           key={card.cardId}
           id={card.cardId}
-          currentUserId={currentUserId}
+          authenticatedUserId={authenticatedUserId}
           title={card.title}
           creator={card.creator}
           likes={card.likes}
           // followers={[{accountname: card.followers.accountname, image: card.creator.image}]}
           followers={[]}
           components={card.components.content}
+          lineComponents={card.lineComponents.content}
         />
       ))}
     </section>

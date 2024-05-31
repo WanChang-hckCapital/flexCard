@@ -62,12 +62,14 @@ const cardSchema = new Schema<Card>({
             },
         }
     ],
-    dailyViews: [
+    updateHistory: [
         {
-            date: Date,
-            count: {
-                type: Number,
-                default: 0
+            userId: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Member',
+            },
+            timestamp: {
+                type: Date,
             }
         }
     ],
