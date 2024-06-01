@@ -25,6 +25,7 @@ import { RANGE_OPTIONS, getRangeOption } from "@/lib/rangeOptions"
 import { MembersByDayChart } from "@/components/chart/admin-analysis/member-day-chart"
 import { MembersCountryTypeChart } from "@/components/chart/admin-analysis/member-country-chart"
 import { MembersTotalByTypeChart } from "@/components/chart/admin-analysis/member-totaltype-chart"
+import { redirect } from "next/navigation"
 
 interface DashboardProps {
     searchParams: {
@@ -47,7 +48,10 @@ async function Dashboard({
     const session = await getServerSession(authOptions)
     const user = session?.user;
 
-    if (!user) return null;
+    if (!user) {
+        redirect("/sign-in");
+    }
+
     const authenticatedUserId = user.id;
 
     const totalSubscriptionRangeOption =
@@ -149,7 +153,7 @@ async function Dashboard({
                             <ChartCard
                                 title="Anaylsis by Country"
                             >
-                                <MembersCountryTypeChart members = {members} />
+                                <MembersCountryTypeChart members={members} />
                             </ChartCard>
                         </div>
                     </div>

@@ -12,7 +12,9 @@ async function Page() {
     const session = await getServerSession(authOptions)
     const user = session?.user;
 
-    if (!user) return null;
+    if (!user) {
+        redirect("/sign-in");
+    }
 
     const userInfo = await fetchMember(user.id);
     if (!userInfo?.onboarded) redirect("/onboarding");

@@ -240,7 +240,9 @@ const Container = ({ element, sectionId, bubble }: Props) => {
       style={styles}
       className={clsx('relative transition-all group', {
         // 'p-2 border-dashed border-[1px] border-slate-300': bubble.hero?.id === sectionId && bubble.hero?.contents[0].contents,
-        'px-2 py-2 border-dashed border-[1px] border-slate-300': bubble.hero?.id === sectionId && (bubble.hero?.contents[0].contents && bubble.hero?.contents[0].contents?.length < 1 || bubble.hero?.contents[0].contents[0]?.type === 'box'),
+        // 'px-2 py-2 border-dashed border-[1px] border-slate-300': bubble.hero?.id === sectionId && (bubble.hero?.contents[0].contents && bubble.hero?.contents[0].contents?.length < 1 || bubble.hero?.contents[0].contents[0]?.type === 'box'),
+        'px-2 py-2 border-dashed border-[1px] border-slate-300': bubble.hero?.id === sectionId && (bubble.hero?.contents[0].contents && bubble.hero?.contents[0].contents?.length < 1 || 
+          (bubble.hero?.contents[0]?.contents && bubble.hero.contents[0].contents[0]?.type === 'box')),
         'p-0 border-0': bubble.hero?.id === sectionId && bubble.hero?.contents && bubble.hero?.contents.length > 1,
         'border-0': bubble.hero?.id === sectionId,
         'max-w-full w-full': strElementType === 'box',

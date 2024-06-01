@@ -54,10 +54,10 @@ const TextElement = (props: Props) => {
     }
   };
 
-  const styles = {
+  const styles: React.CSSProperties = {
     ...defaultStyles,
     color: props.element.color || defaultStyles.color,
-    textAlign: props.element.align || defaultStyles.textAlign,
+    textAlign: props.element.align as 'left' | 'right' | 'center' | 'justify' | 'start' | 'end' | undefined || defaultStyles.textAlign,
     letterSpacing: props.element.lineSpacing,
     fontWeight: props.element.weight,
     fontSize: props.element.size,

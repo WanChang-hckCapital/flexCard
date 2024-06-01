@@ -21,7 +21,8 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { UserValidation } from "@/lib/validations/user";
 import { getIPCountryInfo, updateMemberDetails } from "@/lib/actions/user.actions";
-import { isBase64Image } from "@/lib/utils";
+import { toast } from "sonner";
+import imageCompression from "browser-image-compression";
 
 interface Props {
   user: {
@@ -46,7 +47,7 @@ const MemberProfile = ({ user, btnTitle }: Props) => {
     resolver: zodResolver(UserValidation),
     defaultValues: {
       accountname: user?.accountname ? user.accountname : "",
-      profile_image: user?.image ? user.image: "",
+      profile_image: user?.image ? user.image : "",
       email: user?.email ? user.email : "",
       phone: user?.phone ? user.phone : "",
       shortdescription: user?.shortdescription ? user.shortdescription : "",
@@ -78,8 +79,8 @@ const MemberProfile = ({ user, btnTitle }: Props) => {
       country: geoInfo.country,
       countrycode: geoInfo.countryCode,
       image: {
-        binaryCode: fileUrl, 
-        name: file.name, 
+        binaryCode: fileUrl,
+        name: file.name,
       },
       path: pathname,
     });
@@ -89,10 +90,10 @@ const MemberProfile = ({ user, btnTitle }: Props) => {
     } else {
       router.push("/");
     }
-    
+
   };
 
-  const handleImage = (
+  const handleImage = async (
     e: ChangeEvent<HTMLInputElement>,
     fieldChange: (value: string) => void
   ) => {
@@ -106,15 +107,34 @@ const MemberProfile = ({ user, btnTitle }: Props) => {
 
       if (!file.type.includes("image")) return;
 
-      console.log("Convert Image Selected: " + JSON.stringify(file.name));
+      try {
+        const options = {
+          maxSizeMB: 0.5,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+        };
 
-      fileReader.onload = async (event) => {
-        const imageDataUrl = event.target?.result?.toString() || "";
-        fieldChange(imageDataUrl);
-        setFileUrl(imageDataUrl);
-      };
+        const MAX_SIZE_MB = 5;
+        if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+          toast.info("File size exceeds the 5 MB limit. Please upload a smaller image.");
+          return;
+        }
 
-      fileReader.readAsDataURL(file);
+        let compressedFile = file;
+        if (file.size > 0.5 * 1024 * 1024) {
+          compressedFile = await imageCompression(file, options);
+        }
+
+        fileReader.onload = async (event) => {
+          const imageDataUrl = event.target?.result?.toString() || "";
+          fieldChange(imageDataUrl);
+          setFileUrl(imageDataUrl);
+        };
+
+        fileReader.readAsDataURL(compressedFile);
+      } catch (error: any) {
+        toast.error("Error compressing image:", error);
+      }
     }
   };
 

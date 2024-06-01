@@ -5,13 +5,16 @@ import AddNewProduct from "@/components/forms/new-product";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { fetchProductById } from "@/lib/actions/admin.actions";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 async function Page({ params }: { params: { productId: string } }) {
 
     const session = await getServerSession(authOptions)
     const user = session?.user;
 
-    if (!user) return null;
+    if (!user) {
+        redirect("/sign-in");
+    }
 
     const productDetails = await fetchProductById(params.productId);
     const preparedProductDetails = {
@@ -25,7 +28,7 @@ async function Page({ params }: { params: { productId: string } }) {
         features: productDetails.features.map((feature: any) => (
             { name: feature.name }
         ))
-      };
+    };
 
     return (
         <main className="flex flex-1 flex-col gap-4 p-4 lg:p-6 bg-neutral-900 h-screen">

@@ -8,7 +8,6 @@ import { fetchCardDetails } from '@/lib/actions/workspace.actions'
 import { Card } from '@/types'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
-import { toast } from 'sonner'
 
 type Props = {
   params: {
@@ -21,7 +20,9 @@ const Page = async ({ params }: Props) => {
   const session = await getServerSession(authOptions);
   const user = session?.user;
 
-  if (!user) return;
+  if (!user) {
+    redirect('/sign-in')
+  };
 
   const authaccountId = user.id;
 

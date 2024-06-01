@@ -1,78 +1,78 @@
-import { connectToDB } from "@/lib/mongodb";
-import { GridFSBucket, ObjectId } from "mongodb";
-import mongoose from "mongoose";
-import multer from 'multer';
-import { NextResponse } from "next/server";
+// import { connectToDB } from "@/lib/mongodb";
+// import { GridFSBucket, ObjectId } from "mongodb";
+// import mongoose from "mongoose";
+// import multer from 'multer';
+// import { NextResponse } from "next/server";
 
-const upload = multer({ dest: 'uploads/' });
+// const upload = multer({ dest: 'uploads/' });
 
-// export async function GET(req: NextApiRequest, res: NextApiResponse) {
+// // export async function GET(req: NextApiRequest, res: NextApiResponse) {
+// //   try {
+// //     const { fileId } = req.query;
+
+// //     await connectToDB();
+
+// //     const db = mongoose.connection.getClient().db();
+// //     const bucket = new GridFSBucket(db);
+
+// //     const stream = bucket.openDownloadStream(new mongoose.Types.ObjectId(fileId as string));
+
+// //     res.setHeader('Content-Type', 'image/jpeg'); 
+// //     res.setHeader('Cache-Control', 'public, max-age=31536000');
+
+// //     stream.pipe(res);
+// //   } catch (error: any) {
+// //     console.error(`Failed to get image from GridFS: ${error.message}`);
+// //     res.status(500).send('Internal Server Error');
+// //   }
+// // }
+
+// async function saveToGridFS(file: Express.Multer.File) {
 //   try {
-//     const { fileId } = req.query;
-
 //     await connectToDB();
+
+//     console.log("I'm here saveToGridFS");
 
 //     const db = mongoose.connection.getClient().db();
 //     const bucket = new GridFSBucket(db);
 
-//     const stream = bucket.openDownloadStream(new mongoose.Types.ObjectId(fileId as string));
+//     const uploadStream = bucket.openUploadStream(file.originalname);
+//     const readStream = file.stream;
 
-//     res.setHeader('Content-Type', 'image/jpeg'); 
-//     res.setHeader('Cache-Control', 'public, max-age=31536000');
+//     readStream.pipe(uploadStream);
 
-//     stream.pipe(res);
+//     return new Promise<ObjectId>((resolve, reject) => {
+//       uploadStream.on('finish', () => {
+//         resolve(uploadStream.id as ObjectId);
+//       });
+//       uploadStream.on('error', reject);
+//     });
 //   } catch (error: any) {
-//     console.error(`Failed to get image from GridFS: ${error.message}`);
-//     res.status(500).send('Internal Server Error');
+//     throw new Error(`Failed to upload image to GridFS: ${error.message}`);
 //   }
 // }
 
-async function saveToGridFS(file: Express.Multer.File) {
-  try {
-    await connectToDB();
+// export async function POST(
+//   req: Request,
+//   { params }: {params: { file: Express.Multer.File}}
+// ) {
+//     try {
+//       const file = params.file;
+//       if (!file) {
+//         return new NextResponse("Backend: No file uploaded", {status: 400});
+//       }
+//       const fileId = await saveToGridFS(file);
+//       return NextResponse.json({
+//         message: "image uploaded",
+//         fileId: fileId
+//       })
+//     } catch (error: any) {
+//       console.log(error)
+//       return new NextResponse("server error", { status: 500})
+//     }
+// }
 
-    console.log("I'm here saveToGridFS");
-
-    const db = mongoose.connection.getClient().db();
-    const bucket = new GridFSBucket(db);
-
-    const uploadStream = bucket.openUploadStream(file.originalname);
-    const readStream = file.stream;
-
-    readStream.pipe(uploadStream);
-
-    return new Promise<ObjectId>((resolve, reject) => {
-      uploadStream.on('finish', () => {
-        resolve(uploadStream.id as ObjectId);
-      });
-      uploadStream.on('error', reject);
-    });
-  } catch (error: any) {
-    throw new Error(`Failed to upload image to GridFS: ${error.message}`);
-  }
-}
-
-export async function POST(
-  req: Request,
-  { params }: {params: { file: Express.Multer.File}}
-) {
-    try {
-      const file = params.file;
-      if (!file) {
-        return new NextResponse("Backend: No file uploaded", {status: 400});
-      }
-      const fileId = await saveToGridFS(file);
-      return NextResponse.json({
-        message: "image uploaded",
-        fileId: fileId
-      })
-    } catch (error: any) {
-      console.log(error)
-      return new NextResponse("server error", { status: 500})
-    }
-}
-
-export const multerMiddleware = upload.single('file');
+// export const multerMiddleware = upload.single('file');
 
 // export async function POST(req: NextApiRequest, res: NextApiResponse) {
 //   try {

@@ -8,6 +8,7 @@ import { format } from "date-fns"
 import { Delete, PackageOpen, Pencil } from "lucide-react"
 import { getServerSession } from "next-auth"
 import Link from "next/link"
+import { redirect } from "next/navigation"
 import * as React from "react"
 
 async function Products() {
@@ -15,12 +16,14 @@ async function Products() {
     const session = await getServerSession(authOptions)
     const user = session?.user;
 
-    if (!user) return null;
+    if (!user) {
+        redirect("/sign-in");
+    }
 
     const promotions = await fetchAllPromotion();
 
-    const mainClassName = (promotions.data && promotions.data.length > 5) ? 
-        "flex flex-1 flex-col gap-4 p-4 lg:p-6 bg-neutral-900" : 
+    const mainClassName = (promotions.data && promotions.data.length > 5) ?
+        "flex flex-1 flex-col gap-4 p-4 lg:p-6 bg-neutral-900" :
         "flex flex-1 flex-col gap-4 p-4 lg:p-6 bg-neutral-900 h-screen";
 
     return (
@@ -52,7 +55,7 @@ async function Products() {
                                 <Link href={`/dashboard/promotions/${promotion.id}`}>
                                     <Pencil className="w-5 h-5" />
                                 </Link>
-                                <DeleteConfirmationButton promoId={promotion.id} authenticatedUserId={user.id}/>
+                                <DeleteConfirmationButton promoId={promotion.id} authenticatedUserId={user.id} />
                             </div>
                             <div className="flex flex-col gap-2">
                                 <span className="text-sm text-slate-300">Promo Code: {promotion.code}</span>

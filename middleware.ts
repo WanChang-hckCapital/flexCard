@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export default function middleware(req: NextRequest) {
-
     let ipAddress = req.headers.get("x-real-ip") || "";
 
     if (!ipAddress) {

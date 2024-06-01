@@ -37,6 +37,9 @@ const Page = async ({ params }: Props) => {
     lineFormatComponent: [],
     updatedAt: new Date,
     createdAt: new Date,
+    totalViews: 0,
+    viewDetails: [],
+    updateHistory: []
   };
 
   return (

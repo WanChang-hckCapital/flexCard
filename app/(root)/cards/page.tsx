@@ -3,7 +3,6 @@ import React from 'react'
 // import FunnelsDataTable from './data-table'
 import { Plus } from 'lucide-react'
 // import { columns } from './columns'
-import FunnelForm from '@/components/forms/funnel-form'
 import BlurPage from '@/components/workspace/blur-page'
 import { fetchCardsByAccountId } from '@/lib/actions/workspace.actions'
 

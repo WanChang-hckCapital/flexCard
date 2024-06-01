@@ -16,15 +16,16 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import SideBar from '@/components/admin/sidebar'
 import { fetchMember } from '@/lib/actions/admin.actions'
 
-export const fontSans = FontSans({
+const fontSans = FontSans({
   subsets: ["latin"],
   variable: "--font-sans",
-})
+});
+
 export const metadata: Metadata = {
   title: 'Flex Card',
   description: 'Build you own Flex Card...',
   icons: [{ rel: 'icon', url: Favicon.src }],
-}
+};
 
 export default async function RootLayout({
   children,
@@ -81,5 +82,5 @@ export default async function RootLayout({
         </body>
       </html>
     </AuthSessionProvider>
-  )
+  );
 }

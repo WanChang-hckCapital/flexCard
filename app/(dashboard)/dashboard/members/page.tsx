@@ -56,6 +56,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { fetchAllMember, fetchSubscriptionById } from "@/lib/actions/admin.actions"
 import { fetchMemberImage } from "@/lib/actions/user.actions"
 import FilterDropdown from "@/components/buttons/filter-dropdown-button"
+import { redirect } from "next/navigation"
 
 async function fetchAllSubscriptions(members: any[]) {
 
@@ -78,7 +79,7 @@ async function fetchAllSubscriptions(members: any[]) {
             const lastSubscriptionId = member.subscription[member.subscription.length - 1];
             const subscriptionDetails = await fetchSubscriptionById(lastSubscriptionId);
             member.subscription = subscriptionDetails.toJSON ? subscriptionDetails.toJSON() : subscriptionDetails;
-            return { ...member};
+            return { ...member };
         }
 
         return member;
@@ -94,7 +95,10 @@ async function Dashboard() {
     const session = await getServerSession(authOptions)
     const user = session?.user;
 
-    if (!user) return null;
+    if (!user) {
+        redirect("/sign-in");
+    }
+    
     const authenticatedUserId = user.id;
 
     let members = await fetchAllMember(authenticatedUserId)
@@ -103,14 +107,14 @@ async function Dashboard() {
     members = members.map(member => member.toJSON ? member.toJSON() : member);
 
     const membersWithSubscriptions = await fetchAllSubscriptions(members);
-    const membersWithFreeVersion = membersWithSubscriptions.filter(member => 
-        (member.usertype === 'PERSONAL' || member.usertype === 'ORGANIZATION') && 
-        (member.subscription.length == 0) );
-    const membersWithProfessional = membersWithSubscriptions.filter(member => 
-        (member.usertype === 'PREMIUM' ||  member.usertype === 'EXPERT' || member.usertype === 'ELITE') &&
-        (member.subscription.length !== 0) );
-    const membersOrganization = membersWithSubscriptions.filter(member => 
-        (member.usertype === 'ORGANIZATION' ||  member.usertype === 'BUSINESS' || member.usertype === 'ENTERPRISE'));
+    const membersWithFreeVersion = membersWithSubscriptions.filter(member =>
+        (member.usertype === 'PERSONAL' || member.usertype === 'ORGANIZATION') &&
+        (member.subscription.length == 0));
+    const membersWithProfessional = membersWithSubscriptions.filter(member =>
+        (member.usertype === 'PREMIUM' || member.usertype === 'EXPERT' || member.usertype === 'ELITE') &&
+        (member.subscription.length !== 0));
+    const membersOrganization = membersWithSubscriptions.filter(member =>
+        (member.usertype === 'ORGANIZATION' || member.usertype === 'BUSINESS' || member.usertype === 'ENTERPRISE'));
     const membersAdmin = membersWithSubscriptions.filter(member => member.usertype === 'FLEXADMIN');
     const membersSuperUser = membersWithSubscriptions.filter(member => member.usertype === 'SUPERUSER');
 

@@ -70,6 +70,8 @@ export type Card = {
     totalViews: number,
     viewDetails: ViewDetail[];
     updateHistory: [],
+    updatedAt: Date,
+    createdAt: Date,
 }
 
 export type ViewDetail = {

@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { insertNewPromotion, updatePromotion } from "@/lib/actions/admin.actions";
+import { SelectSingleEventHandler } from "react-day-picker";
 
 interface Props {
   btnTitle: string;
@@ -89,6 +90,7 @@ const AddNewPromotion = ({ btnTitle, authenticatedUserId, promoDetails }: Props)
     } else {
       const randomCode = generateRandomCode(6);
       result = await insertNewPromotion({
+        id: "",
         name: values.name,
         code: randomCode,
         discount: values.discount,
@@ -113,7 +115,9 @@ const AddNewPromotion = ({ btnTitle, authenticatedUserId, promoDetails }: Props)
 
   const [isPickingStartDate, setIsPickingStartDate] = useState(true);
 
-  const onSelectDate = (selectedDate: Date) => {
+  const onSelectDate: SelectSingleEventHandler = (day: Date | undefined) => {
+    const selectedDate = day || new Date(); 
+
     if (isPickingStartDate && selectedDate >= new Date()) {
       setValue("dateRange.startDate", selectedDate);
       setValue("dateRange.endDate", selectedDate);

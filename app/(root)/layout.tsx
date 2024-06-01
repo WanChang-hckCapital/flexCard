@@ -14,15 +14,16 @@ import { authOptions } from '../api/auth/[...nextauth]/route'
 import { fetchMemberImage } from '@/lib/actions/user.actions'
 import { fetchMember } from '@/lib/actions/admin.actions'
 
-export const fontSans = FontSans({
+const fontSans = FontSans({
   subsets: ["latin"],
   variable: "--font-sans",
-})
+});
+
 export const metadata: Metadata = {
   title: 'Flex Card',
   description: 'Build you own Flex Card...',
   icons: [{ rel: 'icon', url: Favicon.src }],
-}
+};
 
 export default async function RootLayout({
   children,
@@ -69,5 +70,5 @@ export default async function RootLayout({
         </body>
       </html>
     </AuthSessionProvider>
-  )
+  );
 }

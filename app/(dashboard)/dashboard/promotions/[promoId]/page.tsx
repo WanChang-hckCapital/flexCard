@@ -4,13 +4,16 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbS
 import { fetchPromoById } from "@/lib/actions/admin.actions";
 import Link from "next/link";
 import AddNewPromotion from "@/components/forms/new-promotion";
+import { redirect } from "next/navigation";
 
 async function Page({ params }: { params: { promoId: string } }) {
 
     const session = await getServerSession(authOptions)
     const user = session?.user;
 
-    if (!user) return null;
+    if (!user) {
+        redirect("/sign-in");
+    }
 
     const promoDetails = await fetchPromoById(params.promoId);
     const preparedPromoDetails = {
@@ -21,9 +24,9 @@ async function Page({ params }: { params: { promoId: string } }) {
         dateRange: {
             startDate: new Date(promoDetails.dateRange.startDate),
             endDate: new Date(promoDetails.dateRange.endDate),
-          },
+        },
         limitedQuantity: promoDetails.limitedQuantity,
-      };
+    };
 
     return (
         <main className="flex flex-1 flex-col gap-4 p-4 lg:p-6 bg-neutral-900 h-screen">

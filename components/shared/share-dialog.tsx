@@ -34,7 +34,7 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ url, userImageUrl, lineCompon
 
     const handleCopyUrl = () => {
         navigator.clipboard.writeText(url);
-        toast.info('URL copied to clipboard');
+        toast.info("URL copied to clipboard");
         onClose();
     };
 
@@ -55,10 +55,10 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ url, userImageUrl, lineCompon
             const qrCodeURL = qrCodeCanvas.toDataURL();
             const a = document.createElement('a');
             a.href = qrCodeURL;
-            a.download = 'qrcode.png';
+            a.download = "qrcode.png";
             a.click();
             onClose();
-            toast.info('QR Code download successfully.');
+            toast.info("QR Code download successfully.");
         }
     };
 
@@ -66,16 +66,16 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ url, userImageUrl, lineCompon
         <div className="fixed inset-0 bg-slate-900 bg-opacity-60 flex justify-center items-center z-50">
             <div className="bg-slate-900 p-5 rounded-lg w-[300px] h-[280px]">
                 <Button
-                    className='float-right p-1'
+                    className="float-right p-1"
                     onClick={onClose}
-                    size={'sm'}
-                    variant={'ghost'}
+                    size={"sm"}
+                    variant={"ghost"}
                 >
                     <X />
                 </Button>
                 <div>
                     <h3 className="text-lg font-bold my-8 pl-[10px] text-center">Share</h3>
-                    <p className="text-center mb-8">It's nice to a share a good component to your friends!</p>
+                    <p className="text-center mb-8">It&apos;s nice to a share a good component to your friends!</p>
                     <div className="mb-2 flex flex-row justify-around">
                         <button onClick={handleCopyUrl} className="mb-2">
                             <Link size={32} />
@@ -100,9 +100,9 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ url, userImageUrl, lineCompon
                                     logoOpacity={1}
                                     eyeRadius={15}
                                     style={{ borderRadius: "20px" }}
-                                    qrStyle='dots'
+                                    qrStyle="dots"
                                     removeQrCodeBehindLogo={true}
-                                    ecLevel='H'
+                                    ecLevel="H"
                                 />
                             </div>
                             <button onClick={handleConfirmDownload} className="mb-2">
@@ -114,12 +114,12 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ url, userImageUrl, lineCompon
                 {showConfirmDialog && (
                     <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50">
                         <div className="bg-slate-800 px-3 pb-3 pt-2 rounded-lg w-[350px] h-[350px]">
-                            <div className='flex justify-end flex-row h-[30px]'>
+                            <div className="flex justify-end flex-row h-[30px]">
                                 <Button
-                                    className='p-1'
+                                    className="p-1"
                                     onClick={handleCancelDownload}
-                                    size={'sm'}
-                                    variant={'ghost'}
+                                    size={"sm"}
+                                    variant={"ghost"}
                                 >
                                     <X />
                                 </Button>
@@ -136,19 +136,19 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ url, userImageUrl, lineCompon
                                         logoOpacity={1}
                                         eyeRadius={15}
                                         style={{ borderRadius: "20px" }}
-                                        qrStyle='dots'
+                                        qrStyle="dots"
                                         removeQrCodeBehindLogo={true}
-                                        ecLevel='H'
+                                        ecLevel="H"
                                     />
                                 </div>
                                 <div className="flex justify-around">
                                     <Button
                                         onClick={handleConfirm}
-                                        size={'sm'}
-                                        variant={'sky'}
+                                        size={"sm"}
+                                        variant={"sky"}
                                     >
                                         <Download
-                                            className='mr-2'
+                                            className="mr-2"
                                             width={24}
                                             height={24} />
                                         Download to device

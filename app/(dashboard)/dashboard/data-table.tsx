@@ -20,7 +20,6 @@ import {
 } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { useModal } from '@/lib/providers/modal-provider'
 import CustomModal from '@/components/custom-modal'
 import { toast } from 'sonner'
 

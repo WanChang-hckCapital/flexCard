@@ -4,13 +4,16 @@ import AddNewPromotion from "@/components/forms/new-promotion";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { getServerSession } from "next-auth";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 async function Page() {
 
   const session = await getServerSession(authOptions)
   const user = session?.user;
 
-  if (!user) return null;
+  if (!user) {
+    redirect("/sign-in");
+  }
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:p-6 bg-neutral-900 h-screen">

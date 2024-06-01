@@ -7,15 +7,16 @@ import Favicon from '/public/favicon.ico';
 import { Toaster } from "@/components/ui/sonner"
 import Header from '@/components/shared/header'
 
-export const fontSans = FontSans({
+const fontSans = FontSans({
   subsets: ["latin"],
   variable: "--font-sans",
-})
+});
+
 export const metadata: Metadata = {
   title: 'Flex Card',
   description: 'Build you own Flex Card...',
   icons: [{ rel: 'icon', url: Favicon.src }],
-}
+};
 
 export default function RootLayout({
   children,
@@ -42,5 +43,5 @@ export default function RootLayout({
         </body>
       </html>
     </AuthSessionProvider>
-  )
+  );
 }
