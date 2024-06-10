@@ -5,7 +5,6 @@ import CardMongodb from "../models/card";
 import Member from "../models/member";
 import { connectToDB } from "../mongodb";
 import { Card } from "@/types";
-import { title } from "process";
 import { v4 as uuidv4 } from 'uuid';
 import ComponentModel from "../models/component";
 
@@ -59,7 +58,7 @@ function generateCustomID() {
   return uuidv4();
 }
 
-export async function upsertCardContent(authaccountId: string, cardDetails: Card, cardContent: string, lineFormatCard: string, cardId: string) {
+export async function upsertCardContent(authaccountId: string, cardDetails: Card, cardContent: string, lineFormatCard: string, flexFormatHtml: string, cardId: string) {
     if (!authaccountId) return;
     
     try {
@@ -84,6 +83,15 @@ export async function upsertCardContent(authaccountId: string, cardDetails: Card
         const newLineFormatCard = new ComponentModel(lineFormatCardComponent);
         await newLineFormatCard.save();
 
+        const newFlexHtml = {
+          componentID: generateCustomID(),
+          componentType: "html",
+          content: flexFormatHtml,
+        };
+
+        const newFlexHtmlComponent = new ComponentModel(newFlexHtml);
+        await newFlexHtmlComponent.save();
+
         const newCardContent = {
           cardID: generateCustomID(),
           creator: authaccountId,
@@ -92,12 +100,11 @@ export async function upsertCardContent(authaccountId: string, cardDetails: Card
           description: cardDetails.description,
           components: newCardComponent._id,
           lineFormatComponent: newLineFormatCard._id,
+          flexFormatHtml: newFlexHtmlComponent._id,
         };
 
         const newCard = new CardMongodb(newCardContent);
         await newCard.save();
-
-        console.log("New card created: ", newCard);
 
         const currentMember = await Member.findOne({ user: authaccountId });
 
@@ -120,6 +127,7 @@ export async function upsertCardContent(authaccountId: string, cardDetails: Card
 
         const componentID = existingCard.components;
         const lineFormatComponentID = existingCard.lineFormatComponent;
+        const flexFormatHtmlID = existingCard.flexFormatHtml;
 
         const existingComponent = await ComponentModel.findOne({ _id: componentID });
         if (!existingComponent) {
@@ -136,6 +144,14 @@ export async function upsertCardContent(authaccountId: string, cardDetails: Card
 
         existingLineFormatComponent.content = lineFormatCard;
         await existingLineFormatComponent.save();
+
+        const existingFlexFormatHTML = await ComponentModel.findOne({ _id: flexFormatHtmlID });
+        if (!existingFlexFormatHTML) {
+            throw new Error("Flex format Html not found.");
+        }
+
+        existingFlexFormatHTML.content = flexFormatHtml;
+        await existingFlexFormatHTML.save();
 
         const response = await CardMongodb.updateOne(
           { cardID: cardId }, 

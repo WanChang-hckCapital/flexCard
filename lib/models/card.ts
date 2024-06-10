@@ -47,6 +47,10 @@ const cardSchema = new Schema<Card>({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Component",
     },
+    flexFormatHtml: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Component",
+    },
     totalViews: {
         type: Number,
         default: 0,

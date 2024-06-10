@@ -4,7 +4,6 @@ import '../globals.css'
 import { cn } from '@/lib/utils'
 import AuthSessionProvider from '../(auth)/auth-session-provider'
 import Favicon from '/public/favicon.ico';
-import { Toaster } from "@/components/ui/sonner"
 import { Toaster as SonnarToaster } from '@/components/ui/sonner'
 import Header from '@/components/shared/header'
 import Footer from '@/components/shared/footer'
@@ -22,7 +21,7 @@ const fontSans = FontSans({
 export const metadata: Metadata = {
   title: 'Flex Card',
   description: 'Build you own Flex Card...',
-  icons: [{ rel: 'icon', url: Favicon.src }],
+  icons: [{ rel: 'icon', url: Favicon.src, sizes: '16x16' }],
 };
 
 export default async function RootLayout({
@@ -58,7 +57,7 @@ export default async function RootLayout({
             fontSans.variable
           )}>
 
-          <main className='flex flex-row'>
+          <main className='flex flex-row w-full'>
             <Header session={session} userInfoImage={userImage} />
             <LeftSidebar session={session} userInfoImage={userImage}/>
             <section className='main-container'>

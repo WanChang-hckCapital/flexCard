@@ -270,7 +270,6 @@ function removeInvalidKeys(obj: EditorElement): EditorElement {
   ) as EditorElement;
 }
 
-
 function updateElementRecursively(contents: EditorElement[], elementDetails: EditorElement): EditorElement[] {
 
   const cleanedElementDetails = removeInvalidKeys(elementDetails);
@@ -492,10 +491,20 @@ const editorReducer = (
         action.payload.bubbleId
       );
 
+      const isSelectedElementDeleted = state.editor.selectedElement.id === action.payload.elementId;
+      const emptySelectedElement = {
+          id: '',
+          type: null,
+          layout: '',
+          contents: []
+      }
+
       const updatedEditorStateAfterDelete = {
         ...state.editor,
         component: updatedComponentAfterDelete,
+        selectedElement: isSelectedElementDeleted ? emptySelectedElement : state.editor.selectedElement,
       }
+
       const updatedHistoryAfterDelete = [
         ...state.history.history.slice(0, state.history.currentIndex + 1),
         { ...updatedEditorStateAfterDelete },

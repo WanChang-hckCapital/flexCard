@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/tooltip'
 import { upsertCardContent } from '@/lib/actions/workspace.actions'
 import { DeviceTypes, useEditor } from '@/lib/editor/editor-provider'
+import { createHtmlFromJson } from '@/lib/utils'
 import { Card } from '@/types'
 import clsx from 'clsx'
 import {
@@ -78,6 +79,7 @@ const CardEditorNavigation = ({
     const strLineFlexMessage = JSON.stringify(workspaceFormat);
     cardDetails.status = 'Public';
 
+    const htmlFormat = createHtmlFromJson(workspaceFormat);
 
     if (cardDetails.title === '' || cardDetails.title === "Temp Card") {
       toast.error('Oppse! You need to have a title, Please try again later.')
@@ -96,6 +98,7 @@ const CardEditorNavigation = ({
           followers: cardDetails.followers,
           components: cardDetails.components,
           lineFormatComponent: cardDetails.lineFormatComponent,
+          flexFormatHtml: cardDetails.flexFormatHtml,
           creator: cardDetails.creator,
           categories: [],
           updatedAt: new Date(),
@@ -106,12 +109,14 @@ const CardEditorNavigation = ({
         },
         strWorkspaceFormat,
         strLineFlexMessage,
+        htmlFormat,
         cardDetails.cardID
       )
 
-      toast.success('Card saved successfully.')
+      toast.success('Card saved successfully.');
+      router.push(`/profile/${authaccountId}`);
     } catch (error) {
-      toast.error('Oppse! Something went wrong, Please try again later.')
+      toast.error('Oppse! Something went wrong, Please try again later.');
     }
   }
 

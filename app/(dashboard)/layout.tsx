@@ -4,11 +4,8 @@ import '../globals.css'
 import { cn } from '@/lib/utils'
 import AuthSessionProvider from '../(auth)/auth-session-provider'
 import Favicon from '/public/favicon.ico';
-import { Toaster } from "@/components/ui/sonner"
 import { Toaster as SonnarToaster } from '@/components/ui/sonner'
 import Header from '@/components/admin/header'
-import Footer from '@/components/shared/footer'
-import LeftSidebar from '@/components/shared/LeftSidebar'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../api/auth/[...nextauth]/route'
 import { fetchMemberImage } from '@/lib/actions/user.actions'
@@ -65,12 +62,6 @@ export default async function RootLayout({
             <div className="flex flex-col">
               <Header session={session} userInfoImage={userImage} />
               <main className='flex flex-row'>
-                {/* <Header session={session} userInfoImage={userImage} />
-              <LeftSidebar session={session} userInfoImage={userImage}/> */}
-                {/* <section className='main-container'>
-              
-              </section> */}
-
                 <TooltipProvider>
                   <div className='w-full'>{children}</div>
                 </TooltipProvider>

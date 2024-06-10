@@ -17,10 +17,13 @@ type Result = {
     accountname: string;
     // image: any;
   }[];
-  components: {
+  // components: {
+  //   content: string;
+  // };
+  lineComponents: {
     content: string;
   };
-  lineComponents: {
+  flexHtml: {
     content: string;
   };
 }[];
@@ -57,27 +60,42 @@ async function CardsTab({ authenticatedUserId, accountId, userType }: Props) {
     redirect("/");
   }
 
+  const styles: React.CSSProperties = {
+    textAlign: "-webkit-center" as "center",
+  };
+  
+
   return (
     // <section className='mt-9 grid auto-rows-auto max-sm:grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 max-xl:grid-cols-6 2xl:grid-cols-7 gap-2'>
-    <section className='mt-7 px-2 md:px-5
-      columns-2 md:columns-3
-      lg:columns-4 mb-4
-      xl:columns-5 space-y-6 mx-auto'>
-      {result.map((card) => (
-        <Card
-          key={card.cardId}
-          id={card.cardId}
-          authenticatedUserId={authenticatedUserId}
-          title={card.title}
-          creator={card.creator}
-          likes={card.likes}
-          // followers={[{accountname: card.followers.accountname, image: card.creator.image}]}
-          followers={[]}
-          components={card.components.content}
-          lineComponents={card.lineComponents.content}
-        />
-      ))}
-    </section>
+    <div style={styles}>
+      <section className='mt-7
+        columns-2 md:columns-3
+        lg:columns-4 mb-4
+        xl:columns-5 space-y-2 w-[85%]'>
+        {result.map((card) => (
+          <div
+            key={card.cardId}
+            className="break-inside-avoid w-[280px] dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden transform transition-transform duration-200 hover:scale-105"
+          >
+            <div className="w-full max-w-full overflow-hidden">
+              <Card
+                key={card.cardId}
+                id={card.cardId}
+                authenticatedUserId={authenticatedUserId}
+                title={card.title}
+                creator={card.creator}
+                likes={card.likes}
+                // followers={[{accountname: card.followers.accountname, image: card.creator.image}]}
+                followers={[]}
+                lineComponents={card.lineComponents.content}
+                flexHtml={card.flexHtml.content}
+              />
+            </div>
+          </div>
+        ))}
+      </section>
+    </div>
+
   );
 }
 

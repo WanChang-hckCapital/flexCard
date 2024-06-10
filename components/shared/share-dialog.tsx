@@ -6,7 +6,8 @@ import React, { useState } from 'react';
 import { QRCode } from 'react-qrcode-logo';
 import { Button } from '../ui/button';
 import { toast } from 'sonner';
-import { sendFlexMessageThruOA } from '@/lib/actions/user.actions';
+import { sendFlexMessageLiff, sendFlexMessageThruOA } from '@/lib/actions/user.actions';
+import liff from '@line/liff';
 
 interface ShareDialogProps {
     url: string;
@@ -38,13 +39,72 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ url, userImageUrl, lineCompon
         onClose();
     };
 
+    // const handleShareLine = async () => {
+    //     const userId = "U29e8cc655a89181aef3ef8bdc5def5e7"; // need to fetch userID from LINE API
+    //     const result = await sendFlexMessageThruOA({ userId: userId, flexContent: lineComponents || '' });
+    //     if (result.success === true) {
+    //         toast.info(result.message);
+    //     } else {
+    //         toast.error(result.message);
+    //     }
+    //     onClose();
+    // };
+
+    // const handleShareLine = async () => {
+    //     if (typeof window !== 'undefined') {
+    //         try {
+    //             const result = await sendFlexMessageLiff(lineComponents || '');
+    //             if (result.success === true) {
+    //                 toast.info(result.message);
+    //             } else {
+    //                 toast.error(result.message);
+    //             }
+    //         } catch (error: any) {
+    //             toast.error("Error sharing on Line: " + error.message);
+    //         }
+    //         onClose();
+    //     } else {
+    //         toast.error("Failed to share card to LINE, Please try again later.");
+    //     }
+    // };
+
     const handleShareLine = async () => {
-        const userId = "U29e8cc655a89181aef3ef8bdc5def5e7"; // need to fetch userID from LINE API
-        const result = await sendFlexMessageThruOA({ userId: userId, flexContent: lineComponents || '' });
-        if (result.success === true) {
-            toast.info(result.message);
-        } else {
-            toast.error(result.message);
+        try {
+            await liff.init({ liffId: process.env.NEXT_PUBLIC_LINE_LIFF_ID! });
+            if (liff.isLoggedIn()) {
+                const result = await liff.shareTargetPicker([
+                    {
+                        type: 'flex',
+                        altText: 'This is a Flex Message',
+                        contents: JSON.parse(lineComponents || ''),
+                    },
+                ]);
+                if (result) {
+                    toast.info("Card has been shared successfully, Please check your LINE.");
+                } else {
+                    const [majorVer, minorVer, patchVer] = (liff.getLineVersion() || "").split('.');
+
+                    if (minorVer === undefined) {
+                        toast.error('ShareTargetPicker was canceled in external browser')
+                        return
+                    }
+
+                    if (parseInt(majorVer) >= 10 && parseInt(minorVer) >= 10 && parseInt(patchVer) > 0) {
+                        toast.info('ShareTargetPicker was canceled in LINE app')
+                    }
+                }
+
+                // if (liff.isInClient()) {
+                //     liff.logout();
+                //     window.location.reload()
+                // } else {
+                //     toast.error("Failed to share card to LINE, Please open in Line app.");
+                // }
+            } else {
+                liff.login();
+            }
+        } catch (error: any) {
+            toast.error("Failed to share card to LINE, Please try again later.");
         }
         onClose();
     };

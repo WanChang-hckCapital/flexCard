@@ -44,7 +44,7 @@ const ButtonElement: React.FC<ButtonElementProps> = ({ element, sectionId, bubbl
     });
   };
 
-  const styles = {
+  const styles: React.CSSProperties = {
     backgroundColor: element.style === 'primary' ? (element.color || '#17c950') : element.style === 'secondary' ? (element.color || '#dcdfe5') : 'transparent',
     color: element.style === 'primary' ? 'white' : element.style === 'secondary' ? 'black' : (element.color || '#42659a'),
     height: element.height === 'sm' ? '40px' : element.height === 'md' ? '52px' : '52px',

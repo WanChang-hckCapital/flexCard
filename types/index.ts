@@ -67,6 +67,7 @@ export type Card = {
     categories: [],
     components: {},
     lineFormatComponent: {},
+    flexFormatHtml: {},
     totalViews: number,
     viewDetails: ViewDetail[];
     updateHistory: [],

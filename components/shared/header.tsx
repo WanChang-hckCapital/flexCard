@@ -28,7 +28,7 @@ async function Header({ session, userInfoImage }: HeaderProps) {
 
     return (
         <header className='fixed w-full z-50'>
-            <nav className="topbar border-b border-neutral-600 shadow-xl">
+            <nav className="topbar shadow-xl">
                 {/* logo */}
                 <div className="flex">
                     <Link href="/">
@@ -53,7 +53,7 @@ async function Header({ session, userInfoImage }: HeaderProps) {
                             alt='icon heart' />
                     </Link> */}
                     {/* <Link href="/workspace/6657da7c793f3b540da23a34"> */}
-                    <Link href="/workspace/66553fdbdc409a6c8af6e439">
+                    <Link href="/workspace/665cf6fde48177efd03b330f">
                         <Image width={24} height={24}
                             className=""
                             src='/assets/heart.svg'
@@ -110,7 +110,7 @@ async function Header({ session, userInfoImage }: HeaderProps) {
                             session ?
                                 <DropdownMenu>
                                     <DropdownMenuTrigger>
-                                    <div className={`relative ${userImage ? 'w-8 h-8' : 'h-8'} object-cover content-center`}>
+                                        <div className={`relative ${userImage ? 'w-8 h-8' : 'h-8'} object-cover content-center`}>
                                             {userImage ? (
                                                 <Image
                                                     fill

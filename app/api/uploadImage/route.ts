@@ -1,102 +1,176 @@
-// import { connectToDB } from "@/lib/mongodb";
-// import { GridFSBucket, ObjectId } from "mongodb";
-// import mongoose from "mongoose";
-// import multer from 'multer';
-// import { NextResponse } from "next/server";
 
-// const upload = multer({ dest: 'uploads/' });
+import { connectToDB } from '@/lib/mongodb';
+import { NextResponse } from 'next/server';
+import { Readable } from 'stream';
+import { GridFSBucket } from 'mongodb';
+import mongoose from 'mongoose';
+import { revalidatePath } from 'next/cache';
 
-// // export async function GET(req: NextApiRequest, res: NextApiResponse) {
-// //   try {
-// //     const { fileId } = req.query;
+// export async function POST(req: NextApiRequestWithFile, res: NextApiResponse) {
+//     if (req.method !== 'POST') {
+//         return new NextResponse("Method Not Allowed", { status: 405 });
+//     }
 
-// //     await connectToDB();
-
-// //     const db = mongoose.connection.getClient().db();
-// //     const bucket = new GridFSBucket(db);
-
-// //     const stream = bucket.openDownloadStream(new mongoose.Types.ObjectId(fileId as string));
-
-// //     res.setHeader('Content-Type', 'image/jpeg'); 
-// //     res.setHeader('Cache-Control', 'public, max-age=31536000');
-
-// //     stream.pipe(res);
-// //   } catch (error: any) {
-// //     console.error(`Failed to get image from GridFS: ${error.message}`);
-// //     res.status(500).send('Internal Server Error');
-// //   }
-// // }
-
-// async function saveToGridFS(file: Express.Multer.File) {
-//   try {
-//     await connectToDB();
-
-//     console.log("I'm here saveToGridFS");
-
-//     const db = mongoose.connection.getClient().db();
-//     const bucket = new GridFSBucket(db);
-
-//     const uploadStream = bucket.openUploadStream(file.originalname);
-//     const readStream = file.stream;
-
-//     readStream.pipe(uploadStream);
-
-//     return new Promise<ObjectId>((resolve, reject) => {
-//       uploadStream.on('finish', () => {
-//         resolve(uploadStream.id as ObjectId);
-//       });
-//       uploadStream.on('error', reject);
-//     });
-//   } catch (error: any) {
-//     throw new Error(`Failed to upload image to GridFS: ${error.message}`);
-//   }
-// }
-
-// export async function POST(
-//   req: Request,
-//   { params }: {params: { file: Express.Multer.File}}
-// ) {
 //     try {
-//       const file = params.file;
-//       if (!file) {
-//         return new NextResponse("Backend: No file uploaded", {status: 400});
-//       }
-//       const fileId = await saveToGridFS(file);
-//       return NextResponse.json({
-//         message: "image uploaded",
-//         fileId: fileId
-//       })
+//         await connectToDB();
+//         const bucket = getBucket();
+//         if (!bucket) {
+//             return new NextResponse("GridFS bucket not initialise", { status: 500 });
+//         }
+
+//         await runUploadMiddleware(req, res);
+
+//         const file = req.file;
+//         if (!file) {
+//             return new NextResponse("No file uploaded", { status: 400 });
+//         }
+
+//         const uploadStream = bucket.openUploadStream(file.originalname, {
+//             contentType: file.mimetype,
+//         });
+
+//         const fileBuffer = Buffer.from(file.buffer);
+//         const readablePhotoStream = new Readable();
+//         readablePhotoStream.push(fileBuffer);
+//         readablePhotoStream.push(null);
+//         readablePhotoStream.pipe(uploadStream);
+
+//         uploadStream.on('finish', () => {
+//             return NextResponse.json({ message: 'File uploaded successfully', fileId: uploadStream.id });
+//         });
+
+//         uploadStream.on('error', (uploadErr) => {
+//             uploadStream.destroy();
+//             return new NextResponse("File upload error, " + uploadErr, { status: 500 });
+//         });
 //     } catch (error: any) {
-//       console.log(error)
-//       return new NextResponse("server error", { status: 500})
+//         return new NextResponse("GridFS bucket error, " + error.message, { status: 500 });
 //     }
 // }
 
-// export const multerMiddleware = upload.single('file');
+export const config = {
+    api: {
+        bodyParser: false,
+    },
+};
 
-// export async function POST(req: NextApiRequest, res: NextApiResponse) {
-//   try {
-//     const { filename } = req.body;
+// export async function POST(req: Request, res: NextApiResponse) {
+//     try {
+//         await connectToDB();
 
-//     await connectToDB();
+//         // await runMiddleware(req, res, uploadMiddleware);
 
-//     const db = mongoose.connection.getClient().db();
-//     const bucket = new GridFSBucket(db);
+//         const formData = await req.formData();
 
-//     const fileId = await uploadImageMetadataToGridFS(bucket, filename);
+//         const file = formData.get("file") as File;
+//         const arrayBuffer = await file.arrayBuffer();
+//         const buffer = new Uint8Array(arrayBuffer);
 
-//     res.status(200).json({ fileId });
-//   } catch (error: any) {
-//     console.error(`Failed to upload image metadata: ${error.message}`);
-//     res.status(500).json({ error: 'Failed to upload image metadata' });
-//   }
+
+//         console.log('formData api:', formData);
+
+//         // const file = formData.file as File;
+//         if (!file) {
+//             return NextResponse.json({ message: 'No file uploaded', status: 400 });
+//         }
+
+//         const gfs = getGFS();
+//         const writestream = gfs.createWriteStream({
+//             filename: file.name,
+//             content_type: file.type,
+//         });
+
+//         const fileBuffer = Buffer.from(await file.arrayBuffer());
+//         const readablePhotoStream = new Readable();
+//         readablePhotoStream.push(buffer);
+//         readablePhotoStream.push(null);
+//         readablePhotoStream.pipe(writestream);
+
+//         writestream.on('finish', () => {
+//             return NextResponse.json({ message: 'File uploaded successfully', fileId: writestream.id });
+//         });
+
+//         writestream.on('error', (uploadErr) => {
+//             writestream.end();
+//             return NextResponse.json({ message: 'File upload error: ' + uploadErr, status: 500 });
+//         });
+//     } catch (err: any) {
+//         NextResponse.json({ message: err.message, status: 500 });
+//     }
+
+//     // try {
+
+//     //     // uploadMiddleware(req, res, function (err) {
+//     //     //     if (err instanceof multer.MulterError) {
+//     //     //         return NextResponse.json({ message: err.message, status: 500 });
+//     //     //     } else if (err) {
+//     //     //         return NextResponse.json({ message: err.message, status: 500 });
+//     //     //     }
+//     //     //     // File uploaded successfully
+//     //     //     return NextResponse.json({ message: "File uploaded successfully", status: 200 });
+//     //     // });
+//     // } catch (err: any) {
+//     //     return NextResponse.json({ message: err.message, status: 500 });
+//     // }
 // }
 
-// async function uploadImageMetadataToGridFS(bucket: GridFSBucket, filename: string): Promise<string> {
-//   try {
-//     const fileId = 'test';
-//     return fileId;
-//   } catch (error:any) {
-//     throw new Error(`Failed to upload image metadata to GridFS: ${error.message}`);
-//   }
-// }
+export async function POST(req: Request) {
+    try {
+        await connectToDB();
+
+        const formData = await req.formData();
+        const file = formData.get("file") as File;
+
+        if (!file) {
+            return NextResponse.json({ message: 'No file uploaded', status: 400 });
+        }
+
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = new Uint8Array(arrayBuffer);
+
+        const db = mongoose.connection.getClient().db();
+        const bucket = new GridFSBucket(db, { bucketName: 'media' });
+
+        const readablePhotoStream = new Readable();
+        readablePhotoStream.push(buffer);
+        readablePhotoStream.push(null);
+
+        const uploadStream = bucket.openUploadStream(file.name, {
+            contentType: file.type,
+        });
+
+        const uploadPromise = new Promise((resolve, reject) => {
+            uploadStream.on('finish', () => {
+                resolve(uploadStream.id.toString());
+            });
+
+            uploadStream.on('error', (uploadErr) => {
+                reject(uploadErr);
+            });
+        });
+
+        readablePhotoStream.pipe(uploadStream);
+
+        const fileId = await uploadPromise;
+
+        revalidatePath("/workspace/create-card");
+        return NextResponse.json({ message: 'File uploaded successfully', fileId });
+    } catch (err: any) {
+        return NextResponse.json({ message: err.message, status: 500 });
+    }
+}
+
+export async function GET() {
+    try {
+        await connectToDB();
+
+        const db = mongoose.connection.getClient().db();
+        const bucket = new GridFSBucket(db, { bucketName: 'media' });
+
+        const files = await bucket.find({ contentType: { $regex: '^image/' } }).toArray();
+
+        return NextResponse.json({ status: 'success', files });
+    } catch (err: any) {
+        return NextResponse.json({ status: 'fail', message: err.message });
+    }
+}

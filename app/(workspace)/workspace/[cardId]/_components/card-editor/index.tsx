@@ -127,8 +127,11 @@ const CardEditor: React.FC<Props> = ({ liveMode, componentId }) => {
   console.log('state.editor.selectedElement', state.editor.selectedElement);
   console.log('state.editor.component in Workspacessssss: ', state.editor.component);
 
+  type Direction = 'inherit' | 'initial' | 'revert' | 'unset' | 'ltr' | 'rtl';
 
-  const styles = (currentIndex: number) => {
+  const styles = (currentIndex: number): React.CSSProperties => {
+    const contents = state.editor.component.contents;
+    const currentContent = contents && contents[currentIndex];
 
     if (currentIndex === 0) {
       return {
@@ -142,7 +145,7 @@ const CardEditor: React.FC<Props> = ({ liveMode, componentId }) => {
                 : state.editor.component.size === 'giga' ? '386px' : '300px',
         marginLeft: '8px',
         marginRight: '8px',
-        direction: state.editor.component.contents?.[currentIndex]?.direction,
+        direction: currentContent?.direction as Direction,
       };
     } else {
       return {
@@ -156,7 +159,7 @@ const CardEditor: React.FC<Props> = ({ liveMode, componentId }) => {
                 : state.editor.component.contents?.[currentIndex]?.size === 'giga' ? '386px' : '300px',
         marginLeft: '8px',
         marginRight: '8px',
-        direction: state.editor.component.contents?.[currentIndex]?.direction,
+        direction: currentContent?.direction as Direction,
       };
     }
   };
@@ -185,7 +188,7 @@ const CardEditor: React.FC<Props> = ({ liveMode, componentId }) => {
 
       return (
         <div
-          style={dynamicStyles}
+          style={typeof dynamicStyles === 'function' ? dynamicStyles(index ?? 0) : dynamicStyles}
           onClick={(e) => handleOnClickBody(e, component as EditorElement, component.id || "")}>
           {component.hero && (
             <div>

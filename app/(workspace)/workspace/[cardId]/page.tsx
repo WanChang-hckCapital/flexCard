@@ -34,12 +34,7 @@ const Page = async ({ params }: Props) => {
 
   if (!cardDetails) {
     redirect(`/`);
-  }
-
-  if (!cardDetails) return null;
-
-  console.log("workspacecard: " + cardDetails.creator);
-  console.log("auth: " + authaccountId.toString());
+  };
 
   if (cardDetails.creator.toString() !== authaccountId.toString()) {
     redirect(`/`);

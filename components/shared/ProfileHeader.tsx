@@ -68,7 +68,7 @@ function ProfileHeader({
   };
 
   return (
-    <div className='flex w-full flex-col justify-center'>
+    <div className='flex w-full flex-col justify-center mt-12'>
       <div className='flex items-center justify-center'>
         <div className='flex items-center gap-8'>
           <div className='relative h-24 w-24 object-cover'>

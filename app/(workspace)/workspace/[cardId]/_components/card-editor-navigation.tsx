@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/tooltip'
 import { updateCardTitle, upsertCardContent } from '@/lib/actions/workspace.actions'
 import { DeviceTypes, useEditor } from '@/lib/editor/editor-provider'
+import { createHtmlFromJson } from '@/lib/utils'
 import { Card } from '@/types'
 import clsx from 'clsx'
 import {
@@ -82,6 +83,8 @@ const CardEditorNavigation = ({
 
     const strLineFlexMessage = JSON.stringify(workspaceFormat);
 
+    const htmlFormat = createHtmlFromJson(workspaceFormat)
+
     try {
       const response = await upsertCardContent(
         authaccountId,
@@ -90,12 +93,14 @@ const CardEditorNavigation = ({
         },
         strWorkspaceFormat,
         strLineFlexMessage,
+        htmlFormat,
         cardDetails.cardID
       )
 
-      toast.success('Card saved successfully.')
+      toast.success('Card saved successfully.');
+      router.push(`/profile/${authaccountId}`);
     } catch (error) {
-      toast.error('Oppse! Something went wrong, Please try again later.')
+      toast.error('Oppse! Something went wrong, Please try again later.');
     }
   }
 

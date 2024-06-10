@@ -1,5 +1,5 @@
 'use client'
-import React, { ChangeEventHandler } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
   Accordion,
   AccordionContent,
@@ -32,17 +32,61 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
 import { EditorElement, useEditor } from '@/lib/editor/editor-provider'
 import { toast } from 'sonner'
+import { RgbaColor, RgbaColorPicker } from "react-colorful";
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Button } from '@/components/ui/button'
 
-type Props = { selectedBubbleId: string, selectedSectionId: string, selectedElement: EditorElement }
+type Props = { selectedBubbleId: string, selectedSectionId: string, selectedElement: EditorElement };
+type PaddingKeys = 'paddingAll' | 'paddingTop' | 'paddingBottom' | 'paddingStart' | 'paddingEnd' | 'size' | 'offsetTop' | 'offsetBottom' | 'offsetStart' | 'offsetEnd';
+type ColorProperty = 'color' | 'backgroundColor' | 'borderColor';
 
 const SettingsTab = (props: Props) => {
-  const { state, dispatch } = useEditor()
+  const { state, dispatch } = useEditor();
+  const [units, setUnits] = useState<{ [key in PaddingKeys]: string }>({
+    paddingAll: state.editor.selectedElement.paddingAll || 'px',
+    paddingTop: state.editor.selectedElement.paddingTop || 'px',
+    paddingBottom: state.editor.selectedElement.paddingBottom || 'px',
+    paddingStart: state.editor.selectedElement.paddingStart || 'px',
+    paddingEnd: state.editor.selectedElement.paddingEnd || 'px',
+    size: state.editor.selectedElement.size || 'px',
+    offsetTop: state.editor.selectedElement.offsetTop || 'px',
+    offsetBottom: state.editor.selectedElement.offsetBottom || 'px',
+    offsetStart: state.editor.selectedElement.offsetStart || 'px',
+    offsetEnd: state.editor.selectedElement.offsetEnd || 'px',
+  });
+  const [isAdvancedColorPickerOpen, setAdvancedColorPickerOpen] = useState(false);
+  const [isColorPickerOpen, setColorPickerOpen] = useState(false);
+  const [activeColorProperty, setActiveColorProperty] = useState('');
+
+  const parseRgba = (rgba: string) => {
+    const match = rgba.match(/rgba?\((\d+), (\d+), (\d+), (\d+(\.\d+)?)\)/);
+    if (match) {
+      return {
+        r: parseInt(match[1], 10),
+        g: parseInt(match[2], 10),
+        b: parseInt(match[3], 10),
+        a: parseFloat(match[4]),
+      };
+    }
+    return { r: 0, g: 0, b: 0, a: 1 };
+  };
+
+  const [color, setColor] = useState<RgbaColor>(
+    parseRgba(state.editor.selectedElement.color || 'rgba(0, 0, 0, 1)')
+  );
+  const colorPickerRef = useRef<HTMLDivElement>(null);
+  const rgbaToHex = ({ r, g, b, a }: RgbaColor): string => {
+    const toHex = (n: number) => n.toString(16).padStart(2, '0');
+    const alpha = Math.round(a * 255);
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}${toHex(alpha)}`;
+  };
 
   const handleOnChanges = (e: any) => {
 
@@ -77,6 +121,98 @@ const SettingsTab = (props: Props) => {
     toast.success(id.toUpperCase() + ' has been updated successfully.')
   }
 
+  const handleUnitOnChanges = (e: any) => {
+
+    const { id, value } = e.target;
+    const unit = units[id as PaddingKeys];
+    const processedValue = value ? `${value.replace(/px|%/, '')}${unit}` : '';
+
+    let elementDetails: EditorElement = {
+      ...state.editor.selectedElement,
+    };
+
+    if (processedValue !== "" && processedValue !== null && processedValue !== undefined) {
+      elementDetails = {
+        ...state.editor.selectedElement,
+        [id]: processedValue,
+      };
+    } else {
+      const keyToRemove: keyof EditorElement = id;
+      const { [keyToRemove]: _, ...newElementDetails } = elementDetails;
+
+      elementDetails = newElementDetails as EditorElement;
+    }
+
+    dispatch({
+      type: 'UPDATE_ELEMENT',
+      payload: {
+        bubbleId: props.selectedBubbleId,
+        sectionId: props.selectedSectionId,
+        elementDetails: elementDetails,
+      },
+    })
+
+    toast.success(id.toUpperCase() + ' has been updated successfully.')
+  }
+
+  const handleInputColorOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+
+    const updatedElement: EditorElement = {
+      ...state.editor.selectedElement,
+      [id]: value || '',
+    };
+
+    dispatch({
+      type: 'UPDATE_ELEMENT',
+      payload: {
+        bubbleId: props.selectedBubbleId,
+        sectionId: props.selectedSectionId,
+        elementDetails: updatedElement,
+      },
+    });
+
+    if (activeColorProperty === id) {
+      setColor(parseRgba(value));
+    }
+  };
+
+  const handleUnitChange = (value: 'px' | '%' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl', id: string) => {
+
+    setUnits(prevUnits => ({
+      ...prevUnits,
+      [id]: value
+    }));
+
+    if (['xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(value)) {
+      const updatedElement: EditorElement = {
+        ...state.editor.selectedElement,
+        [id]: value,
+      };
+      dispatch({
+        type: 'UPDATE_ELEMENT',
+        payload: {
+          bubbleId: props.selectedBubbleId,
+          sectionId: props.selectedSectionId,
+          elementDetails: updatedElement,
+        },
+      });
+    } else if (value === 'px' || value === '%') {
+      const updatedElement: EditorElement = {
+        ...state.editor.selectedElement,
+        [id]: "",
+      };
+      dispatch({
+        type: 'UPDATE_ELEMENT',
+        payload: {
+          bubbleId: props.selectedBubbleId,
+          sectionId: props.selectedSectionId,
+          elementDetails: updatedElement,
+        },
+      });
+    }
+  };
+
   const handleChangeActionValues = (e: any) => {
 
     const id = e.target.id;
@@ -99,6 +235,94 @@ const SettingsTab = (props: Props) => {
 
     toast.success(id.toUpperCase() + ' has been updated successfully.')
   }
+
+  const handleColorChange = (newColor: RgbaColor) => {
+    const hexColor = rgbaToHex(newColor);
+    const updatedElement: EditorElement = {
+      ...state.editor.selectedElement,
+      [activeColorProperty]: hexColor,
+    };
+
+    dispatch({
+      type: "UPDATE_ELEMENT",
+      payload: {
+        bubbleId: props.selectedBubbleId,
+        sectionId: props.selectedSectionId,
+        elementDetails: updatedElement,
+      },
+    });
+
+    setColor(newColor);
+  };
+
+  const handleClickOutside = (event: MouseEvent) => {
+    if (colorPickerRef.current && !colorPickerRef.current.contains(event.target as Node)) {
+      setColorPickerOpen(false);
+    }
+  };
+
+  const handleColorPickerOpen = (property: string) => {
+    setActiveColorProperty(property);
+    setColorPickerOpen(!isColorPickerOpen);
+  };
+
+  const hexToRgba = (hex: string | any[]) => {
+    let r = 0, g = 0, b = 0, a = 1;
+
+    if (hex.length === 4) {
+      r = parseInt(hex[1] + hex[1], 16);
+      g = parseInt(hex[2] + hex[2], 16);
+      b = parseInt(hex[3] + hex[3], 16);
+    } else if (hex.length === 7) {
+      r = parseInt(hex[1] + hex[2], 16);
+      g = parseInt(hex[3] + hex[4], 16);
+      b = parseInt(hex[5] + hex[6], 16);
+    }
+
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+  };
+
+  const exampleColors = [
+    { name: 'Maroon', color: hexToRgba('#800000') },
+    { name: 'Dark Red', color: hexToRgba('#8B0000') },
+    { name: 'Brown', color: hexToRgba('#A52A2A') },
+    { name: 'Firebrick', color: hexToRgba('#B22222') },
+    { name: 'Crimson', color: hexToRgba('#DC143C') },
+    { name: 'Red', color: hexToRgba('#FF0000') },
+
+    { name: 'Dark Orange', color: hexToRgba('#FF8C00') },
+    { name: 'Orange', color: hexToRgba('#FFA500') },
+    { name: 'Gold', color: hexToRgba('#FFD700') },
+    { name: 'Dark Golden Rod', color: hexToRgba('#B8860B') },
+    { name: 'Golden Rod', color: hexToRgba('#DAA520') },
+    { name: 'Pale Golden Rod', color: hexToRgba('#FF0000') },
+
+    { name: 'Yellow Green', color: hexToRgba('#9ACD32') },
+    { name: 'Dark Olive Green', color: hexToRgba('#556B2F') },
+    { name: 'Olive Drab', color: hexToRgba('#6B8E23') },
+    { name: 'Lawn Green', color: hexToRgba('#7CFC00') },
+    { name: 'Green', color: hexToRgba('#008000') },
+    { name: 'Forest Green', color: hexToRgba('#228B22') },
+
+    { name: 'Dark Cyan', color: hexToRgba('#008B8B') },
+    { name: 'Aqua', color: hexToRgba('#00FFFF') },
+    { name: 'Dark Turquoise', color: hexToRgba('#00CED1') },
+    { name: 'Deep Sky Blue', color: hexToRgba('#00BFFF') },
+    { name: 'Sky Blue', color: hexToRgba('#87CEEB') },
+    { name: 'Midnight Blue', color: hexToRgba('#191970') },
+  ];
+
+  useEffect(() => {
+    if (isColorPickerOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isColorPickerOpen]);
 
   return (
     <Accordion
@@ -475,13 +699,54 @@ const SettingsTab = (props: Props) => {
                   state.editor.selectedElement.type === 'separator') &&
                   (
                     <div className="flex flex-col gap-2">
-                      <p className="text-muted-foreground">Color</p>
-                      <Input
-                        className='text-black'
-                        id="color"
-                        onChange={handleOnChanges}
-                        value={state.editor.selectedElement.color}
-                      />
+                      <Label className="text-muted-foreground">Color</Label>
+                      <div className="flex border-[1px] rounded-md overflow-clip">
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <div
+                              className="w-12 cursor-pointer"
+                              style={{
+                                backgroundColor: state.editor.selectedElement.color,
+                              }}
+                              onClick={() => handleColorPickerOpen('color')}
+                            />
+                          </PopoverTrigger>
+                          <PopoverContent>
+                            <div className="grid grid-cols-6 gap-2 justify-items-center mb-6">
+                              {!isAdvancedColorPickerOpen && exampleColors.map((example) => (
+                                <button
+                                  key={example.name}
+                                  style={{ backgroundColor: example.color }}
+                                  onClick={() => handleColorChange(parseRgba(example.color))}
+                                  className="w-6 h-6 rounded-full"
+                                ></button>
+                              ))}
+                            </div>
+                            <div className='-mt-[10px] mb-4'>
+                              {isAdvancedColorPickerOpen && (
+                                <div className='flex justify-center'>
+                                  <RgbaColorPicker className='!w-[250px]' color={color} onChange={handleColorChange} />
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <Button
+                                className="w-full"
+                                variant={'secondary'}
+                                onClick={() => setAdvancedColorPickerOpen(!isAdvancedColorPickerOpen)}
+                              >
+                                {isAdvancedColorPickerOpen ? 'Back' : 'More'}
+                              </Button>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                        <Input
+                          className="text-black flex-grow rounded-l-none rounded-r-md"
+                          id="color"
+                          onChange={handleInputColorOnChange}
+                          value={state.editor.selectedElement.color || ""}
+                        />
+                      </div>
                     </div>
                   )}
 
@@ -644,13 +909,34 @@ const SettingsTab = (props: Props) => {
                 {state.editor.selectedElement.type === 'image' && (
                   <div className='flex flex-col gap-2'>
                     <p>Size(px)</p>
-                    <Input
-                      className='text-black'
-                      id="size"
-                      placeholder="px"
-                      onChange={handleOnChanges}
-                      value={state.editor.selectedElement.size}
-                    />
+                    <div className="flex items-center">
+                      <Input
+                        className="text-black flex-grow rounded-l-md rounded-r-none"
+                        id="size"
+                        placeholder={units.size}
+                        onChange={handleUnitOnChanges}
+                        value={state.editor.selectedElement.size?.replace(/px/, "") || ""}
+                        disabled={['xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.size)}
+                      />
+                      <Select onValueChange={(value) => handleUnitChange(value as 'px', "size")}>
+                        <SelectTrigger className="w-[40px] rounded-l-none">
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectItem value="px">px</SelectItem>
+                          </SelectGroup>
+                          <SelectSeparator />
+                          <SelectGroup>
+                            <SelectItem value="xs">xs</SelectItem>
+                            <SelectItem value="sm">sm</SelectItem>
+                            <SelectItem value="md">md</SelectItem>
+                            <SelectItem value="lg">lg</SelectItem>
+                            <SelectItem value="xl">xl</SelectItem>
+                            <SelectItem value="xxl">xxl</SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 )}
 
@@ -727,55 +1013,165 @@ const SettingsTab = (props: Props) => {
                     <div className="flex gap-4">
                       <div className="flex flex-col gap-2">
                         <Label className="text-muted-foreground">All</Label>
-                        <Input
-                          className='text-black'
-                          placeholder="px"
-                          id="paddingAll"
-                          onChange={handleOnChanges}
-                          value={state.editor.selectedElement.paddingAll}
-                        />
+                        <div className="flex items-center">
+                          <Input
+                            className="text-black flex-grow rounded-l-md rounded-r-none"
+                            placeholder={units.paddingAll}
+                            id="paddingAll"
+                            onChange={handleUnitOnChanges}
+                            value={state.editor.selectedElement.paddingAll?.replace(/px|%/, "") || ""}
+                            disabled={['xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.paddingAll)}
+                          />
+                          <Select onValueChange={(value) => handleUnitChange(value as 'px' | '%', "paddingAll")}>
+                            <SelectTrigger className="w-[40px] rounded-l-none">
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                <SelectItem value="px">px</SelectItem>
+                                <SelectItem value="%">%</SelectItem>
+                              </SelectGroup>
+                              <SelectSeparator />
+                              <SelectGroup>
+                                <SelectItem value="xs">xs</SelectItem>
+                                <SelectItem value="sm">sm</SelectItem>
+                                <SelectItem value="md">md</SelectItem>
+                                <SelectItem value="lg">lg</SelectItem>
+                                <SelectItem value="xl">xl</SelectItem>
+                                <SelectItem value="xxl">xxl</SelectItem>
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                       <div className="flex flex-col gap-2">
                         <Label className="text-muted-foreground">Top</Label>
-                        <Input
-                          className='text-black'
-                          placeholder="px"
-                          id="paddingTop"
-                          onChange={handleOnChanges}
-                          value={state.editor.selectedElement.paddingTop}
-                        />
+                        <div className="flex items-center">
+                          <Input
+                            className="text-black flex-grow rounded-l-md rounded-r-none"
+                            placeholder={units.paddingTop}
+                            id="paddingTop"
+                            onChange={handleOnChanges}
+                            value={state.editor.selectedElement.paddingTop?.replace(/px|%/, '') || ''}
+                            disabled={['xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.paddingTop)}
+                          />
+                          <Select onValueChange={(value) => handleUnitChange(value as 'px' | '%', "paddingTop")}>
+                            <SelectTrigger className="w-[40px] rounded-l-none">
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                <SelectItem value="px">px</SelectItem>
+                                <SelectItem value="%">%</SelectItem>
+                              </SelectGroup>
+                              <SelectSeparator />
+                              <SelectGroup>
+                                <SelectItem value="xs">xs</SelectItem>
+                                <SelectItem value="sm">sm</SelectItem>
+                                <SelectItem value="md">md</SelectItem>
+                                <SelectItem value="lg">lg</SelectItem>
+                                <SelectItem value="xl">xl</SelectItem>
+                                <SelectItem value="xxl">xxl</SelectItem>
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                       <div className="flex flex-col gap-2">
                         <Label className="text-muted-foreground">Bottom</Label>
-                        <Input
-                          className='text-black'
-                          placeholder="px"
-                          id="paddingBottom"
-                          onChange={handleOnChanges}
-                          value={state.editor.selectedElement.paddingBottom}
-                        />
+                        <div className="flex items-center">
+                          <Input
+                            className="text-black flex-grow rounded-l-md rounded-r-none"
+                            placeholder={units.paddingBottom}
+                            id="paddingBottom"
+                            onChange={handleOnChanges}
+                            value={state.editor.selectedElement.paddingBottom?.replace(/px|%/, '') || ''}
+                            disabled={['xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.paddingBottom)}
+                          />
+                          <Select onValueChange={(value) => handleUnitChange(value as 'px' | '%', "paddingBottom")}>
+                            <SelectTrigger className="w-[40px] rounded-l-none">
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                <SelectItem value="px">px</SelectItem>
+                                <SelectItem value="%">%</SelectItem>
+                              </SelectGroup>
+                              <SelectSeparator />
+                              <SelectGroup>
+                                <SelectItem value="xs">xs</SelectItem>
+                                <SelectItem value="sm">sm</SelectItem>
+                                <SelectItem value="md">md</SelectItem>
+                                <SelectItem value="lg">lg</SelectItem>
+                                <SelectItem value="xl">xl</SelectItem>
+                                <SelectItem value="xxl">xxl</SelectItem>
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                     </div>
                     <div className="flex gap-4">
                       <div className="flex flex-col gap-2">
                         <Label className="text-muted-foreground">Start</Label>
-                        <Input
-                          className='text-black'
-                          placeholder="px"
-                          id="paddingStart"
-                          onChange={handleOnChanges}
-                          value={state.editor.selectedElement.paddingStart}
-                        />
+                        <div className="flex items-center">
+                          <Input
+                            className="text-black flex-grow rounded-l-md rounded-r-none"
+                            placeholder={units.paddingStart}
+                            id="paddingStart"
+                            onChange={handleOnChanges}
+                            value={state.editor.selectedElement.paddingStart?.replace(/px|%/, '') || ''}
+                            disabled={['xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.paddingStart)}
+                          />
+                          <Select onValueChange={(value) => handleUnitChange(value as 'px' | '%', "paddingStart")}>
+                            <SelectTrigger className="w-[40px] rounded-l-none">
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                <SelectItem value="px">px</SelectItem>
+                                <SelectItem value="%">%</SelectItem>
+                              </SelectGroup>
+                              <SelectSeparator />
+                              <SelectGroup>
+                                <SelectItem value="xs">xs</SelectItem>
+                                <SelectItem value="sm">sm</SelectItem>
+                                <SelectItem value="md">md</SelectItem>
+                                <SelectItem value="lg">lg</SelectItem>
+                                <SelectItem value="xl">xl</SelectItem>
+                                <SelectItem value="xxl">xxl</SelectItem>
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                       <div className="flex flex-col gap-2">
                         <Label className="text-muted-foreground">End</Label>
-                        <Input
-                          className='text-black'
-                          placeholder="px"
-                          id="paddingEnd"
-                          onChange={handleOnChanges}
-                          value={state.editor.selectedElement.paddingEnd}
-                        />
+                        <div className="flex items-center">
+                          <Input
+                            className="text-black flex-grow rounded-l-md rounded-r-none"
+                            placeholder={units.paddingEnd}
+                            id="paddingEnd"
+                            onChange={handleOnChanges}
+                            value={state.editor.selectedElement.paddingEnd?.replace(/px|%/, '') || ''}
+                            disabled={['xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.paddingEnd)}
+                          />
+                          <Select onValueChange={(value) => handleUnitChange(value as 'px' | '%', "paddingEnd")}>
+                            <SelectTrigger className="w-[40px] rounded-l-none">
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                <SelectItem value="px">px</SelectItem>
+                                <SelectItem value="%">%</SelectItem>
+                              </SelectGroup>
+                              <SelectSeparator />
+                              <SelectGroup>
+                                <SelectItem value="xs">xs</SelectItem>
+                                <SelectItem value="sm">sm</SelectItem>
+                                <SelectItem value="md">md</SelectItem>
+                                <SelectItem value="lg">lg</SelectItem>
+                                <SelectItem value="xl">xl</SelectItem>
+                                <SelectItem value="xxl">xxl</SelectItem>
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -786,7 +1182,7 @@ const SettingsTab = (props: Props) => {
                       <div className="flex flex-col gap-2">
                         <Label className="text-muted-foreground">Width</Label>
                         <Input
-                          className='text-black'
+                          className="text-black flex-grow"
                           placeholder="px"
                           id="width"
                           onChange={handleOnChanges}
@@ -808,7 +1204,7 @@ const SettingsTab = (props: Props) => {
                       <div className="flex flex-col gap-2">
                         <Label className="text-muted-foreground">MaxWidth</Label>
                         <Input
-                          className='text-black'
+                          className="text-black flex-grow"
                           placeholder="px"
                           id="maxWidth"
                           onChange={handleOnChanges}
@@ -818,7 +1214,7 @@ const SettingsTab = (props: Props) => {
                       <div className="flex flex-col gap-2">
                         <Label className="text-muted-foreground">MaxHeight</Label>
                         <Input
-                          className='text-black'
+                          className="text-black flex-grow"
                           placeholder="px"
                           id="maxHeight"
                           onChange={handleOnChanges}
@@ -890,19 +1286,50 @@ const SettingsTab = (props: Props) => {
                   <div className="flex flex-col gap-2">
                     <Label className="text-muted-foreground">Background Color</Label>
                     <div className="flex border-[1px] rounded-md overflow-clip">
-                      <div
-                        className="w-12"
-                        style={{
-                          backgroundColor:
-                            state.editor.selectedElement.backgroundColor,
-                        }}
-                      />
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <div
+                            className="w-12 cursor-pointer"
+                            style={{
+                              backgroundColor: state.editor.selectedElement.backgroundColor,
+                            }}
+                            onClick={() => handleColorPickerOpen('backgroundColor')}
+                          />
+                        </PopoverTrigger>
+                        <PopoverContent>
+                          <div className="grid grid-cols-6 gap-2 justify-items-center mb-6">
+                            {!isAdvancedColorPickerOpen && exampleColors.map((example) => (
+                              <button
+                                key={example.name}
+                                style={{ backgroundColor: example.color }}
+                                onClick={() => handleColorChange(parseRgba(example.color))}
+                                className="w-6 h-6 rounded-full"
+                              ></button>
+                            ))}
+                          </div>
+                          <div className='-mt-[10px] mb-4'>
+                            {isAdvancedColorPickerOpen && (
+                              <div className='flex justify-center'>
+                                <RgbaColorPicker className='!w-[250px]' color={color} onChange={handleColorChange} />
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <Button
+                              className="w-full"
+                              variant={'secondary'}
+                              onClick={() => setAdvancedColorPickerOpen(!isAdvancedColorPickerOpen)}
+                            >
+                              {isAdvancedColorPickerOpen ? 'Back' : 'More'}
+                            </Button>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
                       <Input
-                        placeholder="#HFI245"
-                        className="!border-y-0 rounded-none !border-r-0 mr-2 text-black"
+                        className="text-black flex-grow rounded-l-none rounded-r-md"
                         id="backgroundColor"
-                        onChange={handleOnChanges}
-                        value={state.editor.selectedElement.backgroundColor}
+                        onChange={handleInputColorOnChange}
+                        value={state.editor.selectedElement.backgroundColor || ""}
                       />
                     </div>
                   </div>
@@ -925,20 +1352,51 @@ const SettingsTab = (props: Props) => {
 
                   <div className="flex flex-col gap-2">
                     <Label className="text-muted-foreground">Border Color</Label>
-                    <div className="flex  border-[1px] rounded-md overflow-clip">
-                      <div
-                        className="w-12"
-                        style={{
-                          borderColor:
-                            state.editor.selectedElement.borderColor,
-                        }}
-                      />
+                    <div className="flex border-[1px] rounded-md overflow-clip">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <div
+                            className="w-12 cursor-pointer"
+                            style={{
+                              backgroundColor: state.editor.selectedElement.borderColor,
+                            }}
+                            onClick={() => handleColorPickerOpen('borderColor')}
+                          />
+                        </PopoverTrigger>
+                        <PopoverContent>
+                          <div className="grid grid-cols-6 gap-2 justify-items-center mb-6">
+                            {!isAdvancedColorPickerOpen && exampleColors.map((example) => (
+                              <button
+                                key={example.name}
+                                style={{ backgroundColor: example.color }}
+                                onClick={() => handleColorChange(parseRgba(example.color))}
+                                className="w-6 h-6 rounded-full"
+                              ></button>
+                            ))}
+                          </div>
+                          <div className='-mt-[10px] mb-4'>
+                            {isAdvancedColorPickerOpen && (
+                              <div className='flex justify-center'>
+                                <RgbaColorPicker className='!w-[250px]' color={color} onChange={handleColorChange} />
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <Button
+                              className="w-full"
+                              variant={'secondary'}
+                              onClick={() => setAdvancedColorPickerOpen(!isAdvancedColorPickerOpen)}
+                            >
+                              {isAdvancedColorPickerOpen ? 'Back' : 'More'}
+                            </Button>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
                       <Input
-                        placeholder="#HFI245"
-                        className="!border-y-0 rounded-none !border-r-0 mr-2 text-black"
+                        className="text-black flex-grow rounded-l-none rounded-r-md"
                         id="borderColor"
-                        onChange={handleOnChanges}
-                        value={state.editor.selectedElement.borderColor}
+                        onChange={handleInputColorOnChange}
+                        value={state.editor.selectedElement.borderColor || ""}
                       />
                     </div>
                   </div>
@@ -964,45 +1422,136 @@ const SettingsTab = (props: Props) => {
                   <div className="flex gap-4">
                     <div className="flex flex-col gap-2">
                       <Label className="text-muted-foreground">Top</Label>
-                      <Input
-                        className='text-black'
-                        placeholder="px"
-                        id="offsetTop"
-                        onChange={handleOnChanges}
-                        value={state.editor.selectedElement.offsetTop}
-                      />
+                      <div className="flex items-center">
+                        <Input
+                          className="text-black flex-grow rounded-l-md rounded-r-none"
+                          placeholder={units.offsetTop}
+                          id="offsetTop"
+                          onChange={handleUnitOnChanges}
+                          value={state.editor.selectedElement.offsetTop?.replace(/px|%/, "") || ""}
+                          disabled={['xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.offsetTop)}
+                        />
+                        <Select onValueChange={(value) => handleUnitChange(value as 'px' | '%', "offsetTop")}>
+                          <SelectTrigger className="w-[40px] rounded-l-none">
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectItem value="px">px</SelectItem>
+                              <SelectItem value="%">%</SelectItem>
+                            </SelectGroup>
+                            <SelectSeparator />
+                            <SelectGroup>
+                              <SelectItem value="xs">xs</SelectItem>
+                              <SelectItem value="sm">sm</SelectItem>
+                              <SelectItem value="md">md</SelectItem>
+                              <SelectItem value="lg">lg</SelectItem>
+                              <SelectItem value="xl">xl</SelectItem>
+                              <SelectItem value="xxl">xxl</SelectItem>
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                     <div className="flex flex-col gap-2">
                       <Label className="text-muted-foreground">Bottom</Label>
-                      <Input
-                        className='text-black'
-                        placeholder="px"
-                        id="offsetBottom"
-                        onChange={handleOnChanges}
-                        value={state.editor.selectedElement.offsetBottom}
-                      />
+                      <div className="flex items-center">
+                        <Input
+                          className="text-black flex-grow rounded-l-md rounded-r-none"
+                          placeholder={units.offsetBottom}
+                          id="offsetBottom"
+                          onChange={handleUnitOnChanges}
+                          value={state.editor.selectedElement.offsetBottom?.replace(/px|%/, "") || ""}
+                          disabled={['xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.offsetBottom)}
+
+                        />
+                        <Select onValueChange={(value) => handleUnitChange(value as 'px' | '%', "offsetBottom")}>
+                          <SelectTrigger className="w-[40px] rounded-l-none">
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectItem value="px">px</SelectItem>
+                              <SelectItem value="%">%</SelectItem>
+                            </SelectGroup>
+                            <SelectSeparator />
+                            <SelectGroup>
+                              <SelectItem value="xs">xs</SelectItem>
+                              <SelectItem value="sm">sm</SelectItem>
+                              <SelectItem value="md">md</SelectItem>
+                              <SelectItem value="lg">lg</SelectItem>
+                              <SelectItem value="xl">xl</SelectItem>
+                              <SelectItem value="xxl">xxl</SelectItem>
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   </div>
                   <div className="flex gap-4">
                     <div className="flex flex-col gap-2">
                       <Label className="text-muted-foreground">Start</Label>
-                      <Input
-                        className='text-black'
-                        placeholder="px"
-                        id="offsetStart"
-                        onChange={handleOnChanges}
-                        value={state.editor.selectedElement.offsetStart}
-                      />
+                      <div className="flex items-center">
+                        <Input
+                          className="text-black flex-grow rounded-l-md rounded-r-none"
+                          placeholder={units.offsetStart}
+                          id="offsetStart"
+                          onChange={handleUnitOnChanges}
+                          value={state.editor.selectedElement.offsetStart?.replace(/px|%/, "") || ""}
+                          disabled={['xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.offsetStart)}
+
+                        />
+                        <Select onValueChange={(value) => handleUnitChange(value as 'px' | '%', "offsetStart")}>
+                          <SelectTrigger className="w-[40px] rounded-l-none">
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectItem value="px">px</SelectItem>
+                              <SelectItem value="%">%</SelectItem>
+                            </SelectGroup>
+                            <SelectSeparator />
+                            <SelectGroup>
+                              <SelectItem value="xs">xs</SelectItem>
+                              <SelectItem value="sm">sm</SelectItem>
+                              <SelectItem value="md">md</SelectItem>
+                              <SelectItem value="lg">lg</SelectItem>
+                              <SelectItem value="xl">xl</SelectItem>
+                              <SelectItem value="xxl">xxl</SelectItem>
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                     <div className="flex flex-col gap-2">
                       <Label className="text-muted-foreground">End</Label>
-                      <Input
-                        className='text-black'
-                        placeholder="px"
-                        id="offsetEnd"
-                        onChange={handleOnChanges}
-                        value={state.editor.selectedElement.offsetEnd}
-                      />
+                      <div className="flex items-center">
+                        <Input
+                          className="text-black flex-grow rounded-l-md rounded-r-none"
+                          placeholder={units.offsetEnd}
+                          id="offsetEnd"
+                          onChange={handleUnitOnChanges}
+                          value={state.editor.selectedElement.offsetEnd?.replace(/px|%/, "") || ""}
+                          disabled={['xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.offsetEnd)}
+
+                        />
+                        <Select onValueChange={(value) => handleUnitChange(value as 'px' | '%', "offsetEnd")}>
+                          <SelectTrigger className="w-[40px] rounded-l-none">
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectItem value="px">px</SelectItem>
+                              <SelectItem value="%">%</SelectItem>
+                            </SelectGroup>
+                            <SelectSeparator />
+                            <SelectGroup>
+                              <SelectItem value="xs">xs</SelectItem>
+                              <SelectItem value="sm">sm</SelectItem>
+                              <SelectItem value="md">md</SelectItem>
+                              <SelectItem value="lg">lg</SelectItem>
+                              <SelectItem value="xl">xl</SelectItem>
+                              <SelectItem value="xxl">xxl</SelectItem>
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -11,15 +11,10 @@ import clsx from 'clsx'
 import React, { useEffect, useState } from 'react'
 import TabList from './tabs'
 import SettingsTab from './tabs/settings-tab'
-import MediaBucketTab from './tabs/media-bucket-tab'
 import ComponentsTab from './tabs/components-tab'
 import { EditorElement, useEditor } from '@/lib/editor/editor-provider'
 
-type Props = {
-  authaccountId: string
-}
-
-const CardEditorSidebar = ({ authaccountId }: Props) => {
+const CardEditorSidebar = () => {
   const { state, dispatch } = useEditor();
   const [selectedElement, setSelectedElement] = useState<EditorElement | null>(state.editor.selectedElement);
   const [selectedElementBubbleId, setSelectedElementBubbleId] = useState<string>(state.editor.selectedElementBubbleId);
@@ -31,23 +26,23 @@ const CardEditorSidebar = ({ authaccountId }: Props) => {
     setSelectedElementSectionId(state.editor.selectedElementSectionId || '');
   }, [state.editor.selectedElement, state.editor.selectedElementBubbleId, state.editor.selectedElementSectionId]);
 
-  const handleElementSelect = (element: EditorElement | null) => {
-    setSelectedElement(element || null);
-    dispatch({ type: 'CHANGE_CLICKED_ELEMENT', payload: {
-      elementDetails: element || undefined,
-      bubbleId: '',
-      sectionId: ''
-    } });
-  };
+  // const handleElementSelect = (element: EditorElement | null) => {
+  //   setSelectedElement(element || null);
+  //   dispatch({ type: 'CHANGE_CLICKED_ELEMENT', payload: {
+  //     elementDetails: element || undefined,
+  //     bubbleId: '',
+  //     sectionId: ''
+  //   } });
+  // };
 
-  const handleDeselect = () => {
-    setSelectedElement(null);
-    dispatch({ type: 'CHANGE_CLICKED_ELEMENT', payload: {
-      elementDetails: undefined,
-      bubbleId: '',
-      sectionId: ''
-    } });
-  };
+  // const handleDeselect = () => {
+  //   setSelectedElement(null);
+  //   dispatch({ type: 'CHANGE_CLICKED_ELEMENT', payload: {
+  //     elementDetails: undefined,
+  //     bubbleId: '',
+  //     sectionId: ''
+  //   } });
+  // };
 
   return (
     <Sheet open={true} modal={false}>

@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/button'
 import { EditorElement, EditorSection, useEditor } from '@/lib/editor/editor-provider'
 import clsx from 'clsx'
 import { Trash } from 'lucide-react'
-import React, { useState } from 'react'
-import Image from 'next/image'
+import React, { useRef, useState } from 'react'
 import { defaultStyles } from '@/lib/constants'
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuLabel, ContextMenuRadioGroup, ContextMenuRadioItem, ContextMenuSeparator, ContextMenuShortcut, ContextMenuSub, ContextMenuSubContent, ContextMenuSubTrigger, ContextMenuTrigger } from '@/components/ui/context-menu'
+import { toast } from 'sonner'
 
 type Props = {
   element: EditorElement,
@@ -19,11 +20,8 @@ const ImageElement = (props: Props) => {
   const { dispatch, state } = useEditor();
 
   const [mouseIsOver, setMouseIsOver] = useState<boolean>(false);
-
-  // const handleDragStart = (e: React.DragEvent, type: EditorElementsBtns) => {
-  //   if (type === null) return
-  //   e.dataTransfer.setData('componentType', type)
-  // }
+  const [backgroundImage, setBackgroundImage] = useState(props.element.url || '');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleOnClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -37,12 +35,112 @@ const ImageElement = (props: Props) => {
     })
   }
 
-  const handleDeleteElement = () => {
+  const handleDeleteElement = async () => {
+    const currentImageUrl = state.editor.selectedElement.url;
+
+    const url = new URL(currentImageUrl || '');
+    const currentDomain = url.origin;
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+    if (currentDomain === baseUrl) {
+      const currentImageId = currentImageUrl ? currentImageUrl.split('/').pop() : null;
+
+      if (currentImageId) {
+        const deleteResponse = await fetch(`/api/uploadImage/${currentImageId}`, {
+          method: 'DELETE',
+        });
+
+        if (!deleteResponse.ok) {
+          toast.error('Failed to delete the existing image');
+        }
+
+        const deleteData = await deleteResponse.json();
+        if (deleteData.status !== 'success') {
+          toast.error(deleteData.message);
+        }
+      }
+    }
+
     dispatch({
       type: 'DELETE_ELEMENT',
       payload: { elementId: props.element.id, sectionId: props.sectionId, bubbleId: props.bubbleId },
     })
   }
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const currentImageUrl = state.editor.selectedElement.url;
+
+        const url = new URL(currentImageUrl || '');
+        const currentDomain = url.origin;
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+        if (currentDomain === baseUrl) {
+          const currentImageId = currentImageUrl ? currentImageUrl.split('/').pop() : null;
+
+          if (currentImageId) {
+            const deleteResponse = await fetch(`/api/uploadImage/${currentImageId}`, {
+              method: 'DELETE',
+            });
+
+            if (!deleteResponse.ok) {
+              toast.error('Failed to delete the existing image');
+            }
+
+            const deleteData = await deleteResponse.json();
+            if (deleteData.status !== 'success') {
+              toast.error(deleteData.message);
+            }
+          }
+        }
+
+        const response = await fetch('/api/uploadImage', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          toast.error('File upload failed');
+        }
+
+        const data = await response.json();
+        const uploadedImageUrl = `/api/uploadImage/${data.fileId}`;
+        const uploadImageUrlWithHttp = `${process.env.NEXT_PUBLIC_BASE_URL}${uploadedImageUrl}`;
+
+        setBackgroundImage(uploadedImageUrl);
+
+        const updatedElementDetails = {
+          ...state.editor.selectedElement,
+          url: uploadImageUrlWithHttp,
+        };
+
+        dispatch({
+          type: 'UPDATE_ELEMENT',
+          payload: {
+            bubbleId: props.bubbleId,
+            sectionId: props.sectionId,
+            elementDetails: updatedElementDetails,
+          },
+        })
+
+        toast.success('Image has been uploaded and updated successfully.');
+
+      } catch (error: any) {
+        toast.error('Failed to upload the image, Please try again.');
+        console.error(`Upload error: ${error.message}`);
+      }
+    }
+  };
+
+  const triggerFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
 
   const styles = {
     backgroundColor: props.element.backgroundColor,
@@ -67,7 +165,7 @@ const ImageElement = (props: Props) => {
         setMouseIsOver(false);
       }}
       className={clsx(
-        'w-full relative text-[16px] transition-all flex items-center justify-center',
+        'w-full relative text-[16px] overflow-hidden transition-all flex items-center justify-center',
         {
           '!border-blue-500':
             state.editor.selectedElement.id === props.element.id,
@@ -86,26 +184,36 @@ const ImageElement = (props: Props) => {
         )}
 
       {!Array.isArray(props.element.url) && (
-        console.log('Image AspectMode: ', props.element.aspectMode),
-        // <Image
-        //   src={props.element.url || ''}
-        //   width={parseInt(props.element.size || '200')}
-        //   height={parseInt(props.element.size || '200')}
-        //   alt={props.element.imageAlt || 'User Image'}
-        //   objectFit={props.element.aspectMode === 'fit' ? 'contain' : 'cover'}
-        // />
-        <span
-          style={{
-            display: 'inline-block',
-            width: props.element.size || '100px',
-            height: props.element.size || '100px',
-            backgroundImage: `url(${props.element.url || ''})`,
-            backgroundSize: props.element.aspectMode === 'cover' ? 'cover' : 'contain',
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'center',
-            overflow: 'hidden',
-          }}
-        />
+        <ContextMenu>
+          <ContextMenuTrigger>
+            <span
+              style={{
+                display: 'inline-block',
+                width: props.element.size || '100px',
+                height: props.element.size || '100px',
+                backgroundImage: `url(${backgroundImage})`,
+                backgroundSize: props.element.aspectMode === 'cover' ? 'cover' : 'contain',
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'center',
+                overflow: 'hidden',
+              }}
+            />
+          </ContextMenuTrigger>
+          <ContextMenuContent className="w-64">
+            <ContextMenuItem inset onClick={triggerFileInput}>
+              Upload Image
+              <ContextMenuShortcut>⌘[</ContextMenuShortcut>
+            </ContextMenuItem>
+          </ContextMenuContent>
+          <input
+            type="file"
+            ref={fileInputRef}
+            style={{ display: 'none' }}
+            onChange={handleFileChange}
+          />
+
+        </ContextMenu>
+
 
       )}
 

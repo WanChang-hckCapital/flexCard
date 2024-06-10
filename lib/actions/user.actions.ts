@@ -15,8 +15,8 @@ import { headers } from "next/headers";
 import { addMinutes, startOfDay, subMinutes } from "date-fns";
 import ComponentModel from "../models/component";
 import MemberModel from "../models/member";
-
-const axios = require('axios');
+import liff from "@line/liff";
+import axios from 'axios';
 
 export async function authenticateUser(email: string, password: string) {
     try {
@@ -509,15 +509,19 @@ export async function updateOrganizationUrl(params: ParamsUpdWebURL): Promise<vo
     }
 }
 
-export async function uploadImageToGridFS(imageData: Buffer, filename: string): Promise<string> {
+//not using
+export async function uploadImageToGridFS(file: File, filename: string): Promise<string> {
     try {
         await connectToDB();
+
+        console.log('File:', file);
 
         const db = mongoose.connection.getClient().db();
         const bucket = new GridFSBucket(db);
 
+        const fileBuffer = Buffer.from(await file.arrayBuffer());
         const readableStream = new Readable();
-        readableStream.push(imageData);
+        readableStream.push(fileBuffer);
         readableStream.push(null);
 
         const uploadStream = bucket.openUploadStream(filename);
@@ -754,7 +758,7 @@ export async function fetchPersonalCards(userId: string) {
                 image: creator && creatorImage ? creatorImage.binaryCode : undefined
             };
 
-            const componentInCard = await Card.findOne({ _id: card }).select('components');
+            // const componentInCard = await Card.findOne({ _id: card }).select('components');
             const lineComponents = await Card.findOne({ _id: card }).select('lineFormatComponent');
 
             const likesDetails = await Promise.all(card.likes.map(async (likeId: any) => {
@@ -772,11 +776,14 @@ export async function fetchPersonalCards(userId: string) {
                 };
             }));
 
+            const flexFormatHTML = await Card.findOne({ _id: card }).select('flexFormatHtml');
+
             const followers = await Promise.all(card.followers.map((id: any) => MemberModel.find({ user: id }).select('accountname')));
             // const followersImage = await Promise.all(card.followers.map((id: any) => MemberModel.findById(id).select('image')));
             // const followersImageBinary = await Promise.all(followersImage.map((image: any) => Image.find(image.image).select('binaryCode')));
-            const components = await ComponentModel.findOne({ _id: componentInCard.components }).select('content');
+            // const components = await ComponentModel.findOne({ _id: componentInCard.components }).select('content');
             const lineFormatComponent = await ComponentModel.findOne({ _id: lineComponents.lineFormatComponent }).select('content');
+            const flexFormatHTMLContent = await ComponentModel.findOne({ _id: flexFormatHTML.flexFormatHtml }).select('content');
 
             return {
                 cardId: card._id,
@@ -784,20 +791,81 @@ export async function fetchPersonalCards(userId: string) {
                 creator: creatorData,
                 likes: likesDetails,
                 followers: followers.map(follower => ({ accountname: follower.accountname })),
-                components: {
-                    content: components ? components.content : undefined,
-                },
+                // components: {
+                //     content: components ? components.content : undefined,
+                // },
                 lineComponents: {
                     content: lineFormatComponent ? lineFormatComponent.content : undefined,
+                },
+                flexHtml: {
+                    content: flexFormatHTMLContent ? flexFormatHTMLContent.content : undefined,
                 }
             };
         }));
 
-        // console.log("cardsData: " + JSON.stringify(cardsData));
-
         return cardsData;
     } catch (error) {
         console.error("Error fetching personal cards:", error);
+        throw error;
+    }
+}
+
+export async function fetchAllCards() {
+    try {
+        connectToDB();
+
+        const cards = await Card.find();
+
+        const cardsData = await Promise.all(cards.map(async (card) => {
+            const creator = await MemberModel.findOne({ user: card.creator }).select('accountname image');
+            const creatorImage = await Image.findOne({ _id: creator.image }).select('binaryCode');
+            const creatorData = {
+                accountname: creator ? creator.accountname : "Unknown",
+                image: creator && creatorImage ? creatorImage.binaryCode : undefined
+            };
+
+            const lineComponents = await Card.findOne({ _id: card }).select('lineFormatComponent');
+
+            const likesDetails = await Promise.all(card.likes.map(async (likeId: any) => {
+                const likeUser = await MemberModel.findOne({ user: likeId }).select('accountname image');
+                if (likeUser && likeUser.image) {
+                    const imageDoc = await Image.findById(likeUser.image).select('binaryCode');
+                    return {
+                        accountname: likeUser.accountname,
+                        binarycode: imageDoc ? imageDoc.binaryCode : undefined
+                    };
+                }
+                return {
+                    accountname: likeUser ? likeUser.accountname : "Unknown",
+                    binarycode: undefined
+                };
+            }));
+
+            const flexFormatHTML = await Card.findOne({ _id: card }).select('flexFormatHtml');
+
+            const followers = await Promise.all(card.followers.map((id: any) => MemberModel.find({ user: id }).select('accountname')));
+
+            const lineFormatComponent = await ComponentModel.findOne({ _id: lineComponents.lineFormatComponent }).select('content');
+            const flexFormatHTMLContent = await ComponentModel.findOne({ _id: flexFormatHTML.flexFormatHtml }).select('content');
+
+            return {
+                cardId: card._id,
+                title: card.title,
+                creator: creatorData,
+                likes: likesDetails,
+                followers: followers.map(follower => ({ accountname: follower.accountname })),
+                lineComponents: {
+                    content: lineFormatComponent ? lineFormatComponent.content : undefined,
+                },
+                flexHtml: {
+                    content: flexFormatHTMLContent ? flexFormatHTMLContent.content : undefined,
+                }
+            };
+        }));
+
+        return cardsData;
+    } catch (error) {
+        console.error("Error fetching all cards:", error);
         throw error;
     }
 }
@@ -842,9 +910,33 @@ export async function sendFlexMessageThruOA({
     try {
         const response = await axios.post(url, JSONData, { headers });
         // console.log('Message sent:', response.data);
-        return { success: true, message: 'Card has been shared successfully, Please check your LINE.'};
+        return { success: true, message: 'Card has been shared successfully, Please check your LINE.' };
     } catch (error: any) {
         console.error('Error sharing Card Line:', error.response ? error.response.data : error.message);
+        return { success: false, message: 'Failed to share card to LINE, Please try again later.' };
+    }
+}
+
+// cannot run on server side
+export async function sendFlexMessageLiff(flexContent: string) {
+    try {
+        const liffId = process.env.LIFF_LINE_CLIENT_ID;
+
+        await liff.init({ liffId: liffId! });
+        if (liff.isInClient()) {
+            await liff.shareTargetPicker([
+                {
+                    type: 'flex',
+                    altText: 'This is a Flex Message',
+                    contents: JSON.parse(flexContent),
+                },
+            ]);
+            return { success: true, message: 'Card has been shared successfully, Please check your LINE.'};
+        } else {
+            return { success: false, message: 'Failed to share card to LINE, Please open in Line app.'};
+        }
+    } catch (error: any) {
+        console.log('Error sharing Card Line:', error.message);
         return { success: false, message: 'Failed to share card to LINE, Please try again later.'};
     }
 }

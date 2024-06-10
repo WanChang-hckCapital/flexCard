@@ -14,6 +14,8 @@ import ButtonPlaceholder from './button-placeholder'
 import SeparatorPlaceholder from './separator-placeholder'
 import ImagePlaceholder from './image-placeholder'
 import IconPlaceholder from './icon-placeholder'
+import { Button } from '@/components/ui/button'
+import UploadForm from '@/components/forms/uploadImage-form'
 
 type Props = {}
 
@@ -22,7 +24,7 @@ const ComponentsTab = (props: Props) => {
     Component: React.ReactNode
     label: string
     id: EditorElementsBtns
-    group: 'layout' | 'elements'
+    group: 'layout' | 'elements' | 'media'
   }[] = [
     {
       Component: <ContainerPlaceholder />,
@@ -72,13 +74,19 @@ const ComponentsTab = (props: Props) => {
       id: 'icon',
       group: 'elements',
     },
+    {
+      Component: <IconPlaceholder />,
+      label: 'Media',
+      id: 'icon',
+      group: 'media',
+    },
   ]
 
   return (
     <Accordion
       type="multiple"
       className="w-full px-4"
-      defaultValue={['Layout', 'Elements']}
+      defaultValue={['Layout', 'Elements', 'Media']}
     >
       <AccordionItem
         value="Layout"
