@@ -140,9 +140,8 @@ function Card({
                         </div>
                         <div className="flex justify-start pl-2 pb-2 absolute bottom-2 left-2">
                           {likes.slice(-5).map((like, index) => (
-                            <div className="object-cover max-w-full self-center">
+                            <div key={index} className="object-cover max-w-full self-center">
                               <Image
-                                key={index}
                                 src={like.binarycode}
                                 alt={like.accountname}
                                 width={28}

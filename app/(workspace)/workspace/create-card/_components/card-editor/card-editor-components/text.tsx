@@ -60,7 +60,7 @@ const TextElement = (props: Props) => {
     textAlign: props.element.align as 'left' | 'right' | 'center' | 'justify' | 'start' | 'end' | undefined || defaultStyles.textAlign,
     letterSpacing: props.element.lineSpacing,
     fontWeight: props.element.weight,
-    fontSize: props.element.size,
+    fontSize: props.element.size === 'xs' ? '13px' : props.element.size === 'sm' ? '14px' : props.element.size === 'md' ? '16px' : props.element.size === 'lg' ? '19px' : props.element.size === 'xl' ? '22px' : props.element.size === 'xxl' ? '29px' : props.element.size,
     fontStyle: props.element.style,
     textDecorationLine: props.element.decoration,
     marginTop: props.element.margin,
@@ -90,7 +90,7 @@ const TextElement = (props: Props) => {
     >
       {state.editor.selectedElement.id === props.element.id && !state.editor.liveMode && (
         <Badge className="absolute -top-[25px] -left-[10px] rounded-none rounded-t-lg">
-          <div className='text-slate-700'>
+          <div className='text-[16px]'>
             <p>{state.editor.selectedElement.type?.toUpperCase()}</p>
           </div>
 
@@ -118,5 +118,7 @@ const TextElement = (props: Props) => {
     </div>
   );
 };
+
+TextElement.displayName = 'TextElement';
 
 export default TextElement;

@@ -44,10 +44,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Button } from '@/components/ui/button'
 
 type Props = { selectedBubbleId: string, selectedSectionId: string, selectedElement: EditorElement };
-type PaddingKeys = 'paddingAll' | 'paddingTop' | 'paddingBottom' | 'paddingStart' | 'paddingEnd' | 'size' | 'offsetTop' | 'offsetBottom' | 'offsetStart' | 'offsetEnd';
+type PaddingKeys = 'paddingAll' | 'paddingTop' | 'paddingBottom' | 'paddingStart' | 'paddingEnd' | 'size' | 'borderWidth' | 'offsetTop' | 'offsetBottom' | 'offsetStart' | 'offsetEnd';
 type ColorProperty = 'color' | 'backgroundColor' | 'borderColor';
 
-const SettingsTab = (props: Props) => {
+function SettingsTab(props: Props) {
   const { state, dispatch } = useEditor();
   const [units, setUnits] = useState<{ [key in PaddingKeys]: string }>({
     paddingAll: state.editor.selectedElement.paddingAll || 'px',
@@ -56,6 +56,7 @@ const SettingsTab = (props: Props) => {
     paddingStart: state.editor.selectedElement.paddingStart || 'px',
     paddingEnd: state.editor.selectedElement.paddingEnd || 'px',
     size: state.editor.selectedElement.size || 'px',
+    borderWidth: state.editor.selectedElement.borderWidth || 'px',
     offsetTop: state.editor.selectedElement.offsetTop || 'px',
     offsetBottom: state.editor.selectedElement.offsetBottom || 'px',
     offsetStart: state.editor.selectedElement.offsetStart || 'px',
@@ -177,14 +178,14 @@ const SettingsTab = (props: Props) => {
     }
   };
 
-  const handleUnitChange = (value: 'px' | '%' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl', id: string) => {
+  const handleUnitChange = (value: 'px' | '%' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | 'light' | 'normal' | 'medium' | 'semi-bold' | 'bold', id: string) => {
 
     setUnits(prevUnits => ({
       ...prevUnits,
       [id]: value
     }));
 
-    if (['xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(value)) {
+    if (['xs', 'sm', 'md', 'lg', 'xl', 'xxl', 'light', 'normal', 'medium', 'semi-bold', 'bold'].includes(value)) {
       const updatedElement: EditorElement = {
         ...state.editor.selectedElement,
         [id]: value,
@@ -805,13 +806,34 @@ const SettingsTab = (props: Props) => {
                       </div>
                       <div className="flex flex-col flex-1 gap-2">
                         <Label className="text-muted-foreground">Size</Label>
-                        <Input
-                          className='text-black'
-                          placeholder="px"
-                          id="size"
-                          onChange={handleOnChanges}
-                          value={state.editor.selectedElement.size}
-                        />
+                        <div className="flex items-center">
+                          <Input
+                            className="text-black flex-grow rounded-l-md rounded-r-none"
+                            id="size"
+                            placeholder={units.size}
+                            onChange={handleUnitOnChanges}
+                            value={state.editor.selectedElement.size?.replace(/px/, "") || ""}
+                            disabled={['xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.size)}
+                          />
+                          <Select onValueChange={(value) => handleUnitChange(value as 'px', "size")}>
+                            <SelectTrigger className="w-[40px] rounded-l-none">
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                <SelectItem value="px">px</SelectItem>
+                              </SelectGroup>
+                              <SelectSeparator />
+                              <SelectGroup>
+                                <SelectItem value="xs">xs</SelectItem>
+                                <SelectItem value="sm">sm</SelectItem>
+                                <SelectItem value="md">md</SelectItem>
+                                <SelectItem value="lg">lg</SelectItem>
+                                <SelectItem value="xl">xl</SelectItem>
+                                <SelectItem value="xxl">xxl</SelectItem>
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                     </div>
 
@@ -1242,9 +1264,9 @@ const SettingsTab = (props: Props) => {
             <AccordionContent className="flex flex-col gap-4">
               {state.editor.selectedElement.type === 'box' && (
                 <div>
-                  <Label className="text-muted-foreground">Corner Radius</Label>
-                  <div className="flex items-center justify-end">
-                    <small>
+                  <div className="flex items-center justify-between mb-4">
+                    <Label className="text-muted-foreground">Corner Radius</Label>
+                    <Label>
                       {typeof state.editor.selectedElement?.cornerRadius ===
                         'number'
                         ? state.editor.selectedElement?.cornerRadius
@@ -1254,7 +1276,7 @@ const SettingsTab = (props: Props) => {
                           ).replace('px', '')
                         ) || 0}
                       px
-                    </small>
+                    </Label>
                   </div>
                   <Slider
                     onValueChange={(e: any) => {
@@ -1339,14 +1361,32 @@ const SettingsTab = (props: Props) => {
                 <div className='flex flex-col gap-4'>
                   <div className="flex flex-col gap-2">
                     <Label className="text-muted-foreground">Border Width</Label>
-                    <div className="flex  border-[1px] rounded-md overflow-clip">
+                    <div className="flex items-center">
                       <Input
-                        className='text-black'
-                        placeholder="px"
+                        className="text-black flex-grow rounded-l-md rounded-r-none"
                         id="borderWidth"
-                        onChange={handleOnChanges}
-                        value={state.editor.selectedElement.borderWidth}
+                        placeholder={units.borderWidth}
+                        onChange={handleUnitOnChanges}
+                        value={state.editor.selectedElement.borderWidth?.replace(/px/, "") || ""}
+                        disabled={['light', 'normal', 'medium', 'semi-bold', 'bold'].includes(units.borderWidth)}
                       />
+                      <Select onValueChange={(value) => handleUnitChange(value as 'px', "borderWidth")}>
+                        <SelectTrigger className="w-[40px] rounded-l-none">
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectItem value="px">px</SelectItem>
+                          </SelectGroup>
+                          <SelectSeparator />
+                          <SelectGroup>
+                            <SelectItem value="light">light</SelectItem>
+                            <SelectItem value="normal">normal</SelectItem>
+                            <SelectItem value="medium">medium</SelectItem>
+                            <SelectItem value="semi-bold">semi-bold</SelectItem>
+                            <SelectItem value="bold">bold</SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 

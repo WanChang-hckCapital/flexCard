@@ -23,11 +23,21 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
-import { adminSidebarLinks } from "@/constants"
+import { adminSidebarLinks, NormalUserAllowedRoutes } from "@/constants"
 import { usePathname } from "next/navigation"
+import { Usertype } from "@/types"
 
-function SideBar() {
+interface UserTypeProps {
+    usertype: Usertype;
+}
+
+function SideBar({ usertype }: UserTypeProps) {
     const pathname = usePathname();
+    const userAllowedRoutes = NormalUserAllowedRoutes[usertype];
+
+    const filteredLinks = adminSidebarLinks.filter(link =>
+        userAllowedRoutes.includes(link.route)
+    );
 
     return (
         <div className="hidden border-r border-neutral-600 bg-muted/40 md:block">
@@ -39,12 +49,10 @@ function SideBar() {
                 </div>
                 <div className="flex-1">
                     <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-                        {adminSidebarLinks.map((link) => {
+                        {filteredLinks.map(link => {
                             const isActive =
                                 (pathname.includes(link.route) && link.route.length > 10) ||
                                 pathname === link.route;
-
-                            // if (link.route === "/profile") link.route = `${link.route}/${userId}`;
 
                             return (
                                 <Link
@@ -52,25 +60,17 @@ function SideBar() {
                                     key={link.label}
                                     className={`leftsidebar_link ${isActive && "bg-primary-500 "}`}
                                 >
-                                    {link.icon === 'Home' ? (
-                                        <Home className="h-5 w-5" />
-                                    ) : link.icon === 'ShoppingCart' ? (
+                                    {link.icon === "Home" && <Home className="h-5 w-5" />}
+                                    {link.icon === "ShoppingCart" && (
                                         <ShoppingCart className="h-5 w-5" />
-                                    ) : link.icon === 'Package' ? (
-                                        <Package className="h-5 w-5" />
-                                    ) :link.icon === 'Ticket' ? (
-                                        <Ticket className="h-5 w-5" />
-                                    ) : link.icon === 'Users' ? (
-                                        <Users className="h-5 w-5" />
-                                    ) : link.icon === 'LineChart' ? (
-                                        <LineChart className="h-5 w-5" />
-                                    ) : link.icon === 'PiggyBank' ? (
-                                        <PiggyBank className="h-5 w-5" />
-                                    ) : link.icon === 'Settings' ? (
-                                        <Settings className="h-5 w-5" />
-                                    ) : null}
-
-                                    <p className='text-light-1'>{link.label}</p>
+                                    )}
+                                    {link.icon === "Package" && <Package className="h-5 w-5" />}
+                                    {link.icon === "Ticket" && <Ticket className="h-5 w-5" />}
+                                    {link.icon === "Users" && <Users className="h-5 w-5" />}
+                                    {link.icon === "LineChart" && <LineChart className="h-5 w-5" />}
+                                    {link.icon === "PiggyBank" && <PiggyBank className="h-5 w-5" />}
+                                    {link.icon === "Settings" && <Settings className="h-5 w-5" />}
+                                    <p className="text-light-1">{link.label}</p>
                                 </Link>
                             );
                         })}

@@ -4,7 +4,7 @@ import React from 'react'
 
 type Props = {}
 
-const TextPlaceholder = (props: Props) => {
+function SeparatorPlaceholder(props: Props) {
   const handleDragState = (e: React.DragEvent, type: EditorElementsBtns) => {
     if (type === null) return
     e.dataTransfer.setData('elementType', type)
@@ -26,4 +26,4 @@ const TextPlaceholder = (props: Props) => {
   )
 }
 
-export default TextPlaceholder
+export default SeparatorPlaceholder

@@ -82,7 +82,7 @@ const ButtonElement: React.FC<ButtonElementProps> = ({ element, sectionId, bubbl
           }
         )}
       >
-        <div className='text-slate-700'>
+        <div className='text-[16px]'>
           <p className='text-xs'>{state.editor.selectedElement.type?.toUpperCase()}</p>
         </div>
       </Badge>
@@ -107,5 +107,7 @@ const ButtonElement: React.FC<ButtonElementProps> = ({ element, sectionId, bubbl
     </div>
   );
 };
+
+ButtonElement.displayName = 'ButtonElement';
 
 export default ButtonElement;

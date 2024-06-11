@@ -1,3 +1,5 @@
+import { Usertype } from "@/types";
+
 export const sidebarLinks = [
   {
     imgURL: "/assets/home.svg",
@@ -74,3 +76,15 @@ export const adminSidebarLinks = [
     label: "Settings",
   },
 ]
+
+export const NormalUserAllowedRoutes: Record<Usertype, string[]> = {
+  PERSONAL: ["/dashboard", "/dashboard/analytics", "/dashboard/settings"],
+  PREMIUM: ["/dashboard", "/dashboard/analytics", "/dashboard/settings"],
+  EXPERT: ["/dashboard", "/dashboard/analytics", "/dashboard/settings"],
+  ELITE: ["/dashboard", "/dashboard/analytics", "/dashboard/settings"],
+  SUPERUSER: ["/dashboard", "/dashboard/analytics", "/dashboard/settings"],
+  ORGANIZATION: [],
+  BUSINESS: [],
+  ENTERPRISE: [],
+  FLEXADMIN: []
+};

@@ -35,4 +35,6 @@ const Recursive = ({ element, sectionId, bubble }: Props) => {
   }
 }
 
+Recursive.displayName = 'Recursive';
+
 export default Recursive

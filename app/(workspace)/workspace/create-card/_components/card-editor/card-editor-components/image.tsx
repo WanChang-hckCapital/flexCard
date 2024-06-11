@@ -230,4 +230,6 @@ const ImageElement = (props: Props) => {
   )
 }
 
+ImageElement.displayName = 'ImageElement';
+
 export default ImageElement

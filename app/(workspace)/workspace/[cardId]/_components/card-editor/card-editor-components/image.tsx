@@ -177,7 +177,7 @@ const ImageElement = (props: Props) => {
       {state.editor.selectedElement.id === props.element.id &&
         !state.editor.liveMode && (
           <Badge className="absolute -top-[5px] -left-[5px] rounded-none rounded-t-lg ">
-            <div className='text-slate-700'>
+            <div className='text-[16px]'>
               <p className='text-xs'>{state.editor.selectedElement.type?.toUpperCase()}</p>
             </div>
           </Badge>
@@ -189,8 +189,8 @@ const ImageElement = (props: Props) => {
             <span
               style={{
                 display: 'inline-block',
-                width: props.element.size || '100px',
-                height: props.element.size || '100px',
+                width: props.element.size === 'xs' ? '60px' : props.element.size === 'sm' ? '80px' : props.element.size === 'md' ? '100px' : props.element.size === 'lg' ? '120px' : props.element.size === 'xl' ? '140px' : props.element.size === 'xxl' ? '160px' : props.element.size === 'full' ? '100%' : props.element.size || '100px',
+                height: props.element.size === 'xs' ? '60px' : props.element.size === 'sm' ? '80px' : props.element.size === 'md' ? '100px' : props.element.size === 'lg' ? '120px' : props.element.size === 'xl' ? '140px' : props.element.size === 'xxl' ? '160px' : props.element.size === 'full' ? '100%' : props.element.size || '100px',
                 backgroundImage: `url(${backgroundImage})`,
                 backgroundSize: props.element.aspectMode === 'cover' ? 'cover' : 'contain',
                 backgroundRepeat: 'no-repeat',
@@ -211,10 +211,7 @@ const ImageElement = (props: Props) => {
             style={{ display: 'none' }}
             onChange={handleFileChange}
           />
-
         </ContextMenu>
-
-
       )}
 
       {mouseIsOver && state.editor.selectedElement.id === props.element.id &&
@@ -232,5 +229,7 @@ const ImageElement = (props: Props) => {
     </div>
   )
 }
+
+ImageElement.displayName = 'ImageElement';
 
 export default ImageElement

@@ -223,7 +223,7 @@ const Container = ({ element, sectionId, bubble }: Props) => {
     maxWidth: element.maxWidth,
     maxHeight: element.maxHeight,
     borderRadius: element.cornerRadius,
-    borderWidth: element.borderWidth,
+    borderWidth: element.borderWidth === 'light' ? '0.5px' : element.borderWidth === 'normal' ? '1px' : element.borderWidth === 'medium' ? '2px' : element.borderWidth === 'semi-bold' ? '3px' : element.borderWidth === 'bold' ? '4px' : element.borderWidth,
     borderColor: element.borderColor,
     top: element.offsetTop === 'xs' ? '2px' : element.offsetTop === 'sm' ? '4px' : element.offsetTop === 'md' ? '8px' : element.offsetTop === 'lg' ? '12px' : element.offsetTop === 'xl' ? '16px' : element.offsetTop === 'xxl' ? '20px' : element.offsetTop,
     left: element.offsetStart === 'xs' ? '2px' : element.offsetStart === 'sm' ? '4px' : element.offsetStart === 'md' ? '8px' : element.offsetStart === 'lg' ? '12px' : element.offsetStart === 'xl' ? '16px' : element.offsetStart === 'xxl' ? '20px' : element.offsetStart,
@@ -280,7 +280,7 @@ const Container = ({ element, sectionId, bubble }: Props) => {
           }
         )}
       >
-        <div className='text-slate-700'>
+        <div className='text-[16px]'>
           <p>{strElementType.toUpperCase()} Element</p>
         </div>
       </Badge>
@@ -314,5 +314,7 @@ const Container = ({ element, sectionId, bubble }: Props) => {
     </div>
   )
 }
+
+Container.displayName = 'Container';
 
 export default Container

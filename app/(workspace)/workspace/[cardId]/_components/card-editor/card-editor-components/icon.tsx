@@ -66,7 +66,7 @@ const IconElement = (props: Props) => {
       {state.editor.selectedElement.id === props.element.id &&
         !state.editor.liveMode && (
           <Badge className="absolute -top-[23px] -left-[35px] rounded-none rounded-t-lg ">
-            <div className='text-slate-700'>
+            <div className='text-[16px]'>
               <p className='text-xs'>{state.editor.selectedElement.type?.toUpperCase()}</p>
             </div>
           </Badge>
@@ -100,5 +100,7 @@ const IconElement = (props: Props) => {
     </div>
   )
 }
+
+IconElement.displayName = 'IconElement';
 
 export default IconElement

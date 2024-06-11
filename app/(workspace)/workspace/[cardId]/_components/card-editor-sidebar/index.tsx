@@ -19,7 +19,7 @@ type Props = {
   authaccountId: string
 }
 
-const CardEditorSidebar = ({ authaccountId }: Props) => {
+function CardEditorSidebar({ authaccountId }: Props) {
   const { state, dispatch } = useEditor();
   // const [selectedElement, setSelectedElement] = useState<EditorElement | null>(state.editor.selectedElement);
   // const [selectedElementBubbleId, setSelectedElementBubbleId] = useState<string>(state.editor.selectedElementBubbleId);

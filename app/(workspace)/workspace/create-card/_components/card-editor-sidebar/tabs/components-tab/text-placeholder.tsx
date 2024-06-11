@@ -4,7 +4,7 @@ import React from 'react'
 
 type Props = {}
 
-const TextPlaceholder = (props: Props) => {
+function TextPlaceholder(props: Props) {
   const handleDragState = (e: React.DragEvent, type: EditorElementsBtns) => {
     if (type === null) return
     e.dataTransfer.setData('elementType', type)

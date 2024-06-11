@@ -4,7 +4,7 @@ import React from 'react'
 
 type Props = {}
 
-const BubblePlaceholder = (props: Props) => {
+function BubblePlaceholder(props: Props) {
   const handleDragStart = (e: React.DragEvent, type: EditorComponentsBtns) => {
     if (type === null) return
     e.dataTransfer.setData('componentType', type)

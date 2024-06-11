@@ -59,7 +59,7 @@ const Separator: React.FC<SeparatorProps> = ({ element, sectionId, bubbleId }) =
     >
       {state.editor.selectedElement.id === element.id && !state.editor.liveMode && (
         <Badge className="absolute -top-[15px] -left-[10px] rounded-none rounded-t-lg">
-          <div className='text-slate-700'>
+          <div className='text-[16px]'>
             <p className='text-xs'>{state.editor.selectedElement.type?.toUpperCase()}</p>
           </div>
         </Badge>
@@ -81,5 +81,7 @@ const Separator: React.FC<SeparatorProps> = ({ element, sectionId, bubbleId }) =
     </div>
   );
 };
+
+Separator.displayName = 'Separator';
 
 export default Separator;

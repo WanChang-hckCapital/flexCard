@@ -19,7 +19,7 @@ type Props = {
   componentId: object;
 };
 
-const CardEditor: React.FC<Props> = ({ liveMode, componentId }) => {
+function CardEditor({ liveMode, componentId }: Props) {
   const { dispatch, state } = useEditor();
 
   useEffect(() => {

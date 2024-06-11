@@ -28,5 +28,6 @@ const BubbleComponent: React.FC<BubbleComponentProps> = React.memo(({ element, s
     );
 });
 
+BubbleComponent.displayName = 'BubbleComponent';
 
 export default BubbleComponent;

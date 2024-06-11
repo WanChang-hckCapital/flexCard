@@ -17,7 +17,7 @@ import IconPlaceholder from './icon-placeholder'
 
 type Props = {}
 
-const ComponentsTab = (props: Props) => {
+function ComponentsTab(props: Props) {
   const elements: {
     Component: React.ReactNode
     label: string

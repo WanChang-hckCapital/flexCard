@@ -14,7 +14,7 @@ import SettingsTab from './tabs/settings-tab'
 import ComponentsTab from './tabs/components-tab'
 import { EditorElement, useEditor } from '@/lib/editor/editor-provider'
 
-const CardEditorSidebar = () => {
+function CardEditorSidebar() {
   const { state, dispatch } = useEditor();
   const [selectedElement, setSelectedElement] = useState<EditorElement | null>(state.editor.selectedElement);
   const [selectedElementBubbleId, setSelectedElementBubbleId] = useState<string>(state.editor.selectedElementBubbleId);

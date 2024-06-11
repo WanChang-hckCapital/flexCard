@@ -19,7 +19,7 @@ import UploadForm from '@/components/forms/uploadImage-form'
 
 type Props = {}
 
-const ComponentsTab = (props: Props) => {
+function ComponentsTab(props: Props) {
   const elements: {
     Component: React.ReactNode
     label: string

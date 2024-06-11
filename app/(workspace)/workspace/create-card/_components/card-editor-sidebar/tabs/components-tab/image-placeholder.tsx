@@ -4,7 +4,7 @@ import React from 'react'
 
 type Props = {}
 
-const ImagePlaceholder = (props: Props) => {
+function ImagePlaceholder(props: Props) {
   const handleDragStart = (e: React.DragEvent, type: EditorElementsBtns) => {
     if (type === null) return
     e.dataTransfer.setData('elementType', type)

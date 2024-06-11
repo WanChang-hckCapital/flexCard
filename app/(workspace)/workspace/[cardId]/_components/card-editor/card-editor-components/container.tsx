@@ -25,10 +25,6 @@ const Container = ({ element, sectionId, bubble }: Props) => {
     e.stopPropagation()
     const elementType = e.dataTransfer.getData('elementType') as EditorElementsBtns
 
-    console.log('elementType', elementType);
-    console.log('element', element);
-    console.log('sectionId', sectionId);
-
     switch (elementType) {
       case 'text':
         if (element.type === 'box') {
@@ -215,11 +211,11 @@ const Container = ({ element, sectionId, bubble }: Props) => {
     backgroundColor: element.backgroundColor,
     justifyContent: element.justifyContent,
     alignItems: element.alignItems,
-    padding: element.paddingAll,
-    paddingTop: element.paddingTop,
-    paddingBottom: element.paddingBottom,
-    paddingLeft: element.paddingStart,
-    paddingRight: element.paddingEnd,
+    padding: element.paddingAll === 'xs' ? '2px' : element.paddingAll === 'sm' ? '4px' : element.paddingAll === 'md' ? '8px' : element.paddingAll === 'lg' ? '12px' : element.paddingAll === 'xl' ? '16px' : element.paddingAll === 'xxl' ? '20px' : element.paddingAll,
+    paddingTop: element.paddingTop === 'xs' ? '2px' : element.paddingTop === 'sm' ? '4px' : element.paddingTop === 'md' ? '8px' : element.paddingTop === 'lg' ? '12px' : element.paddingTop === 'xl' ? '16px' : element.paddingTop === 'xxl' ? '20px' : element.paddingTop,
+    paddingBottom: element.paddingBottom === 'xs' ? '2px' : element.paddingBottom === 'sm' ? '4px' : element.paddingBottom === 'md' ? '8px' : element.paddingBottom === 'lg' ? '12px' : element.paddingBottom === 'xl' ? '16px' : element.paddingBottom === 'xxl' ? '20px' : element.paddingBottom,
+    paddingLeft: element.paddingAll === 'xs' ? '2px' : element.paddingAll === 'sm' ? '4px' : element.paddingAll === 'md' ? '8px' : element.paddingAll === 'lg' ? '12px' : element.paddingAll === 'xl' ? '16px' : element.paddingAll === 'xxl' ? '20px' : element.paddingAll,
+    paddingRight: element.paddingAll === 'xs' ? '2px' : element.paddingAll === 'sm' ? '4px' : element.paddingAll === 'md' ? '8px' : element.paddingAll === 'lg' ? '12px' : element.paddingAll === 'xl' ? '16px' : element.paddingAll === 'xxl' ? '20px' : element.paddingAll,
     gap: element.spacing,
     marginTop: element.margin,
     width: element.width,
@@ -227,12 +223,12 @@ const Container = ({ element, sectionId, bubble }: Props) => {
     maxWidth: element.maxWidth,
     maxHeight: element.maxHeight,
     borderRadius: element.cornerRadius,
-    borderWidth: element.borderWidth,
+    borderWidth: element.borderWidth === 'light' ? '0.5px' : element.borderWidth === 'normal' ? '1px' : element.borderWidth === 'medium' ? '2px' : element.borderWidth === 'semi-bold' ? '3px' : element.borderWidth === 'bold' ? '4px' : element.borderWidth,
     borderColor: element.borderColor,
-    top: element.offsetTop,
-    left: element.offsetStart,
-    right: element.offsetEnd,
-    bottom: element.offsetBottom,
+    top: element.offsetTop === 'xs' ? '2px' : element.offsetTop === 'sm' ? '4px' : element.offsetTop === 'md' ? '8px' : element.offsetTop === 'lg' ? '12px' : element.offsetTop === 'xl' ? '16px' : element.offsetTop === 'xxl' ? '20px' : element.offsetTop,
+    left: element.offsetStart === 'xs' ? '2px' : element.offsetStart === 'sm' ? '4px' : element.offsetStart === 'md' ? '8px' : element.offsetStart === 'lg' ? '12px' : element.offsetStart === 'xl' ? '16px' : element.offsetStart === 'xxl' ? '20px' : element.offsetStart,
+    right: element.offsetEnd === 'xs' ? '2px' : element.offsetEnd === 'sm' ? '4px' : element.offsetEnd === 'md' ? '8px' : element.offsetEnd === 'lg' ? '12px' : element.offsetEnd === 'xl' ? '16px' : element.offsetEnd === 'xxl' ? '20px' : element.offsetEnd,
+    bottom: element.offsetBottom === 'xs' ? '2px' : element.offsetBottom === 'sm' ? '4px' : element.offsetBottom === 'md' ? '8px' : element.offsetBottom === 'lg' ? '12px' : element.offsetBottom === 'xl' ? '16px' : element.offsetBottom === 'xxl' ? '20px' : element.offsetBottom,
   };
 
   return (
@@ -240,7 +236,6 @@ const Container = ({ element, sectionId, bubble }: Props) => {
       style={styles}
       className={clsx('relative transition-all group', {
         // 'p-2 border-dashed border-[1px] border-slate-300': bubble.hero?.id === sectionId && bubble.hero?.contents[0].contents,
-        // 'px-2 py-2 border-dashed border-[1px] border-slate-300': bubble.hero?.id === sectionId && (bubble.hero?.contents[0].contents && bubble.hero?.contents[0].contents?.length < 1 || bubble.hero?.contents[0].contents[0]?.type === 'box'),
         'px-2 py-2 border-dashed border-[1px] border-slate-300': bubble.hero?.id === sectionId && (bubble.hero?.contents[0].contents && bubble.hero?.contents[0].contents?.length < 1 || 
           (bubble.hero?.contents[0]?.contents && bubble.hero.contents[0].contents[0]?.type === 'box')),
         'p-0 border-0': bubble.hero?.id === sectionId && bubble.hero?.contents && bubble.hero?.contents.length > 1,
@@ -285,7 +280,7 @@ const Container = ({ element, sectionId, bubble }: Props) => {
           }
         )}
       >
-        <div className='text-slate-700'>
+        <div className='text-[16px]'>
           <p>{strElementType.toUpperCase()} Element</p>
         </div>
       </Badge>
@@ -319,5 +314,7 @@ const Container = ({ element, sectionId, bubble }: Props) => {
     </div>
   )
 }
+
+Container.displayName = 'Container';
 
 export default Container

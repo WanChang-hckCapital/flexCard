@@ -15,7 +15,7 @@ type Props = {
   liveMode?: boolean;
 };
 
-const CardEditor: React.FC<Props> = ({ liveMode }) => {
+function CardEditor({ liveMode }: Props) {
   const { dispatch, state } = useEditor();
 
   useEffect(() => {

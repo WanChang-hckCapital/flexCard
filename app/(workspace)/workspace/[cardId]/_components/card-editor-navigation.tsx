@@ -32,10 +32,7 @@ type Props = {
   authaccountId: string
 }
 
-const CardEditorNavigation = ({
-  cardDetails,
-  authaccountId,
-}: Props) => {
+function CardEditorNavigation({ cardDetails, authaccountId }: Props) {
   const router = useRouter()
   const { state, dispatch } = useEditor()
 

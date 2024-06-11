@@ -90,7 +90,7 @@ const TextElement = (props: Props) => {
     >
       {state.editor.selectedElement.id === props.element.id && !state.editor.liveMode && (
         <Badge className="absolute -top-[25px] -left-[10px] rounded-none rounded-t-lg">
-          <div className='text-slate-700'>
+          <div className='text-[16px]'>
             <p>{state.editor.selectedElement.type?.toUpperCase()}</p>
           </div>
 
@@ -118,5 +118,7 @@ const TextElement = (props: Props) => {
     </div>
   );
 };
+
+TextElement.displayName = 'TextElement';
 
 export default TextElement;
