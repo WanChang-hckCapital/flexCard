@@ -1,4 +1,3 @@
-import BrowseItems from '@/components/browse-items'
 import MaxWContainer from '@/components/max-w-container'
 import Link from 'next/link'
 import { authOptions } from '../api/auth/[...nextauth]/route'

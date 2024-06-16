@@ -174,14 +174,14 @@ const ImageElement = (props: Props) => {
         }
       )}
     >
-      {state.editor.selectedElement.id === props.element.id &&
+      {/* {state.editor.selectedElement.id === props.element.id &&
         !state.editor.liveMode && (
           <Badge className="absolute -top-[5px] -left-[5px] rounded-none rounded-t-lg ">
             <div className='text-[16px]'>
               <p className='text-xs'>{state.editor.selectedElement.type?.toUpperCase()}</p>
             </div>
           </Badge>
-        )}
+        )} */}
 
       {!Array.isArray(props.element.url) && (
         <ContextMenu>

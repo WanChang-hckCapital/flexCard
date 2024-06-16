@@ -28,19 +28,20 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { adminSidebarLinks } from "@/constants"
+import { NormalUserAllowedRoutes, adminSidebarLinks } from "@/constants"
 import { usePathname } from "next/navigation"
 import { Session } from "next-auth";
-import { UserImage } from "@/types";
+import { UserImage, Usertype } from "@/types";
 import SignOutButton from "../buttons/signout-button";
 import SignInButton from "../buttons/signin-button";
 
 interface HeaderProps {
     session: Session | null;
     userInfoImage: UserImage | null;
+    usertype: Usertype;
 }
 
-function Header({ session, userInfoImage }: HeaderProps) {
+function Header({ session, userInfoImage, usertype }: HeaderProps) {
     const user = session?.user;
 
     let userImage = null;
@@ -51,6 +52,11 @@ function Header({ session, userInfoImage }: HeaderProps) {
     }
 
     const pathname = usePathname();
+    const userAllowedRoutes = NormalUserAllowedRoutes[usertype];
+
+    const filteredLinks = adminSidebarLinks.filter(link =>
+        userAllowedRoutes.includes(link.route)
+    );
 
     return (
         <header className="flex h-14 items-center gap-4 border-b border-neutral-600 bg-muted/40 px-4 lg:h-[60px] lg:px-6">
@@ -63,12 +69,10 @@ function Header({ session, userInfoImage }: HeaderProps) {
                 </SheetTrigger>
                 <SheetContent side="left" className="sm:max-w-xs bg-black">
                     <nav className="grid gap-6 text-lg font-medium">
-                        {adminSidebarLinks.map((link) => {
+                        {filteredLinks.map(link => {
                             const isActive =
                                 (pathname.includes(link.route) && link.route.length > 10) ||
                                 pathname === link.route;
-
-                            // if (link.route === "/profile") link.route = `${link.route}/${userId}`;
 
                             return (
                                 <Link
@@ -76,25 +80,17 @@ function Header({ session, userInfoImage }: HeaderProps) {
                                     key={link.label}
                                     className={`leftsidebar_link ${isActive && "bg-primary-500 "}`}
                                 >
-                                    {link.icon === 'Home' ? (
-                                        <Home className="h-5 w-5" />
-                                    ) : link.icon === 'ShoppingCart' ? (
+                                    {link.icon === "Home" && <Home className="h-5 w-5" />}
+                                    {link.icon === "ShoppingCart" && (
                                         <ShoppingCart className="h-5 w-5" />
-                                    ) : link.icon === 'Package' ? (
-                                        <Package className="h-5 w-5" />
-                                    ) :link.icon === 'Ticket' ? (
-                                        <Ticket className="h-5 w-5" />
-                                    ) : link.icon === 'Users' ? (
-                                        <Users2 className="h-5 w-5" />
-                                    ) : link.icon === 'LineChart' ? (
-                                        <LineChart className="h-5 w-5" />
-                                    ) : link.icon === 'PiggyBank' ? (
-                                        <PiggyBank className="h-5 w-5" />
-                                    ) : link.icon === 'Settings' ? (
-                                        <Settings className="h-5 w-5" />
-                                    ) : null}
-
-                                    <p className='text-light-1'>{link.label}</p>
+                                    )}
+                                    {link.icon === "Package" && <Package className="h-5 w-5" />}
+                                    {link.icon === "Ticket" && <Ticket className="h-5 w-5" />}
+                                    {link.icon === "Users" && <Users2 className="h-5 w-5" />}
+                                    {link.icon === "LineChart" && <LineChart className="h-5 w-5" />}
+                                    {link.icon === "PiggyBank" && <PiggyBank className="h-5 w-5" />}
+                                    {link.icon === "Settings" && <Settings className="h-5 w-5" />}
+                                    <p className="text-light-1">{link.label}</p>
                                 </Link>
                             );
                         })}

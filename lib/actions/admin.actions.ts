@@ -9,10 +9,12 @@ import { revalidatePath } from "next/cache";
 import TransactionModel from "../models/transaction";
 import MemberModel from "../models/member";
 import { endOfDay, startOfDay } from "date-fns";
+import axios from "axios";
+import { v4 as uuidv4 } from 'uuid';
 
 export async function authorizationAdmin(
     authenticatedUserId: string
-):Promise<{ success: boolean; message?: string }> {
+): Promise<{ success: boolean; message?: string }> {
     try {
 
         connectToDB();
@@ -20,13 +22,51 @@ export async function authorizationAdmin(
         const admin = await Member.findOne({ user: authenticatedUserId });
 
         if (admin.usertype.toUpperCase() !== 'FLEXADMIN') {
-            return {success: false, message: "You has no authorization to do this action."};
+            return { success: false, message: "You has no authorization to do this action." };
         }
 
-        return {success: true};
+        return { success: true };
 
     } catch (error: any) {
         return { success: false, message: error.message };
+    }
+}
+
+function generateCustomID() {
+    return uuidv4();
+  }
+
+interface CreateMemberWithRoleParams {
+    email: string;
+    userRole: string;
+    authenticatedUserId: string;
+}
+
+export async function createMemberWithRole({ email, userRole, authenticatedUserId }: CreateMemberWithRoleParams) {
+    try {
+        await connectToDB();
+
+        const admin = await Member.findOne({ user: authenticatedUserId });
+        if (admin.usertype.toUpperCase() !== 'FLEXADMIN') {
+            throw new Error("User is not authorized to create member with role.");
+        }
+
+        const existingMember = await Member.findOne({ email: email });
+
+        if (!existingMember) {
+            const newMember = new Member({
+                generatedId: generateCustomID(),
+                email: email,
+                usertype: userRole,
+            });
+
+            await newMember.save();
+            return { success: true, message: 'Member created successfully' };
+        }
+
+        return { success: false, message: 'Member already exists' };
+    } catch (error: any) {
+        throw new Error(`Failed to create member: ${error.message}`);
     }
 }
 
@@ -265,7 +305,7 @@ export async function fetchSubscriptionByDateRange(
         if (startDate) startDate = startOfDay(new Date(startDate));
         if (endDate) {
             endDate = endOfDay(new Date(endDate));
-        }else{
+        } else {
             endDate = endOfDay(new Date());
         }
 
@@ -591,4 +631,22 @@ export async function deletePromotion({ promoId, authenticatedUserId }
     }
 }
 
+// line api
+export async function getFollowers(): Promise<{ success: boolean; message: string; followers?: string[] }> {
+    const url = 'https://api.line.me/v2/bot/followers/ids';
+    const channelAccessToken = process.env.MESSAGING_LINE_CHANNEL_AT;
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${channelAccessToken}`
+    };
+
+    try {
+        const response = await axios.get(url, { headers });
+        const followers = response.data.userIds;
+        return { success: true, message: 'Follower list retrieved successfully.', followers };
+    } catch (error: any) {
+        console.error('Error retrieving follower list:', error.response ? error.response.data : error.message);
+        return { success: false, message: 'Failed to retrieve follower list, Please try again later.' };
+    }
+}
 

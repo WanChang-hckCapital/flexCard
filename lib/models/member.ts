@@ -6,8 +6,9 @@ const memberSchema = new Schema<Member>({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        required: true,
-        unique: true,
+    },
+    generatedId: {
+        type: String,
     },
     accountname: { type: String, default: null },
     image: [

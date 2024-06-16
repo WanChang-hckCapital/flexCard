@@ -56,6 +56,11 @@ export const authOptions: AuthOptions = {
             }
             return Promise.resolve(session);
         },
+        async redirect({ url, baseUrl }) {
+            return url.startsWith(baseUrl)
+                ? url
+                : baseUrl;
+        }
     }
 }
 

@@ -86,5 +86,7 @@ export const NormalUserAllowedRoutes: Record<Usertype, string[]> = {
   ORGANIZATION: [],
   BUSINESS: [],
   ENTERPRISE: [],
-  FLEXADMIN: []
+  FLEXADMIN: ["/dashboard", "/dashboard/members", "/dashboard/products", "/dashboard/promotions", "/dashboard/transactions", "/dashboard/analytics", "/dashboard/settings"],
+  FLEXACCOUNTANT: ["/dashboard", "/dashboard/products", "/dashboard/promotions", "/dashboard/transactions", "/dashboard/analytics"],
+  FLEXHR: ["/dashboard", "/dashboard/members", "/dashboard/analytics", "/dashboard/settings"]
 };

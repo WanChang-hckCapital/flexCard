@@ -60,7 +60,7 @@ export default async function RootLayout({
           <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
             <SideBar usertype={userInfo.usertype} />
             <div className="flex flex-col">
-              <Header session={session} userInfoImage={userImage} />
+              <Header session={session} userInfoImage={userImage} usertype={userInfo.usertype} />
               <main className='flex flex-row'>
                 <TooltipProvider>
                   <div className='w-full'>{children}</div>

@@ -44,7 +44,7 @@ export async function createUser(email: string, username: string, password: stri
     try {
         connectToDB();
 
-        const existingUser = await Member.findOne({ email });
+        const existingUser = await Member.findOne({ email: email });
         if (existingUser) {
             throw new Error("User with this email already exists.");
         }
@@ -552,7 +552,7 @@ interface ParamsMemberDetails {
     ip_address: string;
     country?: string;
     countrycode?: string;
-    image: {
+    image?: {
         binaryCode: string;
         name: string;
     };
@@ -566,7 +566,7 @@ type UpdateMemberData = {
     phone: string;
     shortdescription: string;
     ip_address: string;
-    image: any;
+    image?: any;
     onboarded: boolean;
     country?: string;
     countrycode?: string;
@@ -588,29 +588,41 @@ export async function updateMemberDetails({
     try {
         connectToDB();
 
-        const existingUser = await Member.findOne({ email });
+        const existingUser = await Member.findOne({ email: email });
         if (existingUser && path != '/profile/edit') {
             throw new Error("User with this email already exists.");
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const savedImage = await Image.create({
-            binaryCode: image.binaryCode,
-            name: image.name,
-        });
-        const imageId = savedImage._id;
-
-        const updateData: UpdateMemberData = {
-            accountname: accountname,
-            email: email,
-            password: hashedPassword,
-            phone: phone,
-            shortdescription: shortdescription,
-            ip_address: ip_address,
-            image: imageId,
-            onboarded: true,
-        };
+        let updateData: UpdateMemberData;
+        if (image) {
+            const savedImage = await Image.create({
+                binaryCode: image.binaryCode,
+                name: image.name,
+            });
+            const imageId = savedImage._id;
+            updateData = {
+                accountname: accountname,
+                email: email,
+                password: hashedPassword,
+                phone: phone,
+                shortdescription: shortdescription,
+                ip_address: ip_address,
+                image: imageId,
+                onboarded: true,
+            };
+        }else{
+            updateData = {
+                accountname: accountname,
+                email: email,
+                password: hashedPassword,
+                phone: phone,
+                shortdescription: shortdescription,
+                ip_address: ip_address,
+                onboarded: true,
+            };
+        }
 
         if (path !== "/profile/edit") {
             updateData.country = country;

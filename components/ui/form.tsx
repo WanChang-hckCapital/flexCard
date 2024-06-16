@@ -14,6 +14,7 @@ import {
 
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
+import { MdError } from "react-icons/md";
 
 const Form = FormProvider
 
@@ -157,9 +158,10 @@ const FormMessage = React.forwardRef<
     <p
       ref={ref}
       id={formMessageId}
-      className={cn("text-sm font-medium text-destructive", className)}
+      className={cn("text-[14px] font-medium text-destructive flex items-center ", className)}
       {...props}
     >
+      {error && <MdError width={18} className="mr-1" />}
       {body}
     </p>
   )

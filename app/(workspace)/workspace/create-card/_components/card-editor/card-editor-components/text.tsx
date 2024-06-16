@@ -88,14 +88,14 @@ const TextElement = (props: Props) => {
         setMouseIsOver(false);
       }}
     >
-      {state.editor.selectedElement.id === props.element.id && !state.editor.liveMode && (
+      {/* {state.editor.selectedElement.id === props.element.id && !state.editor.liveMode && (
         <Badge className="absolute -top-[25px] -left-[10px] rounded-none rounded-t-lg">
           <div className='text-[16px]'>
             <p>{state.editor.selectedElement.type?.toUpperCase()}</p>
           </div>
 
         </Badge>
-      )}
+      )} */}
       <span
         contentEditable={!state.editor.liveMode}
         onBlur={handleTextUpdate}

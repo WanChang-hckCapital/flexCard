@@ -208,7 +208,7 @@ function CardEditor({ liveMode }: Props) {
       )}
       onClick={handleClick}
       onDrop={handleOnDrop}
-      onDragOver={handleDragOver}
+      // onDragOver={handleDragOver}
     >
       {state.editor.previewMode && state.editor.liveMode && (
         <Button variant="ghost" size="icon" className="w-32 h-8 bg-slate-600 p-[2px] fixed top-5 right-5 z-[100]" onClick={handleUnpreview}>

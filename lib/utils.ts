@@ -144,7 +144,7 @@ const IconStyle = (element: any) => ({
 
 const ImageContainerStyles = (element: any) => ({
   backgroundColor: element.backgroundColor,
-  justifyContent: element.align || 'center',
+  textAlign: element.align || 'center',
   marginTop: element.margin,
   top: element.offsetTop || 0,
   left: element.offsetStart || 0,
@@ -154,8 +154,8 @@ const ImageContainerStyles = (element: any) => ({
 
 const ImageStyle = (element: any) => ({
   display: 'inline-block',
-  width: element.size || '100px',
-  height: element.size || '100px',
+  width: element.size === 'xs' ? '60px' : element.size === 'sm' ? '80px' : element.size === 'md' ? '100px' : element.size === 'lg' ? '120px' : element.size === 'xl' ? '140px' : element.size === 'xxl' ? '160px' : element.size === 'full' ? '100%' : element.size || '100px',
+  height: element.size === 'xs' ? '60px' : element.size === 'sm' ? '80px' : element.size === 'md' ? '100px' : element.size === 'lg' ? '120px' : element.size === 'xl' ? '140px' : element.size === 'xxl' ? '160px' : element.size === 'full' ? '100%' : element.size || '100px',
   backgroundImage: `url(${element.url || ''})`,
   backgroundSize: element.aspectMode === 'cover' ? 'cover' : 'contain',
   backgroundRepeat: 'no-repeat',
@@ -175,7 +175,7 @@ const TextStyles = (element: any) => ({
   textAlign: element.align || 'left',
   letterSpacing: element.lineSpacing,
   fontWeight: element.weight,
-  fontSize: element.size,
+  fontSize: element.size === 'xs' ? '13px' : element.size === 'sm' ? '14px' : element.size === 'md' ? '16px' : element.size === 'lg' ? '19px' : element.size === 'xl' ? '22px' : element.size === 'xxl' ? '29px' : element.size,
   fontStyle: element.style,
   textDecoration: element.decoration,
   marginTop: element.margin,
@@ -184,6 +184,36 @@ const TextStyles = (element: any) => ({
   right: element.offsetEnd,
   bottom: element.offsetBottom,
 });
+
+const BoxStyles = (element: any) => {
+  return {
+    display: 'flex',
+    overflow: 'hidden',
+    flexDirection: element.layout === 'vertical' ? 'column' : 'row',
+    backgroundColor: element.backgroundColor,
+    justifyContent: element.justifyContent || 'flex-start',
+    alignItems: element.alignItems,
+    padding: element.paddingAll === 'xs' ? '2px' : element.paddingAll === 'sm' ? '4px' : element.paddingAll === 'md' ? '8px' : element.paddingAll === 'lg' ? '12px' : element.paddingAll === 'xl' ? '16px' : element.paddingAll === 'xxl' ? '20px' : element.paddingAll,
+    paddingTop: element.paddingTop === 'xs' ? '2px' : element.paddingTop === 'sm' ? '4px' : element.paddingTop === 'md' ? '8px' : element.paddingTop === 'lg' ? '12px' : element.paddingTop === 'xl' ? '16px' : element.paddingTop === 'xxl' ? '20px' : element.paddingTop,
+    paddingBottom: element.paddingBottom === 'xs' ? '2px' : element.paddingBottom === 'sm' ? '4px' : element.paddingBottom === 'md' ? '8px' : element.paddingBottom === 'lg' ? '12px' : element.paddingBottom === 'xl' ? '16px' : element.paddingBottom === 'xxl' ? '20px' : element.paddingBottom,
+    paddingLeft: element.paddingLeft === 'xs' ? '2px' : element.paddingLeft === 'sm' ? '4px' : element.paddingLeft === 'md' ? '8px' : element.paddingLeft === 'lg' ? '12px' : element.paddingLeft === 'xl' ? '16px' : element.paddingLeft === 'xxl' ? '20px' : element.paddingLeft,
+    paddingRight: element.paddingRight === 'xs' ? '2px' : element.paddingRight === 'sm' ? '4px' : element.paddingRight === 'md' ? '8px' : element.paddingRight === 'lg' ? '12px' : element.paddingRight === 'xl' ? '16px' : element.paddingRight === 'xxl' ? '20px' : element.paddingRight,
+    gap: element.spacing,
+    marginTop: element.margin,
+    width: element.width,
+    height: element.height,
+    maxWidth: element.maxWidth || '100%',
+    maxHeight: element.maxHeight,
+    borderRadius: element.cornerRadius,
+    borderWidth: element.borderWidth === 'light' ? '0.5px' : element.borderWidth === 'normal' ? '1px' : element.borderWidth === 'medium' ? '2px' : element.borderWidth === 'semi-bold' ? '3px' : element.borderWidth === 'bold' ? '4px' : element.borderWidth,
+    borderColor: element.borderColor,
+    top: element.offsetTop === 'xs' ? '2px' : element.offsetTop === 'sm' ? '4px' : element.offsetTop === 'md' ? '8px' : element.offsetTop === 'lg' ? '12px' : element.offsetTop === 'xl' ? '16px' : element.offsetTop === 'xxl' ? '20px' : element.offsetTop,
+    left: element.offsetStart === 'xs' ? '2px' : element.offsetStart === 'sm' ? '4px' : element.offsetStart === 'md' ? '8px' : element.offsetStart === 'lg' ? '12px' : element.offsetStart === 'xl' ? '16px' : element.offsetStart === 'xxl' ? '20px' : element.offsetStart,
+    right: element.offsetEnd === 'xs' ? '2px' : element.offsetEnd === 'sm' ? '4px' : element.offsetEnd === 'md' ? '8px' : element.offsetEnd === 'lg' ? '12px' : element.offsetEnd === 'xl' ? '16px' : element.offsetEnd === 'xxl' ? '20px' : element.offsetEnd,
+    bottom: element.offsetBottom === 'xs' ? '2px' : element.offsetBottom === 'sm' ? '4px' : element.offsetBottom === 'md' ? '8px' : element.offsetBottom === 'lg' ? '12px' : element.offsetBottom === 'xl' ? '16px' : element.offsetBottom === 'xxl' ? '20px' : element.offsetBottom,
+  };
+};
+
 
 const VideoStyles = {
   padding: '5px',
@@ -212,7 +242,7 @@ const renderContents = (contents: any) => {
             <hr style="${convertToKebabCase(SeparatorStyles(content))}" />
           </div>`;
       case 'box':
-        return `<div style="display: flex; max-width: 100%; overflow: hidden; flex-direction: ${content.layout === 'vertical' ? 'column' : 'row'}; justify-content: ${content.justifyContent || 'flex-start'}; align-items: ${content.alignItems || 'flex-start'};">${renderContents(content.contents)}</div>`;
+        return `<div style="${convertToKebabCase(BoxStyles(content))}">${renderContents(content.contents)}</div>`;
       default:
         return '';
     }

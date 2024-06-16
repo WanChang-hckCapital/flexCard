@@ -42,6 +42,7 @@ import { toast } from 'sonner'
 import { RgbaColor, RgbaColorPicker } from "react-colorful";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 
 type Props = { selectedBubbleId: string, selectedSectionId: string, selectedElement: EditorElement };
 type PaddingKeys = 'paddingAll' | 'paddingTop' | 'paddingBottom' | 'paddingStart' | 'paddingEnd' | 'size' | 'borderWidth' | 'offsetTop' | 'offsetBottom' | 'offsetStart' | 'offsetEnd';
@@ -65,6 +66,8 @@ function SettingsTab(props: Props) {
   const [isAdvancedColorPickerOpen, setAdvancedColorPickerOpen] = useState(false);
   const [isColorPickerOpen, setColorPickerOpen] = useState(false);
   const [activeColorProperty, setActiveColorProperty] = useState('');
+  const [decoration, setDecoration] = useState(state.editor.selectedElement.decoration || '');
+  const [style, setStyle] = useState(state.editor.selectedElement.style || '');
 
   const parseRgba = (rgba: string) => {
     const match = rgba.match(/rgba?\((\d+), (\d+), (\d+), (\d+(\.\d+)?)\)/);
@@ -93,6 +96,39 @@ function SettingsTab(props: Props) {
 
     const { id, value } = e.target;
     let processedValue = value;
+
+    let elementDetails: EditorElement = {
+      ...state.editor.selectedElement,
+    };
+
+    if (processedValue !== "" && processedValue !== null && processedValue !== undefined) {
+      elementDetails = {
+        ...state.editor.selectedElement,
+        [id]: processedValue,
+      };
+    } else {
+      const keyToRemove: keyof EditorElement = id;
+      const { [keyToRemove]: _, ...newElementDetails } = elementDetails;
+
+      elementDetails = newElementDetails as EditorElement;
+    }
+
+    dispatch({
+      type: 'UPDATE_ELEMENT',
+      payload: {
+        bubbleId: props.selectedBubbleId,
+        sectionId: props.selectedSectionId,
+        elementDetails: elementDetails,
+      },
+    })
+
+    toast.success(id.toUpperCase() + ' has been updated successfully.')
+  }
+
+  const handleValueWithoutPxOnChanges = (e: any) => {
+
+    const { id, value } = e.target;
+    const processedValue = value ? `${value.replace(/px/, '')}px` : '';
 
     let elementDetails: EditorElement = {
       ...state.editor.selectedElement,
@@ -284,34 +320,79 @@ function SettingsTab(props: Props) {
   };
 
   const exampleColors = [
-    { name: 'Maroon', color: hexToRgba('#800000') },
-    { name: 'Dark Red', color: hexToRgba('#8B0000') },
-    { name: 'Brown', color: hexToRgba('#A52A2A') },
-    { name: 'Firebrick', color: hexToRgba('#B22222') },
-    { name: 'Crimson', color: hexToRgba('#DC143C') },
-    { name: 'Red', color: hexToRgba('#FF0000') },
+    { name: 'Crimson', color: hexToRgba('#FFEBD2') },
+    { name: 'Firebrick', color: hexToRgba('#FFFACD') },
+    { name: 'Coral', color: hexToRgba('#F1FDD5') },
+    { name: 'LightSalmon', color: hexToRgba('#D6E4FF') },
+    { name: 'Brown', color: hexToRgba('#D5FEF9') },
+    { name: 'Red', color: hexToRgba('#F9D6FB') },
 
-    { name: 'Dark Orange', color: hexToRgba('#FF8C00') },
-    { name: 'Orange', color: hexToRgba('#FFA500') },
-    { name: 'Gold', color: hexToRgba('#FFD700') },
-    { name: 'Dark Golden Rod', color: hexToRgba('#B8860B') },
-    { name: 'Golden Rod', color: hexToRgba('#DAA520') },
-    { name: 'Pale Golden Rod', color: hexToRgba('#FF0000') },
+    { name: 'Golden Rod', color: hexToRgba('#FFB179') },
+    { name: 'Dark Golden Rod', color: hexToRgba('#FFEC69') },
+    { name: 'Orange', color: hexToRgba('#C6F481') },
+    { name: 'Dark Orange', color: hexToRgba('#84A9FF') },
+    { name: 'Gold', color: hexToRgba('#83FAFE') },
+    { name: 'Pale Golden Rod', color: hexToRgba('#D581EA') },
 
-    { name: 'Yellow Green', color: hexToRgba('#9ACD32') },
-    { name: 'Dark Olive Green', color: hexToRgba('#556B2F') },
-    { name: 'Olive Drab', color: hexToRgba('#6B8E23') },
-    { name: 'Lawn Green', color: hexToRgba('#7CFC00') },
-    { name: 'Green', color: hexToRgba('#008000') },
-    { name: 'Forest Green', color: hexToRgba('#228B22') },
+    { name: 'Green', color: hexToRgba('#FF6021') },
+    { name: 'Lawn Green', color: hexToRgba('#FFD905') },
+    { name: 'Dark Olive Green', color: hexToRgba('#85DB30') },
+    { name: 'Yellow Green', color: hexToRgba('#3366FF') },
+    { name: 'Olive Drab', color: hexToRgba('#32D7FC') },
+    { name: 'Forest Green', color: hexToRgba('#8d30ba') },
 
-    { name: 'Dark Cyan', color: hexToRgba('#008B8B') },
-    { name: 'Aqua', color: hexToRgba('#00FFFF') },
-    { name: 'Dark Turquoise', color: hexToRgba('#00CED1') },
-    { name: 'Deep Sky Blue', color: hexToRgba('#00BFFF') },
-    { name: 'Sky Blue', color: hexToRgba('#87CEEB') },
-    { name: 'Midnight Blue', color: hexToRgba('#191970') },
+    { name: 'Sky Blue', color: hexToRgba('#DB4218') },
+    { name: 'Deep Sky Blue', color: hexToRgba('#DBB703') },
+    { name: 'Aqua', color: hexToRgba('#67BC23') },
+    { name: 'Dark Cyan', color: hexToRgba('#254EDB') },
+    { name: 'Dark Turquoise', color: hexToRgba('#24AAD8') },
+    { name: 'Midnight Blue', color: hexToRgba('#6F239F') },
+
+    { name: 'Golden Rod', color: hexToRgba('#B72910') },
+    { name: 'Dark Golden Rod', color: hexToRgba('#B79602') },
+    { name: 'Orange', color: hexToRgba('#4D9D18') },
+    { name: 'Dark Orange', color: hexToRgba('#102693') },
+    { name: 'Gold', color: hexToRgba('#1981B5') },
+    { name: 'Pale Golden Rod', color: hexToRgba('#531885') },
+
+    { name: 'Green', color: hexToRgba('#93150A') },
+    { name: 'Lawn Green', color: hexToRgba('#937601') },
+    { name: 'Dark Olive Green', color: hexToRgba('#357F0F') },
+    { name: 'Yellow Green', color: hexToRgba('#102693') },
+    { name: 'Olive Drab', color: hexToRgba('#0F5C92') },
+    { name: 'Forest Green', color: hexToRgba('#3B0F6B') },
+
+    { name: 'Sky Blue', color: hexToRgba('#7A0706') },
+    { name: 'Deep Sky Blue', color: hexToRgba('#7A6000') },
+    { name: 'Aqua', color: hexToRgba('#256909') },
+    { name: 'Dark Cyan', color: hexToRgba('#091A7A') },
+    { name: 'Dark Turquoise', color: hexToRgba('#094278') },
+    { name: 'Midnight Blue', color: hexToRgba('#2A0959') },
   ];
+
+  const handleStyleChange = (value: string) => {
+    const newValue = value === style ? '' : value;
+    setStyle(newValue);
+
+    handleOnChanges({
+      target: {
+        id: 'style',
+        value: newValue,
+      },
+    });
+  };
+
+  const handleToggleChange = (value: string) => {
+    const newValue = value === decoration ? '' : value;
+    setDecoration(newValue);
+
+    handleOnChanges({
+      target: {
+        id: 'decoration',
+        value: newValue,
+      },
+    });
+  };
 
   useEffect(() => {
     if (isColorPickerOpen) {
@@ -324,6 +405,14 @@ function SettingsTab(props: Props) {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isColorPickerOpen]);
+
+  useEffect(() => {
+    setDecoration(state.editor.selectedElement.decoration || '');
+  }, [state.editor.selectedElement.decoration]);
+
+  useEffect(() => {
+    setStyle(state.editor.selectedElement.style || '');
+  }, [state.editor.selectedElement.style]);
 
   return (
     <Accordion
@@ -687,8 +776,8 @@ function SettingsTab(props: Props) {
                           className='text-black'
                           placeholder="px"
                           id="lineSpacing"
-                          onChange={handleOnChanges}
-                          value={state.editor.selectedElement.lineSpacing}
+                          onChange={handleValueWithoutPxOnChanges}
+                          value={state.editor.selectedElement.lineSpacing?.replace(/px/, "") || ""}
                         />
                       </div>
                     </div>
@@ -840,63 +929,42 @@ function SettingsTab(props: Props) {
                     <div className="flex gap-4">
                       <div className="flex flex-col gap-2 flex-1">
                         <Label className="text-muted-foreground">Style</Label>
-                        <Tabs
-                          onValueChange={(e) =>
-                            handleOnChanges({
-                              target: {
-                                id: 'style',
-                                value: e,
-                              },
-                            })
-                          }
-                          value={state.editor.selectedElement.style}
-                        >
-                          <TabsList className="flex items-center flex-row justify-evenly border-[1px] rounded-md bg-transparent h-fit gap-4">
-                            <TabsTrigger
-                              value="normal"
-                              className="w-10 h-10 p-0 data-[state=active]:bg-muted"
-                            >
+                        <div className="flex items-center flex-row justify-evenly border-[1px] rounded-md bg-transparent h-fit p-1">
+                          <ToggleGroup
+                            className='gap-4'
+                            type="single"
+                            onValueChange={handleStyleChange}
+                            value={style}
+                          >
+                            <ToggleGroupItem value="normal">
                               <TextCursor size={18} />
-                            </TabsTrigger>
-                            <TabsTrigger
-                              value="italic"
-                              className="w-10 h-10 p-0 data-[state=active]:bg-muted"
-                            >
+                            </ToggleGroupItem>
+                            <ToggleGroupItem value="italic">
                               <Italic size={18} />
-                            </TabsTrigger>
-                          </TabsList>
-                        </Tabs>
+                            </ToggleGroupItem>
+                          </ToggleGroup>
+                        </div>
                       </div>
 
                       <div className="flex flex-col gap-2 flex-1">
                         <Label className="text-muted-foreground">Text Decoration</Label>
-                        <Tabs
-                          onValueChange={(e) =>
-                            handleOnChanges({
-                              target: {
-                                id: 'decoration',
-                                value: e,
-                              },
-                            })
-                          }
-                          value={state.editor.selectedElement.decoration}
-                        >
-                          <TabsList className="flex items-center flex-row justify-evenly border-[1px] rounded-md bg-transparent h-fit gap-4">
-                            <TabsTrigger
-                              value="underline"
-                              className="w-10 h-10 p-0 data-[state=active]:bg-muted"
-                            >
+                        <div className="flex items-center flex-row justify-evenly border-[1px] rounded-md bg-transparent h-fit p-1">
+                          <ToggleGroup
+                            className='gap-4'
+                            type="single"
+                            onValueChange={handleToggleChange}
+                            value={decoration}
+                          >
+                            <ToggleGroupItem value="underline">
                               <Underline size={18} />
-                            </TabsTrigger>
-                            <TabsTrigger
-                              value="line-through "
-                              className="w-10 h-10 p-0 data-[state=active]:bg-muted"
-                            >
-                              <MdOutlineStrikethroughS size={18} />
-                            </TabsTrigger>
-                          </TabsList>
-                        </Tabs>
+                            </ToggleGroupItem>
+                            <ToggleGroupItem value="line-through">
+                              <MdOutlineStrikethroughS size={20} />
+                            </ToggleGroupItem>
+                          </ToggleGroup>
+                        </div>
                       </div>
+
                     </div>
                   </div>
                 )}
@@ -923,8 +991,8 @@ function SettingsTab(props: Props) {
                     className='text-black'
                     id="margin"
                     placeholder="px"
-                    onChange={handleOnChanges}
-                    value={state.editor.selectedElement.margin}
+                    onChange={handleValueWithoutPxOnChanges}
+                    value={state.editor.selectedElement.margin?.replace(/px/, "") || ""}
                   />
                 </div>
 
@@ -969,8 +1037,8 @@ function SettingsTab(props: Props) {
                       className='text-black'
                       id="spacing"
                       placeholder="px"
-                      onChange={handleOnChanges}
-                      value={state.editor.selectedElement.spacing}
+                      onChange={handleValueWithoutPxOnChanges}
+                      value={state.editor.selectedElement.spacing?.replace(/px/, "") || ""}
                     />
                   </div>
                 )}
@@ -1207,8 +1275,8 @@ function SettingsTab(props: Props) {
                           className="text-black flex-grow"
                           placeholder="px"
                           id="width"
-                          onChange={handleOnChanges}
-                          value={state.editor.selectedElement.width}
+                          onChange={handleValueWithoutPxOnChanges}
+                          value={state.editor.selectedElement.width?.replace(/px/, "") || ""}
                         />
                       </div>
                       <div className="flex flex-col gap-2">
@@ -1217,8 +1285,8 @@ function SettingsTab(props: Props) {
                           className='text-black'
                           placeholder="px"
                           id="height"
-                          onChange={handleOnChanges}
-                          value={state.editor.selectedElement.height}
+                          onChange={handleValueWithoutPxOnChanges}
+                          value={state.editor.selectedElement.height?.replace(/px/, "") || ""}
                         />
                       </div>
                     </div>
@@ -1229,8 +1297,8 @@ function SettingsTab(props: Props) {
                           className="text-black flex-grow"
                           placeholder="px"
                           id="maxWidth"
-                          onChange={handleOnChanges}
-                          value={state.editor.selectedElement.maxWidth}
+                          onChange={handleValueWithoutPxOnChanges}
+                          value={state.editor.selectedElement.maxWidth?.replace(/px/, "") || ""}
                         />
                       </div>
                       <div className="flex flex-col gap-2">
@@ -1239,8 +1307,8 @@ function SettingsTab(props: Props) {
                           className="text-black flex-grow"
                           placeholder="px"
                           id="maxHeight"
-                          onChange={handleOnChanges}
-                          value={state.editor.selectedElement.maxHeight}
+                          onChange={handleValueWithoutPxOnChanges}
+                          value={state.editor.selectedElement.maxHeight?.replace(/px/, "") || ""}
                         />
                       </div>
                     </div>

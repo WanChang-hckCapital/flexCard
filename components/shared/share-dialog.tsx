@@ -8,6 +8,7 @@ import { Button } from '../ui/button';
 import { toast } from 'sonner';
 import { sendFlexMessageLiff, sendFlexMessageThruOA } from '@/lib/actions/user.actions';
 import liff from '@line/liff';
+import { createPortal } from 'react-dom';
 
 interface ShareDialogProps {
     url: string;
@@ -122,7 +123,7 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ url, userImageUrl, lineCompon
         }
     };
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 bg-slate-900 bg-opacity-60 flex justify-center items-center z-50">
             <div className="bg-slate-900 p-5 rounded-lg w-[300px] h-[280px]">
                 <Button
@@ -215,12 +216,12 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ url, userImageUrl, lineCompon
                                     </Button>
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 )}
             </div>
-        </div>
+        </div>,
+        document.getElementById('modal-root')!
     );
 };
 

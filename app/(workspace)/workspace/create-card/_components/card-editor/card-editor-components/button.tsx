@@ -72,7 +72,7 @@ const ButtonElement: React.FC<ButtonElementProps> = ({ element, sectionId, bubbl
         setMouseIsOver(false);
       }}
     >
-      <Badge
+      {/* <Badge
         className={clsx(
           'absolute -top-[25px] -left-[10px] rounded-none rounded-t-lg hidden',
           {
@@ -83,9 +83,9 @@ const ButtonElement: React.FC<ButtonElementProps> = ({ element, sectionId, bubbl
         )}
       >
         <div className='text-[16px]'>
-          <p className='text-xs'>{state.editor.selectedElement.type?.toUpperCase()}</p>
+          <p className='text-xs text-black'>{state.editor.selectedElement.type?.toUpperCase()}</p>
         </div>
-      </Badge>
+      </Badge> */}
 
       <button
         disabled={state.editor.liveMode}

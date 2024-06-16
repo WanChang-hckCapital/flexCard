@@ -4,7 +4,7 @@ import * as z from "zod";
 import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { usePathname, useRouter } from "next/navigation";
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import {
@@ -23,6 +23,7 @@ import { UserValidation } from "@/lib/validations/user";
 import { getIPCountryInfo, updateMemberDetails } from "@/lib/actions/user.actions";
 import { toast } from "sonner";
 import imageCompression from "browser-image-compression";
+import { CircleUser, Pencil } from "lucide-react";
 
 interface Props {
   user: {
@@ -42,48 +43,57 @@ const MemberProfile = ({ user, btnTitle }: Props) => {
 
   const [file, setFiles] = useState<File | null>(null);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [isFormDirty, setIsFormDirty] = useState(false);
+  const [defaultValues, setDefaultValues] = useState({
+    accountname: user?.accountname ? user.accountname : "",
+    profile_image: user?.image ? user.image : "",
+    email: user?.email ? user.email : "",
+    phone: user?.phone ? user.phone : "",
+    shortdescription: user?.shortdescription ? user.shortdescription : "",
+  });
 
   const form = useForm<z.infer<typeof UserValidation>>({
     resolver: zodResolver(UserValidation),
-    defaultValues: {
-      accountname: user?.accountname ? user.accountname : "",
-      profile_image: user?.image ? user.image : "",
-      email: user?.email ? user.email : "",
-      phone: user?.phone ? user.phone : "",
-      shortdescription: user?.shortdescription ? user.shortdescription : "",
-    },
+    defaultValues: defaultValues,
   });
 
+  console.log("image", defaultValues.profile_image);
+
   const onSubmit = async (values: z.infer<typeof UserValidation>) => {
-
-    if (!file) {
-      console.error('Check empty: No file selected');
-      return;
-    }
-
-    if (!fileUrl) {
-      console.error('No fileUrl available');
-      return;
-    }
-
+    
     const geoInfo = await getIPCountryInfo();
 
-    await updateMemberDetails({
-      userId: user.userId,
-      accountname: values.accountname,
-      email: values.email,
-      password: values.password,
-      phone: values.phone,
-      shortdescription: values.shortdescription,
-      ip_address: geoInfo.ip,
-      country: geoInfo.country,
-      countrycode: geoInfo.countryCode,
-      image: {
-        binaryCode: fileUrl,
-        name: file.name,
-      },
-      path: pathname,
-    });
+    if(file && fileUrl) {
+      await updateMemberDetails({
+        userId: user.userId,
+        accountname: values.accountname,
+        email: values.email,
+        password: values.password,
+        phone: values.phone,
+        shortdescription: values.shortdescription,
+        ip_address: geoInfo.ip,
+        country: geoInfo.country,
+        countrycode: geoInfo.countryCode,
+        image: {
+          binaryCode: fileUrl,
+          name: file.name,
+        },
+        path: pathname,
+      });
+    }else{
+      await updateMemberDetails({
+        userId: user.userId,
+        accountname: values.accountname,
+        email: values.email,
+        password: values.password,
+        phone: values.phone,
+        shortdescription: values.shortdescription,
+        ip_address: geoInfo.ip,
+        country: geoInfo.country,
+        countrycode: geoInfo.countryCode,
+        path: pathname,
+      });
+    }
 
     if (pathname === "/profile/edit") {
       router.back();
@@ -104,6 +114,7 @@ const MemberProfile = ({ user, btnTitle }: Props) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       setFiles(file);
+      setIsFormDirty(true);
 
       if (!file.type.includes("image")) return;
 
@@ -138,6 +149,30 @@ const MemberProfile = ({ user, btnTitle }: Props) => {
     }
   };
 
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (isFormDirty) {
+        event.preventDefault();
+        event.returnValue = "";
+      }
+    };
+  
+    window.addEventListener("beforeunload", handleBeforeUnload);
+  
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [isFormDirty]);
+  
+
+  useEffect(() => {
+    const isDirty = Object.keys(defaultValues).some(
+      (key) =>
+        form.getValues(key as keyof typeof defaultValues) !== defaultValues[key as keyof typeof defaultValues]
+    );
+    setIsFormDirty(isDirty);
+  }, [form.watch()]);
+
   return (
     <Form {...form}>
       <form
@@ -148,37 +183,39 @@ const MemberProfile = ({ user, btnTitle }: Props) => {
           control={form.control}
           name='profile_image'
           render={({ field }) => (
-            <FormItem className='flex items-center gap-4'>
-              <FormLabel className='account-form_image-label'>
-                {field.value ? (
-                  <Image
-                    src={field.value}
-                    alt='profile_icon'
-                    width={96}
-                    height={96}
-                    priority
-                    className='rounded-full object-contain'
-                  />
-                ) : (
-                  <Image
-                    src='/assets/profile.svg'
-                    alt='profile_icon'
-                    width={24}
-                    height={24}
-                    className='object-contain'
-                  />
-                )}
-              </FormLabel>
-              <FormControl className='flex-1 text-base-semibold text-gray-200'>
-                <Input
-                  type='file'
-                  accept='image/*'
-                  placeholder='Add profile photo'
-                  className='account-form_image-input'
-                  // onChange={handleImage}
-                  onChange={(e) => handleImage(e, field.onChange)}
-                />
-              </FormControl>
+            <FormItem className='flex items-center gap-4 justify-center relative'>
+              <div className="relative group">
+                <FormLabel className='account-form_image-label'>
+                  {field.value.length !== 0 ? (
+                    <Image
+                      src={field.value}
+                      alt='profile_icon'
+                      width={96}
+                      height={96}
+                      priority
+                      className='rounded-full object-contain'
+                    />
+                  ) : (
+                    <CircleUser 
+                      width={96}
+                      height={96}
+                      className='rounded-full object-contain text-gray-500'
+                    />
+                  )}
+                </FormLabel>
+                <div className="absolute inset-0 flex items-center justify-center cursor-pointer rounded-full bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <Pencil size={24} className="text-white" />
+                  <FormControl className='absolute inset-0 opacity-0 cursor-pointer'>
+                    <Input
+                      type='file'
+                      accept='image/*'
+                      placeholder='Add profile photo'
+                      className='account-form_image-input w-full h-full'
+                      onChange={(e) => handleImage(e, field.onChange)}
+                    />
+                  </FormControl>
+                </div>
+              </div>
             </FormItem>
           )}
         />
@@ -194,7 +231,7 @@ const MemberProfile = ({ user, btnTitle }: Props) => {
               <FormControl>
                 <Input
                   type='text'
-                  className='account-form_input no-focus'
+                  className='account-form_input'
                   {...field}
                 />
               </FormControl>
@@ -214,7 +251,7 @@ const MemberProfile = ({ user, btnTitle }: Props) => {
               <FormControl>
                 <Input
                   type='email'
-                  className='account-form_input no-focus'
+                  className='account-form_input'
                   {...field}
                 />
               </FormControl>
@@ -234,7 +271,7 @@ const MemberProfile = ({ user, btnTitle }: Props) => {
               <FormControl>
                 <Input
                   type='password'
-                  className='account-form_input no-focus'
+                  className='account-form_input'
                   {...field}
                 />
               </FormControl>
@@ -254,7 +291,7 @@ const MemberProfile = ({ user, btnTitle }: Props) => {
               <FormControl>
                 <Input
                   type='password'
-                  className='account-form_input no-focus'
+                  className='account-form_input'
                   {...field}
                 />
               </FormControl>
@@ -294,7 +331,7 @@ const MemberProfile = ({ user, btnTitle }: Props) => {
               <FormControl>
                 <Textarea
                   rows={6}
-                  className='account-form_input no-focus'
+                  className='account-form_input'
                   {...field}
                 />
               </FormControl>

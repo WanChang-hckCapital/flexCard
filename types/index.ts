@@ -15,6 +15,7 @@ export type Price = {
 
 export type Member = {
     user: {},
+    generatedId: string,
     accountname: string,
     image: string,
     email: string,
@@ -53,6 +54,8 @@ export enum Usertype {
     BUSINESS = 'BUSINESS',
     ENTERPRISE = 'ENTERPRISE',
     SUPERUSER = 'SUPERUSER',
+    FLEXACCOUNTANT = 'FLEXACCOUNTANT',
+    FLEXHR = 'FLEXHR',
     FLEXADMIN = 'FLEXADMIN',
 }
 

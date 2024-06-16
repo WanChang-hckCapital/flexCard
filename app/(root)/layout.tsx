@@ -61,6 +61,7 @@ export default async function RootLayout({
             <Header session={session} userInfoImage={userImage} />
             <LeftSidebar session={session} userInfoImage={userImage}/>
             <section className='main-container'>
+              <div id="modal-root"></div>
               <div className='w-full'>{children}</div>
             </section>
           </main>

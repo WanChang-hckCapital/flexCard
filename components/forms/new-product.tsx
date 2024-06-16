@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { usePathname, useRouter } from "next/navigation";
 import { fetchAllPromotion, insertNewProduct, updateProduct } from "@/lib/actions/admin.actions";
 import { useEffect, useState } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 interface Props {
   btnTitle: string;
@@ -213,16 +214,20 @@ const AddNewProduct = ({ btnTitle, authenticatedUserId, productDetails }: Props)
                 Promotion
               </FormLabel>
               <FormControl>
-                <select {...field} className="account-form_input no-focus">
-                  <option value="">Select a Promotion</option>
-                  {promotions.length > 0 ? (
-                    promotions.map((promo) => (
-                      <option key={promo.name} value={promo.name}>{promo.name}</option>
-                    ))
-                  ) : (
-                    <option value="" disabled>No Promotions Available</option>
-                  )}
-                </select>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a Promotion" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {promotions.length > 0 ? (
+                      promotions.map((promo) => (
+                        <SelectItem key={promo.name} value={promo.name}>{promo.name}</SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-promotions" disabled>No Promotions Available</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
               </FormControl>
               <FormMessage />
             </FormItem>

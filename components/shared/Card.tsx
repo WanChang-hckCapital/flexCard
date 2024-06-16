@@ -42,7 +42,7 @@ function Card({
   const [likesData, setLikesData] = useState<Like[]>(likes);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const shareUrl = process.env.NEXT_PUBLIC_BASE_URL + `/card/${id}`;
+  const shareUrl = process.env.NEXT_PUBLIC_BASE_URL + `/cards/${id}`;
 
   const handleShareClick = () => {
     setIsDialogOpen(true);
@@ -139,7 +139,7 @@ function Card({
                           </div>
                         </div>
                         <div className="flex justify-start pl-2 pb-2 absolute bottom-2 left-2">
-                          {likes.slice(-5).map((like, index) => (
+                          {likesData.slice(-5).map((like, index) => (
                             <div key={index} className="object-cover max-w-full self-center">
                               <Image
                                 src={like.binarycode}
