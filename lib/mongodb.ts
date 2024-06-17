@@ -30,21 +30,20 @@ export const connectToDB = async () => {
         return;
     }
 
-    if (process.env.NODE_ENV === 'development') {
-        try {
+    try {
+        if (process.env.NODE_ENV === 'development') {
             if (!globalWithMongo._mongooseClient) {
-                globalWithMongo._mongooseClient = await mongoose.connect(uri)
+                globalWithMongo._mongooseClient = await mongoose.connect(uri);
             }
-
-            client = globalWithMongo._mongooseClient.connection.getClient()
-            isConnected = true;
-            console.log("MongoDB connected");
-        } catch (error) {
-            console.log(error);
+            client = globalWithMongo._mongooseClient.connection.getClient();
+        } else {
+            const _client = await mongoose.connect(uri);
+            client = _client.connection.getClient();
         }
-    } else {
-        let _client = await mongoose.connect(uri)
-        client = _client.connection.getClient()
         isConnected = true;
+        console.log("MongoDB connected");
+    } catch (error) {
+        console.error('MongoDB connection error:', error);
+        throw new Error('MongoDB connection failed');
     }
 }

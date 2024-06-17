@@ -17,7 +17,7 @@ export async function authorizationAdmin(
 ): Promise<{ success: boolean; message?: string }> {
     try {
 
-        connectToDB();
+        await connectToDB();
 
         const admin = await Member.findOne({ user: authenticatedUserId });
 
@@ -73,7 +73,7 @@ export async function createMemberWithRole({ email, userRole, authenticatedUserI
 export async function fetchAllMember(authenticatedUserId: string) {
     try {
 
-        connectToDB();
+        await connectToDB();
 
         const admin = await Member.findOne({ user: authenticatedUserId });
 
@@ -93,7 +93,7 @@ export async function fetchAllMember(authenticatedUserId: string) {
 export async function fetchMember(userId: string) {
     try {
 
-        connectToDB();
+        await connectToDB();
 
         const member = await Member.findOne({ user: userId });
 
@@ -134,7 +134,7 @@ export async function fetchCountMemberByDateRange(
     startDate: Date | null, endDate: Date | null
 ): Promise<{ success: boolean; data?: { date: string; totalMembers: number }[]; message?: string }> {
     try {
-        connectToDB();
+        await connectToDB();
 
         let modifiedEndDate = endDate || new Date();
         if (endDate) {
@@ -176,7 +176,7 @@ export async function fetchTotalMemberByDateRange(
     startDate: Date | null, endDate: Date | null
 ): Promise<{ success: boolean; data?: any[]; message?: string }> {
     try {
-        connectToDB();
+        await connectToDB();
 
         let modifiedEndDate = endDate || new Date();
         if (endDate) {
@@ -247,7 +247,7 @@ export async function fetchTotalMemberByDateRange(
 export async function generateSubscription() {
     try {
 
-        connectToDB();
+        await connectToDB();
 
         const dummySubscription = new SubscriptionModel({
             id: "sub123",
@@ -284,6 +284,8 @@ export async function generateSubscription() {
 
 export async function fetchSubscriptionById(subscriptionId: string) {
     try {
+        await connectToDB();
+
         const subscription = await SubscriptionModel.findOne({ _id: subscriptionId });
 
         if (!subscription) {
@@ -300,7 +302,7 @@ export async function fetchSubscriptionByDateRange(
     startDate: Date | null, endDate: Date | null
 ): Promise<any> {
     try {
-        connectToDB();
+        await connectToDB();
 
         if (startDate) startDate = startOfDay(new Date(startDate));
         if (endDate) {
@@ -356,7 +358,7 @@ export async function insertNewProduct({
     path,
 }: ParamsProductDetails): Promise<{ success: boolean; message?: string }> {
     try {
-        connectToDB();
+        await connectToDB();
 
         const user = await Member.findOne({ user: authenticatedUserId });
         if (user.usertype.toUpperCase() !== "FLEXADMIN") {
@@ -388,7 +390,7 @@ export async function insertNewProduct({
 export async function fetchAllProduct() {
     try {
 
-        connectToDB();
+        await connectToDB();
 
         const products = await ProductModel.find();
 
@@ -401,6 +403,8 @@ export async function fetchAllProduct() {
 
 export async function fetchProductById(productId: string): Promise<any> {
     try {
+        await connectToDB();
+        
         const product = await ProductModel.findOne({ _id: productId });
 
         if (!product) {
@@ -439,7 +443,7 @@ export async function updateProduct({
     path,
 }: ParamsUpdate): Promise<{ success: boolean; message?: string }> {
     try {
-        connectToDB();
+        await connectToDB();
 
         const user = await Member.findOne({ user: authenticatedUserId });
         if (user.usertype.toUpperCase() !== "FLEXADMIN") {
@@ -474,7 +478,7 @@ export async function deleteProduct({ productId, authenticatedUserId }
     : { productId: string; authenticatedUserId: string }
 ): Promise<{ success: boolean; message?: string }> {
     try {
-        connectToDB();
+        await connectToDB();
 
         const user = await Member.findOne({ user: authenticatedUserId });
         if (user.usertype.toUpperCase() !== "FLEXADMIN") {
@@ -511,7 +515,7 @@ export async function insertNewPromotion({
     authenticatedUserId,
 }: ParamsPromotionDetails): Promise<{ success: boolean; message?: string }> {
     try {
-        connectToDB();
+        await connectToDB();
 
         const user = await Member.findOne({ user: authenticatedUserId });
         if (user.usertype.toUpperCase() !== "FLEXADMIN") {
@@ -537,7 +541,7 @@ export async function insertNewPromotion({
 export async function fetchAllPromotion(): Promise<{ success: boolean; data?: ParamsPromotionDetails[]; message?: string }> {
     try {
 
-        connectToDB();
+        await connectToDB();
 
         const promotions = await PromotionModel.find();
 
@@ -584,7 +588,7 @@ export async function updatePromotion({
     path,
 }: ParamsPromoUpdate): Promise<{ success: boolean; message?: string }> {
     try {
-        connectToDB();
+        await connectToDB();
 
         const user = await Member.findOne({ user: authenticatedUserId });
         if (user.usertype.toUpperCase() !== "FLEXADMIN") {
@@ -616,7 +620,7 @@ export async function deletePromotion({ promoId, authenticatedUserId }
     : { promoId: string; authenticatedUserId: string }
 ): Promise<{ success: boolean; message?: string }> {
     try {
-        connectToDB();
+        await connectToDB();
 
         const user = await Member.findOne({ user: authenticatedUserId });
         if (user.usertype.toUpperCase() !== "FLEXADMIN") {

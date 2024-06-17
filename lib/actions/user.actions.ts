@@ -20,7 +20,7 @@ import axios from 'axios';
 
 export async function authenticateUser(email: string, password: string) {
     try {
-        connectToDB();
+        await connectToDB();
 
         const user = await Member.findOne({ email });
         if (!user) {
@@ -42,7 +42,7 @@ export async function authenticateUser(email: string, password: string) {
 
 export async function createUser(email: string, username: string, password: string) {
     try {
-        connectToDB();
+        await connectToDB();
 
         const existingUser = await Member.findOne({ email: email });
         if (existingUser) {
@@ -61,7 +61,7 @@ export async function createUser(email: string, username: string, password: stri
 
 export async function createMember(userId: string) {
     try {
-        connectToDB();
+        await connectToDB();
 
         const existingMember = await Member.findOne({ user: userId });
 
@@ -129,7 +129,7 @@ export async function getGeoInfoByIP(ipAddress: string) {
 
 export async function updateLastLoginDateAndIP(userId: string, ipAddress: string) {
     try {
-        connectToDB();
+        await connectToDB();
 
         const member = await Member.findOne({ user: userId });
 
@@ -175,6 +175,8 @@ export async function updateLastLoginDateAndIP(userId: string, ipAddress: string
 
 export async function fetchMemberImage(imageId: string) {
     try {
+        await connectToDB();
+
         const imageUrl = await Image.findOne({ _id: imageId });
 
         return imageUrl;
@@ -195,7 +197,7 @@ export async function updateProfileViewData({
     const threeMinutesAgo = subMinutes(now, 3);
 
     try {
-        connectToDB();
+        await connectToDB();
 
         if (userId === authUserId) {
             console.log(`${authUserId} view ${userId} considered same user and not recorded.`);
@@ -243,7 +245,7 @@ export async function fetchProfileViewDetails(
     authenticatedUserId: string, startDate: Date | null, endDate: Date | null
 ): Promise<{ success: boolean; data?: any[]; message?: string }> {
     try {
-        connectToDB();
+        await connectToDB();
 
         if (endDate === null) {
             endDate = new Date();
@@ -278,7 +280,7 @@ export async function fetchFollowersByDateRange(
     authenticatedUserId: string, startDate: Date | null, endDate: Date | null
 ): Promise<{ success: boolean; data?: any[]; message?: string }> {
     try {
-        connectToDB();
+        await connectToDB();
 
         if (endDate === null) {
             endDate = new Date();
@@ -344,7 +346,7 @@ export async function updateMemberFollow({
     authUserId, accountId, method
 }: ParamUpdateMemberFollowData): Promise<{ success: boolean; data?: any; message?: string }> {
     try {
-        connectToDB();
+        await connectToDB();
 
         const now = new Date();
         const threeMinutesAgo = subMinutes(now, 3);
@@ -412,7 +414,7 @@ export async function updateCardLikes(
     params: ParamsCardLikes
 ): Promise<{ success: boolean; data?: any[]; message?: string }> {
     try {
-        connectToDB();
+        await connectToDB();
 
         const now = new Date();
         const threeMinutesAgo = subMinutes(now, 3);
@@ -481,7 +483,7 @@ interface ParamsUpdWebURL {
 
 export async function updateOrganizationUrl(params: ParamsUpdWebURL): Promise<void> {
     try {
-        connectToDB();
+        await connectToDB();
 
         const { authUserId, url } = params;
         const currentMember = await Member.findOne({ user: authUserId });
@@ -586,7 +588,7 @@ export async function updateMemberDetails({
     path,
 }: ParamsMemberDetails): Promise<void> {
     try {
-        connectToDB();
+        await connectToDB();
 
         const existingUser = await Member.findOne({ email: email });
         if (existingUser && path != '/profile/edit') {
@@ -697,7 +699,7 @@ export async function fetchCardViewDetails(
     cardId: string, startDate: Date | null, endDate: Date | null
 ): Promise<{ success: boolean; data?: any[]; message?: string }> {
     try {
-        connectToDB();
+        await connectToDB();
 
         if (endDate === null) {
             endDate = new Date();
@@ -730,7 +732,7 @@ export async function fetchCardViewDetails(
 
 export async function fetchOnlyCardId(userId: string) {
     try {
-        connectToDB();
+        await connectToDB();
 
         const cardId = await Member.findOne({ user: userId }).select('cards');
         const cardWithTitle = await Card.find({ '_id': { $in: cardId.cards } }).select('title');
@@ -744,7 +746,7 @@ export async function fetchOnlyCardId(userId: string) {
 
 export async function fetchPersonalCards(userId: string) {
     try {
-        connectToDB();
+        await connectToDB();
 
         const member = await Member.findOne({ user: userId });
 
@@ -824,7 +826,7 @@ export async function fetchPersonalCards(userId: string) {
 
 export async function fetchAllCards() {
     try {
-        connectToDB();
+        await connectToDB();
 
         const cards = await Card.find();
 

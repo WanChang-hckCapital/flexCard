@@ -11,7 +11,7 @@ import ComponentModel from "../models/component";
 
 export async function fetchCardsByAccountId(accountId: string) {
     try {
-        connectToDB();
+        await connectToDB();
 
         const Cards = await Member.find({ user: accountId }).populate('cards').exec();
 
@@ -32,7 +32,7 @@ export async function fetchCardsByAccountId(accountId: string) {
   
 export async function fetchCardDetails(cardId: string) {
     try {
-        connectToDB();
+        await connectToDB();
 
         const card = await CardMongodb.findOne({ _id: cardId });
 
@@ -44,7 +44,7 @@ export async function fetchCardDetails(cardId: string) {
 
 export async function fetchComponent(componentId: string) {
   try {
-      connectToDB();
+      await connectToDB();
 
       const component = await ComponentModel.findOne({ _id: componentId });
 
@@ -62,7 +62,7 @@ export async function upsertCardContent(authaccountId: string, cardDetails: Card
     if (!authaccountId) return;
     
     try {
-      connectToDB();
+      await connectToDB();
 
       if (cardId === "") {
         const cardComponent = {
@@ -170,7 +170,7 @@ export async function upsertCardContent(authaccountId: string, cardDetails: Card
 
 export async function updateCardTitle(authaccountId: string, cardId: string, newTitle: string) {
   try {
-    connectToDB();
+    await connectToDB();
 
     const existingCard = await CardMongodb.findOne({ cardID: cardId });
     if (!existingCard) {
