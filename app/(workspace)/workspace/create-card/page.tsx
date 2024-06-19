@@ -7,6 +7,7 @@ import EditorProvider from '@/lib/editor/editor-provider'
 import { Card } from '@/types'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { generateCustomID } from '@/lib/utils'
 
 type Props = {
   params: {
@@ -28,7 +29,7 @@ const Page = async ({ params }: Props) => {
   const authaccountId = user.id;
 
   const newCardData: Card = {
-    cardID: "",
+    cardID: generateCustomID(),
     creator: authaccountId,
     title: "Temp Card",
     status: "Developing",

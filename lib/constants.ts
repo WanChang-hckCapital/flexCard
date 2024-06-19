@@ -19,7 +19,6 @@ export const defaultStyles: React.CSSProperties = {
   textAlign: 'start',
   opacity: '100%',
   color: 'black',
-
 }
 
 export type EditorElementsBtns =

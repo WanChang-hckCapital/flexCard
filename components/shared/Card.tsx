@@ -114,7 +114,7 @@ function Card({
                     {isHovered && (
                       <div className="absolute inset-0 bg-black opacity-50 flex flex-col justify-between max-w-full">
                         <p className="text-[18px] text-light-2 px-3 py-5 max-w-full truncate">{title}</p>
-                        <div className="flex justify-end pr-2 pb-2 mb-2 max-w-full">
+                        <div className="flex justify-end pr-2 pb-2 max-w-full">
                           <div
                             onClick={handleShareClick}
                             className="rounded-full bg-white p-1 mr-1 hover:scale-110">
@@ -151,7 +151,7 @@ function Card({
                             </div>
                           ))}
                           <p className='mt-1 text-[18px] text-white-1'>
-                            {likes.length} lik{likes.length > 1 ? "es" : "e"}
+                            {likesData.length} lik{likesData.length > 1 ? "es" : "e"}
                           </p>
                         </div>
                       </div>

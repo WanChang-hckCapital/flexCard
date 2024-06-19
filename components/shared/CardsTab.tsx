@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation";
 import Card from "./Card";
 import { fetchPersonalCards } from "@/lib/actions/user.actions";
+import ResponsiveGrid from "../responsive-grid";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 type Result = {
   cardId: string;
@@ -54,6 +57,11 @@ async function CardsTab({ authenticatedUserId, accountId, userType }: Props) {
   //   };
   // } else {
   result = await fetchPersonalCards(accountId);
+  const session = await getServerSession(authOptions)
+
+  if (session) {
+    const user = session?.user;
+  }
   // }
 
   if (!result) {
@@ -68,7 +76,7 @@ async function CardsTab({ authenticatedUserId, accountId, userType }: Props) {
   return (
     // <section className='mt-9 grid auto-rows-auto max-sm:grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 max-xl:grid-cols-6 2xl:grid-cols-7 gap-2'>
     <div style={styles}>
-      <section className='mt-7
+      {/* <section className='mt-7
         columns-2 md:columns-3
         lg:columns-4 mb-4
         xl:columns-5 space-y-2 w-[85%]'>
@@ -93,7 +101,11 @@ async function CardsTab({ authenticatedUserId, accountId, userType }: Props) {
             </div>
           </div>
         ))}
+      </section> */}
+      <section className='lg:mt-7 space-y-2 mx-auto'>
+        <ResponsiveGrid result={result} session={session} />
       </section>
+
     </div>
 
   );

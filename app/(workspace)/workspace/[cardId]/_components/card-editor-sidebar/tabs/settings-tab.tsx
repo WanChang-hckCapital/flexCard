@@ -44,7 +44,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Button } from '@/components/ui/button'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 
-type Props = { selectedBubbleId: string, selectedSectionId: string, selectedElement: EditorElement };
+type Props = { selectedBubbleId: string, selectedSectionId?: string, selectedElement: EditorElement };
 type PaddingKeys = 'paddingAll' | 'paddingTop' | 'paddingBottom' | 'paddingStart' | 'paddingEnd' | 'size' | 'borderWidth' | 'offsetTop' | 'offsetBottom' | 'offsetStart' | 'offsetEnd';
 type ColorProperty = 'color' | 'backgroundColor' | 'borderColor';
 
@@ -117,7 +117,7 @@ function SettingsTab(props: Props) {
       type: 'UPDATE_ELEMENT',
       payload: {
         bubbleId: props.selectedBubbleId,
-        sectionId: props.selectedSectionId,
+        sectionId: props.selectedSectionId || "",
         elementDetails: elementDetails,
       },
     })
@@ -150,7 +150,7 @@ function SettingsTab(props: Props) {
       type: 'UPDATE_ELEMENT',
       payload: {
         bubbleId: props.selectedBubbleId,
-        sectionId: props.selectedSectionId,
+        sectionId: props.selectedSectionId || "",
         elementDetails: elementDetails,
       },
     })
@@ -162,7 +162,13 @@ function SettingsTab(props: Props) {
 
     const { id, value } = e.target;
     const unit = units[id as PaddingKeys];
-    const processedValue = value ? `${value.replace(/px|%/, '')}${unit}` : '';
+
+    let processedValue;
+    if(unit === 'px' || unit === '%') {
+      processedValue = value ? `${value.replace(/px|%/, '')}${unit}` : '';
+    }else{
+      processedValue = value ? `${value.replace(/px|%/, '')}px` : '';
+    }
 
     let elementDetails: EditorElement = {
       ...state.editor.selectedElement,
@@ -184,7 +190,7 @@ function SettingsTab(props: Props) {
       type: 'UPDATE_ELEMENT',
       payload: {
         bubbleId: props.selectedBubbleId,
-        sectionId: props.selectedSectionId,
+        sectionId: props.selectedSectionId || "",
         elementDetails: elementDetails,
       },
     })
@@ -204,7 +210,7 @@ function SettingsTab(props: Props) {
       type: 'UPDATE_ELEMENT',
       payload: {
         bubbleId: props.selectedBubbleId,
-        sectionId: props.selectedSectionId,
+        sectionId: props.selectedSectionId || "",
         elementDetails: updatedElement,
       },
     });
@@ -230,7 +236,7 @@ function SettingsTab(props: Props) {
         type: 'UPDATE_ELEMENT',
         payload: {
           bubbleId: props.selectedBubbleId,
-          sectionId: props.selectedSectionId,
+          sectionId: props.selectedSectionId || "",
           elementDetails: updatedElement,
         },
       });
@@ -243,7 +249,7 @@ function SettingsTab(props: Props) {
         type: 'UPDATE_ELEMENT',
         payload: {
           bubbleId: props.selectedBubbleId,
-          sectionId: props.selectedSectionId,
+          sectionId: props.selectedSectionId || "",
           elementDetails: updatedElement,
         },
       });
@@ -259,7 +265,7 @@ function SettingsTab(props: Props) {
       type: 'UPDATE_ELEMENT',
       payload: {
         bubbleId: props.selectedBubbleId,
-        sectionId: props.selectedSectionId,
+        sectionId: props.selectedSectionId || "",
         elementDetails: {
           ...state.editor.selectedElement,
           action: {
@@ -284,7 +290,7 @@ function SettingsTab(props: Props) {
       type: "UPDATE_ELEMENT",
       payload: {
         bubbleId: props.selectedBubbleId,
-        sectionId: props.selectedSectionId,
+        sectionId: props.selectedSectionId || "",
         elementDetails: updatedElement,
       },
     });

@@ -64,7 +64,9 @@ export async function upsertCardContent(authaccountId: string, cardDetails: Card
     try {
       await connectToDB();
 
-      if (cardId === "") {
+      const existingCard = await CardMongodb.findOne({ cardID: cardId });
+
+      if (!existingCard) {
         const cardComponent = {
           componentID: generateCustomID(),
           componentType: "flexCard",
@@ -93,7 +95,7 @@ export async function upsertCardContent(authaccountId: string, cardDetails: Card
         await newFlexHtmlComponent.save();
 
         const newCardContent = {
-          cardID: generateCustomID(),
+          cardID: cardId,
           creator: authaccountId,
           title: cardDetails.title,
           status: cardDetails.status,
@@ -117,11 +119,6 @@ export async function upsertCardContent(authaccountId: string, cardDetails: Card
       } 
       else 
       {
-        const existingCard = await CardMongodb.findOne({ cardID: cardId });
-        if (!existingCard) {
-            throw new Error("Card not found.");
-        }
-
         const title = cardDetails.title;
         const description = cardDetails.description;
 
@@ -166,6 +163,32 @@ export async function upsertCardContent(authaccountId: string, cardDetails: Card
     } catch (error: any) {
       throw new Error(`Error upserting card content: ${error.message}`);
     }
+}
+
+export async function checkDuplicateCard(
+  authaccountId: string,
+  cardId: string
+): Promise<{ success: boolean; message?: string }>  {
+  try {
+    await connectToDB();
+
+    const authenticatedUserId  = await Member.findOne({ user: authaccountId });
+
+    if(!authenticatedUserId) {
+      return { success: false, message: "You need to login before save the card" };
+    }
+
+    const existingCard = await CardMongodb.findOne({ cardID: cardId });
+
+    if (!existingCard) {
+      return { success: true };
+    }else{
+      return { success: false, message: "Opps, Card already exists, Please try again later."};
+    }
+  }
+  catch{
+    return { success: false };
+  }
 }
 
 export async function updateCardTitle(authaccountId: string, cardId: string, newTitle: string) {

@@ -800,7 +800,7 @@ export async function fetchPersonalCards(userId: string) {
             const flexFormatHTMLContent = await ComponentModel.findOne({ _id: flexFormatHTML.flexFormatHtml }).select('content');
 
             return {
-                cardId: card._id,
+                cardId: card._id.toString(),
                 title: card.title,
                 creator: creatorData,
                 likes: likesDetails,
@@ -863,7 +863,7 @@ export async function fetchAllCards() {
             const flexFormatHTMLContent = await ComponentModel.findOne({ _id: flexFormatHTML.flexFormatHtml }).select('content');
 
             return {
-                cardId: card._id,
+                cardId: card._id.toString(),
                 title: card.title,
                 creator: creatorData,
                 likes: likesDetails,

@@ -57,13 +57,11 @@ const MemberProfile = ({ user, btnTitle }: Props) => {
     defaultValues: defaultValues,
   });
 
-  console.log("image", defaultValues.profile_image);
-
   const onSubmit = async (values: z.infer<typeof UserValidation>) => {
-    
+
     const geoInfo = await getIPCountryInfo();
 
-    if(file && fileUrl) {
+    if (file && fileUrl) {
       await updateMemberDetails({
         userId: user.userId,
         accountname: values.accountname,
@@ -80,7 +78,7 @@ const MemberProfile = ({ user, btnTitle }: Props) => {
         },
         path: pathname,
       });
-    }else{
+    } else {
       await updateMemberDetails({
         userId: user.userId,
         accountname: values.accountname,
@@ -156,14 +154,17 @@ const MemberProfile = ({ user, btnTitle }: Props) => {
         event.returnValue = "";
       }
     };
-  
-    window.addEventListener("beforeunload", handleBeforeUnload);
-  
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
+
+    if (pathname === "/profile/edit") {
+      window.addEventListener("beforeunload", handleBeforeUnload);
+
+      return () => {
+        window.removeEventListener("beforeunload", handleBeforeUnload);
+      };
+    }
+
   }, [isFormDirty]);
-  
+
 
   useEffect(() => {
     const isDirty = Object.keys(defaultValues).some(
@@ -196,7 +197,7 @@ const MemberProfile = ({ user, btnTitle }: Props) => {
                       className='rounded-full object-contain'
                     />
                   ) : (
-                    <CircleUser 
+                    <CircleUser
                       width={96}
                       height={96}
                       className='rounded-full object-contain text-gray-500'

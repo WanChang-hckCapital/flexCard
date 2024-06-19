@@ -5,7 +5,7 @@
 @layer components {
   /* main */
   .main-container {
-    @apply flex min-h-screen flex-1 flex-col items-center bg-dark-1 px-2 pb-10 pt-16;
+    @apply flex min-h-screen flex-1 flex-col items-center bg-dark-1 px-2 max-sm:pt-0 max-md:pt-3 md:pt-3 lg:pt-16 pb-10;
   }
 
   /* Head Text */
@@ -75,7 +75,7 @@
   }
 
   .leftsidebar {
-    @apply sticky left-0 top-0 z-20 flex h-screen w-fit flex-col justify-between overflow-auto border-r border-r-dark-4 bg-dark-2 pb-5 pt-28 max-sm:hidden lg:hidden;
+    @apply sticky left-0 top-0 z-20 flex h-screen w-fit flex-col justify-between overflow-auto border-r border-r-dark-4 bg-dark-2 pb-5 pt-5 max-sm:hidden lg:hidden;
   }
 
   .leftsidebar_link {

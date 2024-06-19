@@ -68,9 +68,9 @@ function ProfileHeader({
   };
 
   return (
-    <div className='flex w-full flex-col justify-center mt-12'>
+    <div className='flex w-full flex-col justify-center mt-12 sm:mt-6'>
       <div className='flex items-center justify-center'>
-        <div className='flex items-center gap-8'>
+        <div className='flex items-center gap-8 max-sm:gap-4'>
           <div className='relative h-24 w-24 object-cover'>
             {
               imgUrl ? (
@@ -91,7 +91,7 @@ function ProfileHeader({
             }
           </div>
 
-          <div className='flex-1 justify-center min-w-80'>
+          <div className='flex-1 justify-center min-w-60'>
             <div className="flex justify-between items-center">
               <h2 className='flex row text-left text-heading3-bold text-light-1 gap-2'>
                 {

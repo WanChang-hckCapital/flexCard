@@ -197,7 +197,7 @@ function CardEditor({ liveMode, componentId }: Props) {
           )}
           {(component.header?.contents &&
             component.header?.contents.length > 0) && (
-              <div className="component-container relative mt-2 p-4 border-x border-t rounded-t-lg bg-white overflow-hidden">
+              <div className="component-container relative mt-2 border-x border-t rounded-t-lg bg-white overflow-hidden">
                 {component.header && renderSection(component.header, component)}
               </div>
             )}
@@ -217,7 +217,7 @@ function CardEditor({ liveMode, componentId }: Props) {
               </div>
             )}
           <div
-            className={clsx('component-container relative mb-2 p-4 border-b border-x rounded-b-lg shadow-lg bg-white overflow-hidden', {
+            className={clsx('component-container relative mb-2 border-b border-x rounded-b-lg shadow-lg bg-white overflow-hidden', {
               'mt-2': (component.hero?.contents && component.hero?.contents.length < 1 && component.header?.contents && component.header?.contents.length < 1),
               'border-t': (component.hero?.contents && component.hero?.contents.length < 1 && component.header?.contents && component.header?.contents.length < 1),
               'rounded-t-lg': (component.hero?.contents && component.hero?.contents.length < 1 && component.header?.contents && component.header?.contents.length < 1),

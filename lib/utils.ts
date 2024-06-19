@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { v4 as uuidv4 } from 'uuid';
 import jsPDF from "jspdf";
 import React from 'react';
 import ReactDOMServer from 'react-dom/server';
@@ -260,7 +261,7 @@ export function createHtmlFromJson(json: any) {
 
     if (currentIndex === 0) {
       return {
-        width: '300px',
+        width: '236px', //for grid view looks in application homepage
         // maxWidth: json.size === 'nano' ? '120px'
         //   : json.size === 'micro' ? '160px'
         //     : json.size === 'deca' ? '220px'
@@ -340,3 +341,45 @@ export function createHtmlFromJson(json: any) {
     </div>
 `;
 };
+
+export function transformJson(inputJson: any) {
+  return {
+    id: 'initial',
+    type: inputJson.type,
+    header: {
+      id: 'initial_header',
+      contents: [],
+    },
+    hero: {
+      id: 'initial_hero',
+      contents: [],
+    },
+    body: {
+      id: 'initial_body',
+      contents: [
+        {
+          id: 'initial_box',
+          type: inputJson.body.type,
+          layout: inputJson.body.layout,
+          description: 'Expand your creativity by using me!',
+          contents: inputJson.body.contents.map((content: any) => ({
+            ...content,
+            id: generateCustomID(),
+            description:
+              content.type === 'image'
+                ? 'Image is the best way to render information!'
+                : 'Render your mind using me.',
+          })),
+        },
+      ],
+    },
+    footer: {
+      id: 'initial_footer',
+      contents: [],
+    },
+  };
+};
+
+export function generateCustomID() {
+  return uuidv4();
+}

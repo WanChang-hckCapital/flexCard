@@ -8,7 +8,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { upsertCardContent } from '@/lib/actions/workspace.actions'
+import { checkDuplicateCard, upsertCardContent } from '@/lib/actions/workspace.actions'
 import { DeviceTypes, useEditor } from '@/lib/editor/editor-provider'
 import { createHtmlFromJson } from '@/lib/utils'
 import { Card } from '@/types'
@@ -45,7 +45,7 @@ function CardEditorNavigation({ cardDetails, authaccountId }: Props) {
       const value = event.target.value;
       cardDetails.title = value,
 
-      toast.success('Card title updated successfully.')
+        toast.success('Card title updated successfully.')
       // router.refresh()
     } else {
       toast.error('Oppse! You need to have a title, Please try again later.')
@@ -84,33 +84,39 @@ function CardEditorNavigation({ cardDetails, authaccountId }: Props) {
     }
 
     try {
-      await upsertCardContent(
-        authaccountId,
-        {
-          cardID: cardDetails.cardID,
-          title: cardDetails.title,
-          status: cardDetails.status,
-          description: cardDetails.description,
-          likes: cardDetails.likes,
-          followers: cardDetails.followers,
-          components: cardDetails.components,
-          lineFormatComponent: cardDetails.lineFormatComponent,
-          flexFormatHtml: cardDetails.flexFormatHtml,
-          creator: cardDetails.creator,
-          categories: [],
-          updatedAt: new Date(),
-          createdAt: new Date(),
-          totalViews: 0,
-          viewDetails: [],
-          updateHistory: []
-        },
-        strWorkspaceFormat,
-        strLineFlexMessage,
-        htmlFormat,
-        cardDetails.cardID
-      )
+      const isDuplicateCard = await checkDuplicateCard(authaccountId, cardDetails.cardID);
+      if (isDuplicateCard.success === false) {
+        toast.error(isDuplicateCard.message);
+        return;
+      } else {
+        await upsertCardContent(
+          authaccountId,
+          {
+            cardID: cardDetails.cardID,
+            title: cardDetails.title,
+            status: cardDetails.status,
+            description: cardDetails.description,
+            likes: cardDetails.likes,
+            followers: cardDetails.followers,
+            components: cardDetails.components,
+            lineFormatComponent: cardDetails.lineFormatComponent,
+            flexFormatHtml: cardDetails.flexFormatHtml,
+            creator: cardDetails.creator,
+            categories: [],
+            updatedAt: new Date(),
+            createdAt: new Date(),
+            totalViews: 0,
+            viewDetails: [],
+            updateHistory: []
+          },
+          strWorkspaceFormat,
+          strLineFlexMessage,
+          htmlFormat,
+          cardDetails.cardID
+        )
+        toast.success('Card saved successfully.');
+      }
 
-      toast.success('Card saved successfully.');
       router.push(`/profile/${authaccountId}`);
     } catch (error) {
       toast.error('Oppse! Something went wrong, Please try again later.');
