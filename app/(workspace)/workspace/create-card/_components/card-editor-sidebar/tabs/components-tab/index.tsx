@@ -17,6 +17,8 @@ import IconPlaceholder from './icon-placeholder'
 import JSONImportForm from '@/components/forms/json-import'
 import { toast } from 'sonner'
 import { useEditor } from '@/lib/editor/editor-provider'
+import DescriptionForm from '@/components/forms/description'
+import OCRForm from '@/components/forms/ocr'
 
 type Props = {}
 
@@ -27,7 +29,7 @@ function ComponentsTab(props: Props) {
     Component: React.ReactNode
     label: string
     id: EditorElementsBtns
-    group: 'layout' | 'elements' | 'import'
+    group: 'layout' | 'elements' | 'describe' | 'import'
   }[] = [
       {
         Component: <ContainerPlaceholder />,
@@ -79,21 +81,34 @@ function ComponentsTab(props: Props) {
       },
       {
         Component: <IconPlaceholder />,
+        label: 'Describe',
+        id: 'icon',
+        group: 'describe',
+      },
+      {
+        Component: <IconPlaceholder />,
         label: 'Import',
         id: 'icon',
         group: 'import',
       },
-  ]
+    ]
 
   const handleImport = (importedJson: any) => {
-    // dispatch({ type: 'SET_COMPONENT', payload: importedJson });
+    dispatch({ 
+      type: 'IMPORT_COMPONENT', 
+      payload: {
+        componentDetails: importedJson
+      } 
+    });
+
+    console.log('importedJson', importedJson);
   };
 
   return (
     <Accordion
       type="multiple"
       className="w-full px-4"
-      defaultValue={['Layout', 'Elements', 'Media']}
+      defaultValue={['Layout', 'Elements', 'Describe']}
     >
       <AccordionItem
         value="Layout"
@@ -133,19 +148,19 @@ function ComponentsTab(props: Props) {
             ))}
         </AccordionContent>
       </AccordionItem>
+      <AccordionItem value="Describe" className="py-0 ">
+        <AccordionTrigger className="!no-underline">Describe</AccordionTrigger>
+        <AccordionContent className="flex flex-wrap gap-2 ">
+          <DescriptionForm />
+        </AccordionContent>
+      </AccordionItem>
       <AccordionItem value="import" className="py-0 ">
         <AccordionTrigger className="!no-underline">Import</AccordionTrigger>
         <AccordionContent className="flex flex-wrap gap-2 ">
-          {/* {elements.filter((element) => element.group === 'import').map((element) => (
-            <div key={element.id} className="flex-col items-center justify-center flex">
-              {element.Component}
-              <span className="text-muted-foreground">{element.label}</span>
-            </div>
-          ))} */}
-          {/* <JSONImportForm onImport={handleImport}/> */}
+          <JSONImportForm onImport={handleImport} />
+          <OCRForm />
         </AccordionContent>
       </AccordionItem>
-
     </Accordion>
   )
 }

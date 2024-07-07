@@ -336,6 +336,32 @@ export async function fetchUser(userId: string) {
     }
 }
 
+type CheckIfFollowingParams = {
+    authUserId: string;
+    accountId: string;
+};
+
+export async function checkIfFollowing({
+    authUserId, accountId
+}: CheckIfFollowingParams): Promise<{ success: boolean; isFollowing: boolean; message?: string }> {
+    try {
+        await connectToDB();
+
+        const currentMember = await Member.findOne({ user: authUserId });
+        const accountMember = await Member.findOne({ user: accountId });
+
+        if (!currentMember || !accountMember) {
+            throw new Error("Current member or account member not found");
+        }
+
+        const isFollowing = currentMember.following.includes(accountId.toString());
+
+        return { success: true, isFollowing };
+    } catch (error: any) {
+        return { success: false, isFollowing: false, message: `Failed to check following status: ${error.message}` };
+    }
+}
+
 interface ParamUpdateMemberFollowData {
     authUserId: string;
     accountId: string;
@@ -405,6 +431,17 @@ export async function updateMemberFollow({
     }
 }
 
+export async function getLikeCount(cardId: string) {
+    try {
+      await connectToDB();
+      const card = await Card.findById(cardId);
+      if (!card) throw new Error('Card not found');
+      return { success: true, likes: card.likes.length };
+    } catch (error: any) {
+      return { success: false, message: error.message };
+    }
+  }
+
 interface ParamsCardLikes {
     authUserId: string,
     cardId: string,
@@ -412,7 +449,7 @@ interface ParamsCardLikes {
 
 export async function updateCardLikes(
     params: ParamsCardLikes
-): Promise<{ success: boolean; data?: any[]; message?: string }> {
+): Promise<{ success: boolean; data?: any[]; reachedLimit: boolean; message?: string }> {
     try {
         await connectToDB();
 
@@ -420,7 +457,10 @@ export async function updateCardLikes(
         const threeMinutesAgo = subMinutes(now, 3);
 
         const { authUserId, cardId } = params;
-        const card = await Card.findById(cardId);
+
+        const authUserIdSanitized = authUserId.trim();
+
+        const card = await Card.findOne({ _id: cardId });
 
         if (!card) {
             throw new Error("Card not found");
@@ -434,7 +474,8 @@ export async function updateCardLikes(
             const nextAvailableTime = addMinutes(userUpdateTimestamps[0].timestamp, 3).toLocaleTimeString();
             return {
                 success: false,
-                message: `Although We know you like this card so much but unfortunately You have reach the like limits for this card, Please Try again in ${nextAvailableTime}.`
+                message: `Although We know you like this card so much but unfortunately You have reach the like limits for this card, Please Try again in ${nextAvailableTime}.`,
+                reachedLimit: true
             };
         }
 
@@ -442,12 +483,12 @@ export async function updateCardLikes(
         const userHasLiked = card.likes.includes(authUserId);
 
         if (userHasLiked) {
-            update = { $pull: { likes: authUserId }, $push: { updateHistory: { userId: authUserId, timestamp: now } } };
+            update = { $pull: { likes: authUserIdSanitized }, $push: { updateHistory: { userId: authUserIdSanitized, timestamp: now } } };
         } else {
-            update = { $addToSet: { likes: authUserId }, $push: { updateHistory: { userId: authUserId, timestamp: now } } };
+            update = { $addToSet: { likes: authUserIdSanitized }, $push: { updateHistory: { userId: authUserIdSanitized, timestamp: now } } };
         }
 
-        const updatedCard = await Card.findByIdAndUpdate(cardId, update, { new: true });
+        const updatedCard = await Card.findByIdAndUpdate(card._id, update, { new: true });
 
         if (!updatedCard) {
             throw new Error("Update failed");
@@ -469,10 +510,10 @@ export async function updateCardLikes(
             };
         }));
 
-        return { success: true, data: likesDetails };
+        return { success: true, data: likesDetails, reachedLimit: false };
     }
     catch (error: any) {
-        return { success: false, message: `Failed to update card likes: ${error.message}` };
+        return { success: false, message: `Failed to update card likes: ${error.message}`, reachedLimit: false };
     }
 }
 
@@ -515,8 +556,6 @@ export async function updateOrganizationUrl(params: ParamsUpdWebURL): Promise<vo
 export async function uploadImageToGridFS(file: File, filename: string): Promise<string> {
     try {
         await connectToDB();
-
-        console.log('File:', file);
 
         const db = mongoose.connection.getClient().db();
         const bucket = new GridFSBucket(db);
@@ -614,7 +653,7 @@ export async function updateMemberDetails({
                 image: imageId,
                 onboarded: true,
             };
-        }else{
+        } else {
             updateData = {
                 accountname: accountname,
                 email: email,
@@ -776,15 +815,18 @@ export async function fetchPersonalCards(userId: string) {
             const lineComponents = await Card.findOne({ _id: card }).select('lineFormatComponent');
 
             const likesDetails = await Promise.all(card.likes.map(async (likeId: any) => {
-                const likeUser = await MemberModel.findOne({ user: likeId }).select('accountname image');
+                const likeUser = await MemberModel.findOne({ user: likeId }).select('user accountname image');
+
                 if (likeUser && likeUser.image) {
                     const imageDoc = await Image.findById(likeUser.image).select('binaryCode');
                     return {
+                        userId: likeUser.user.toString(),
                         accountname: likeUser.accountname,
                         binarycode: imageDoc ? imageDoc.binaryCode : undefined
                     };
                 }
                 return {
+                    userId: likeUser.user.toString(),
                     accountname: likeUser ? likeUser.accountname : "Unknown",
                     binarycode: undefined
                 };
@@ -841,15 +883,17 @@ export async function fetchAllCards() {
             const lineComponents = await Card.findOne({ _id: card }).select('lineFormatComponent');
 
             const likesDetails = await Promise.all(card.likes.map(async (likeId: any) => {
-                const likeUser = await MemberModel.findOne({ user: likeId }).select('accountname image');
+                const likeUser = await MemberModel.findOne({ user: likeId }).select('user accountname image');
                 if (likeUser && likeUser.image) {
                     const imageDoc = await Image.findById(likeUser.image).select('binaryCode');
                     return {
+                        userId: likeUser.user.toString(),
                         accountname: likeUser.accountname,
                         binarycode: imageDoc ? imageDoc.binaryCode : undefined
                     };
                 }
                 return {
+                    userId: likeUser.user.toString(),
                     accountname: likeUser ? likeUser.accountname : "Unknown",
                     binarycode: undefined
                 };
@@ -945,13 +989,13 @@ export async function sendFlexMessageLiff(flexContent: string) {
                     contents: JSON.parse(flexContent),
                 },
             ]);
-            return { success: true, message: 'Card has been shared successfully, Please check your LINE.'};
+            return { success: true, message: 'Card has been shared successfully, Please check your LINE.' };
         } else {
-            return { success: false, message: 'Failed to share card to LINE, Please open in Line app.'};
+            return { success: false, message: 'Failed to share card to LINE, Please open in Line app.' };
         }
     } catch (error: any) {
         console.log('Error sharing Card Line:', error.message);
-        return { success: false, message: 'Failed to share card to LINE, Please try again later.'};
+        return { success: false, message: 'Failed to share card to LINE, Please try again later.' };
     }
 }
 

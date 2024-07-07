@@ -9,8 +9,9 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { checkDuplicateCard, upsertCardContent } from '@/lib/actions/workspace.actions'
-import { DeviceTypes, useEditor } from '@/lib/editor/editor-provider'
-import { createHtmlFromJson } from '@/lib/utils'
+import { EditorElementsBtns } from '@/lib/constants'
+import { DeviceTypes, EditorElement, useEditor } from '@/lib/editor/editor-provider'
+import { createHtmlFromJson, generateCustomID } from '@/lib/utils'
 import { Card } from '@/types'
 import clsx from 'clsx'
 import {
@@ -66,9 +67,57 @@ function CardEditorNavigation({ cardDetails, authaccountId }: Props) {
     dispatch({ type: 'REDO' })
   }
 
+  const initialFooterComponent: EditorElement = {
+    "id": "initial_footer_box",
+    "type": "box",
+    "layout": "horizontal",
+    "description": "Expand your creativity by using me!",
+    "contents": [
+      {
+        "id": generateCustomID(),
+        "type": "image",
+        "description": "Image is the best way to render information!",
+        "url": "https://cdn-icons-png.flaticon.com/128/16188/16188216.png",
+        "size": "25px",
+        "action": {
+          "type": "uri",
+          "label": "action",
+          "uri": "http://linecorp.com/"
+        }
+      },
+      {
+        "id": generateCustomID(),
+        "type": "image",
+        "description": "Image is the best way to render information!",
+        "url": "https://cdn-icons-png.flaticon.com/128/10747/10747272.png",
+        "size": "25px",
+        "action": {
+          "type": "uri",
+          "label": "action",
+          "uri": "http://linecorp.com/"
+        }
+      }
+    ],
+    "backgroundColor": "#DCDCDC"
+  }
+
   const handleOnSave = async () => {
     const workspaceFormat = state.editor.component;
-    const strWorkspaceFormat = JSON.stringify(workspaceFormat);
+    const initialWorkspaceFormat = JSON.parse(JSON.stringify(workspaceFormat));
+
+    const updatedComponent = { ...workspaceFormat };
+
+    if (!updatedComponent.footer) {
+      updatedComponent.footer = {
+        id: generateCustomID(),
+        contents: []
+      };
+    }
+
+    const strFlexFormatHtml = JSON.stringify(initialWorkspaceFormat);
+    updatedComponent.footer.contents = [initialFooterComponent];
+
+    console.log('new workspaceFormat with footer', workspaceFormat);
 
     removeIdsAndDescriptions(workspaceFormat);
     removeEmptySections(workspaceFormat);
@@ -76,7 +125,7 @@ function CardEditorNavigation({ cardDetails, authaccountId }: Props) {
     const strLineFlexMessage = JSON.stringify(workspaceFormat);
     cardDetails.status = 'Public';
 
-    const htmlFormat = createHtmlFromJson(workspaceFormat);
+    const htmlFormat = createHtmlFromJson(initialWorkspaceFormat);
 
     if (cardDetails.title === '' || cardDetails.title === "Temp Card") {
       toast.error('Oppse! You need to have a title, Please try again later.')
@@ -95,7 +144,7 @@ function CardEditorNavigation({ cardDetails, authaccountId }: Props) {
             cardID: cardDetails.cardID,
             title: cardDetails.title,
             status: cardDetails.status,
-            description: cardDetails.description,
+            description: state.editor.description || '',
             likes: cardDetails.likes,
             followers: cardDetails.followers,
             components: cardDetails.components,
@@ -109,7 +158,7 @@ function CardEditorNavigation({ cardDetails, authaccountId }: Props) {
             viewDetails: [],
             updateHistory: []
           },
-          strWorkspaceFormat,
+          strFlexFormatHtml,
           strLineFlexMessage,
           htmlFormat,
           cardDetails.cardID

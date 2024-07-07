@@ -1,11 +1,12 @@
 "use client"
 
-import Image from "next/image";
-
-import { useState } from "react";
-import { updateCardLikes } from "@/lib/actions/user.actions";
+import { useEffect, useState } from "react";
+import { getLikeCount, updateCardLikes } from "@/lib/actions/user.actions";
 import { toast } from "sonner";
 import ShareDialog from "./share-dialog";
+import { Heart, Share2 } from "lucide-react";
+import { Button } from "../ui/button";
+import Link from "next/link";
 
 interface Props {
   id: string;
@@ -25,6 +26,7 @@ interface Props {
 }
 
 interface Like {
+  userId: string;
   accountname: string;
   binarycode: string;
 }
@@ -41,8 +43,26 @@ function Card({
   const [isHovered, setIsHovered] = useState(false);
   const [likesData, setLikesData] = useState<Like[]>(likes);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [likeCount, setLikeCount] = useState<number>(likes.length);
+  const [isLiked, setIsLiked] = useState<boolean>(likes.some(like => like.userId === authenticatedUserId));
+  const [likeButtonDisabled, setLikeButtonDisabled] = useState(false);
 
   const shareUrl = process.env.NEXT_PUBLIC_BASE_URL + `/cards/${id}`;
+
+  useEffect(() => {
+    const fetchLikeCount = async () => {
+      try {
+        const result = await getLikeCount(id);
+        if (result.success) {
+          setLikeCount(result.likes);
+        }
+      } catch (error) {
+        console.error('Error fetching like count:', error);
+      }
+    };
+
+    fetchLikeCount();
+  }, [id]);
 
   const handleShareClick = () => {
     setIsDialogOpen(true);
@@ -52,21 +72,57 @@ function Card({
     setIsDialogOpen(false);
   };
 
+  // const handleUpdateLikeButtonClick = async () => {
+  //   if (!authenticatedUserId) {
+  //     toast.error("You need to login first before actions.");
+  //     return;
+  //   }
+
+  //   try {
+  //     const updatedCard = await updateCardLikes({ authUserId: authenticatedUserId, cardId: id });
+  //     if (updatedCard.success === true) {
+  //       // setLikesData(updatedCard.data || []);
+  //       setLikeCount(updatedCard.data?.length || 0);
+  //       setIsLiked(!isLiked);
+  //     } else {
+  //       toast.error(updatedCard.message);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error updating member likes:', error);
+  //   }
+  // };
+
   const handleUpdateLikeButtonClick = async () => {
     if (!authenticatedUserId) {
       toast.error("You need to login first before actions.");
       return;
     }
 
+    const initialIsLiked = isLiked;
+    const initialLikeCount = likeCount;
+    const newLikeCount = initialIsLiked ? Math.max(0, initialLikeCount - 1) : initialLikeCount + 1;
+    setLikeCount(newLikeCount);
+    setIsLiked(!initialIsLiked);
+
     try {
       const updatedCard = await updateCardLikes({ authUserId: authenticatedUserId, cardId: id });
       if (updatedCard.success === true) {
-        setLikesData(updatedCard.data || []);
+        setLikeCount(updatedCard.data?.length || 0);
+        setIsLiked(!initialIsLiked);
       } else {
+        setLikeCount(initialLikeCount);
+        setIsLiked(initialIsLiked);
         toast.error(updatedCard.message);
       }
+
+      if (updatedCard.reachedLimit === true) {
+        setLikeButtonDisabled(true);
+      }
     } catch (error) {
+      setLikeCount(initialLikeCount);
+      setIsLiked(initialIsLiked);
       console.error('Error updating member likes:', error);
+      toast.error('Error updating likes. Please try again later.');
     }
   };
 
@@ -111,8 +167,11 @@ function Card({
                       dangerouslySetInnerHTML={{ __html: flexHtml }}
                       className='flex w-full flex-col items-center max-w-full'
                     />
-                    {isHovered && (
-                      <div className="absolute inset-0 bg-black opacity-50 flex flex-col justify-between max-w-full">
+                    {/* {isHovered && (
+                      <div 
+                        className="absolute inset-0 bg-black opacity-50 flex flex-col justify-between max-w-full cursor-pointer"
+                        onClick={handleNavigateToCardDetail}
+                        >
                         <p className="text-[18px] text-light-2 px-3 py-5 max-w-full truncate">{title}</p>
                         <div className="flex justify-end pr-2 pb-2 max-w-full">
                           <div
@@ -156,7 +215,10 @@ function Card({
                         </div>
                       </div>
                     )}
-                    {isDialogOpen && <ShareDialog url={shareUrl} lineComponents={lineComponents} userImageUrl={creator.image} onClose={handleCloseDialog} />}
+                    {isDialogOpen && <ShareDialog url={shareUrl} lineComponents={lineComponents} userImageUrl={creator.image} onClose={handleCloseDialog} />} */}
+                    {isHovered && (
+                      <Link className="absolute inset-0 flex max-w-full cursor-pointer" href={`/cards/${id}`} />
+                    )}
                   </div>
                 </>
               ) : (
@@ -168,6 +230,25 @@ function Card({
           </div>
         </div>
       </div>
+      <div className="flex justify-around items-center p-2">
+        <div className="flex items-center">
+          <Button variant="none_bg" size="icon" disabled={likeButtonDisabled} onClick={handleUpdateLikeButtonClick}>
+            {isLiked ? (
+              <Heart fill="#F47983" strokeWidth={0} className="cursor-pointer" />
+            ) : (
+              <Heart className="cursor-pointer" />
+            )}
+          </Button>
+          <span className="ml-2">{likeCount}</span>
+        </div>
+        <div className="flex items-center">
+          <Share2 className="cursor-pointer" onClick={handleShareClick} />
+          <span className="ml-2">0</span>
+        </div>
+      </div>
+      {isDialogOpen && (
+        <ShareDialog url={shareUrl} lineComponents={lineComponents} userImageUrl={creator.image} onClose={handleCloseDialog} />
+      )}
     </article>
   );
 }

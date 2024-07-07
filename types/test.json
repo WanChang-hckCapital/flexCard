@@ -126,3 +126,88 @@
         }
     ]
 }
+
+"footer": {
+    "type": "box",
+    "layout": "horizontal",
+    "contents": [
+      {
+        "type": "image",
+        "url": "https://cdn-icons-png.flaticon.com/128/16188/16188216.png",
+        "size": "25px",
+        "action": {
+          "type": "uri",
+          "label": "action",
+          "uri": "http://linecorp.com/"
+        }
+      },
+      {
+        "type": "image",
+        "url": "https://cdn-icons-png.flaticon.com/128/10747/10747272.png",
+        "size": "25px",
+        "action": {
+          "type": "uri",
+          "label": "action",
+          "uri": "http://linecorp.com/"
+        }
+      }
+    ],
+    "backgroundColor": "#778899"
+  }
+
+  "contents": [
+    {
+      "id": generateCustomID(),
+      "type": "button",
+      "description": "A button explore your route magic!",
+      "action": {
+        "type": "uri",
+        "label": "Share",
+        "uri": `${process.env.NEXT_PUBLIC_BASE_URL}/api/updateCardLikes/${cardDetails.cardID}`
+      },
+      "style": "secondary",
+      "height": "sm"
+    },
+    {
+      "id": generateCustomID(),
+      "type": "button",
+      "description": "A button explore your route magic!",
+      "action": {
+        "type": "uri",
+        "label": "Like",
+        "uri": `${process.env.NEXT_PUBLIC_BASE_URL}/api/updateCardLikes/${cardDetails.cardID}?authUserId=${authaccountId}`
+      },
+      "color": "#24a0ed",
+      "style": "primary",
+      "height": "sm"
+    }
+  ]
+
+  "footer": {
+    "type": "box",
+    "layout": "horizontal",
+    "spacing": "none",
+    "contents": [
+      {
+        "type": "image",
+        "url": "https://cdn-icons-png.flaticon.com/128/16188/16188216.png",
+        "size": "25px",
+        "action": {
+          "type": "uri",
+          "label": "action",
+          "uri": "http://linecorp.com/"
+        }
+      },
+      {
+        "type": "image",
+        "url": "https://cdn-icons-png.flaticon.com/128/10747/10747272.png",
+        "size": "25px",
+        "action": {
+          "type": "uri",
+          "label": "action",
+          "uri": "http://linecorp.com/"
+        }
+      }
+    ],
+    "backgroundColor": "#DCDCDC"
+  }

@@ -30,9 +30,22 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
         const readableStream = new ReadableStream({
             start(controller) {
-                downloadStream.on('data', (chunk) => controller.enqueue(chunk));
+                downloadStream.on('data', (chunk) => {
+                    if (!controller.desiredSize) {
+                        downloadStream.pause();
+                    }
+                    controller.enqueue(chunk);
+                });
                 downloadStream.on('end', () => controller.close());
                 downloadStream.on('error', (err) => controller.error(err));
+            },
+            pull(controller) {
+                if (downloadStream.isPaused()) {
+                    downloadStream.resume();
+                }
+            },
+            cancel() {
+                downloadStream.destroy();
             }
         });
 

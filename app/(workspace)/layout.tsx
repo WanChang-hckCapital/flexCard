@@ -49,16 +49,17 @@ export default async function WorkspaceLayout({
   return (
     <AuthSessionProvider>
       <html lang="en">
+        <script src="/opencv.js"></script>
         <body
           className={cn(
             "min-h-screen flex flex-col bg-dark-1 justify-center text-white font-sans antialiased",
             fontSans.variable
           )}>
-            
             <main className='h-screen overflow-hidden'>
               <section className='flex h-full flex-row'>
               {/* <Header session={session} userInfoImage={userImage} /> */}
                 {/* <LeftSidebar /> */}
+                <div className='z-99' id="modal-root"></div>
                 <div className='w-full'>{children}</div>
               </section>
             </main>

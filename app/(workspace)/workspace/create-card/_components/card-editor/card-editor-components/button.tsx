@@ -5,6 +5,7 @@ import { Trash } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import clsx from 'clsx';
 import { Button } from '@/components/ui/button';
+import { convertSizeToPixels } from '@/lib/utils';
 
 type ButtonElementProps = {
   element: EditorElement;
@@ -53,11 +54,11 @@ const ButtonElement: React.FC<ButtonElementProps> = ({ element, sectionId, bubbl
     width: '100%',
     textAlign: 'center',
     alignContent: 'center',
-    marginTop: element.margin,
-    top: element.offsetTop,
-    left: element.offsetStart,
-    right: element.offsetEnd,
-    bottom: element.offsetBottom,
+    marginTop: convertSizeToPixels(element.margin),
+    top: convertSizeToPixels(element.offsetTop),
+    left: convertSizeToPixels(element.offsetStart),
+    right: convertSizeToPixels(element.offsetEnd),
+    bottom: convertSizeToPixels(element.offsetBottom),
   };
 
   return (

@@ -154,7 +154,7 @@ function CardEditor({ liveMode }: Props) {
 
       return (
         <div
-        style={typeof dynamicStyles === 'function' ? dynamicStyles(index ?? 0) : dynamicStyles}
+          style={typeof dynamicStyles === 'function' ? dynamicStyles(index ?? 0) : dynamicStyles}
           onClick={(e) => handleOnClickBody(e, component as EditorElement, component.id || "")}>
           {component.hero && (
             <div>
@@ -216,7 +216,7 @@ function CardEditor({ liveMode }: Props) {
           Unpreview
         </Button>
       )}
-      <div className="components-flex-container w-[78%] max-w-fit">
+      <div className="components-flex-container w-[78%] h-[1400px] max-w-fit">
         {state.editor.component ? renderComponent(state.editor.component) : <p>No components to display</p>}
       </div>
     </div>

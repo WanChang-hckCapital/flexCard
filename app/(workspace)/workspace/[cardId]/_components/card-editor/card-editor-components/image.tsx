@@ -5,10 +5,11 @@ import { Button } from '@/components/ui/button'
 import { EditorElement, EditorSection, useEditor } from '@/lib/editor/editor-provider'
 import clsx from 'clsx'
 import { Trash } from 'lucide-react'
-import React, { useRef, useState } from 'react'
+import React, { use, useEffect, useRef, useState } from 'react'
 import { defaultStyles } from '@/lib/constants'
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuLabel, ContextMenuRadioGroup, ContextMenuRadioItem, ContextMenuSeparator, ContextMenuShortcut, ContextMenuSub, ContextMenuSubContent, ContextMenuSubTrigger, ContextMenuTrigger } from '@/components/ui/context-menu'
 import { toast } from 'sonner'
+import { convertSizeToPixels, getSize } from '@/lib/utils'
 
 type Props = {
   element: EditorElement,
@@ -22,6 +23,12 @@ const ImageElement = (props: Props) => {
   const [mouseIsOver, setMouseIsOver] = useState<boolean>(false);
   const [backgroundImage, setBackgroundImage] = useState(props.element.url || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (state.editor.selectedElement?.id === props.element.id && state.editor.selectedElement.url) {
+      setBackgroundImage(state.editor.selectedElement.url);
+    }
+  }, [state.editor.selectedElement, props.element.id]);
 
   const handleOnClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -145,11 +152,11 @@ const ImageElement = (props: Props) => {
   const styles = {
     backgroundColor: props.element.backgroundColor,
     justifyContent: props.element.align || defaultStyles.textAlign,
-    marginTop: props.element.margin,
-    top: props.element.offsetTop || 0,
-    left: props.element.offsetStart || 0,
-    right: props.element.offsetEnd || 0,
-    bottom: props.element.offsetBottom || 0,
+    marginTop: convertSizeToPixels(props.element.margin),
+    top: convertSizeToPixels(props.element.offsetTop) || 0,
+    left: convertSizeToPixels(props.element.offsetStart) || 0,
+    right: convertSizeToPixels(props.element.offsetEnd) || 0,
+    bottom: convertSizeToPixels(props.element.offsetBottom) || 0,
   };
 
   return (
@@ -177,7 +184,7 @@ const ImageElement = (props: Props) => {
       {/* {state.editor.selectedElement.id === props.element.id &&
         !state.editor.liveMode && (
           <Badge className="absolute -top-[5px] -left-[5px] rounded-none rounded-t-lg ">
-            <div className='text-[16px]'>
+            <div className='text-slate-700'>
               <p className='text-xs'>{state.editor.selectedElement.type?.toUpperCase()}</p>
             </div>
           </Badge>
@@ -189,8 +196,8 @@ const ImageElement = (props: Props) => {
             <span
               style={{
                 display: 'inline-block',
-                width: props.element.size === 'xs' ? '60px' : props.element.size === 'sm' ? '80px' : props.element.size === 'md' ? '100px' : props.element.size === 'lg' ? '120px' : props.element.size === 'xl' ? '140px' : props.element.size === 'xxl' ? '160px' : props.element.size === 'full' ? '100%' : props.element.size || '100px',
-                height: props.element.size === 'xs' ? '60px' : props.element.size === 'sm' ? '80px' : props.element.size === 'md' ? '100px' : props.element.size === 'lg' ? '120px' : props.element.size === 'xl' ? '140px' : props.element.size === 'xxl' ? '160px' : props.element.size === 'full' ? '100%' : props.element.size || '100px',
+                width: props.element.size === 'xs' ? '60px' : props.element.size === 'sm' ? '80px' : props.element.size === 'md' ? '100px' : props.element.size === 'lg' ? '120px' : props.element.size === 'xl' ? '140px' : props.element.size === 'xxl' ? '160px' : props.element.size === '3xl' ? '180px' : props.element.size === '4xl' ? '200px' : props.element.size === '5xl' ? '220px' : props.element.size === 'full' ? getSize(state.editor.component.size) : props.element.size || '100px',
+                height: props.element.size === 'xs' ? '60px' : props.element.size === 'sm' ? '80px' : props.element.size === 'md' ? '100px' : props.element.size === 'lg' ? '120px' : props.element.size === 'xl' ? '140px' : props.element.size === 'xxl' ? '160px' : props.element.size === '3xl' ? '180px' : props.element.size === '4xl' ? '200px' : props.element.size === '5xl' ? '220px' : props.element.size === 'full' ? getSize(state.editor.component.size) : props.element.size || '100px',
                 backgroundImage: `url(${backgroundImage})`,
                 backgroundSize: props.element.aspectMode === 'cover' ? 'cover' : 'contain',
                 backgroundRepeat: 'no-repeat',

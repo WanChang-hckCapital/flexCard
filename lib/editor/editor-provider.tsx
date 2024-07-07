@@ -84,6 +84,7 @@ export type EditorSection = {
 
 export type Editor = {
   liveMode: boolean
+  description?: string
   component: EditorComponent
   elements: EditorElement[]
   selectedElementBubbleId: string
@@ -145,7 +146,8 @@ const initialEditorState: EditorState['editor'] = {
   },
   device: 'Desktop',
   previewMode: false,
-  liveMode: false
+  liveMode: false,
+  description: "",
 }
 
 const initialHistoryState: HistoryState = {
@@ -493,10 +495,10 @@ const editorReducer = (
 
       const isSelectedElementDeleted = state.editor.selectedElement.id === action.payload.elementId;
       const emptySelectedElement = {
-          id: '',
-          type: null,
-          layout: '',
-          contents: []
+        id: '',
+        type: null,
+        layout: '',
+        contents: []
       }
 
       const updatedEditorStateAfterDelete = {
@@ -677,6 +679,39 @@ const editorReducer = (
         };
       }
     }
+    case 'IMPORT_COMPONENT': {
+      const { componentDetails } = action.payload;
+
+      const updatedEditorState = {
+        ...state.editor,
+        component: componentDetails
+      };
+
+      const updatedHistory = [
+        ...state.history.history.slice(0, state.history.currentIndex + 1),
+        { ...updatedEditorState },
+      ];
+
+      return {
+        ...state,
+        editor: updatedEditorState,
+        history: {
+          ...state.history,
+          history: updatedHistory,
+          currentIndex: updatedHistory.length - 1,
+        },
+      };
+    }
+
+    case 'UPDATE_DESCRIPTION':
+      return {
+        ...state,
+        editor: {
+          ...state.editor,
+          description: action.payload.description,
+        },
+      };
+
 
     default:
       return state

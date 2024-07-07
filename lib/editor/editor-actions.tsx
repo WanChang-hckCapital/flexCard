@@ -71,3 +71,15 @@ export type EditorAction =
         componentDetails: EditorComponent;
       };
     }
+  | {
+    type: 'IMPORT_COMPONENT'
+    payload: {
+      componentDetails: EditorComponent;
+    };
+  }
+  | {
+    type: 'UPDATE_DESCRIPTION'
+    payload: {
+      description: string;
+    };
+  }

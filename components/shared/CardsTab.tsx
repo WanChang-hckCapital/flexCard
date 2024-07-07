@@ -13,16 +13,13 @@ type Result = {
     image: string;
   };
   likes: {
+    userId: string;
     accountname: string;
     binarycode: string;
   }[];
   followers: {
     accountname: string;
-    // image: any;
   }[];
-  // components: {
-  //   content: string;
-  // };
   lineComponents: {
     content: string;
   };
@@ -74,34 +71,7 @@ async function CardsTab({ authenticatedUserId, accountId, userType }: Props) {
   
 
   return (
-    // <section className='mt-9 grid auto-rows-auto max-sm:grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 max-xl:grid-cols-6 2xl:grid-cols-7 gap-2'>
     <div style={styles}>
-      {/* <section className='mt-7
-        columns-2 md:columns-3
-        lg:columns-4 mb-4
-        xl:columns-5 space-y-2 w-[85%]'>
-        {result.map((card) => (
-          <div
-            key={card.cardId}
-            className="break-inside-avoid w-[280px] dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden transform transition-transform duration-200 hover:scale-105"
-          >
-            <div className="w-full max-w-full overflow-hidden">
-              <Card
-                key={card.cardId}
-                id={card.cardId}
-                authenticatedUserId={authenticatedUserId}
-                title={card.title}
-                creator={card.creator}
-                likes={card.likes}
-                // followers={[{accountname: card.followers.accountname, image: card.creator.image}]}
-                followers={[]}
-                lineComponents={card.lineComponents.content}
-                flexHtml={card.flexHtml.content}
-              />
-            </div>
-          </div>
-        ))}
-      </section> */}
       <section className='lg:mt-7 space-y-2 mx-auto'>
         <ResponsiveGrid result={result} session={session} />
       </section>

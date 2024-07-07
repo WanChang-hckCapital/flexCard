@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { Textarea } from '../ui/textarea';
 import { Button } from '../ui/button';
+import { transformJson } from '@/lib/utils';
 
 const JSONImportForm = ({ onImport }: any) => {
   const [jsonInput, setJsonInput] = useState('');
@@ -12,7 +13,11 @@ const JSONImportForm = ({ onImport }: any) => {
     e.preventDefault();
     try {
       const parsedJson = JSON.parse(jsonInput);
-      onImport(parsedJson);
+      const transformedJson = transformJson(parsedJson);
+
+      console.log("transformedJson", JSON.stringify(transformedJson));
+
+      onImport(transformedJson);
       setJsonInput('');
     } catch (error) {
       toast.error('Invalid JSON format');
@@ -20,11 +25,11 @@ const JSONImportForm = ({ onImport }: any) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-full">
+    <form onSubmit={handleSubmit} className="w-full p-2">
       <Textarea
         value={jsonInput}
         onChange={(e) => setJsonInput(e.target.value)}
-        className="w-full p-2 border"
+        className="w-full p-2 border account-form_input"
         rows={5}
         placeholder="Paste your JSON here"
       />

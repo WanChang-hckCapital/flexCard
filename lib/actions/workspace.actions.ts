@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import CardMongodb from "../models/card";
 import Member from "../models/member";
+import Image from "../models/image";
 import { connectToDB } from "../mongodb";
 import { Card } from "@/types";
 import { v4 as uuidv4 } from 'uuid';
@@ -31,15 +32,137 @@ export async function fetchCardsByAccountId(accountId: string) {
 //   }
   
 export async function fetchCardDetails(cardId: string) {
-    try {
-        await connectToDB();
+  try {
+      await connectToDB();
 
-        const card = await CardMongodb.findOne({ _id: cardId });
+      const card = await CardMongodb.findById(cardId);
+      if (!card) {
+          throw new Error('Card not found');
+      }
 
-        return card;
-    } catch (error: any) {
-        throw new Error(`Error getting card: ${error.message}`);
-    }
+      const creator = await Member.findOne({ user: card.creator }).select('accountname image');
+      const creatorImage = await Image.findOne({ _id: creator?.image }).select('binaryCode');
+      const creatorData = {
+          accountname: creator ? creator.accountname : "Unknown",
+          image: creator && creatorImage ? creatorImage.binaryCode : undefined
+      };
+
+      const lineComponents = await CardMongodb.findById(cardId).select('lineFormatComponent');
+      
+      const likesDetails = await Promise.all(card.likes.map(async (likeId: any) => {
+          const likeUser = await Member.findOne({ user: likeId }).select('accountname image');
+          if (likeUser && likeUser.image) {
+              const imageDoc = await Image.findById(likeUser.image).select('binaryCode');
+              return {
+                  accountname: likeUser.accountname,
+                  binarycode: imageDoc ? imageDoc.binaryCode : undefined
+              };
+          }
+          return {
+              accountname: likeUser ? likeUser.accountname : "Unknown",
+              binarycode: undefined
+          };
+      }));
+
+      const flexFormatHTML = await CardMongodb.findById(cardId).select('flexFormatHtml');
+
+      const followers = await Promise.all(card.followers.map((id: any) => Member.findOne({ user: id }).select('accountname')));
+
+      const lineFormatComponent = await ComponentModel.findById(lineComponents.lineFormatComponent).select('content');
+      const flexFormatHTMLContent = await ComponentModel.findById(flexFormatHTML.flexFormatHtml).select('content');
+
+      return {
+          cardId: card._id.toString(),
+          title: card.title,
+          description: card.description,
+          creator: creatorData,
+          creatorID: card.creator,
+          likes: likesDetails,
+          followers: followers.map(follower => ({ accountname: follower.accountname })),
+          lineComponents: {
+              content: lineFormatComponent ? lineFormatComponent.content : undefined,
+          },
+          flexHtml: {
+              content: flexFormatHTMLContent ? flexFormatHTMLContent.content : undefined,
+          }
+      };
+  } catch (error) {
+      console.error("Error fetching card details:", error);
+      throw error;
+  }
+}
+
+export async function fetchSuggestedCards(currentCardId: string) {
+  try {
+    await connectToDB();
+
+    const topLikedCards = await CardMongodb.find({ _id: { $ne: currentCardId } })
+      .sort({ likes: -1 })
+      .limit(5)
+      .lean()
+      .exec();
+
+    const additionalCards = await CardMongodb.find({ _id: { $ne: currentCardId } })
+      .skip(5)
+      .lean()
+      .exec();
+
+    const suggestedCards = [...topLikedCards, ...additionalCards];
+
+    const processedCards = await Promise.all(suggestedCards.map(async (card: any) => {
+      const creator = await Member.findOne({ user: card.creator }).select('accountname image');
+      const creatorImage = await Image.findOne({ _id: creator?.image }).select('binaryCode');
+      const creatorData = {
+        accountname: creator ? creator.accountname : "Unknown",
+        image: creator && creatorImage ? creatorImage.binaryCode : undefined
+      };
+
+      const lineComponents = await CardMongodb.findById(card._id).select('lineFormatComponent');
+      
+      const likesDetails = await Promise.all(card.likes.map(async (likeId: any) => {
+        const likeUser = await Member.findOne({ user: likeId }).select('accountname image');
+        if (likeUser && likeUser.image) {
+          const imageDoc = await Image.findById(likeUser.image).select('binaryCode');
+          return {
+            accountname: likeUser.accountname,
+            binarycode: imageDoc ? imageDoc.binaryCode : undefined
+          };
+        }
+        return {
+          accountname: likeUser ? likeUser.accountname : "Unknown",
+          binarycode: undefined
+        };
+      }));
+
+      const flexFormatHTML = await CardMongodb.findById(card._id).select('flexFormatHtml');
+
+      const followers = await Promise.all(card.followers.map((id: any) => Member.findOne({ user: id }).select('accountname')));
+
+      const lineFormatComponent = await ComponentModel.findById(lineComponents.lineFormatComponent).select('content');
+      const flexFormatHTMLContent = await ComponentModel.findById(flexFormatHTML.flexFormatHtml).select('content');
+
+      return {
+        cardId: card._id.toString(),
+        title: card.title,
+        description: card.description,
+        creator: creatorData,
+        creatorID: card.creator,
+        likes: likesDetails,
+        followers: followers.map(follower => ({ accountname: follower.accountname })),
+        lineComponents: {
+          content: lineFormatComponent ? lineFormatComponent.content : undefined,
+        },
+        flexHtml: {
+          content: flexFormatHTMLContent ? flexFormatHTMLContent.content : undefined,
+        }
+      };
+    }));
+
+    return processedCards;
+  } catch (error) {
+    console.error("Error fetching suggested cards:", error);
+    throw error;
+  }
 }
 
 export async function fetchComponent(componentId: string) {

@@ -15,6 +15,7 @@ type Result = {
     image: string;
   };
   likes: {
+    userId: string;
     accountname: string;
     binarycode: string;
   }[];
