@@ -1,20 +1,12 @@
 import * as React from "react"
 import Link from "next/link"
 import {
-    File,
-    ListFilter,
-    Plus,
-} from "lucide-react"
-
-import { Badge } from "@/components/ui/badge"
-import {
     Breadcrumb,
     BreadcrumbItem,
     BreadcrumbLink,
     BreadcrumbList,
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import { Button } from "@/components/ui/button"
 import {
     Card,
     CardContent,
@@ -23,34 +15,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
-import {
-    DropdownMenu,
-    DropdownMenuCheckboxItem,
-    DropdownMenuContent,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
-    Pagination,
-    PaginationContent,
-    PaginationItem,
-} from "@/components/ui/pagination"
 import { Progress } from "@/components/ui/progress"
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"
-import {
-    Tabs,
-    TabsContent,
-    TabsList,
-    TabsTrigger,
-} from "@/components/ui/tabs"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { ChartCard } from "@/components/chart/chart-card"
@@ -59,6 +24,7 @@ import { RANGE_OPTIONS, getRangeOption } from "@/lib/rangeOptions"
 import { TotalViewProfileByDate } from "@/components/chart/member-analysis-chart/total-profile-views"
 import { TotalFollowersByDate } from "@/components/chart/member-analysis-chart/total-follower-views"
 import { redirect } from "next/navigation"
+import { fetchDashboardData } from "@/lib/actions/user.actions"
 
 interface DashboardProps {
     searchParams: {
@@ -85,7 +51,7 @@ async function Dashboard({
     if (!user) {
         redirect("/sign-in");
     }
-    
+
     const authenticatedUserId = user.id;
 
     const viewDetailsCardRangeOption =
@@ -100,6 +66,7 @@ async function Dashboard({
         getRangeOption(searchParams.followersByDateRange, searchParams.followersByDateRangeFrom, searchParams.followersByDateRangeTo) ||
         RANGE_OPTIONS.last_7_days
 
+    const dashboardData = await fetchDashboardData({ userId: authenticatedUserId });
 
     return (
         <div className="flex min-h-screen w-full flex-col bg-neutral-900 gap-4 p-4 lg:gap-6 lg:p-6">
@@ -125,43 +92,43 @@ async function Dashboard({
                             <Card>
                                 <CardHeader className="pb-2">
                                     <CardDescription className="text-slate-300">Total Create Card</CardDescription>
-                                    <CardTitle className="text-[32px]">14</CardTitle>
+                                    <CardTitle className="text-[32px]">{dashboardData.memberCardQuantity}</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="text-[12px] text-slate-300">
-                                        +25% from last week
+                                        +{dashboardData.cardsLastWeek}% from last week
                                     </div>
                                 </CardContent>
                                 <CardFooter>
-                                    <Progress value={25} aria-label="25% increase" />
+                                    <Progress value={(dashboardData.cardsLastWeek / dashboardData.memberCardQuantity) * 100} aria-label={`${dashboardData.cardsLastWeek}% increase`} />
                                 </CardFooter>
                             </Card>
                             <Card>
                                 <CardHeader className="pb-2">
                                     <CardDescription className="text-slate-300">Profile Views</CardDescription>
-                                    <CardTitle className="text-[32px]">45</CardTitle>
+                                    <CardTitle className="text-[32px]">{dashboardData.profileViews}</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="text-[12px] text-slate-300">
-                                        +35% from last month
+                                        +{dashboardData.profileViewsLastWeek}% from last week
                                     </div>
                                 </CardContent>
                                 <CardFooter>
-                                    <Progress value={35} aria-label="35% increase" />
+                                    <Progress value={(dashboardData.profileViewsLastWeek / dashboardData.profileViews) * 100} aria-label={`${dashboardData.profileViewsLastWeek}% increase`} />
                                 </CardFooter>
                             </Card>
                             <Card>
                                 <CardHeader className="pb-2">
                                     <CardDescription className="text-slate-300">Followers Increase</CardDescription>
-                                    <CardTitle className="text-[32px]">6</CardTitle>
+                                    <CardTitle className="text-[32px]">{dashboardData.followersIncrease}</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="text-[12px] text-slate-300">
-                                        +55% from last week
+                                        +{dashboardData.totalFollowersLastWeek}% from last week
                                     </div>
                                 </CardContent>
                                 <CardFooter>
-                                    <Progress value={55} aria-label="55% increase" />
+                                    <Progress value={(dashboardData.totalFollowersLastWeek / dashboardData.followersIncrease) * 100} aria-label={`${dashboardData.totalFollowersLastWeek}% increase`} />
                                 </CardFooter>
                             </Card>
                         </div>

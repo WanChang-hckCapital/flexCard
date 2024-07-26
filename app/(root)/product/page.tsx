@@ -1,194 +1,65 @@
-'use client'
-
 import GetStartButton from "@/components/buttons/getstart-button";
-import SignInButton from "@/components/buttons/signin-button";
-import { Button } from "@/components/ui/button";
-import Image from "next/image";
 import { TiTick } from "react-icons/ti";
+import { fetchAllProduct } from '@/lib/actions/admin.actions';
+import Link from 'next/link';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
+const ProductPage = async () => {
+    const products = await fetchAllProduct();
 
-function Product() {
     return (
-        <div className="pl-4 pr-4 min-2xl:p-8 ">
-            <h1 className="text-center head-text font-bold">
-                Subscription Plan
-            </h1>
-            <div className="grid lg:grid-cols-6 md:grid-cols-4 sm:grid-cols-2 overflow-x-auto gap-3 h-full">
-                <div className="mt-14 rounded-xl border border-[#4E67E5]/25 bg-[#080C23] p-6 w-full">
-                    <div className="relative h-full overflow-hidden">
-                        <div className="text-[#4d66e5] font-bold">Basic</div>
-                        <div className="text-6xl my-5 font-light">Free</div>
-                        <div>
-                            Basic Feature for Personal
-                        </div>
-                        <ul className="mt-4 mb-12">
-                            <li className="flex items-center mb-2"><TiTick className="mr-2" /> Create flexCard</li>
-                            {/* <li className="flex items-center mb-2"><TiTick className="mr-2" /> Share to Friends</li> */}
-                            {/* <li className="flex items-center mb-2"><TiTick className="mr-2" /> Import from JSON format</li> */}
-                            {/* <li className="flex items-center mb-2"><TiTick className="mr-2" /> Generate as QRCode to share</li> */}
-                            <li className="flex items-center mb-2"><TiTick className="mr-2" /> Up to 10 flexCard to save</li>
-                            <li className="flex items-center mb-2"><TiTick className="mr-2" /> Up to 3 flexCard per flex message</li>
-                        </ul>
-                        <div className="absolute bottom-0 left-0 right-0">
-                            <GetStartButton />
-                        </div>
-                    </div>
-                </div>
-                <div className="mt-14 rounded-xl border border-[#4E67E5]/25 bg-[#080C23] p-6 w-full">
-                    <div className="relative h-full overflow-hidden">
-                        <div className="text-[#4d66e5] font-bold">Premium</div>
-                        <div className="text-6xl my-5 font-light">$1.9/month</div>
-                        <div>
-                            Unlock Premium Features
-                        </div>
-                        <ul className="mt-4 mb-12">
-                            <li className="flex items-center mb-2"><TiTick className="mr-2" /> Included all Basic Features</li>
-                            {/* <li className="flex items-center mb-2"><TiTick className="mr-2" /> Import data from picture</li> */}
-                            <li className="flex items-center mb-2"><TiTick className="mr-2" /> Up to 100 flexCard to save</li>
-                            <li className="flex items-center mb-2"><TiTick className="mr-2" /> Up to 6 flexCard per flex message</li>
-                        </ul>
-                        <div className="absolute bottom-0 left-0 right-0">
-                            <GetStartButton />
-                        </div>
-                    </div>
-                </div>
-                <div
-                    className="text-xl mt-14 rounded-xl border border-[#9966FF]/25 bg-[#120d1d] p-6 w-full"
-                >
-                    <div className="relative h-full overflow-hidden">
-                        <div className="text-[#9967FF] font-bold">Expert</div>
-                        <div className="text-6xl my-5 font-light">$9.9/month</div>
-                        <div>
-                            Just For Expert
-                        </div>
-                        <ul className="mt-4 mb-12">
-                            <li className="flex items-center mb-2"><TiTick className="mr-2" /> Included all Premium Features</li>
-                            <li className="flex items-center mb-2"><TiTick className="mr-2" /> Up to 1 video per flexCard</li>
-                            <li className="flex items-center mb-2"><TiTick className="mr-2" /> Up to 500 flexCard to save</li>
-                        </ul>
-                        <div className="absolute bottom-0 left-0 right-0">
-                            <GetStartButton />
-                        </div>
-                    </div>
-                </div>
-                <div
-                    className="text-xl mt-14 rounded-xl border border-[#F7E16F]/25 bg-[#19170d] p-6 w-full"
-                >
-                    <div className="relative h-full overflow-hidden">
-                        <div className="text-[#F7E16F] font-bold">Elite</div>
-                        <div className="text-6xl my-5 font-light">$19.9/month</div>
-                        <div>
-                            Enjoy for Unlimited flexCard
-                        </div>
-                        <ul className="mt-4 mb-12">
-                            <li className="flex items-center mb-2"><TiTick className="mr-2" /> Included all Expert Features</li>
-                            <li className="flex items-center mb-2"><TiTick className="mr-2" /> Unlimited flexCard to Save</li>
-                        </ul>
-                        <div className="absolute bottom-0 left-0 right-0">
-                            <GetStartButton />
-                        </div>
-                    </div>
-                </div>
-                <div className="text-xl mt-14 rounded-xl border border-[#4E67E5]/25 bg-[#080C23] p-6 w-full">
-                    <div className="relative h-full overflow-hidden">
-                        <div className="text-[#4d66e5] font-bold">Business</div>
-                        <div className="text-6xl my-5 font-light">$14.9/month</div>
-                        <div>
-                            Just for Business
-                        </div>
-                        <ul className="mt-4 mb-12">
-                            <li className="flex items-center mb-2"><TiTick className="mr-2" /> Included all Basic Features</li>
-                            {/* <li className="flex items-center mb-2"><TiTick className="mr-2" /> Import data from picture</li> */}
-                            <li className="flex items-center mb-2"><TiTick className="mr-2" /> Import Employee details from CSV</li>
-                            <li className="flex items-center mb-2"><TiTick className="mr-2" /> Up to 1 video per flexCard</li>
-                            <li className="flex items-center mb-2"><TiTick className="mr-2" /> Up to 6 flexCard per flex message</li>
-                        </ul>
-                        <div className="absolute bottom-0 left-0 right-0">
-                            <GetStartButton />
-                        </div>
-                    </div>
-                </div>
-                <div className="text-xl mt-14 rounded-xl border border-[#4E67E5]/25 bg-[#080C23] p-6 w-full">
-                    <div className="relative h-full overflow-hidden">
-                        <div className="text-[#4d66e5] font-bold">Enterprise</div>
-                        <div className="text-6xl my-5 font-light">$24.9/month</div>
-                        <div>
-                            Just for Enterprise
-                        </div>
-                        <ul className="mt-4 mb-12">
-                            <li className="flex items-center mb-2"><TiTick className="mr-2" /> Included all Business Features</li>
-                            <li className="flex items-center mb-2"><TiTick className="mr-2" /> Unlimited flexCard to Save</li>
-                        </ul>
-                        <div className="absolute bottom-0 left-0 right-0">
-                            <GetStartButton />
-                        </div>
-                    </div>
-                </div>
+        <div className="bg-black text-white py-16 px-4 min-h-screen">
+            <div className="text-center mb-12">
+                <h1 className="text-[32px] font-bold">Choose your right Plan!</h1>
+                <span className="text-gray-400">No hidden fees, cancel anytime.</span>
+            </div>
+            <div className="flex flex-col lg:flex-row justify-center space-y-6 lg:space-y-0 lg:space-x-6">
+                {products?.map((product, index) => (
+                    <Card key={product._id} className={`bg-gray-900 p-6 w-[336px] rounded-lg shadow-lg ${index === 1 ? 'border-2 border-purple-600' : ''}`}>
+                        <CardHeader className="mb-6 p-0">
+                            {index === 1 && (
+                                <div className="text-sm text-purple-400 mb-2">MOST POPULAR</div>
+                            )}
+                            <CardTitle className="text-[2xl] font-bold">{product.name}</CardTitle>
+                            <CardDescription className="text-gray-400 mt-2">{product.description}</CardDescription>
+                            <div className="text-center text-4xl font-bold !mt-8 mb-4">$
+                                <span className="text-[36px]">
+                                    {product.price}
+                                </span>
+                                /month
+                            </div>
+                            {/* <div className="text-sm text-gray-500">For 48 month term</div>
+                            <div className="text-sm text-purple-400">+3 months FREE</div> */}
+                        </CardHeader>
+                        <CardContent className="px-0 pt-0 pb-6">
+                            <Link className="w-full" href={`/checkout?productId=${product._id}`}>
+                                <Button 
+                                    className={`rounded-lg w-full`}
+                                    variant={`${index === 1 ? 'purple' : 'outline'}`}>
+                                    Choose Plan
+                                </Button>
+                            </Link>
+                        </CardContent>
+                        <hr className="h-1 text-slate-800"></hr>
+                        <CardFooter className="flex mt-6 p-0">
+                            <ul className="space-y-2 text-left">
+                                {product.features.map((feature: any, featureIndex: number) => (
+                                    <li key={featureIndex} className="flex items-center">
+                                        <TiTick className="mr-2 text-green-500" />
+                                        {feature.name}
+                                    </li>
+                                ))}
+                            </ul>
+                        </CardFooter>
+                    </Card>
+                ))}
+            </div>
+            <div className="text-center mt-12">
+                <a href="#" className="text-purple-400">Payment terms</a>
             </div>
         </div>
-
-        // continue future
-        // <>
-        //     <div>
-        //         <h2 className="h2-bold text-dark-600">
-        //             Subcription Plan
-        //         </h2>
-        //         <p className="p-16-regular mt-4">Choose a package that suits your needs!</p>
-        //     </div>
-
-        //     <section>
-        //         <ul className="products-list">
-        //             {products.map((product) => (
-        //                 <li key={product.name} className="product-item">
-        //                     <div className="flex-center flex-col gap-3">
-        //                         <Image src={product.icon} alt="check" width={50} height={50} />
-        //                         <p className="p-20-semibold mt-2 text-purple-500">
-        //                             {product.name}
-        //                         </p>
-        //                         <p className="h1-semibold text-dark-600">${product.price}</p>
-        //                     </div>
-
-        //                     {/* Inclusions */}
-        //                     <ul className="flex flex-col gap-5 py-9">
-        //                         {product.descriptions.map((description) => (
-        //                             <li
-        //                                 key={product.name + description}
-        //                                 className="flex items-center gap-4"
-        //                             >
-        //                                 <Image
-        //                                     src='/assets/check.svg'
-        //                                     alt="check"
-        //                                     width={24}
-        //                                     height={24}
-        //                                 />
-        //                                 <p className="p-16-regular">{description}</p>
-        //                             </li>
-        //                         ))}
-        //                     </ul>
-
-        //                     {product.price === "Free" ? (
-        //                         <Button variant="outline" className="credits-btn">
-        //                             Free 
-        //                         </Button>
-        //                     ) : (
-        //                         session ? (
-        //                             <Checkout
-        //                                 plan={plan.name}
-        //                                 amount={plan.price}
-        //                                 credits={plan.credits}
-        //                                 buyerId={user._id}
-        //                             />
-        //                         ) : (
-        //                             <SignInButton />
-        //                         )
-                                    
-        //                     )}
-        //                 </li>
-        //             ))}
-        //         </ul>
-        //     </section>
-        // </>
     );
 };
 
-export default Product;
+export default ProductPage;

@@ -27,11 +27,13 @@ export type Member = {
     ip_address: string,
     country: string,
     countrycode: string,
-    subscription: Subscription[],
+    stripeCustomerId: string,
+    subscription: {},
     cards: Card[],
     followers: Member[],
     following: Member[],
     organization: {},
+    trial: Trial[],
     totalViews: number,
     viewDetails: ViewDetail[];
     updateHistory: [],
@@ -98,10 +100,18 @@ export type Subscription = {
     id: string,
     planStarted: Date,
     estimatedEndDate: Date,
-    autoRenew: boolean,
     paidTerms: number,
+    totalAmount: number,
     plan: Product,
-    transaction: Transaction,
+    transaction: Transaction[],
+    stripeSubscriptionId: string,
+    status: string,
+}
+
+export type Trial = {
+    trialPlan: Product,
+    trialStartDate: Date,
+    trialEndDate: Date,
 }
 
 export type Transaction = {
@@ -110,6 +120,8 @@ export type Transaction = {
     transactionFees: number,
     ip_address: string,
     payment_types: string,
+    currency: string,
+    transactionStatus: boolean,
 }
 
 export type Product = {
@@ -117,6 +129,9 @@ export type Product = {
     description: string,
     price: number,
     availablePromo: string,
+    stripeProductId: string,
+    monthlyDiscount: number,
+    annualDiscount: number,
     features: string[],
     limitedIP: number,
     limitedCard: number,
@@ -132,6 +147,17 @@ export type Promotion = {
         endDate: Date,
     },
     limitedQuantity: number,
+}
+
+export type Feedback = {
+    selectedReasons: string[];
+    otherReason: string;
+    hasUsedSimilar: boolean;
+    similarAppName: string;
+    feedbackComment: string;
+    isSkip: boolean;
+    feedbackDate: Date;
+    feedbackBy: {};
 }
 
 export enum ItemStatus {

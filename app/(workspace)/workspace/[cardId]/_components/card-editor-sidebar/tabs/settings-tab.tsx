@@ -45,7 +45,7 @@ import { Button } from '@/components/ui/button'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 
 type Props = { selectedBubbleId: string, selectedSectionId?: string, selectedElement: EditorElement };
-type PaddingKeys = 'paddingAll' | 'paddingTop' | 'paddingBottom' | 'paddingStart' | 'paddingEnd' | 'size' | 'borderWidth' | 'offsetTop' | 'offsetBottom' | 'offsetStart' | 'offsetEnd';
+type PaddingKeys = 'paddingAll' | 'paddingTop' | 'paddingBottom' | 'paddingStart' | 'paddingEnd' | 'size' | 'spacing' | 'margin' | 'borderWidth' | 'offsetTop' | 'offsetBottom' | 'offsetStart' | 'offsetEnd';
 type ColorProperty = 'color' | 'backgroundColor' | 'borderColor';
 
 function SettingsTab(props: Props) {
@@ -57,6 +57,8 @@ function SettingsTab(props: Props) {
     paddingStart: state.editor.selectedElement.paddingStart || 'px',
     paddingEnd: state.editor.selectedElement.paddingEnd || 'px',
     size: state.editor.selectedElement.size || 'px',
+    spacing: state.editor.selectedElement.spacing || 'px',
+    margin: state.editor.selectedElement.margin || 'px',
     borderWidth: state.editor.selectedElement.borderWidth || 'px',
     offsetTop: state.editor.selectedElement.offsetTop || 'px',
     offsetBottom: state.editor.selectedElement.offsetBottom || 'px',
@@ -68,6 +70,7 @@ function SettingsTab(props: Props) {
   const [activeColorProperty, setActiveColorProperty] = useState('');
   const [decoration, setDecoration] = useState(state.editor.selectedElement.decoration || '');
   const [style, setStyle] = useState(state.editor.selectedElement.style || '');
+  const [cornerRadiusUnit, setCornerRadiusUnit] = useState('px');
 
   const parseRgba = (rgba: string) => {
     const match = rgba.match(/rgba?\((\d+), (\d+), (\d+), (\d+(\.\d+)?)\)/);
@@ -164,9 +167,9 @@ function SettingsTab(props: Props) {
     const unit = units[id as PaddingKeys];
 
     let processedValue;
-    if(unit === 'px' || unit === '%') {
+    if (unit === 'px' || unit === '%') {
       processedValue = value ? `${value.replace(/px|%/, '')}${unit}` : '';
-    }else{
+    } else {
       processedValue = value ? `${value.replace(/px|%/, '')}px` : '';
     }
 
@@ -220,14 +223,14 @@ function SettingsTab(props: Props) {
     }
   };
 
-  const handleUnitChange = (value: 'px' | '%' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | 'light' | 'normal' | 'medium' | 'semi-bold' | 'bold', id: string) => {
+  const handleUnitChange = (value: 'px' | '%' | 'none' | 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | '3xl' | '4xl' | '5xl' | 'full' | 'light' | 'normal' | 'medium' | 'semi-bold' | 'bold', id: string) => {
 
     setUnits(prevUnits => ({
       ...prevUnits,
       [id]: value
     }));
 
-    if (['xs', 'sm', 'md', 'lg', 'xl', 'xxl', 'light', 'normal', 'medium', 'semi-bold', 'bold'].includes(value)) {
+    if (['none', 'xxs', 'xs', 'sm', 'md', 'lg', 'xl', 'xxl', '3xl', '4xl', '5xl', 'full', 'light', 'normal', 'medium', 'semi-bold', 'bold'].includes(value)) {
       const updatedElement: EditorElement = {
         ...state.editor.selectedElement,
         [id]: value,
@@ -396,6 +399,16 @@ function SettingsTab(props: Props) {
       target: {
         id: 'decoration',
         value: newValue,
+      },
+    });
+  };
+
+  const handleCornerRadiusUnitChange = (value: 'px') => {
+    setCornerRadiusUnit(value);
+    handleOnChanges({
+      target: {
+        id: 'cornerRadius',
+        value: `${parseFloat(state.editor.selectedElement?.cornerRadius || '0')}${value}`,
       },
     });
   };
@@ -908,7 +921,7 @@ function SettingsTab(props: Props) {
                             placeholder={units.size}
                             onChange={handleUnitOnChanges}
                             value={state.editor.selectedElement.size?.replace(/px/, "") || ""}
-                            disabled={['xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.size)}
+                            disabled={['xxs', 'xs', 'sm', 'md', 'lg', 'xl', 'xxl', '3xl', '4xl', '5xl'].includes(units.size)}
                           />
                           <Select onValueChange={(value) => handleUnitChange(value as 'px', "size")}>
                             <SelectTrigger className="w-[40px] rounded-l-none">
@@ -919,12 +932,16 @@ function SettingsTab(props: Props) {
                               </SelectGroup>
                               <SelectSeparator />
                               <SelectGroup>
+                                <SelectItem value="xxs">xxs</SelectItem>
                                 <SelectItem value="xs">xs</SelectItem>
                                 <SelectItem value="sm">sm</SelectItem>
                                 <SelectItem value="md">md</SelectItem>
                                 <SelectItem value="lg">lg</SelectItem>
                                 <SelectItem value="xl">xl</SelectItem>
                                 <SelectItem value="xxl">xxl</SelectItem>
+                                <SelectItem value="3xl">3xl</SelectItem>
+                                <SelectItem value="4xl">4xl</SelectItem>
+                                <SelectItem value="5xl">5xl</SelectItem>
                               </SelectGroup>
                             </SelectContent>
                           </Select>
@@ -975,7 +992,6 @@ function SettingsTab(props: Props) {
                   </div>
                 )}
               </div>
-
             </AccordionContent>
           </AccordionItem>
         )}
@@ -993,13 +1009,36 @@ function SettingsTab(props: Props) {
               <div className='flex gap-4'>
                 <div className='flex flex-col gap-2'>
                   <p>Margin(px)</p>
-                  <Input
-                    className='text-black'
-                    id="margin"
-                    placeholder="px"
-                    onChange={handleValueWithoutPxOnChanges}
-                    value={state.editor.selectedElement.margin?.replace(/px/, "") || ""}
-                  />
+                  <div className="flex items-center">
+                    <Input
+                      className="text-black flex-grow rounded-l-md rounded-r-none"
+                      placeholder={units.margin}
+                      id="margin"
+                      onChange={handleUnitOnChanges}
+                      value={state.editor.selectedElement.margin?.replace(/px|%/, "") || ""}
+                      disabled={['none', 'xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.margin)}
+                    />
+                    <Select onValueChange={(value) => handleUnitChange(value as 'px' | '%', "margin")}>
+                      <SelectTrigger className="w-[40px] rounded-l-none">
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectItem value="px">px</SelectItem>
+                          <SelectItem value="%">%</SelectItem>
+                        </SelectGroup>
+                        <SelectSeparator />
+                        <SelectGroup>
+                          <SelectItem value="none">none</SelectItem>
+                          <SelectItem value="xs">xs</SelectItem>
+                          <SelectItem value="sm">sm</SelectItem>
+                          <SelectItem value="md">md</SelectItem>
+                          <SelectItem value="lg">lg</SelectItem>
+                          <SelectItem value="xl">xl</SelectItem>
+                          <SelectItem value="xxl">xxl</SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 {state.editor.selectedElement.type === 'image' && (
@@ -1012,7 +1051,7 @@ function SettingsTab(props: Props) {
                         placeholder={units.size}
                         onChange={handleUnitOnChanges}
                         value={state.editor.selectedElement.size?.replace(/px/, "") || ""}
-                        disabled={['xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.size)}
+                        disabled={['xs', 'sm', 'md', 'lg', 'xl', 'xxl', '3xl', '4xl', '5xl', 'full'].includes(units.size)}
                       />
                       <Select onValueChange={(value) => handleUnitChange(value as 'px', "size")}>
                         <SelectTrigger className="w-[40px] rounded-l-none">
@@ -1029,6 +1068,10 @@ function SettingsTab(props: Props) {
                             <SelectItem value="lg">lg</SelectItem>
                             <SelectItem value="xl">xl</SelectItem>
                             <SelectItem value="xxl">xxl</SelectItem>
+                            <SelectItem value="3xl">3xl</SelectItem>
+                            <SelectItem value="4xl">4xl</SelectItem>
+                            <SelectItem value="5xl">5xl</SelectItem>
+                            <SelectItem value="full">full</SelectItem>
                           </SelectGroup>
                         </SelectContent>
                       </Select>
@@ -1039,13 +1082,36 @@ function SettingsTab(props: Props) {
                 {state.editor.selectedElement.type === 'box' && (
                   <div className='flex flex-col gap-2'>
                     <p>Spacing(px)</p>
-                    <Input
-                      className='text-black'
-                      id="spacing"
-                      placeholder="px"
-                      onChange={handleValueWithoutPxOnChanges}
-                      value={state.editor.selectedElement.spacing?.replace(/px/, "") || ""}
-                    />
+                    <div className="flex items-center">
+                      <Input
+                        className="text-black flex-grow rounded-l-md rounded-r-none"
+                        placeholder={units.spacing}
+                        id="spacing"
+                        onChange={handleUnitOnChanges}
+                        value={state.editor.selectedElement.spacing?.replace(/px|%/, "") || ""}
+                        disabled={['none', 'xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.spacing)}
+                      />
+                      <Select onValueChange={(value) => handleUnitChange(value as 'px' | '%', "spacing")}>
+                        <SelectTrigger className="w-[40px] rounded-l-none">
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectItem value="px">px</SelectItem>
+                            <SelectItem value="%">%</SelectItem>
+                          </SelectGroup>
+                          <SelectSeparator />
+                          <SelectGroup>
+                            <SelectItem value="none">none</SelectItem>
+                            <SelectItem value="xs">xs</SelectItem>
+                            <SelectItem value="sm">sm</SelectItem>
+                            <SelectItem value="md">md</SelectItem>
+                            <SelectItem value="lg">lg</SelectItem>
+                            <SelectItem value="xl">xl</SelectItem>
+                            <SelectItem value="xxl">xxl</SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 )}
 
@@ -1116,7 +1182,7 @@ function SettingsTab(props: Props) {
                             id="paddingAll"
                             onChange={handleUnitOnChanges}
                             value={state.editor.selectedElement.paddingAll?.replace(/px|%/, "") || ""}
-                            disabled={['xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.paddingAll)}
+                            disabled={['none', 'xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.paddingAll)}
                           />
                           <Select onValueChange={(value) => handleUnitChange(value as 'px' | '%', "paddingAll")}>
                             <SelectTrigger className="w-[40px] rounded-l-none">
@@ -1128,6 +1194,7 @@ function SettingsTab(props: Props) {
                               </SelectGroup>
                               <SelectSeparator />
                               <SelectGroup>
+                                <SelectItem value="none">none</SelectItem>
                                 <SelectItem value="xs">xs</SelectItem>
                                 <SelectItem value="sm">sm</SelectItem>
                                 <SelectItem value="md">md</SelectItem>
@@ -1148,7 +1215,7 @@ function SettingsTab(props: Props) {
                             id="paddingTop"
                             onChange={handleOnChanges}
                             value={state.editor.selectedElement.paddingTop?.replace(/px|%/, '') || ''}
-                            disabled={['xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.paddingTop)}
+                            disabled={['none', 'xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.paddingTop)}
                           />
                           <Select onValueChange={(value) => handleUnitChange(value as 'px' | '%', "paddingTop")}>
                             <SelectTrigger className="w-[40px] rounded-l-none">
@@ -1160,6 +1227,7 @@ function SettingsTab(props: Props) {
                               </SelectGroup>
                               <SelectSeparator />
                               <SelectGroup>
+                                <SelectItem value="none">none</SelectItem>
                                 <SelectItem value="xs">xs</SelectItem>
                                 <SelectItem value="sm">sm</SelectItem>
                                 <SelectItem value="md">md</SelectItem>
@@ -1180,7 +1248,7 @@ function SettingsTab(props: Props) {
                             id="paddingBottom"
                             onChange={handleOnChanges}
                             value={state.editor.selectedElement.paddingBottom?.replace(/px|%/, '') || ''}
-                            disabled={['xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.paddingBottom)}
+                            disabled={['none', 'xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.paddingBottom)}
                           />
                           <Select onValueChange={(value) => handleUnitChange(value as 'px' | '%', "paddingBottom")}>
                             <SelectTrigger className="w-[40px] rounded-l-none">
@@ -1192,6 +1260,7 @@ function SettingsTab(props: Props) {
                               </SelectGroup>
                               <SelectSeparator />
                               <SelectGroup>
+                                <SelectItem value="none">none</SelectItem>
                                 <SelectItem value="xs">xs</SelectItem>
                                 <SelectItem value="sm">sm</SelectItem>
                                 <SelectItem value="md">md</SelectItem>
@@ -1214,7 +1283,7 @@ function SettingsTab(props: Props) {
                             id="paddingStart"
                             onChange={handleOnChanges}
                             value={state.editor.selectedElement.paddingStart?.replace(/px|%/, '') || ''}
-                            disabled={['xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.paddingStart)}
+                            disabled={['none', 'xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.paddingStart)}
                           />
                           <Select onValueChange={(value) => handleUnitChange(value as 'px' | '%', "paddingStart")}>
                             <SelectTrigger className="w-[40px] rounded-l-none">
@@ -1226,6 +1295,7 @@ function SettingsTab(props: Props) {
                               </SelectGroup>
                               <SelectSeparator />
                               <SelectGroup>
+                                <SelectItem value="none">none</SelectItem>
                                 <SelectItem value="xs">xs</SelectItem>
                                 <SelectItem value="sm">sm</SelectItem>
                                 <SelectItem value="md">md</SelectItem>
@@ -1246,7 +1316,7 @@ function SettingsTab(props: Props) {
                             id="paddingEnd"
                             onChange={handleOnChanges}
                             value={state.editor.selectedElement.paddingEnd?.replace(/px|%/, '') || ''}
-                            disabled={['xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.paddingEnd)}
+                            disabled={['none', 'xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.paddingEnd)}
                           />
                           <Select onValueChange={(value) => handleUnitChange(value as 'px' | '%', "paddingEnd")}>
                             <SelectTrigger className="w-[40px] rounded-l-none">
@@ -1258,6 +1328,7 @@ function SettingsTab(props: Props) {
                               </SelectGroup>
                               <SelectSeparator />
                               <SelectGroup>
+                                <SelectItem value="none">none</SelectItem>
                                 <SelectItem value="xs">xs</SelectItem>
                                 <SelectItem value="sm">sm</SelectItem>
                                 <SelectItem value="md">md</SelectItem>
@@ -1341,39 +1412,51 @@ function SettingsTab(props: Props) {
                   <div className="flex items-center justify-between mb-4">
                     <Label className="text-muted-foreground">Corner Radius</Label>
                     <Label>
-                      {typeof state.editor.selectedElement?.cornerRadius ===
-                        'number'
+                      {typeof state.editor.selectedElement?.cornerRadius === 'number'
                         ? state.editor.selectedElement?.cornerRadius
-                        : parseFloat(
-                          (
-                            state.editor.selectedElement?.cornerRadius || '0'
-                          ).replace('px', '')
-                        ) || 0}
-                      px
+                        : state.editor.selectedElement?.cornerRadius}
+                      {typeof state.editor.selectedElement?.cornerRadius === 'number' ? cornerRadiusUnit : ''}
                     </Label>
                   </div>
-                  <Slider
-                    onValueChange={(e: any) => {
-                      handleOnChanges({
-                        target: {
-                          id: 'cornerRadius',
-                          value: `${e[0]}px`,
-                        },
-                      })
-                    }}
-                    defaultValue={[
-                      typeof state.editor.selectedElement?.cornerRadius ===
-                        'number'
-                        ? state.editor.selectedElement?.cornerRadius
-                        : parseFloat(
-                          (
-                            state.editor.selectedElement?.cornerRadius || '0'
-                          ).replace('%', '')
-                        ) || 0,
-                    ]}
-                    max={100}
-                    step={1}
-                  />
+                  <div className="flex items-center">
+                    <Slider
+                      id="cornerRadius"
+                      onValueChange={(e: any) => {
+                        handleOnChanges({
+                          target: {
+                            id: 'cornerRadius',
+                            value: `${e[0]}${cornerRadiusUnit}`,
+                          },
+                        });
+                      }}
+                      defaultValue={[
+                        typeof state.editor.selectedElement?.cornerRadius === 'number'
+                          ? state.editor.selectedElement?.cornerRadius
+                          : parseFloat(state.editor.selectedElement?.cornerRadius || '0'),
+                      ]}
+                      max={cornerRadiusUnit === 'px' ? 100 : 100}
+                      step={1}
+                    />
+                    <Select onValueChange={(value) => handleUnitChange(value as 'px', "cornerRadius")}>
+                      <SelectTrigger className="w-[40px] rounded-l-none">
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectItem value="px">px</SelectItem>
+                        </SelectGroup>
+                        <SelectSeparator />
+                        <SelectGroup>
+                          <SelectItem value="none">none</SelectItem>
+                          <SelectItem value="xs">xs</SelectItem>
+                          <SelectItem value="sm">sm</SelectItem>
+                          <SelectItem value="md">md</SelectItem>
+                          <SelectItem value="lg">lg</SelectItem>
+                          <SelectItem value="xl">xl</SelectItem>
+                          <SelectItem value="xxl">xxl</SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               )}
 
@@ -1442,7 +1525,7 @@ function SettingsTab(props: Props) {
                         placeholder={units.borderWidth}
                         onChange={handleUnitOnChanges}
                         value={state.editor.selectedElement.borderWidth?.replace(/px/, "") || ""}
-                        disabled={['light', 'normal', 'medium', 'semi-bold', 'bold'].includes(units.borderWidth)}
+                        disabled={['none', 'light', 'normal', 'medium', 'semi-bold', 'bold'].includes(units.borderWidth)}
                       />
                       <Select onValueChange={(value) => handleUnitChange(value as 'px', "borderWidth")}>
                         <SelectTrigger className="w-[40px] rounded-l-none">
@@ -1453,6 +1536,7 @@ function SettingsTab(props: Props) {
                           </SelectGroup>
                           <SelectSeparator />
                           <SelectGroup>
+                            <SelectItem value="none">none</SelectItem>
                             <SelectItem value="light">light</SelectItem>
                             <SelectItem value="normal">normal</SelectItem>
                             <SelectItem value="medium">medium</SelectItem>
@@ -1543,7 +1627,7 @@ function SettingsTab(props: Props) {
                           id="offsetTop"
                           onChange={handleUnitOnChanges}
                           value={state.editor.selectedElement.offsetTop?.replace(/px|%/, "") || ""}
-                          disabled={['xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.offsetTop)}
+                          disabled={['none', 'xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.offsetTop)}
                         />
                         <Select onValueChange={(value) => handleUnitChange(value as 'px' | '%', "offsetTop")}>
                           <SelectTrigger className="w-[40px] rounded-l-none">
@@ -1555,6 +1639,7 @@ function SettingsTab(props: Props) {
                             </SelectGroup>
                             <SelectSeparator />
                             <SelectGroup>
+                              <SelectItem value="none">none</SelectItem>
                               <SelectItem value="xs">xs</SelectItem>
                               <SelectItem value="sm">sm</SelectItem>
                               <SelectItem value="md">md</SelectItem>
@@ -1575,7 +1660,7 @@ function SettingsTab(props: Props) {
                           id="offsetBottom"
                           onChange={handleUnitOnChanges}
                           value={state.editor.selectedElement.offsetBottom?.replace(/px|%/, "") || ""}
-                          disabled={['xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.offsetBottom)}
+                          disabled={['none', 'xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.offsetBottom)}
 
                         />
                         <Select onValueChange={(value) => handleUnitChange(value as 'px' | '%', "offsetBottom")}>
@@ -1588,6 +1673,7 @@ function SettingsTab(props: Props) {
                             </SelectGroup>
                             <SelectSeparator />
                             <SelectGroup>
+                              <SelectItem value="none">none</SelectItem>
                               <SelectItem value="xs">xs</SelectItem>
                               <SelectItem value="sm">sm</SelectItem>
                               <SelectItem value="md">md</SelectItem>
@@ -1610,7 +1696,7 @@ function SettingsTab(props: Props) {
                           id="offsetStart"
                           onChange={handleUnitOnChanges}
                           value={state.editor.selectedElement.offsetStart?.replace(/px|%/, "") || ""}
-                          disabled={['xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.offsetStart)}
+                          disabled={['none', 'xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.offsetStart)}
 
                         />
                         <Select onValueChange={(value) => handleUnitChange(value as 'px' | '%', "offsetStart")}>
@@ -1623,6 +1709,7 @@ function SettingsTab(props: Props) {
                             </SelectGroup>
                             <SelectSeparator />
                             <SelectGroup>
+                              <SelectItem value="none">none</SelectItem>
                               <SelectItem value="xs">xs</SelectItem>
                               <SelectItem value="sm">sm</SelectItem>
                               <SelectItem value="md">md</SelectItem>
@@ -1643,7 +1730,7 @@ function SettingsTab(props: Props) {
                           id="offsetEnd"
                           onChange={handleUnitOnChanges}
                           value={state.editor.selectedElement.offsetEnd?.replace(/px|%/, "") || ""}
-                          disabled={['xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.offsetEnd)}
+                          disabled={['none', 'xs', 'sm', 'md', 'lg', 'xl', 'xxl'].includes(units.offsetEnd)}
 
                         />
                         <Select onValueChange={(value) => handleUnitChange(value as 'px' | '%', "offsetEnd")}>
@@ -1656,6 +1743,7 @@ function SettingsTab(props: Props) {
                             </SelectGroup>
                             <SelectSeparator />
                             <SelectGroup>
+                              <SelectItem value="none">none</SelectItem>
                               <SelectItem value="xs">xs</SelectItem>
                               <SelectItem value="sm">sm</SelectItem>
                               <SelectItem value="md">md</SelectItem>

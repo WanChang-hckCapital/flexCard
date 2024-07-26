@@ -181,3 +181,16 @@
   background: #555;
   cursor: pointer;
 }
+
+.my-masonry-grid {
+  display: flex;
+  width: auto;
+}
+.my-masonry-grid_column {
+  padding-left: 10px; /* gutter size */
+  background-clip: padding-box;
+  /* width: auto !important; */
+}
+/* .my-masonry-grid_column > div {
+  margin-bottom: 30px;
+} */

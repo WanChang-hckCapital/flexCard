@@ -19,10 +19,18 @@ const transactionSchema = new Schema<Transaction>({
         type: String,
         required: true,
     },
+    currency: {
+        type: String,
+        required: true,
+    },
     payment_types: {
         type: String,
         required: true,
     },
+    transactionStatus: {
+        type: Boolean,
+        default: false,
+    }
 }, {
     timestamps: true
 })

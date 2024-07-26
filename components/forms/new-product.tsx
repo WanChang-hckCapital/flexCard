@@ -31,6 +31,9 @@ interface Props {
     price: number;
     description: string;
     availablePromo: string;
+    stripeProductId: string;
+    monthlyDiscount: number;
+    annualDiscount: number;
     limitedCard: number;
     limitedIP: number;
     features: { name: string }[];
@@ -78,6 +81,9 @@ const AddNewProduct = ({ btnTitle, authenticatedUserId, productDetails }: Props)
       price: productDetails?.price ? productDetails.price : 0,
       description: productDetails?.description ? productDetails.description : '',
       availablePromo: productDetails?.availablePromo ? productDetails.availablePromo : '',
+      stripeProductId: productDetails?.stripeProductId ? productDetails.stripeProductId : '',
+      monthlyDiscount: productDetails?.monthlyDiscount ? productDetails.monthlyDiscount : 0,
+      annualDiscount: productDetails?.annualDiscount ? productDetails.annualDiscount : 0,
       limitedCard: productDetails?.limitedCard ? productDetails.limitedCard : 10,
       limitedIP: productDetails?.limitedIP ? productDetails.limitedIP : 1,
       features: productDetails?.features?.map(feature => (
@@ -98,6 +104,9 @@ const AddNewProduct = ({ btnTitle, authenticatedUserId, productDetails }: Props)
     resetField("price");
     resetField("description");
     resetField("availablePromo");
+    resetField("stripeProductId");
+    resetField("monthlyDiscount");
+    resetField("annualDiscount");
     resetField("limitedCard");
     resetField("limitedIP");
     resetField("features");
@@ -106,6 +115,8 @@ const AddNewProduct = ({ btnTitle, authenticatedUserId, productDetails }: Props)
   const onSubmit = async (values: z.infer<typeof ProductValidation>) => {
     let result;
     if (isEditMode && productDetails) {
+      console.log("values", values);
+
       result = await updateProduct({
         ...values,
         productId: productDetails.id,
@@ -118,6 +129,9 @@ const AddNewProduct = ({ btnTitle, authenticatedUserId, productDetails }: Props)
         price: values.price,
         description: values.description,
         availablePromo: values.availablePromo,
+        stripeProductId: values.stripeProductId,
+        monthlyDiscount: values.monthlyDiscount,
+        annualDiscount: values.annualDiscount,
         limitedCard: values.limitedCard,
         limitedIP: values.limitedIP,
         features: values.features,
@@ -233,6 +247,73 @@ const AddNewProduct = ({ btnTitle, authenticatedUserId, productDetails }: Props)
             </FormItem>
           )}
         />
+
+        <FormField
+          control={control}
+          name='stripeProductId'
+          render={({ field }) => (
+            <FormItem className='flex w-full flex-col gap-2'>
+              <FormLabel className='text-base-semibold text-light-2'>
+                Stripe Product ID
+              </FormLabel>
+              <FormControl>
+                <Input
+                  type='string'
+                  className='account-form_input no-focus'
+                  placeholder="stripe_product_id"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="flex flex-row gap-4">
+          <FormField
+            control={control}
+            name='monthlyDiscount'
+            render={({ field }) => (
+              <FormItem className='flex w-full flex-col gap-2'>
+                <FormLabel className='text-base-semibold text-light-2'>
+                  Monthly Discount
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type='number'
+                    className='account-form_input no-focus'
+                    placeholder="0"
+                    {...field}
+                    onChange={(e) => setValue('monthlyDiscount', parseInt(e.target.value) || 0)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={control}
+            name='annualDiscount'
+            render={({ field }) => (
+              <FormItem className='flex w-full flex-col gap-2'>
+                <FormLabel className='text-base-semibold text-light-2'>
+                  Annual Discount
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type='number'
+                    className='account-form_input no-focus'
+                    placeholder="0"
+                    {...field}
+                    onChange={(e) => setValue('annualDiscount', parseInt(e.target.value) || 0)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <div className="flex flex-row gap-4">
           <FormField

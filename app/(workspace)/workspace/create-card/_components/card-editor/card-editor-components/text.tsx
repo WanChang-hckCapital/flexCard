@@ -104,11 +104,11 @@ const TextElement = (props: Props) => {
         {props.element.text}
       </span>
 
-      {mouseIsOver && state.editor.selectedElement.id === props.element.id && !state.editor.liveMode && (
-        <div className="absolute -top-[28px] -right-[3px]">
+      {state.editor.selectedElement.id === props.element.id && !state.editor.liveMode && (
+        <div className="absolute -top-[5px] -right-[70px]">
           <Button
             className="flex justify-center h-full border rounded-md bg-red-500"
-            variant={"outline"}
+            variant={"ghost"}
             onClick={handleDeleteElement}
           >
             <Trash className="h-3 w-3" />

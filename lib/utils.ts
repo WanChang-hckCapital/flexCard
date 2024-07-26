@@ -5,6 +5,7 @@ import jsPDF from "jspdf";
 import React from 'react';
 import ReactDOMServer from 'react-dom/server';
 import { EditorComponent, EditorElement } from "./editor/editor-provider";
+import crypto from 'crypto';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -200,6 +201,7 @@ const TextStyles = (element: any) => ({
   left: convertSizeToPixels(element.offsetStart),
   right: convertSizeToPixels(element.offsetEnd),
   bottom: convertSizeToPixels(element.offsetEnd),
+  position: 'relative',
 });
 
 const BoxStyles = (element: any) => {
@@ -323,13 +325,14 @@ export function createHtmlFromJson(json: any) {
       return {
         // width: '236px', //for grid view looks in application homepage
         width: '400px',
-        maxWidth: json.size === 'nano' ? '120px'
-                : json.size === 'micro' ? '160px'
-                : json.size === 'deca' ? '220px'
-                : json.size === 'hecto' ? '241px'
-                : json.size === 'kilo' ? '260px'
-                : json.size === 'mega' ? '300px'
-                : json.size === 'giga' ? '386px' : '300px',
+        MaxWidth: '300px',
+        // maxWidth: json.size === 'nano' ? '120px'
+        //         : json.size === 'micro' ? '160px'
+        //         : json.size === 'deca' ? '220px'
+        //         : json.size === 'hecto' ? '241px'
+        //         : json.size === 'kilo' ? '260px'
+        //         : json.size === 'mega' ? '300px'
+        //         : json.size === 'giga' ? '386px' : '300px',
         // marginLeft: '8px',
         // marginRight: '8px',
         direction: currentContent?.direction,
@@ -459,6 +462,41 @@ export function convertSizeToPixels(value: any, defaultValue = '') {
   }
 }
 
+export function rewriteFlexHtml(flexHtml: string, size: string): string {
+  let maxWidth: string;
+
+  switch (size) {
+      case 'nano':
+          maxWidth = '120px';
+          break;
+      case 'micro':
+          maxWidth = '160px';
+          break;
+      case 'deca':
+          maxWidth = '220px';
+          break;
+      case 'hecto':
+          maxWidth = '241px';
+          break;
+      case 'kilo':
+          maxWidth = '260px';
+          break;
+      case 'mega':
+          maxWidth = '300px';
+          break;
+      case 'giga':
+          maxWidth = '386px';
+          break;
+      default:
+          maxWidth = '300px';
+  }
+
+    const updatedFlexHtml = flexHtml.replace(/max-width:\s*\d+px;/, `max-width: ${maxWidth};`);
+
+    return updatedFlexHtml;
+}
+
+
 function addIdAndDescription(content: any): any {
   const newContent = {
     ...content,
@@ -540,32 +578,51 @@ const scalePosition = (position: any, originalWidth: number) => {
 };
 
 export const convertExtractedInfoToEditorElements = (extractedInfo: any, originalWidth: number): EditorElement[] => {
-  const createTextElement = (text: string): EditorElement => ({
-    id: generateCustomID(),
-    type: 'text',
-    text: text,
-    size: 'sm',
-    description: getDescription('text'),
-  });
+  console.log("Ori image Width:", originalWidth);
+
+  const calculateTextAlign = (x0: number, x1: number, originalWidth: number) => {
+    const relativeX0Position = x0 / originalWidth;
+    const relativeX1Position = x1 / originalWidth;
+
+    console.log("Relative X0 Position:", relativeX0Position);
+    console.log("Relative X1 Position:", relativeX1Position);
+
+    if(relativeX1Position > 0.7 || relativeX0Position > 0.6){
+      return 'end';
+    } else if (relativeX0Position > 0.33){
+      return 'center';
+    } else {
+      return 'start';
+    }
+  };
+
+  const createTextElement = (text: string, position: any): EditorElement => {
+    const scaledPosition = scalePosition(position, originalWidth);
+    const { x0, x1 } = scaledPosition;
+    const textAlign = calculateTextAlign(x0, x1, originalWidth);
+
+    return {
+      id: generateCustomID(),
+      type: 'text',
+      text: text,
+      size: 'sm',
+      align: textAlign,
+      description: getDescription('text'),
+    };
+  };
 
   const createBoxElement = (field: any): EditorElement => {
     const { text, position } = field;
-    const scaledPosition = scalePosition(position, originalWidth);
-    const { x0, y0, x1, y1 } = scaledPosition;
 
     console.log("Creating box element for:", text);
-    console.log("Scaled position:", scaledPosition);
+    console.log("Position:", position);
 
     return {
       id: generateCustomID(),
       type: 'box',
       layout: 'vertical',
-      contents: [createTextElement(text)],
+      contents: [createTextElement(text, position)],
       position: 'absolute',
-      offsetStart: `${x0}px`,
-      // offsetTop: `${y0}px`,
-      // width: `${x1 - x0}px`,
-      // height: `${y1 - y0}px`,
       description: getDescription('box'),
     };
   };
@@ -588,6 +645,7 @@ export const convertExtractedInfoToEditorElements = (extractedInfo: any, origina
 
   return elements;
 };
+
 
 // export const convertExtractedInfoToEditorElements = (extractedInfo: any, originalWidth: number): EditorComponent => {
 //   const createTextElement = (text: string): EditorElement => ({
@@ -700,3 +758,13 @@ export const loadOpenCV = () => {
 export function generateCustomID() {
   return uuidv4();
 }
+
+//line pay
+
+export function generateHmacSignature(channelSecret: string, requestUri: string, requestBody: string, nonce: string): string {
+  const rawSignature = `${channelSecret}${requestUri}${requestBody}${nonce}`;
+  const hmac = crypto.createHmac('sha256', channelSecret);
+  hmac.update(rawSignature);
+  return hmac.digest('base64');
+}
+

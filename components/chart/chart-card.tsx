@@ -141,6 +141,7 @@ export function ChartCard({
                         />
                         <DropdownMenuItem className="hover:bg-auto">
                           <Button
+                            variant="outline"
                             onClick={() => {
                               if (dateRange == null) return
                               setRange(dateRange)

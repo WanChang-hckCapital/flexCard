@@ -456,7 +456,8 @@ const Container = ({ element, sectionId, bubble }: Props) => {
       <ContextMenuTrigger>
         <div
           style={styles}
-          className={clsx('relative transition-all group overflow-hidden border-0', {
+          // tried remove overflow-hidden
+          className={clsx('relative transition-all group border-0', {
             'px-2 py-2': bubble.hero?.id === sectionId && (bubble.hero?.contents[0].contents && bubble.hero?.contents[0].contents?.length < 1 ||
               (bubble.hero?.contents[0]?.contents && bubble.hero.contents[0].contents[0]?.type === 'box')),
             'p-0 border-0': bubble.hero?.id === sectionId && bubble.hero?.contents && bubble.hero?.contents.length > 1,
@@ -496,12 +497,12 @@ const Container = ({ element, sectionId, bubble }: Props) => {
               );
             })}
 
-          {mouseIsOver && state.editor.selectedElement.id === element.id && !state.editor.liveMode && (
+          {state.editor.selectedElement.id === element.id && !state.editor.liveMode && (
             <>
-              <div className="absolute -top-[25px] -right-[5px]">
+              <div className="absolute -top-[0px] -right-[50px]">
                 <Button
                   className="flex justify-center h-full border rounded-md bg-red-500"
-                  variant={"outline"}
+                  variant={"ghost"}
                   onClick={handleDeleteElement}
                 >
                   <Trash className="h-3 w-3" />

@@ -16,6 +16,18 @@ export const ProductValidation = z.object({
     .string()
     .min(0, { message: "Minimum 0 characters." })
     .max(100, { message: "Maximum 100 caracters." }),
+  stripeProductId: z
+    .string()
+    .min(0, { message: "Minimum 0 characters." })
+    .max(50, { message: "Maximum 50 caracters." }),
+  monthlyDiscount: z
+    .number()
+    .min(0, { message: "Discount must not less than zero." })
+    .max(100, { message: "Maximum discount 100%." }),
+  annualDiscount: z
+    .number()
+    .min(0, { message: "Discount must not less than zero." })
+    .max(100, { message: "Maximum discount 100%." }),
   limitedCard: z
     .number()
     .min(10, { message: "Minimum limited 10 cards." })

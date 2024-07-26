@@ -4,7 +4,6 @@ import {
     File,
 } from "lucide-react"
 
-import { Badge } from "@/components/ui/badge"
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -53,7 +52,7 @@ import MemberDataTable from "./data-table"
 import { columns } from "./columns"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
-import { fetchAllMember, fetchSubscriptionById } from "@/lib/actions/admin.actions"
+import { fetchAllMember, fetchMemberStats, fetchSubscriptionById } from "@/lib/actions/admin.actions"
 import { fetchMemberImage } from "@/lib/actions/user.actions"
 import FilterDropdown from "@/components/buttons/filter-dropdown-button"
 import { redirect } from "next/navigation"
@@ -98,11 +97,13 @@ async function Dashboard() {
     if (!user) {
         redirect("/sign-in");
     }
-    
+
     const authenticatedUserId = user.id;
 
     let members = await fetchAllMember(authenticatedUserId)
     if (!members) return null;
+
+    const memberStats = await fetchMemberStats();
 
     members = members.map(member => member.toJSON ? member.toJSON() : member);
 
@@ -142,43 +143,81 @@ async function Dashboard() {
                             <Card>
                                 <CardHeader className="pb-2">
                                     <CardDescription className="text-slate-300">General Members</CardDescription>
-                                    <CardTitle className="text-[32px]">14</CardTitle>
+                                    <CardTitle className="text-[32px]">{memberStats.general.count}</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="text-[12px] text-slate-300">
-                                        +25% from last week
+                                        {memberStats.general.isNew
+                                            ? 'New members this week'
+                                            : `+${memberStats.general.increaseRate.toFixed(2)}% from last week`}
                                     </div>
                                 </CardContent>
                                 <CardFooter>
-                                    <Progress value={25} aria-label="25% increase" />
+                                    <Progress value={memberStats.general.increaseRate} aria-label={`${memberStats.general.increaseRate.toFixed(2)}% increase`} />
                                 </CardFooter>
                             </Card>
                             <Card>
                                 <CardHeader className="pb-2">
                                     <CardDescription className="text-slate-300">Professional Users</CardDescription>
-                                    <CardTitle className="text-[32px]">45</CardTitle>
+                                    <CardTitle className="text-[32px]">{memberStats.professional.count}</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="text-[12px] text-slate-300">
-                                        +35% from last month
+                                        {memberStats.professional.isNew
+                                            ? 'New members this week'
+                                            : `+${memberStats.professional.increaseRate.toFixed(2)}% from last week`}
                                     </div>
                                 </CardContent>
                                 <CardFooter>
-                                    <Progress value={35} aria-label="35% increase" />
+                                    <Progress value={memberStats.professional.increaseRate} aria-label={`${memberStats.professional.increaseRate.toFixed(2)}% increase`} />
                                 </CardFooter>
                             </Card>
                             <Card>
                                 <CardHeader className="pb-2">
                                     <CardDescription className="text-slate-300">Organizations</CardDescription>
-                                    <CardTitle className="text-[32px]">6</CardTitle>
+                                    <CardTitle className="text-[32px]">{memberStats.organization.count}</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="text-[12px] text-slate-300">
-                                        +55% from last week
+                                        {memberStats.organization.isNew
+                                            ? 'New members this week'
+                                            : `+${memberStats.organization.increaseRate.toFixed(2)}% from last week`}
                                     </div>
                                 </CardContent>
                                 <CardFooter>
-                                    <Progress value={55} aria-label="55% increase" />
+                                    <Progress value={memberStats.organization.increaseRate} aria-label={`${memberStats.organization.increaseRate.toFixed(2)}% increase`} />
+                                </CardFooter>
+                            </Card>
+                            <Card>
+                                <CardHeader className="pb-2">
+                                    <CardDescription className="text-slate-300">Admins</CardDescription>
+                                    <CardTitle className="text-[32px]">{memberStats.admin.count}</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-[12px] text-slate-300">
+                                        {memberStats.admin.isNew
+                                            ? 'New members this week'
+                                            : `+${memberStats.admin.increaseRate.toFixed(2)}% from last week`}
+                                    </div>
+                                </CardContent>
+                                <CardFooter>
+                                    <Progress value={memberStats.admin.increaseRate} aria-label={`${memberStats.admin.increaseRate.toFixed(2)}% increase`} />
+                                </CardFooter>
+                            </Card>
+                            <Card>
+                                <CardHeader className="pb-2">
+                                    <CardDescription className="text-slate-300">Super Users</CardDescription>
+                                    <CardTitle className="text-[32px]">{memberStats.superuser.count}</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-[12px] text-slate-300">
+                                        {memberStats.superuser.isNew
+                                            ? 'New members this week'
+                                            : `+${memberStats.superuser.increaseRate.toFixed(2)}% from last week`}
+                                    </div>
+                                </CardContent>
+                                <CardFooter>
+                                    <Progress value={memberStats.superuser.increaseRate} aria-label={`${memberStats.superuser.increaseRate.toFixed(2)}% increase`} />
                                 </CardFooter>
                             </Card>
                         </div>

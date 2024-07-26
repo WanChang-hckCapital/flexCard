@@ -183,7 +183,8 @@ function CardEditor({ liveMode }: Props) {
               </div>
             )}
           <div
-            className={clsx('component-container relative mb-2 border-b border-x rounded-b-lg shadow-lg bg-white overflow-hidden', {
+          // tried remove overflow hidden
+            className={clsx('component-container relative mb-2 border-b border-x rounded-b-lg shadow-lg bg-white', {
               'mt-2': (component.hero?.contents && component.hero?.contents.length < 1 && component.header?.contents && component.header?.contents.length < 1),
               'border-t': (component.hero?.contents && component.hero?.contents.length < 1 && component.header?.contents && component.header?.contents.length < 1),
               'rounded-t-lg': (component.hero?.contents && component.hero?.contents.length < 1 && component.header?.contents && component.header?.contents.length < 1),

@@ -743,7 +743,7 @@ type EditorProps = {
   children: React.ReactNode
   authaccountId: string
   cardId: string
-  cardDetails: Card
+  cardDetails: any
 }
 
 const EditorProvider = (props: EditorProps) => {

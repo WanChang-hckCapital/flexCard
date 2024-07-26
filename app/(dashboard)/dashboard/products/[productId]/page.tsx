@@ -23,6 +23,9 @@ async function Page({ params }: { params: { productId: string } }) {
         description: productDetails.description,
         price: productDetails.price,
         availablePromo: productDetails.availablePromo,
+        stripeProductId: productDetails.stripeProductId,
+        monthlyDiscount: productDetails.monthlyDiscount,
+        annualDiscount: productDetails.annualDiscount,
         limitedCard: productDetails.limitedCard,
         limitedIP: productDetails.limitedIP,
         features: productDetails.features.map((feature: any) => (

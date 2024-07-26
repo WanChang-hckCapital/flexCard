@@ -118,7 +118,7 @@ export default function CardInfo({
     };
 
     return (
-        <div className="p-4 border rounded shadow flex flex-col justify-between h-full">
+        <div className="p-4 border rounded shadow flex flex-col justify-between overflow-y-auto h-[380px]">
             <div>
                 <div className="flex justify-between items-center mb-4">
                     <h1 className="text-2xl font-bold">{cardTitle}</h1>
@@ -167,7 +167,7 @@ export default function CardInfo({
                     <div className="pt-4" dangerouslySetInnerHTML={{ __html: cardDescription }} />
                 </div>
             )}
-            <div className="mt-auto flex justify-end items-center">
+            <div className="mt-auto sticky bottom-0 flex justify-end items-center">
                 <span className="mr-2">{likeCount}</span>
                 <Button variant="none_bg" size="icon" disabled={likeButtonDisabled} onClick={handleUpdateLikeButtonClick}>
                     {isLiked === true ? (
@@ -186,4 +186,5 @@ export default function CardInfo({
             )}
         </div>
     );
+    
 }

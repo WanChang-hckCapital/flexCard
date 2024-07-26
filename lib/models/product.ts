@@ -19,6 +19,18 @@ const productSchema = new Schema<Product>({
     availablePromo: {
         type: String,
     },
+    stripeProductId: {
+        type: String,
+        required: true,
+    },
+    monthlyDiscount: {
+        type: Number,
+        default: 0,
+    },
+    annualDiscount: {
+        type: Number,
+        default: 0,
+    },
     features: [
         {
             name: {

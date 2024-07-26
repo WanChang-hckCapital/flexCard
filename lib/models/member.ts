@@ -30,10 +30,11 @@ const memberSchema = new Schema<Member>({
     ip_address: { type: String, default: null },
     country: { type: String, default: null },
     countrycode: { type: String, default: null },
+    stripeCustomerId: { type: String, default: null },
     subscription: [
         {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Subcription",
+            ref: "Subscription",
         },
     ],
     cards: [
@@ -65,6 +66,12 @@ const memberSchema = new Schema<Member>({
         ref: "Organization",
         default: null
     },
+    trial: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Trial",
+        },
+    ],
     totalViews: {
         type: Number,
         default: 0,

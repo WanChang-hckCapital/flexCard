@@ -28,7 +28,7 @@ import React, { FocusEventHandler, useEffect } from 'react'
 import { toast } from 'sonner'
 
 type Props = {
-  cardDetails: Card
+  cardDetails: any
   authaccountId: string
 }
 
@@ -36,7 +36,7 @@ function CardEditorNavigation({ cardDetails, authaccountId }: Props) {
   const router = useRouter()
   const { state, dispatch } = useEditor()
 
-  const handleOnBlurTitleChange: FocusEventHandler<HTMLInputElement> = async (
+  const handleOnBlurTitleChange: FocusEventHandler<HTMLInputElement> = (
     event
   ) => {
     if (event.target.value === cardDetails.title) return
@@ -44,14 +44,13 @@ function CardEditorNavigation({ cardDetails, authaccountId }: Props) {
 
       cardDetails.title = event.target.value,
 
-        await updateCardTitle(
-          authaccountId,
-          cardDetails.cardID,
-          event.target.value,
-        )
+      // await updateCardTitle(
+      //   authaccountId,
+      //   cardDetails.cardID.toString(),
+      //   event.target.value,
+      // )
 
       toast.success('Card title updated successfully.')
-      router.refresh()
     } else {
       toast.error('Oppse! You need to have a title, Please try again later.')
       event.target.value = cardDetails.title

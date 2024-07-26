@@ -7,6 +7,7 @@ import ReactCrop, {
     convertToPixelCrop,
     makeAspectCrop,
 } from "react-image-crop";
+import { ClipLoader } from "react-spinners";
 import { Button } from "./ui/button";
 
 const ASPECT_RATIO = 1;
@@ -75,6 +76,7 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ closeModal, updateImage, ha
     const [originalImageWidth, setOriginalImageWidth] = useState<number>(0);
     const [isCameraOpen, setIsCameraOpen] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
+    const [loading, setLoading] = useState(false);
 
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -190,9 +192,7 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ closeModal, updateImage, ha
 
     const handleCropAndOCR = async (onImageUpload: (url: string) => void) => {
         if (imgRef.current && previewCanvasRef.current && crop) {
-
-            console.log("handle Crop and OCR...");
-
+            setLoading(true);
             setCanvasPreview(
                 imgRef.current,
                 previewCanvasRef.current,
@@ -223,29 +223,30 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ closeModal, updateImage, ha
                         const uploadImageUrlWithHttp = `${process.env.NEXT_PUBLIC_BASE_URL}${uploadedImageUrl}`;
                         updateImage(uploadImageUrlWithHttp);
                         onImageUpload(uploadImageUrlWithHttp);
-    
+
                         const ocrFormData = new FormData();
                         ocrFormData.append("file", originalFile);
-    
+
                         const ocrResponse = await fetch("/api/ocr", {
                             method: "POST",
                             body: ocrFormData,
                         });
-    
+
                         const ocrData = await ocrResponse.json();
-    
+
                         if (ocrResponse.ok) {
                             console.log("OCR Data: ", ocrData);
                             handleOCRText(ocrData.ocrData, originalImageWidth, uploadImageUrlWithHttp);
                         } else {
                             setError(`OCR failed: ${ocrData.message}`);
                         }
-    
+
                         closeModal();
                     } else {
                         setError(`Upload failed: ${uploadData.message}`);
                     }
                 }
+                setLoading(false);
             }, "image/png");
         }
     };
@@ -321,36 +322,49 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ closeModal, updateImage, ha
                 </div>
             )}
             {error && <p className="text-red-400 text-xs">{error}</p>}
-            {imgSrc && (
-                <div className="flex flex-col items-center">
-                    <ReactCrop
-                        crop={crop}
-                        onChange={(pixelCrop, percentCrop) => setCrop(percentCrop)}
-                        // circularCrop
-                        keepSelection
-                        // aspect={ASPECT_RATIO}
-                        minWidth={MIN_DIMENSION}
-                    >
-                        <img
-                            ref={imgRef}
-                            src={imgSrc}
-                            alt="Upload"
-                            style={{ maxHeight: "70vh" }}
-                            onLoad={onImageLoad}
-                        />
-                    </ReactCrop>
-                    <div className="flex flex-row gap-4">
-                        <Button variant="outline" onClick={handleCropImage} className="mt-4">
-                            Crop Image
-                        </Button>
-                        <Button variant="outline" onClick={handleFullImageUpload} className="mt-4">
-                            Full Image
-                        </Button>
-                        <Button variant="outline" onClick={() => handleCropAndOCR(onImageUpload)} className="mt-4">
-                            Crop & OCR
-                        </Button>
-                    </div>
+            {loading ? (
+                <div className="flex flex-col items-center mt-10">
+                    <ClipLoader size={50} color={"#123abc"} loading={loading} />
+                    <p className="text-blue-400 text-xs">Just a moment, processing OCR...</p>
                 </div>
+            ) : (
+                imgSrc && (
+                    <div className="flex flex-col items-center">
+                        <ReactCrop
+                            crop={crop}
+                            onChange={(pixelCrop, percentCrop) => setCrop(percentCrop)}
+                            keepSelection
+                            minWidth={MIN_DIMENSION}
+                        >
+                            <img
+                                ref={imgRef}
+                                src={imgSrc}
+                                alt="Upload"
+                                style={{ maxHeight: "70vh" }}
+                                onLoad={onImageLoad}
+                            />
+                        </ReactCrop>
+                        <div className="flex flex-row gap-4">
+                            <Button variant="outline" onClick={handleCropImage} className="mt-4">
+                                Crop Image
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={handleFullImageUpload}
+                                className="mt-4"
+                            >
+                                Full Image
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={() => handleCropAndOCR(onImageUpload)}
+                                className="mt-4"
+                            >
+                                Crop & OCR
+                            </Button>
+                        </div>
+                    </div>
+                )
             )}
             {/* {loading && <p>Processing...</p>}
             {extractedInfo && (

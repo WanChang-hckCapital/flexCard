@@ -15,28 +15,33 @@ const subscriptionSchema = new Schema<Subscription>({
         type: Date,
         required: true,
     },
-    autoRenew: {
-        type: Boolean,
-        required: true,
-        default: false,
-    },
     paidTerms: {
         type: Number,
         required: true,
         default: 1,
     },
-    plan: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Product",
-        },
-    ],
+    totalAmount: {
+        type: Number,
+        required: true,
+    },
+    plan:
+    {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Product",
+    },
     transaction: [
         {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Transaction",
         },
     ],
+    stripeSubscriptionId: {
+        type: String,
+    },
+    status: {
+        type: String,
+        default: "pending",
+    },
 }, {
     timestamps: true
 })

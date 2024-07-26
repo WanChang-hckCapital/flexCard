@@ -5,6 +5,7 @@ import ImageCropper from "../image-cropper";
 import { createPortal } from "react-dom";
 import { loadOpenCV } from "@/lib/utils";
 import { useEffect, useState } from "react";
+import { addressPattern, emailPattern, jobTitlePatterns, namePatterns, phonePattern, websitePattern } from "@/lib/ocr-patterns";
 
 interface CropModalProps {
     updateImage: any;
@@ -77,13 +78,6 @@ interface CropModalProps {
 const extractInfo = async (words: any, imageSrc: string) => {
     console.log("Words: ", words);
 
-    const nameRegex = /(?:Mr|Ms|Dr|Mrs|Miss|Prof)?\s*([A-Z][a-z]*\s+[A-Z][a-z]*)/;
-    const jobTitleRegex = /\b(?:Senior|Junior|Lead|Chief|Head|Manager|Engineer|Developer|Consultant|Director|Officer|Designer|Advisor)\b.*(?:Engineer|Developer|Consultant|Director|Officer|Designer|Advisor|Manager)?/i;
-    const phoneRegex = /\+?\d[\d\s-]{7,}/;
-    const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/;
-    const addressRegex = /(\d{1,5}\s\w+\s\w+.*,\s\w+\s\w+)/;
-    const websiteRegex = /(https?:\/\/[^\s]+)/i;
-
     let extractedInfo: { type: string; text: string; position: any; }[] = [];
 
     const lines = words.reduce((acc: any[], word: any) => {
@@ -116,29 +110,29 @@ const extractInfo = async (words: any, imageSrc: string) => {
         console.log("Processing line: ", lineText);
         let match: RegExpMatchArray | null;
 
-        if (match = lineText.match(jobTitleRegex)) {
-            console.log("Job Title match: ", match);
-            extractedInfo.push({ type: 'jobTitle', text: match[0], position: lineBbox });
-        }
-        else if (match = lineText.match(phoneRegex)) {
-            console.log("Phone match: ", match);
-            extractedInfo.push({ type: 'phone', text: match[0], position: lineBbox });
-        }
-        else if (match = lineText.match(emailRegex)) {
+        if (match = lineText.match(emailPattern)) {
             console.log("Email match: ", match);
             extractedInfo.push({ type: 'email', text: match[0], position: lineBbox });
         }
-        else if (match = lineText.match(addressRegex)) {
+        else if (match = lineText.match(phonePattern)) {
+            console.log("Phone match: ", match);
+            extractedInfo.push({ type: 'phone', text: match[0], position: lineBbox });
+        }
+        else if (jobTitlePatterns.some(pattern => (match = lineText.match(pattern)) !== null)) {
+            console.log("Job Title match: ", match);
+            extractedInfo.push({ type: 'jobTitle', text: match![0], position: lineBbox });
+        }
+        else if (match = lineText.match(addressPattern)) {
             console.log("Address match: ", match);
             extractedInfo.push({ type: 'address', text: match[0], position: lineBbox });
         }
-        else if (match = lineText.match(websiteRegex)) {
+        else if (match = lineText.match(websitePattern)) {
             console.log("Website match: ", match);
             extractedInfo.push({ type: 'website', text: match[0], position: lineBbox });
         }
-        else if (match = lineText.match(nameRegex)) {
+        else if (namePatterns.some(pattern => (match = lineText.match(pattern)) !== null)) {
             console.log("Name match: ", match);
-            extractedInfo.push({ type: 'name', text: match[0], position: lineBbox });
+            extractedInfo.push({ type: 'name', text: match![0], position: lineBbox });
         }
         else {
             console.log("No match found for line: ", lineText);
@@ -158,6 +152,7 @@ const extractInfo = async (words: any, imageSrc: string) => {
     console.log("Extracted Info: ", extractedInfo);
     return extractedInfo;
 };
+
 
 const CropModal: React.FC<CropModalProps> = ({ updateImage, onExtractedInfo, closeModal }) => {
     const [imageSrc, setImageSrc] = useState<string>('');

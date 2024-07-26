@@ -71,6 +71,11 @@ export const adminSidebarLinks = [
     label: "Analytics",
   },
   {
+    icon: "MailCheck",
+    route: "/dashboard/subscription",
+    label: "Subscription",
+  },
+  {
     icon: "Settings",
     route: "/dashboard/settings",
     label: "Settings",
@@ -78,15 +83,15 @@ export const adminSidebarLinks = [
 ]
 
 export const NormalUserAllowedRoutes: Record<Usertype, string[]> = {
-  PERSONAL: ["/dashboard", "/dashboard/analytics", "/dashboard/settings"],
-  PREMIUM: ["/dashboard", "/dashboard/analytics", "/dashboard/settings"],
-  EXPERT: ["/dashboard", "/dashboard/analytics", "/dashboard/settings"],
-  ELITE: ["/dashboard", "/dashboard/analytics", "/dashboard/settings"],
+  PERSONAL: ["/dashboard", "/dashboard/analytics", "/dashboard/subscription", "/dashboard/settings"],
+  PREMIUM: ["/dashboard", "/dashboard/analytics", "/dashboard/subscription", "/dashboard/settings"],
+  EXPERT: ["/dashboard", "/dashboard/analytics", "/dashboard/subscription", "/dashboard/settings"],
+  ELITE: ["/dashboard", "/dashboard/analytics", "/dashboard/subscription", "/dashboard/settings"],
   SUPERUSER: ["/dashboard", "/dashboard/analytics", "/dashboard/settings"],
   ORGANIZATION: [],
   BUSINESS: [],
   ENTERPRISE: [],
-  FLEXADMIN: ["/dashboard", "/dashboard/members", "/dashboard/products", "/dashboard/promotions", "/dashboard/transactions", "/dashboard/analytics", "/dashboard/settings"],
+  FLEXADMIN: ["/dashboard", "/dashboard/members", "/dashboard/products", "/dashboard/promotions", "/dashboard/transactions", "/dashboard/analytics", "/dashboard/subscription", "/dashboard/settings"],
   FLEXACCOUNTANT: ["/dashboard", "/dashboard/products", "/dashboard/promotions", "/dashboard/transactions", "/dashboard/analytics"],
   FLEXHR: ["/dashboard", "/dashboard/members", "/dashboard/analytics", "/dashboard/settings"]
 };

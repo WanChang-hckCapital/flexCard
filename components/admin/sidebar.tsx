@@ -12,6 +12,7 @@ import {
     PiggyBank,
     Ticket,
     Settings,
+    MailCheck,
 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -69,6 +70,7 @@ function SideBar({ usertype }: UserTypeProps) {
                                     {link.icon === "Users" && <Users className="h-5 w-5" />}
                                     {link.icon === "LineChart" && <LineChart className="h-5 w-5" />}
                                     {link.icon === "PiggyBank" && <PiggyBank className="h-5 w-5" />}
+                                    {link.icon === "MailCheck" && <MailCheck className="h-5 w-5" />}
                                     {link.icon === "Settings" && <Settings className="h-5 w-5" />}
                                     <p className="text-light-1">{link.label}</p>
                                 </Link>

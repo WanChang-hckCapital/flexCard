@@ -9,17 +9,11 @@ import {
 import { Tabs, TabsContent } from '@/components/ui/tabs'
 import clsx from 'clsx'
 import React, { useEffect, useState } from 'react'
-import TabList from './tabs'
 import SettingsTab from './tabs/settings-tab'
-import MediaBucketTab from './tabs/media-bucket-tab'
 import ComponentsTab from './tabs/components-tab'
 import { EditorElement, useEditor } from '@/lib/editor/editor-provider'
 
-type Props = {
-  authaccountId: string
-}
-
-function CardEditorSidebar({ authaccountId }: Props) {
+function CardEditorSidebar() {
   const { state, dispatch } = useEditor();
   // const [selectedElement, setSelectedElement] = useState<EditorElement | null>(state.editor.selectedElement);
   // const [selectedElementBubbleId, setSelectedElementBubbleId] = useState<string>(state.editor.selectedElementBubbleId);
@@ -31,28 +25,9 @@ function CardEditorSidebar({ authaccountId }: Props) {
   //   setSelectedElementSectionId(state.editor.selectedElementSectionId || '');
   // }, [state.editor.selectedElement, state.editor.selectedElementBubbleId, state.editor.selectedElementSectionId]);
 
-  // const handleElementSelect = (element: EditorElement | null) => {
-  //   setSelectedElement(element || null);
-  //   dispatch({ type: 'CHANGE_CLICKED_ELEMENT', payload: {
-  //     elementDetails: element || undefined,
-  //     bubbleId: '',
-  //     sectionId: ''
-  //   } });
-  // };
-
   return (
     <Sheet open={true} modal={false}>
       <Tabs className="w-full" defaultValue="Components">
-        {/* <SheetContent
-          showX={false}
-          side="right"
-          className={clsx(
-            'mt-[97px] w-16 z-[80] shadow-none p-0 focus:border-none transition-all overflow-hidden',
-            { hidden: state.editor.previewMode }
-          )}
-        >
-          <TabList />
-        </SheetContent> */}
         <SheetContent
           showX={false}
           side="right"
@@ -77,7 +52,7 @@ function CardEditorSidebar({ authaccountId }: Props) {
                   </SheetHeader>
                   <SettingsTab 
                     selectedBubbleId={state.editor.selectedElementBubbleId} 
-                    selectedSectionId={state.editor.selectedElementSectionId || ''} 
+                    selectedSectionId={state.editor.selectedElementSectionId} 
                     selectedElement={state.editor.selectedElement} />
                 </React.Fragment>
               ) : (

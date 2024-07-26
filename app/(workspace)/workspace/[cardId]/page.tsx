@@ -26,19 +26,21 @@ const Page = async ({ params }: Props) => {
 
   const authaccountId = user.id;
 
-  let cardDetails = await fetchCardDetails(params.cardId);
-  if (cardDetails && typeof cardDetails.toObject === 'function') {
-    cardDetails = cardDetails.toObject();
+  let cardDetails;
+  try {
+    cardDetails = await fetchCardDetails(params.cardId);
+    console.log("cardDetails: ", cardDetails);
+  } catch (error) {
+    console.error("Error fetching card details: ", error);
+    redirect('/');
   }
+
+  if (!cardDetails || cardDetails.creatorID.toString() !== authaccountId.toString()) {
+    console.error("Card not found or not owned by user");
+    redirect('/');
+  }
+
   cardDetails.status = "Modifying";
-
-  if (!cardDetails) {
-    redirect(`/`);
-  };
-
-  if (cardDetails.creator.toString() !== authaccountId.toString()) {
-    redirect(`/`);
-  };
 
   return (
     <div className="fixed top-0 bottom-0 left-0 right-0 z-[20] bg-background overflow-hidden">
@@ -59,7 +61,7 @@ const Page = async ({ params }: Props) => {
           />
         </div>
 
-        <CardEditorSidebar authaccountId={authaccountId} />
+        <CardEditorSidebar/>
       </EditorProvider>
     </div>
   )

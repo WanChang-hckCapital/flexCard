@@ -1,6 +1,5 @@
 'use client'
 
-import { Badge } from '@/components/ui/badge'
 import { EditorElementsBtns, defaultStyles } from '@/lib/constants'
 import { EditorComponent, EditorElement, useEditor } from '@/lib/editor/editor-provider'
 import clsx from 'clsx'
@@ -11,6 +10,7 @@ import { Trash } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu'
+import { convertSizeToPixels } from '@/lib/utils'
 
 type Props = { element: EditorElement, sectionId: string, bubble: EditorComponent }
 
@@ -241,9 +241,9 @@ const Container = ({ element, sectionId, bubble }: Props) => {
 
   const getStyles = (item: { itemI: number }) => {
     if (dragItem.current?.itemI === item.itemI) {
-      return 'dnd-item current';
+      return 'dnd-item current flex-1';
     }
-    return 'dnd-item';
+    return 'dnd-item flex-1';
   };
 
   const handleAddElement = (elementType: string) => {
@@ -423,44 +423,24 @@ const Container = ({ element, sectionId, bubble }: Props) => {
     })
   }
 
-  function convertSizeToPixels(value: any, defaultValue = '') {
-    if (!value) return defaultValue;
-    switch (value) {
-      case 'xs':
-        return '2px';
-      case 'sm':
-        return '4px';
-      case 'md':
-        return '8px';
-      case 'lg':
-        return '12px';
-      case 'xl':
-        return '16px';
-      case 'xxl':
-        return '20px';
-      default:
-        return value;
-    }
-  }
-
   const styles = {
     ...defaultStyles,
     backgroundColor: element.backgroundColor,
     justifyContent: element.justifyContent,
     alignItems: element.alignItems,
-    padding: element.paddingAll ? convertSizeToPixels(element.paddingAll) : '20px',
+    padding: element.paddingAll ? convertSizeToPixels(element.paddingAll) : '',
     paddingTop: convertSizeToPixels(element.paddingTop),
     paddingBottom: convertSizeToPixels(element.paddingBottom),
     paddingLeft: convertSizeToPixels(element.paddingStart),
     paddingRight: convertSizeToPixels(element.paddingEnd),
-    gap: element.spacing,
-    marginTop: element.margin,
+    gap: convertSizeToPixels(element.spacing),
+    marginTop: convertSizeToPixels(element.margin),
     width: element.width,
     height: element.height,
     maxWidth: element.maxWidth,
     maxHeight: element.maxHeight,
-    borderRadius: element.cornerRadius,
-    borderWidth: element.borderWidth ? convertSizeToPixels(element.borderWidth) : '1px',
+    borderRadius: convertSizeToPixels(element.cornerRadius),
+    borderWidth: element.borderWidth ? convertSizeToPixels(element.borderWidth) : '0px',
     borderColor: element.borderColor,
     top: convertSizeToPixels(element.offsetTop),
     left: convertSizeToPixels(element.offsetStart),
@@ -468,13 +448,17 @@ const Container = ({ element, sectionId, bubble }: Props) => {
     bottom: convertSizeToPixels(element.offsetEnd),
   };
 
+  const isInitialBox = element.id === bubble.body?.contents[0]?.id;
+
+  // need to fix how to control new added box
   return (
     <ContextMenu>
       <ContextMenuTrigger>
         <div
           style={styles}
-          className={clsx('relative transition-all group', {
-            'px-2 py-2 border-dashed border-[1px] border-slate-300': bubble.hero?.id === sectionId && (bubble.hero?.contents[0].contents && bubble.hero?.contents[0].contents?.length < 1 ||
+          // tried remove overflow-hidden
+          className={clsx('relative transition-all group border-0', {
+            'px-2 py-2': bubble.hero?.id === sectionId && (bubble.hero?.contents[0].contents && bubble.hero?.contents[0].contents?.length < 1 ||
               (bubble.hero?.contents[0]?.contents && bubble.hero.contents[0].contents[0]?.type === 'box')),
             'p-0 border-0': bubble.hero?.id === sectionId && bubble.hero?.contents && bubble.hero?.contents.length > 1,
             'border-0': bubble.hero?.id === sectionId,
@@ -482,19 +466,10 @@ const Container = ({ element, sectionId, bubble }: Props) => {
             'h-fit': strElementType === 'box',
             'h-full': strElementType === 'initial',
             'overflow-scroll ': strElementType === 'initial',
-            '!border-blue-500':
-              state.editor.selectedElement.id === element.id &&
-              !state.editor.liveMode &&
-              strElementType !== 'initial',
-            '!border-yellow-400 !border-4':
-              state.editor.selectedElement.id === element.id &&
-              !state.editor.liveMode &&
-              strElementType === 'initial',
-            '!border-solid':
-              state.editor.selectedElement.id === element.id && !state.editor.liveMode,
-            'border-dashed border-[1px] p-[20px] border-slate-300': !state.editor.liveMode && bubble.hero?.id !== sectionId && element.aspectMode !== 'cover',
             'flex flex-row': element.layout === 'horizontal' || element.layout === 'baseline',
             'items-baseline': element.layout === 'baseline',
+            'p-[20px]': element.id === 'initial_box',
+            'p-[10px]': element.id === 'initial_footer_box',
           })}
           onDrop={handleOnDrop}
           onClick={handleOnClickBody}
@@ -506,36 +481,32 @@ const Container = ({ element, sectionId, bubble }: Props) => {
             setMouseIsOver(false);
           }}
         >
-
-          {/* {element.contents && element.contents.map((childElement) => (
-            <Recursive key={childElement.id} element={childElement} sectionId={sectionId} bubble={bubble} />
-          ))} */}
           {element.contents &&
-            element.contents.map((childElement, itemI) => (
-              <div
-                key={childElement.id}
-                draggable
-                onDragStart={(e) => handleDragStart(e, { itemI })}
-                onDragEnter={dragging ? (e) => handleDragEnter(e, { itemI }) : undefined}
-                className={dragging ? getStyles({ itemI }) : 'dnd-item'}
-              >
-                <Recursive element={childElement} sectionId={sectionId} bubble={bubble} />
-              </div>
-            ))}
+            element.contents.map((childElement, itemI) => {
 
-          {mouseIsOver && state.editor.selectedElement.id === element.id && !state.editor.liveMode && (
+              return (
+                <div
+                  key={childElement.id}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, { itemI })}
+                  onDragEnter={dragging ? (e) => handleDragEnter(e, { itemI }) : undefined}
+                  className={dragging ? getStyles({ itemI }) : 'dnd-item flex-1'}
+                >
+                  <Recursive element={childElement} sectionId={sectionId} bubble={bubble} />
+                </div>
+              );
+            })}
+
+          {state.editor.selectedElement.id === element.id && !state.editor.liveMode && (
             <>
-              <div className="absolute -top-[25px] -right-[5px]">
+              <div className="absolute -top-[0px] -right-[50px]">
                 <Button
                   className="flex justify-center h-full border rounded-md bg-red-500"
-                  variant={"outline"}
+                  variant={"ghost"}
                   onClick={handleDeleteElement}
                 >
                   <Trash className="h-3 w-3" />
                 </Button>
-              </div>
-              <div className="text-center animate-pulse">
-                <p className="text-slate-700 text-xs">Click for properties</p>
               </div>
             </>
           )}

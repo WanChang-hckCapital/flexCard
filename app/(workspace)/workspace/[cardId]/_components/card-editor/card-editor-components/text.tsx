@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { defaultStyles } from '@/lib/constants';
 import { EditorElement, EditorSection, useEditor } from '@/lib/editor/editor-provider';
+import { convertSizeToPixels } from '@/lib/utils';
 import clsx from 'clsx';
 import { Trash } from 'lucide-react';
 import React, { useState } from 'react';
@@ -60,23 +61,22 @@ const TextElement = (props: Props) => {
     textAlign: props.element.align as 'left' | 'right' | 'center' | 'justify' | 'start' | 'end' | undefined || defaultStyles.textAlign,
     letterSpacing: props.element.lineSpacing,
     fontWeight: props.element.weight,
-    fontSize: props.element.size,
+    fontSize: props.element.size === 'xxs' ? '11px' : props.element.size === 'xs' ? '13px' : props.element.size === 'sm' ? '14px' : props.element.size === 'md' ? '16px' : props.element.size === 'lg' ? '19px' : props.element.size === 'xl' ? '22px' : props.element.size === 'xxl' ? '29px' : props.element.size === '3xl' ? '35px' : props.element.size === '4xl' ? '48px' : props.element.size === '5xl' ? '74px' : props.element.size,
     fontStyle: props.element.style,
     textDecorationLine: props.element.decoration,
     marginTop: props.element.margin,
-    top: props.element.offsetTop,
-    left: props.element.offsetStart,
-    right: props.element.offsetEnd,
-    bottom: props.element.offsetBottom,
+    top: convertSizeToPixels(props.element.offsetTop),
+    left: convertSizeToPixels(props.element.offsetStart),
+    right: convertSizeToPixels(props.element.offsetEnd),
+    bottom: convertSizeToPixels(props.element.offsetBottom),
   };
 
   return (
     <div
       style={styles}
-      className={clsx('p-[2px] m-[5px] relative text-[16px] transition-all', {
+      className={clsx('relative text-[16px] transition-all', {
         '!border-blue-500': state.editor.selectedElement.id === props.element.id,
         '!border-solid': state.editor.selectedElement.id === props.element.id,
-        'border-dashed border-[1px] border-slate-300': !state.editor.liveMode,
         'text-wrap': props.element.wrap === 'true',
         'text-nowrap': props.element.wrap === 'false',
       })}
@@ -104,11 +104,11 @@ const TextElement = (props: Props) => {
         {props.element.text}
       </span>
 
-      {mouseIsOver && state.editor.selectedElement.id === props.element.id && !state.editor.liveMode && (
-        <div className="absolute -top-[28px] -right-[3px]">
+      {state.editor.selectedElement.id === props.element.id && !state.editor.liveMode && (
+        <div className="absolute -top-[5px] -right-[70px]">
           <Button
             className="flex justify-center h-full border rounded-md bg-red-500"
-            variant={"outline"}
+            variant={"ghost"}
             onClick={handleDeleteElement}
           >
             <Trash className="h-3 w-3" />

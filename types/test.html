@@ -18,3 +18,30 @@
         </div>
     </div>
 </div>
+
+<!-- // return (
+    //     <div className={`grid ${getGridColumnsClass()} gap-2 ${isProfilePage ? "justify-center w-[70%] max-sm:w-[98%] sm:w-[95%] md:w-[75%]" : ""}`}>
+    //         {Array.from({ length: columnsCount }).map((_, colIndex) => (
+    //             <div key={colIndex} className="grid gap-2 h-min">
+    //                 {result
+    //                     .filter((_: any, index: number) => index % columnsCount === colIndex)
+    //                     .map((card: any) => (
+    //                         <div key={card.cardId} style={{ width: "200px", height: "300px" }}>
+    //                             <div className={`h-auto max-w-fit max-sm:max-w-[180px] xxl:max-w-[230px] ${isProfilePage ? "max-w-[220px]" : ""} rounded-lg`}>
+    //                                 <Card
+    //                                     id={card.cardId}
+    //                                     authenticatedUserId={session?.user.id.toString() || undefined}
+    //                                     title={card.title}
+    //                                     creator={card.creator}
+    //                                     likes={card.likes}
+    //                                     followers={[]}
+    //                                     lineComponents={card.lineComponents.content}
+    //                                     flexHtml={card.flexHtml.content}
+    //                                 />
+    //                             </div>
+    //                         </div>
+    //                     ))}
+    //             </div>
+    //         ))}
+    //     </div>
+    // ); -->

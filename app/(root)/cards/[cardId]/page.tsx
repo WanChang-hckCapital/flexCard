@@ -8,13 +8,14 @@ import { ArrowLeftCircle } from 'lucide-react'
 import CardComponent from '@/components/card-details/card-component'
 import CardInfo from '@/components/card-details/card-info'
 import ResponsiveGrid from '@/components/responsive-grid'
+import Link from 'next/link'
 
 type Props = {
   params: { cardId: string }
 }
 
 const CardDetails = async ({ params }: Props) => {
-  const cardDetails = await fetchCardDetails(params.cardId)
+  const cardDetails = await fetchCardDetails(params.cardId);
   const shareUrl = process.env.NEXT_PUBLIC_BASE_URL + `/cards/${params.cardId}`;
   // if (!cardDetails) return redirect(`/`);
 
@@ -30,18 +31,22 @@ const CardDetails = async ({ params }: Props) => {
 
   const suggestedCards = await fetchSuggestedCards(params.cardId);
 
+  const lineComponentsContent = JSON.parse(cardDetails.lineComponents.content);
+  const bubbleSize = lineComponentsContent.size;
+
   return (
     <>
       {cardDetails ?
         <div className='p-3 md:p-12 rounded-2xl md:px-24 lg:px-36'>
-          <ArrowLeftCircle
-            width={30}
-            height={30}
-            className='ml-[-50px] cursor-pointer'
-          // onClick={() => router.back()} 
-          />
+          <Link href={`/`}>
+            <ArrowLeftCircle
+              width={30}
+              height={30}
+              className='ml-[-50px] cursor-pointer'
+            />
+          </Link>
           <div className='grid grid-cols-1 lg:grid-cols-2 shadow-lg rounded-2xl p-3 md:p-7 lg:p-12 xl:p-16'>
-            <CardComponent flexHtml={cardDetails.flexHtml.content} />
+            <CardComponent flexHtml={cardDetails.flexHtml.content} bubbleSize={bubbleSize} />
             <CardInfo
               cardTitle={cardDetails.title}
               cardDescription={cardDetails.description}
@@ -57,8 +62,8 @@ const CardDetails = async ({ params }: Props) => {
           </div>
         </div> : null}
       {suggestedCards && suggestedCards.length > 0 ? (
-        <div>
-          <h2 className='mt-8 text-2xl font-bold'>Suggested Cards</h2>
+        <div className='w-[95%] m-auto'>
+          <h2 className='mt-8 mb-[8px] ml-[5px] text-2xl font-bold'>Suggested Cards</h2>
           <ResponsiveGrid result={suggestedCards} session={session} />
         </div>
       ) : null}

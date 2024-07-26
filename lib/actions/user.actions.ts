@@ -17,6 +17,8 @@ import ComponentModel from "../models/component";
 import MemberModel from "../models/member";
 import liff from "@line/liff";
 import axios from 'axios';
+import ProductModel from "../models/product";
+import FeedbackModel from "../models/feedback";
 
 export async function authenticateUser(email: string, password: string) {
     try {
@@ -433,14 +435,14 @@ export async function updateMemberFollow({
 
 export async function getLikeCount(cardId: string) {
     try {
-      await connectToDB();
-      const card = await Card.findById(cardId);
-      if (!card) throw new Error('Card not found');
-      return { success: true, likes: card.likes.length };
+        await connectToDB();
+        const card = await Card.findById(cardId);
+        if (!card) throw new Error('Card not found');
+        return { success: true, likes: card.likes.length };
     } catch (error: any) {
-      return { success: false, message: error.message };
+        return { success: false, message: error.message };
     }
-  }
+}
 
 interface ParamsCardLikes {
     authUserId: string,
@@ -928,6 +930,84 @@ export async function fetchAllCards() {
     }
 }
 
+export async function fetchProductPlanLimitedCardQuantity(productId: string): Promise<number> {
+    try {
+        await connectToDB();
+
+        const product = await ProductModel.findById(productId);
+
+        if (!product) {
+            throw new Error('Product not found');
+        }
+
+        return product.limitedCard;
+    }
+    catch (error: any) {
+        console.error('Error fetching product plan limited card quantity:', error);
+        throw error;
+    }
+}
+
+export async function fetchMemberCardsLength(memberId: string): Promise<number> {
+    try {
+        await connectToDB();
+
+        const member = await MemberModel.findOne({ user: memberId }).populate('cards');
+
+        if (!member) {
+            throw new Error('Member not found');
+        }
+
+        return member.cards.length;
+    }
+    catch (error: any) {
+        console.error('Error fetching member cards length:', error);
+        throw error;
+    }
+}
+
+interface FeedbackProps {
+    selectedReasons: string[];
+    otherReason: string;
+    hasUsedSimilar: boolean;
+    similarAppName: string;
+    feedbackComment: string;
+    isSkip: boolean;
+    userId: string;
+}
+
+export async function submitFeedback({
+    selectedReasons,
+    otherReason,
+    hasUsedSimilar,
+    similarAppName,
+    feedbackComment,
+    isSkip,
+    userId,
+}: FeedbackProps): Promise<{ success: boolean; message: string }> {
+    try {
+        await connectToDB();
+
+        const feedback = new FeedbackModel({
+            selectedReasons,
+            otherReason,
+            hasUsedSimilar,
+            similarAppName,
+            feedbackComment,
+            isSkip,
+            feedbackDate: new Date(),
+            feedbackBy: userId,
+        });
+
+        await feedback.save();
+
+        return { success: true, message: 'Feedback submitted successfully' };
+    } catch (error: any) {
+        console.error('Error submitting feedback:', error);
+        return { success: false, message: error.message };
+    }
+}
+
 interface ParamsSendFlexMessage {
     userId: string;
     flexContent: string;
@@ -972,6 +1052,56 @@ export async function sendFlexMessageThruOA({
     } catch (error: any) {
         console.error('Error sharing Card Line:', error.response ? error.response.data : error.message);
         return { success: false, message: 'Failed to share card to LINE, Please try again later.' };
+    }
+}
+
+export async function fetchDashboardData({ userId }: { userId: string }) {
+    try {
+        await connectToDB();
+
+        const cardDashboard = await MemberModel.findOne({ user: userId }).select('cards totalViews followers');
+
+        if (!cardDashboard) {
+            throw new Error('Member not found');
+        }
+
+        const quantityOfCard = cardDashboard.cards.length;
+        const profileViews = cardDashboard.totalViews;
+        const totalFollowers = cardDashboard.followers.length;
+
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        const cardsLastWeek = await Card.find({
+            creator: userId,
+            createdAt: { $gte: sevenDaysAgo }
+        }).countDocuments();
+
+        const profileViewsLastWeek = await MemberModel.aggregate([
+            { $match: { _id: new mongoose.Types.ObjectId(cardDashboard._id) } },
+            { $unwind: "$viewDetails" },
+            { $match: { "viewDetails.viewedAt": { $gte: sevenDaysAgo } } },
+            { $group: { _id: null, totalViews: { $sum: 1 } } }
+        ]);
+
+        const totalFollowersLastWeek = await MemberModel.aggregate([
+            { $match: { _id: new mongoose.Types.ObjectId(cardDashboard._id) } },
+            { $unwind: "$followers" },
+            { $match: { "followers.followedAt": { $gte: sevenDaysAgo } } },
+            { $group: { _id: null, totalFollowers: { $sum: 1 } } }
+        ]);
+
+        return {
+            memberCardQuantity: quantityOfCard,
+            profileViews: profileViews,
+            followersIncrease: totalFollowers,
+            cardsLastWeek: cardsLastWeek,
+            profileViewsLastWeek: profileViewsLastWeek[0]?.totalViews || 0,
+            totalFollowersLastWeek: totalFollowersLastWeek[0]?.totalFollowers || 0
+        };
+    } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+        throw error;
     }
 }
 
