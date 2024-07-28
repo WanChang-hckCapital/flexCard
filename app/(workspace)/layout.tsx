@@ -77,7 +77,7 @@ import AuthSessionProvider from "../(auth)/auth-session-provider";
 import Favicon from "/public/favicon.ico";
 import { Toaster as SonnarToaster } from "@/components/ui/sonner";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../api/auth/[...nextauth]/route";
+import { authOptions } from "../api/utils/authOptions";
 import { fetchMemberImage } from "@/lib/actions/user.actions";
 import Header from "@/components/shared/header";
 import { fetchMember } from "@/lib/actions/admin.actions";

@@ -1,18 +1,24 @@
-import { redirect } from 'next/navigation'
-import React from 'react'
-import { fetchCardDetails, fetchSuggestedCards } from '@/lib/actions/workspace.actions'
-import { getIPCountryInfo, updateCardViewData } from '@/lib/actions/user.actions'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
-import { ArrowLeftCircle } from 'lucide-react'
-import CardComponent from '@/components/card-details/card-component'
-import CardInfo from '@/components/card-details/card-info'
-import ResponsiveGrid from '@/components/responsive-grid'
-import Link from 'next/link'
+import { redirect } from "next/navigation";
+import React from "react";
+import {
+  fetchCardDetails,
+  fetchSuggestedCards,
+} from "@/lib/actions/workspace.actions";
+import {
+  getIPCountryInfo,
+  updateCardViewData,
+} from "@/lib/actions/user.actions";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/utils/authOptions";
+import { ArrowLeftCircle } from "lucide-react";
+import CardComponent from "@/components/card-details/card-component";
+import CardInfo from "@/components/card-details/card-info";
+import ResponsiveGrid from "@/components/responsive-grid";
+import Link from "next/link";
 
 type Props = {
-  params: { cardId: string }
-}
+  params: { cardId: string };
+};
 
 const CardDetails = async ({ params }: Props) => {
   const cardDetails = await fetchCardDetails(params.cardId);
@@ -36,17 +42,20 @@ const CardDetails = async ({ params }: Props) => {
 
   return (
     <>
-      {cardDetails ?
-        <div className='p-3 md:p-12 rounded-2xl md:px-24 lg:px-36'>
+      {cardDetails ? (
+        <div className="p-3 md:p-12 rounded-2xl md:px-24 lg:px-36">
           <Link href={`/`}>
             <ArrowLeftCircle
               width={30}
               height={30}
-              className='ml-[-50px] cursor-pointer'
+              className="ml-[-50px] cursor-pointer"
             />
           </Link>
-          <div className='grid grid-cols-1 lg:grid-cols-2 shadow-lg rounded-2xl p-3 md:p-7 lg:p-12 xl:p-16'>
-            <CardComponent flexHtml={cardDetails.flexHtml.content} bubbleSize={bubbleSize} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 shadow-lg rounded-2xl p-3 md:p-7 lg:p-12 xl:p-16">
+            <CardComponent
+              flexHtml={cardDetails.flexHtml.content}
+              bubbleSize={bubbleSize}
+            />
             <CardInfo
               cardTitle={cardDetails.title}
               cardDescription={cardDetails.description}
@@ -55,20 +64,24 @@ const CardDetails = async ({ params }: Props) => {
               creatorInfo={cardDetails.creator}
               userFollowers={cardDetails.followers.length}
               session={session}
-              cardId={cardDetails.cardId}
+              cardId={cardDetails.cardID}
               likes={cardDetails.likes}
               lineComponents={cardDetails.lineComponents.content}
-              shareUrl={shareUrl} />
+              shareUrl={shareUrl}
+            />
           </div>
-        </div> : null}
+        </div>
+      ) : null}
       {suggestedCards && suggestedCards.length > 0 ? (
-        <div className='w-[95%] m-auto'>
-          <h2 className='mt-8 mb-[8px] ml-[5px] text-2xl font-bold'>Suggested Cards</h2>
+        <div className="w-[95%] m-auto">
+          <h2 className="mt-8 mb-[8px] ml-[5px] text-2xl font-bold">
+            Suggested Cards
+          </h2>
           <ResponsiveGrid result={suggestedCards} session={session} />
         </div>
       ) : null}
     </>
-  )
-}
+  );
+};
 
-export default CardDetails
+export default CardDetails;

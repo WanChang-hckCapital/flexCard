@@ -1,24 +1,23 @@
-import { redirect } from 'next/navigation'
-import React from 'react'
-import CardEditorNavigation from './_components/card-editor-navigation'
-import CardEditorSidebar from './_components/card-editor-sidebar'
-import CardEditor from './_components/card-editor'
-import EditorProvider from '@/lib/editor/editor-provider'
-import { Card } from '@/types'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
-import { generateCustomID } from '@/lib/utils'
+import { redirect } from "next/navigation";
+import React from "react";
+import CardEditorNavigation from "./_components/card-editor-navigation";
+import CardEditorSidebar from "./_components/card-editor-sidebar";
+import CardEditor from "./_components/card-editor";
+import EditorProvider from "@/lib/editor/editor-provider";
+import { Card } from "@/types";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/utils/authOptions";
+import { generateCustomID } from "@/lib/utils";
 
 type Props = {
   params: {
-    userId: string
-    authaccountId: string
-  }
-}
+    userId: string;
+    authaccountId: string;
+  };
+};
 
 const Page = async ({ params }: Props) => {
-
-  const session = await getServerSession(authOptions)
+  const session = await getServerSession(authOptions);
   const user = session?.user;
 
   //modify later
@@ -40,8 +39,8 @@ const Page = async ({ params }: Props) => {
     components: [],
     lineFormatComponent: [],
     flexFormatHtml: [],
-    updatedAt: new Date,
-    createdAt: new Date,
+    updatedAt: new Date(),
+    createdAt: new Date(),
     totalViews: 0,
     viewDetails: [],
     updateHistory: [],
@@ -53,15 +52,14 @@ const Page = async ({ params }: Props) => {
   //   </EditorProvider>
   // );
 
-  // console.log("cardhtml: " + cardEditorHtml); 
+  // console.log("cardhtml: " + cardEditorHtml);
 
   return (
     <div className="fixed top-0 bottom-0 left-0 right-0 z-[20] bg-background overflow-hidden">
       <EditorProvider
         authaccountId={authaccountId}
         cardId={newCardData.cardID}
-        cardDetails={newCardData}
-      >
+        cardDetails={newCardData}>
         <CardEditorNavigation
           cardDetails={newCardData}
           authaccountId={authaccountId}
@@ -72,10 +70,10 @@ const Page = async ({ params }: Props) => {
           <CardEditor />
         </div>
 
-        <CardEditorSidebar/>
+        <CardEditorSidebar />
       </EditorProvider>
     </div>
-  )
-}
+  );
+};
 
-export default Page
+export default Page;

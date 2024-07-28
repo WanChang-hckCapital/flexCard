@@ -1,14 +1,18 @@
-
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/app/api/utils/authOptions";
 import AddNewProduct from "@/components/forms/new-product";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { getServerSession } from "next-auth";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
 async function Page() {
-
-  const session = await getServerSession(authOptions)
+  const session = await getServerSession(authOptions);
   const user = session?.user;
 
   if (!user) {
@@ -34,14 +38,18 @@ async function Page() {
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link href="/dashboard/products/add-new-plans">Add New Products</Link>
+                <Link href="/dashboard/products/add-new-plans">
+                  Add New Products
+                </Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
       </div>
       <div className="bg-black border border-neutral-600 px-[25%] py-[4%] rounded-xl w-full self-center">
-        <AddNewProduct btnTitle="Add" authenticatedUserId={user.id}></AddNewProduct>
+        <AddNewProduct
+          btnTitle="Add"
+          authenticatedUserId={user.id}></AddNewProduct>
       </div>
     </main>
   );
