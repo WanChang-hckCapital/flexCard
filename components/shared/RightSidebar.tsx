@@ -1,71 +1,79 @@
-// import { currentUser } from "@clerk/nextjs";
+"use client";
 
-// import UserCard from "../cards/UserCard";
+import { useState, useEffect } from "react";
+import { fetchAllMembers } from "@/lib/actions/user.actions";
+import { Member } from "@/types";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
-// import { fetchUsers } from "@/lib/actions/user.actions";
+function RightSidebar() {
+  const [members, setMembers] = useState<Member[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-async function RightSidebar() {
-  // const user = await currentUser();
-  // if (!user) return null;
+  useEffect(() => {
+    const getMembers = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-  // const similarMinds = await fetchUsers({
-  //   userId: user.id,
-  //   pageSize: 4,
-  // });
+        const data: any[] = await fetchAllMembers();
+        setMembers(data);
+      } catch (error) {
+        if (error instanceof Error) {
+          setError(error.message);
+        } else {
+          setError(String(error));
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
 
+    getMembers();
+  }, []);
 
-  // return (
-  //   <section className='custom-scrollbar rightsidebar'>
-  //     <div className='flex flex-1 flex-col justify-start'>
-  //       <h3 className='text-heading4-medium text-light-1'>
-  //         Suggested Communities
-  //       </h3>
+  const showChatBox = (userID: string) => {
+    console.log("userID:" + userID);
+  };
 
-  //       <div className='mt-7 flex w-[350px] flex-col gap-9'>
-  //         {suggestedCOmmunities.communities.length > 0 ? (
-  //           <>
-  //             {suggestedCOmmunities.communities.map((community) => (
-  //               <UserCard
-  //                 key={community.id}
-  //                 id={community.id}
-  //                 name={community.name}
-  //                 username={community.username}
-  //                 imgUrl={community.image}
-  //                 personType='Community'
-  //               />
-  //             ))}
-  //           </>
-  //         ) : (
-  //           <p className='!text-base-regular text-light-3'>
-  //             No communities yet
-  //           </p>
-  //         )}
-  //       </div>
-  //     </div>
-
-  //     <div className='flex flex-1 flex-col justify-start'>
-  //       <h3 className='text-heading4-medium text-light-1'>Similar Minds</h3>
-  //       <div className='mt-7 flex w-[350px] flex-col gap-10'>
-  //         {similarMinds.users.length > 0 ? (
-  //           <>
-  //             {similarMinds.users.map((person) => (
-  //               <UserCard
-  //                 key={person.id}
-  //                 id={person.id}
-  //                 name={person.name}
-  //                 username={person.username}
-  //                 imgUrl={person.image}
-  //                 personType='User'
-  //               />
-  //             ))}
-  //           </>
-  //         ) : (
-  //           <p className='!text-base-regular text-light-3'>No users yet</p>
-  //         )}
-  //       </div>
-  //     </div>
-  //   </section>
-  // );
+  return (
+    <section className="custom-scrollbar bg-gray-800 text-white shadow-lg w-64">
+      <div className="flex flex-col p-4 mt-12">
+        <h3 className="text-lg font-medium mb-4">Friend List</h3>
+        {loading && <p>Loading...</p>}
+        {error && <p className="text-red-500">Error: {error}</p>}
+        {!loading && !error && (
+          <div className="flex flex-col gap-4">
+            {members.length > 0 ? (
+              members.map((member, index) => (
+                <div
+                  key={index}
+                  className="p-2 bg-gray-700 rounded flex items-center gap-4 cursor-pointer hover:bg-gray-600"
+                  onClick={() => showChatBox(member.user)}
+                >
+                  <Avatar className="h-6 w-6 border">
+                    <AvatarImage src="/assets/user.svg" />
+                    {/* <AvatarFallback>
+                      {member.accountname ? member.accountname.charAt(0) : "A"}
+                    </AvatarFallback> */}
+                  </Avatar>
+                  <div>
+                    <p>{member.accountname || "Anonymous"}</p>
+                    {/* <p>UserID: {member.user || "No User ID found"}</p>s */}
+                    {/* <p>Email: {member.email || "No email provided"}</p>
+                    <p>Country: {member.country || "No country provided"}</p> */}
+                    <p>Online</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p>No members found</p>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
+  );
 }
 
 export default RightSidebar;

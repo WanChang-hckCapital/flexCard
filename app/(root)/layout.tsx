@@ -12,6 +12,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../api/utils/authOptions";
 import { fetchMemberImage } from "@/lib/actions/user.actions";
 import { fetchMember } from "@/lib/actions/admin.actions";
+import RightSidebarWrapper from "@/components/shared/RightSideWrapper";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -55,7 +56,8 @@ export default async function RootLayout({
           className={cn(
             "min-h-screen flex flex-col bg-dark-1 justify-center text-white font-sans antialiased",
             fontSans.variable
-          )}>
+          )}
+        >
           <main className="flex flex-row w-full">
             <Header session={session} userInfoImage={userImage} />
             <LeftSidebar session={session} userInfoImage={userImage} />
@@ -63,6 +65,7 @@ export default async function RootLayout({
               <div id="modal-root"></div>
               <div className="w-full">{children}</div>
             </section>
+            <RightSidebarWrapper />ç
           </main>
           <SonnarToaster position="bottom-left" />
           {/* <Footer /> */}
