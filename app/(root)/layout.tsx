@@ -65,7 +65,7 @@ export default async function RootLayout({
               <div id="modal-root"></div>
               <div className="w-full">{children}</div>
             </section>
-            <RightSidebarWrapper />ç
+            <RightSidebarWrapper />
           </main>
           <SonnarToaster position="bottom-left" />
           {/* <Footer /> */}
