@@ -23,6 +23,8 @@ export type Member = {
     phone: string,
     shortdescription: string,
     usertype: string,
+    accountType: string,
+    role: string,
     onboarded: boolean,
     ip_address: string,
     country: string,
@@ -30,10 +32,12 @@ export type Member = {
     stripeCustomerId: string,
     subscription: {},
     cards: Card[],
+    closeFriends: Member[],
+    blockedUsers: Member[],
     followers: Member[],
     following: Member[],
-    organization: {},
-    trial: Trial[],
+    organization: Organization,
+    offers: Offer[],
     totalViews: number,
     viewDetails: ViewDetail[];
     updateHistory: [],
@@ -41,10 +45,26 @@ export type Member = {
 }
 
 export type Organization = {
-    organizationID: {},
     document: [],
     employees: Member[],
-    webUrl: string,
+    businessType: string,
+    businessLocation: string,
+    legalBusinessName: string,
+    businessRegistrationNumber: string,
+    businessName: string,
+    businessAddress: string,
+    businessPhone: string,
+    industry: string,
+    businessWebsite: string,
+    businessProductDescription: string,
+    bankAccountHolder: string,
+    bankName: string,
+    bankAccountNumber: string,
+    verify: {
+        verified: boolean,
+        verifiedAt: Date,
+        verifiedBy: {},
+    },
 }
 
 export enum Usertype {
@@ -61,6 +81,13 @@ export enum Usertype {
     FLEXADMIN = 'FLEXADMIN',
 }
 
+export enum Role {
+    FLEXADMIN = 'FLEXADMIN',
+    PERSONAL = 'PERSONAL',
+    SUPERUSER = 'SUPERUSER',
+    ORGANIZATION = 'ORGANIZATION',
+}
+
 export type Card = {
     cardID: string,
     creator: {},
@@ -73,11 +100,21 @@ export type Card = {
     components: {},
     lineFormatComponent: {},
     flexFormatHtml: {},
+    comments: [],
     totalViews: number,
     viewDetails: ViewDetail[];
     updateHistory: [],
     updatedAt: Date,
     createdAt: Date,
+}
+
+export type Comment = {
+    commentID: string,
+    comment: string,
+    commentBy: {},
+    commentDate: Date,
+    likes: {},
+    replies: Comment[];
 }
 
 export type ViewDetail = {
@@ -108,10 +145,11 @@ export type Subscription = {
     status: string,
 }
 
-export type Trial = {
-    trialPlan: Product,
-    trialStartDate: Date,
-    trialEndDate: Date,
+export type Offer = {
+    plan: Product,
+    startDate: Date,
+    endDate: Date,
+    type: string,
 }
 
 export type Transaction = {
@@ -127,6 +165,7 @@ export type Transaction = {
 export type Product = {
     name: string,
     description: string,
+    category: string,
     price: number,
     availablePromo: string,
     stripeProductId: string,

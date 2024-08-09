@@ -34,8 +34,8 @@ export default function RootLayout({
 
 
           <main className='flex flex-row justify-center'>
-            <section className='justify-center'>
-              <div className='w-full max-w-4xl'>{children}</div>
+            <section className='w-full justify-center'>
+              <div className='w-full'>{children}</div>
             </section>
           </main>
 

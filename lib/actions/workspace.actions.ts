@@ -7,6 +7,7 @@ import { connectToDB } from "../mongodb";
 import { Card } from "@/types";
 import { v4 as uuidv4 } from 'uuid';
 import ComponentModel from "../models/component";
+import mongoose from "mongoose";
 
 
 export async function fetchCardsByAccountId(accountId: string) {
@@ -172,15 +173,13 @@ function generateCustomID() {
   return uuidv4();
 }
 
-export async function upsertCardContent(authaccountId: string, cardDetails: Card, cardContent: string, lineFormatCard: string, flexFormatHtml: string, cardId: string) {
+export async function upsertCardContent(authaccountId: string, cardDetails: Card, cardContent: string, lineFormatCard: string, flexFormatHtml: string, cardId?: string) {
   if (!authaccountId) return;
 
   try {
     await connectToDB();
-  
-    console.log("cardDetails from edit: ", cardDetails); 
 
-    const existingCard = await CardMongodb.findById(cardId);
+    const existingCard = await CardMongodb.findOne({ _id: cardId });
 
     if (!existingCard) {
       const cardComponent = {
@@ -211,7 +210,7 @@ export async function upsertCardContent(authaccountId: string, cardDetails: Card
       await newFlexHtmlComponent.save();
 
       const newCardContent = {
-        cardID: cardId,
+        cardID: cardDetails.cardID,
         creator: authaccountId,
         title: cardDetails.title,
         status: cardDetails.status,
@@ -294,10 +293,10 @@ export async function checkDuplicateCard(
 
     const existingCard = await CardMongodb.findOne({ cardID: cardId });
 
-    if (!existingCard) {
-      return { success: true };
+    if (existingCard) {
+      return { success: false, message: "Opps, Card already exists, Please try again later."  };
     } else {
-      return { success: false, message: "Opps, Card already exists, Please try again later." };
+      return { success: true };
     }
   }
   catch {

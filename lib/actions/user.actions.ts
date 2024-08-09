@@ -9,7 +9,7 @@ import { connectToDB } from "../mongodb";
 import Member from "../models/member";
 import Card from "../models/card";
 import Image from "../models/image";
-import Organization from "../models/organization";
+import OrganizationModel from "../models/organization";
 import { Readable } from "stream";
 import { headers } from "next/headers";
 import { addMinutes, startOfDay, subMinutes } from "date-fns";
@@ -19,6 +19,9 @@ import liff from "@line/liff";
 import axios from 'axios';
 import ProductModel from "../models/product";
 import FeedbackModel from "../models/feedback";
+import CommentModel from "../models/comment";
+import { generateCustomID } from "../utils";
+import { Comment } from "@/types";
 
 export async function authenticateUser(email: string, password: string) {
     try {
@@ -519,6 +522,103 @@ export async function updateCardLikes(
     }
 }
 
+export async function fetchMemberRole(
+    authenticatedUserId: string
+): Promise<{ success: boolean; data?: string; message?: string }> {
+    try {
+        await connectToDB();
+
+        const member = await Member.findOne({ user: authenticatedUserId }).select('role');
+
+        if (!member) {
+            return { success: false, message: "Member not found" };
+        }
+
+        return { success: true, data: member.role };
+    } catch (error: any) {
+        return { success: false, message: error.message };
+    }
+}
+
+
+interface ParamsOrganizationDetails {
+    businessType: string;
+    businessLocation: string;
+    legalBusinessName: string;
+    businessRegistrationNumber: string;
+    businessName: string;
+    businessAddress: string;
+    businessPhone: string;
+    industry: string;
+    businessWebsite?: string;
+    businessProductDescription: string;
+    bankAccountHolder: string;
+    bankName: string;
+    bankAccountNumber: string;
+    authenticatedUserId: string;
+}
+
+export async function signUpOrganization({
+    businessType,
+    businessLocation,
+    legalBusinessName,
+    businessRegistrationNumber,
+    businessName,
+    businessAddress,
+    businessPhone,
+    industry,
+    businessWebsite,
+    businessProductDescription,
+    bankAccountHolder,
+    bankName,
+    bankAccountNumber,
+    authenticatedUserId,
+}: ParamsOrganizationDetails): Promise<{ success: boolean; message?: string }> {
+    try {
+        await connectToDB();
+
+        const member = await MemberModel.findOne({ user: authenticatedUserId }).select("role usertype");
+        if (!member) {
+            console.log("User not found when signing up organization.");
+            return { success: false, message: "User not found" };
+        }
+
+        if (member.role.toUpperCase() === "ORGANIZATION") {
+            console.log("Member is already join as an organization.");
+            return { success: false, message: "Member is already join as an organization." };
+        }
+
+        const newOrganization = new OrganizationModel({
+            businessType,
+            businessLocation,
+            legalBusinessName,
+            businessRegistrationNumber,
+            businessName,
+            businessAddress,
+            businessPhone,
+            industry,
+            businessWebsite,
+            businessProductDescription,
+            bankAccountHolder,
+            bankName,
+            bankAccountNumber,
+        });
+
+        await newOrganization.save();
+
+        member.organization = newOrganization._id;
+        member.role = 'ORGANIZATION';
+        member.usertype = 'ORGANIZATION';
+        await member.save();
+
+        //update user subscription to be organization free version subscription or purchasing subscription
+
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, message: error.message };
+    }
+}
+
 interface ParamsUpdWebURL {
     authUserId: string,
     url: string,
@@ -539,13 +639,13 @@ export async function updateOrganizationUrl(params: ParamsUpdWebURL): Promise<vo
             throw new Error("Current member isn't Organization owner.");
         }
 
-        const organization = await Organization.findOne({ organizationID: currentMember._id });
+        const organization = await OrganizationModel.findOne({ organizationID: currentMember._id });
 
         if (!organization) {
             throw new Error("Organization not found");
         }
 
-        organization.webUrl = url;
+        organization.businessWebsite = url;
 
         await organization.save();
 
@@ -927,6 +1027,197 @@ export async function fetchAllCards() {
     } catch (error) {
         console.error("Error fetching all cards:", error);
         throw error;
+    }
+}
+
+interface MemberDetails {
+    accountname: string;
+    image: string | null;
+}
+
+interface CommentWithReplies {
+    _id: string;
+    commentID: string;
+    comment: string;
+    commentBy: MemberDetails | null;
+    commentDate: Date;
+    likes: string[];
+    replies: CommentWithReplies[];
+}
+
+async function getMemberDetails(memberId: string): Promise<MemberDetails | null> {
+    const member: any = await MemberModel.findOne({ user: memberId }).select('user accountname image').lean();
+    if (member && Array.isArray(member.image) && member.image.length > 0) {
+        const image: any = await Image.findById(member.image[0]).select('binaryCode').lean();
+        member.image = image ? image.binaryCode : null;
+    } else {
+        member.image = null;
+    }
+    return member;
+}
+
+async function getCommentDetails(commentId: string): Promise<CommentWithReplies | null> {
+    const comment: any = await CommentModel.findById(commentId).lean();
+    if (!comment) {
+        return null;
+    }
+
+    const memberDetails = await getMemberDetails(comment.commentBy);
+    const replies = await Promise.all((comment.replies || []).map(async (replyId: string) => {
+        return await getCommentDetails(replyId);
+    }));
+
+    const likesDetails = await Promise.all((comment.likes || []).map(async (likeId: string) => {
+        return await getMemberDetails(likeId);
+    }));
+
+    return {
+        ...comment,
+        commentBy: memberDetails,
+        likes: likesDetails.filter(like => like !== null),
+        replies: replies.filter(reply => reply !== null),
+    } as CommentWithReplies;
+}
+
+
+export async function fetchComments(cardId: string): Promise<{ success: boolean; data?: any; message?: string }> {
+    try {
+        await connectToDB();
+
+        const card: any = await Card.findById(cardId)
+            .select('comments')
+            .populate({
+                path: 'comments',
+                model: 'Comment',
+            })
+            .lean();
+
+        if (!card) {
+            return { success: false, message: "Card not found" };
+        }
+
+        if (!Array.isArray(card.comments)) {
+            return { success: false, message: "Comments not found" };
+        }
+
+        const commentsWithDetails = await Promise.all(card.comments.map(async (comment: any) => {
+            return await getCommentDetails(comment._id);
+        }));
+
+        return { success: true, data: commentsWithDetails.filter(comment => comment !== null) };
+    } catch (error: any) {
+        console.log("error: ", error.message);
+        return { success: false, message: error.message };
+    }
+}
+
+export async function addComment(
+    cardId: string, userId: string, commentText: string
+): Promise<{ success: boolean; data?: any[]; message?: string }> {
+    try {
+        await connectToDB();
+
+        const newComment = new CommentModel({
+            commentID: generateCustomID(),
+            comment: commentText,
+            commentBy: userId,
+        });
+
+        await newComment.save();
+
+        const userInfo = await getMemberDetails(newComment.commentBy);
+
+        const replyWithUserDetails = {
+            ...newComment.toObject(),
+            commentBy: userInfo,
+        };
+
+        const card = await Card.findById(cardId);
+        if (!card) {
+            throw new Error('Card not found');
+        }
+        card.comments.push(newComment._id);
+
+        await card.save();
+
+        return { success: true, data: replyWithUserDetails };
+    } catch (error: any) {
+        return { success: false, message: error.message };
+    }
+}
+
+export async function likeComment(
+    commentId: string, userId: string
+): Promise<{ success: boolean; data?: any; message?: string }> {
+    try {
+        await connectToDB();
+
+        const comment = await CommentModel.findById(commentId);
+
+        if (!comment) {
+            throw new Error("Comment not found");
+        }
+
+        const userIdStr = userId.toString();
+
+        if (!comment.likes.map((like: { toString: () => string; }) => like.toString()).includes(userIdStr)) {
+            comment.likes.push(userId);
+        } else {
+            comment.likes = comment.likes.filter((like: any) => like.toString() !== userIdStr);
+        }
+
+        await comment.save();
+
+        const updatedComment: any = await CommentModel.findById(commentId).lean();
+
+        const likesDetails = await Promise.all((updatedComment.likes || []).map(async (likeId: string) => {
+            return await getMemberDetails(likeId);
+        }));
+
+        const updatedCommentWithLikes = {
+            ...updatedComment,
+            likes: likesDetails.filter(like => like !== null)
+        };
+
+        return { success: true, data: updatedCommentWithLikes };
+    } catch (error: any) {
+        return { success: false, message: error.message };
+    }
+}
+
+
+export async function addReply(
+    commentId: string, userId: string, replyText: string
+): Promise<{ success: boolean; data?: any; message?: string }> {
+    try {
+        await connectToDB();
+
+        const newReply = new CommentModel({
+            commentID: generateCustomID(),
+            comment: replyText,
+            commentBy: userId,
+        });
+
+        await newReply.save();
+
+        const userInfo = await getMemberDetails(newReply.commentBy);
+
+        const replyWithUserDetails = {
+            ...newReply.toObject(),
+            commentBy: userInfo,
+        };
+
+        const comment = await CommentModel.findById(commentId);
+        if (!comment) {
+            return { success: false, message: "Comment not found." };
+        }
+
+        comment.replies.push(newReply._id);
+        await comment.save();
+
+        return { success: true, data: replyWithUserDetails };
+    } catch (error: any) {
+        return { success: false, message: error.message };
     }
 }
 

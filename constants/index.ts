@@ -88,9 +88,9 @@ export const NormalUserAllowedRoutes: Record<Usertype, string[]> = {
   EXPERT: ["/dashboard", "/dashboard/analytics", "/dashboard/subscription", "/dashboard/settings"],
   ELITE: ["/dashboard", "/dashboard/analytics", "/dashboard/subscription", "/dashboard/settings"],
   SUPERUSER: ["/dashboard", "/dashboard/analytics", "/dashboard/settings"],
-  ORGANIZATION: [],
-  BUSINESS: [],
-  ENTERPRISE: [],
+  ORGANIZATION: ["/dashboard", "/dashboard/analytics", "/dashboard/subscription", "/dashboard/settings"],
+  BUSINESS: ["/dashboard", "/dashboard/analytics", "/dashboard/subscription", "/dashboard/settings"],
+  ENTERPRISE: ["/dashboard", "/dashboard/analytics", "/dashboard/subscription", "/dashboard/settings"],
   FLEXADMIN: ["/dashboard", "/dashboard/members", "/dashboard/products", "/dashboard/promotions", "/dashboard/transactions", "/dashboard/analytics", "/dashboard/subscription", "/dashboard/settings"],
   FLEXACCOUNTANT: ["/dashboard", "/dashboard/products", "/dashboard/promotions", "/dashboard/transactions", "/dashboard/analytics"],
   FLEXHR: ["/dashboard", "/dashboard/members", "/dashboard/analytics", "/dashboard/settings"]

@@ -10,7 +10,9 @@ import MemberModel from "../models/member";
 import { endOfDay, endOfWeek, startOfDay, startOfWeek, subDays, subWeeks } from "date-fns";
 import axios from "axios";
 import { v4 as uuidv4 } from 'uuid';
-import TrialModel from "../models/trial";
+import OfferModel from "../models/offer";
+import { Member, Usertype } from "@/types";
+import OrganizationModel from "../models/organization";
 
 export async function authorizationAdmin(
     authenticatedUserId: string
@@ -331,7 +333,6 @@ export async function fetchTransactionStats(
 
 export async function fetchMember(userId: string) {
     try {
-
         await connectToDB();
 
         const member = await MemberModel.findOne({ user: userId });
@@ -339,6 +340,84 @@ export async function fetchMember(userId: string) {
         return member;
     } catch (error: any) {
         throw new Error(`Failed to fetch Member: ${error.message}`);
+    }
+}
+
+export async function fetchMemberDetails(
+    userId: string
+): Promise<{ success: boolean; data?: any; message?: string }> {
+    try {
+        await connectToDB();
+
+        const member = await MemberModel.findOne({ user: userId })
+            .select("usertype ip_address country organization")
+            .populate({
+                path: "organization",
+                options: { lean: true }
+            })
+            .lean<Member>();
+
+        if (!member) {
+            return { success: false, message: "Member not found" };
+        }
+
+        let verifiedAdminName = null;
+        if (member.organization && member.organization.verify.verifiedBy) {
+            const verifiedAdmin = await MemberModel.findOne({ user: member.organization.verify.verifiedBy}).select("accountname").lean<Member>();
+            if (verifiedAdmin) {
+                verifiedAdminName = verifiedAdmin.accountname;
+            }
+        }
+
+        const restructureMemberOrganization = member.organization ? {
+            ...member.organization,
+            verify: {
+                ...member.organization.verify,
+                verifiedBy: verifiedAdminName,
+            }
+        } : null;
+
+        const structuredMember = {
+            ...member,
+            organization: restructureMemberOrganization,
+        };
+
+        return { success: true, data: structuredMember };
+    } catch (error: any) {
+        return { success: false, message: error.message };
+    }
+}
+
+export async function verifyOrganizationStatus(
+    authenticatedUserId: string, organizationId: string
+): Promise<{ success: boolean; data?: any; message?: string }> {
+    try {
+        await connectToDB();
+
+        const member = await MemberModel.findOne({ user: authenticatedUserId }).select("usertype accountname");
+
+        if (member.usertype.toUpperCase() !== 'FLEXADMIN' && member.usertype.toUpperCase() !== 'FLEXHR') {
+            return { success: false, message: "User is not authorized to verify organization status." };
+        }
+
+        const organization = await OrganizationModel.findOne({ _id: organizationId }).select("verify");
+        
+        if (!organization) {
+            return { success: false, message: "Organization not found." };
+        }
+
+        organization.verify.verified = true;
+        organization.verify.verifiedAt = new Date();
+        organization.verify.verifiedBy = authenticatedUserId;
+
+        const returnOrganizationVerifyDetails = organization.verify;
+        returnOrganizationVerifyDetails.verifiedBy = member.accountname;
+
+        await organization.save();
+
+        return { success: true, data: returnOrganizationVerifyDetails };
+    } catch (error: any) {
+        return { success: false, message: error.message };
     }
 }
 
@@ -483,43 +562,6 @@ export async function fetchTotalMemberByDateRange(
     }
 }
 
-export async function generateSubscription() {
-    try {
-
-        await connectToDB();
-
-        const dummySubscription = new SubscriptionModel({
-            id: "sub123",
-            planStarted: new Date(),
-            estimatedEndDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
-            paidTerms: 1,
-            plan: [],
-            transaction: [],
-        });
-
-        const savedSubscription = await dummySubscription.save();
-
-        const member = await MemberModel.findOne({ user: "66471e695f42161352af80d0" });
-
-        if (!member) {
-            throw new Error("Current member not found");
-        }
-
-        const updatedSubscription = [...member.subscription, savedSubscription._id];
-
-        await MemberModel.findOneAndUpdate(
-            { user: "66471e695f42161352af80d0" },
-            {
-                subscription: updatedSubscription,
-            },
-            { upsert: true }
-        );
-
-    } catch (error) {
-        console.error("Failed to create dummy subscription:", error);
-    }
-}
-
 export async function fetchSubscriptionById(subscriptionId: string) {
     try {
         await connectToDB();
@@ -536,13 +578,39 @@ export async function fetchSubscriptionById(subscriptionId: string) {
     }
 }
 
+function checkAndReturnUserType(productName: string, planCategory: string) {
+    if (planCategory.toUpperCase() === "PERSONAL") {
+        switch (productName.toLocaleUpperCase()) {
+            case "PREMIUM":
+                return Usertype.PREMIUM;
+            case "EXPERT":
+                return Usertype.EXPERT;
+            case "ELITE":
+                return Usertype.ELITE;
+            case "PREMIUM":
+                return Usertype.PREMIUM;
+            default:
+                return Usertype.PERSONAL;
+        }
+    } else if (planCategory.toUpperCase() === "ORGANIZATION") {
+        switch (productName.toLocaleUpperCase()) {
+            case "BUSINESS":
+                return Usertype.BUSINESS;
+            case "ENTERPRISE":
+                return Usertype.ENTERPRISE;
+            default:
+                return Usertype.ORGANIZATION;
+        }
+    }
+}
+
 export async function fetchTransactionStatusFromSubsciptionId(
     subscriptionId: string, transactionId: string
 ): Promise<{ success: boolean; status?: boolean; estimatedEndDate?: Date; message?: string }> {
     try {
         await connectToDB();
 
-        const subscription = await SubscriptionModel.findOne({ _id: subscriptionId }).select('transaction estimatedEndDate');
+        const subscription = await SubscriptionModel.findOne({ _id: subscriptionId }).select('transaction estimatedEndDate plan');
         if (!subscription) {
             throw new Error("No subscription found");
         }
@@ -555,9 +623,23 @@ export async function fetchTransactionStatusFromSubsciptionId(
             throw new Error("No specific transaction found");
         }
 
+        const product = await ProductModel.findOne({ _id: subscription.plan });
+        console.log("Product: ", product);
+
+        const planCategory = product.category;
+
+        const member = await MemberModel.findOne({ subscription: { $in: [subscriptionId] } }).select("user");
+
+        const newUserType = checkAndReturnUserType(product.name, planCategory);
+
         let returnMessage: string;
         if (transaction.transactionStatus == true) {
-            returnMessage = "Thank you for subscribing to our service. Your subscription is now active.";
+            const result = await updateUserType(member.user, newUserType);
+            if (result.success) {
+                returnMessage = "Thank you for subscribing to our service. Your subscription is now active.";
+            } else {
+                returnMessage = "Something went wrong while updating your user type, please contact to our customer service for any assistance.";
+            }
         } else {
             returnMessage = "Something went wrong while subscribing to our service, please contact to our customer service for any assistance."
         }
@@ -574,6 +656,25 @@ export async function fetchTransactionStatusFromSubsciptionId(
             status: false,
             message: "Something went wrong while subscribing to our service, please contact to our customer service for any assistance. Error Code: " + error.message,
         };
+    }
+}
+
+export async function updateUserType(memberId: string, userType: any) {
+    try {
+        await connectToDB();
+
+        const member = await MemberModel.findOne({ user: memberId });
+
+        if (!member) {
+            throw new Error("Member not found");
+        }
+
+        member.usertype = userType;
+        await member.save();
+
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, message: error.message };
     }
 }
 
@@ -617,6 +718,7 @@ export async function fetchSubscriptionByDateRange(
 interface ParamsProductDetails {
     name: string;
     description: string;
+    category: string;
     price: number;
     availablePromo: string; //array
     stripeProductId: string;
@@ -632,6 +734,7 @@ interface ParamsProductDetails {
 export async function insertNewProduct({
     name,
     description,
+    category,
     price,
     availablePromo,
     stripeProductId,
@@ -654,6 +757,7 @@ export async function insertNewProduct({
         const newProduct = new ProductModel({
             name,
             description,
+            category,
             price,
             availablePromo,
             stripeProductId,
@@ -710,19 +814,37 @@ export async function storeSubscription({
     productId,
     paidTerms,
     totalAmount,
-}: { authenticatedUserId: string; productId: string; paidTerms: number; totalAmount: number }): Promise<{ success: boolean; data?: any; message?: string }> {
+}: {
+    authenticatedUserId: string;
+    productId: string;
+    paidTerms: number;
+    totalAmount: number;
+}): Promise<{ success: boolean; data?: any; message?: string }> {
     try {
         await connectToDB();
 
-        const member = await MemberModel.findOne({ user: authenticatedUserId });
+        const member = await MemberModel.findOne({ user: authenticatedUserId }).populate('offers');
+
         if (!member) {
             return { success: false, message: 'Member not found' };
         }
 
         let planStarted;
         let estimatedEndDate;
+        let hasTrialOffer = false;
 
-        if (member.trial && member.trial.length > 0) {
+        if (member.offers && member.offers.length > 0) {
+            for (const offerId of member.offers) {
+                const offer = await OfferModel.findById(offerId);
+
+                if (offer && offer.type === 'trial') {
+                    hasTrialOffer = true;
+                    break;
+                }
+            }
+        }
+
+        if (hasTrialOffer) {
             planStarted = new Date();
             estimatedEndDate = new Date(planStarted);
             estimatedEndDate.setMonth(planStarted.getMonth() + paidTerms);
@@ -733,15 +855,16 @@ export async function storeSubscription({
             const trialEndDate = new Date(trialStartDate);
             trialEndDate.setDate(trialStartDate.getDate() + 14);
 
-            const trial = new TrialModel({
-                trialPlan: productId,
-                trialStartDate,
-                trialEndDate,
+            const trial = new OfferModel({
+                plan: productId,
+                startDate: trialStartDate,
+                endDate: trialEndDate,
+                type: 'trial',
             });
 
             await trial.save();
 
-            member.trial.push(trial._id);
+            member.offers.push(trial._id);
             await member.save();
 
             planStarted = trialEndDate;
@@ -861,10 +984,12 @@ export async function generateTransactionAndUpdateSubscription({
             transactionStatus,
         });
 
-        if (stripeSubscriptionId) {
-            subscription.stripeSubscriptionId = stripeSubscriptionId;
-        } else {
-            throw new Error("No stripe subscription id found");
+        if (payment_types === "Stripe" && stripeSubscriptionId) {
+            if (stripeSubscriptionId) {
+                subscription.stripeSubscriptionId = stripeSubscriptionId;
+            } else {
+                throw new Error("No stripe subscription id found");
+            }
         }
 
         await transaction.save();
@@ -882,6 +1007,7 @@ export async function generateTransactionAndUpdateSubscription({
 interface ParamsUpdate {
     name: string;
     description: string;
+    category: string;
     price: number;
     availablePromo: string; //array
     stripeProductId: string;
@@ -898,6 +1024,7 @@ interface ParamsUpdate {
 export async function updateProduct({
     name,
     description,
+    category,
     price,
     availablePromo,
     stripeProductId,
@@ -925,6 +1052,7 @@ export async function updateProduct({
             {
                 name,
                 description,
+                category,
                 price,
                 availablePromo,
                 stripeProductId,

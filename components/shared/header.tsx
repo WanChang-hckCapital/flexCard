@@ -53,7 +53,7 @@ async function Header({ session, userInfoImage }: HeaderProps) {
                             alt='icon heart' />
                     </Link> */}
                     {/* <Link href="/workspace/6657da7c793f3b540da23a34"> */}
-                    <Link href="/workspace/66a16e2c2b0c81471449dde6">
+                    <Link href="/workspace/66b332c9339423ac1861e9d8">
                         <Image width={24} height={24}
                             className=""
                             src='/assets/heart.svg'

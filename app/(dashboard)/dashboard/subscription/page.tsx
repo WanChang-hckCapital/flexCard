@@ -22,8 +22,7 @@ async function Subscription() {
     }
 
     const authenticatedUserId = user.id;
-
-    const subscriptionData = await fetchUserSubscription(user.id);
+    const subscriptionData = await fetchUserSubscription(authenticatedUserId);
 
     if (!subscriptionData.success) {
         return (

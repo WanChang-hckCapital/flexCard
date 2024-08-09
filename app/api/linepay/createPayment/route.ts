@@ -53,6 +53,14 @@ export async function POST(req: Request) {
                 confirmUrl: returnUrl,
                 cancelUrl: `${returnUrl}/cancel`,
             },
+            //subscription
+            payType: "PREAPPROVED",
+            payInfo: {
+                preapprovedPayment: {
+                    period: "MONTH",
+                    maxAmount: amount,
+                }
+            }
         };
 
         const nonce = uuidv4();
@@ -70,11 +78,11 @@ export async function POST(req: Request) {
         console.log("response---", response.data);
 
         if (response.data.returnCode === '0000') {
-            return NextResponse.json({ paymentUrl: response.data.info.paymentUrl.web });
+            return NextResponse.json({ success: true, paymentUrl: response.data.info.paymentUrl.web });
         } else {
-            return NextResponse.json({ message: response.data.returnMessage, status: 400 });
+            return NextResponse.json({ success: false, message: response.data.returnMessage, status: 400 });
         }
     } catch (err: any) {
-        return NextResponse.json({ message: err.message, status: 500 });
+        return NextResponse.json({ success: false, message: err.message, status: 500 });
     }
 }

@@ -12,24 +12,31 @@ interface TradeInfo {
     ReturnURL: string;
     ClientBackURL: string;
     ChoosePayment: string;
-    // EncryptType: number;
+    EncryptType: number;
 }
+
+const formatDate = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const seconds = date.getSeconds().toString().padStart(2, '0');
+    return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
+};
 
 export async function POST(req: Request) {
     try {
-        console.log("called createPayment.ts api");
-
         const { amount, orderId, description } = await req.json() as { amount: number; orderId: string; description: string };
 
         const merchantID = process.env.ECPAY_MERCHANT_ID!;
         const hashKey = process.env.ECPAY_HASH_KEY!;
         const hashIV = process.env.ECPAY_HASH_IV!;
-        const baseURL = 'https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5';
 
         const tradeInfo: TradeInfo = {
             MerchantID: merchantID,
             MerchantTradeNo: orderId,
-            MerchantTradeDate: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
+            MerchantTradeDate: formatDate(new Date()),
             PaymentType: 'aio',
             TotalAmount: amount,
             TradeDesc: 'Test Transaction',
@@ -37,7 +44,7 @@ export async function POST(req: Request) {
             ReturnURL: 'http://localhost:3000/api/ecpay/callback',
             ClientBackURL: 'http://localhost:3000/order-complete',
             ChoosePayment: 'ALL',
-            // EncryptType: 1,
+            EncryptType: 1,
         };
 
         const sortedQueryString = Object.keys(tradeInfo)
@@ -46,12 +53,12 @@ export async function POST(req: Request) {
             .join('&');
 
         const hashString = `HashKey=${hashKey}&${sortedQueryString}&HashIV=${hashIV}`;
-        const tradeSha = crypto.createHash('sha256').update(hashString).digest('hex').toUpperCase();
+        const checkMacValue = crypto.createHash('sha256').update(hashString).digest('hex').toUpperCase();
+        // const checkMacValue = "BF918798400BE5318E94E95EEE5DEDDABB07140480D55D228E76D7784F0EAC54";
 
-        const paymentUrl = `${baseURL}?${sortedQueryString}&CheckMacValue=${tradeSha}`;
-
-        return NextResponse.json({ paymentUrl });
+        return NextResponse.json({ success: true, tradeInfo, checkMacValue });
     } catch (err: any) {
-        return NextResponse.json({ message: err.message, status: 500 });
+        console.error("Error in createPayment: ", err.message);
+        return NextResponse.json({ success: false, message: err.message, status: 500 });
     }
 }

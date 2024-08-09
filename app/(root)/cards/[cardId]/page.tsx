@@ -55,7 +55,7 @@ const CardDetails = async ({ params }: Props) => {
               creatorInfo={cardDetails.creator}
               userFollowers={cardDetails.followers.length}
               session={session}
-              cardId={cardDetails.cardId}
+              cardId={cardDetails.cardID}
               likes={cardDetails.likes}
               lineComponents={cardDetails.lineComponents.content}
               shareUrl={shareUrl} />

@@ -248,7 +248,7 @@ const renderContents = (contents: any, size?: any) => {
                       <div style="${convertToKebabCase(ImageStyle(content, size))}"></div>
                     </a>
                   </div>`;
-        }else{
+        } else {
           return `<div style="${convertToKebabCase(ImageContainerStyles(content))}"><div style="${convertToKebabCase(ImageStyle(content, size))}"></div></div>`;
         }
       case 'text':
@@ -466,34 +466,34 @@ export function rewriteFlexHtml(flexHtml: string, size: string): string {
   let maxWidth: string;
 
   switch (size) {
-      case 'nano':
-          maxWidth = '120px';
-          break;
-      case 'micro':
-          maxWidth = '160px';
-          break;
-      case 'deca':
-          maxWidth = '220px';
-          break;
-      case 'hecto':
-          maxWidth = '241px';
-          break;
-      case 'kilo':
-          maxWidth = '260px';
-          break;
-      case 'mega':
-          maxWidth = '300px';
-          break;
-      case 'giga':
-          maxWidth = '386px';
-          break;
-      default:
-          maxWidth = '300px';
+    case 'nano':
+      maxWidth = '120px';
+      break;
+    case 'micro':
+      maxWidth = '160px';
+      break;
+    case 'deca':
+      maxWidth = '220px';
+      break;
+    case 'hecto':
+      maxWidth = '241px';
+      break;
+    case 'kilo':
+      maxWidth = '260px';
+      break;
+    case 'mega':
+      maxWidth = '300px';
+      break;
+    case 'giga':
+      maxWidth = '386px';
+      break;
+    default:
+      maxWidth = '300px';
   }
 
-    const updatedFlexHtml = flexHtml.replace(/max-width:\s*\d+px;/, `max-width: ${maxWidth};`);
+  const updatedFlexHtml = flexHtml.replace(/max-width:\s*\d+px;/, `max-width: ${maxWidth};`);
 
-    return updatedFlexHtml;
+  return updatedFlexHtml;
 }
 
 
@@ -587,9 +587,9 @@ export const convertExtractedInfoToEditorElements = (extractedInfo: any, origina
     console.log("Relative X0 Position:", relativeX0Position);
     console.log("Relative X1 Position:", relativeX1Position);
 
-    if(relativeX1Position > 0.7 || relativeX0Position > 0.6){
+    if (relativeX1Position > 0.7 || relativeX0Position > 0.6) {
       return 'end';
-    } else if (relativeX0Position > 0.33){
+    } else if (relativeX0Position > 0.33) {
       return 'center';
     } else {
       return 'start';
@@ -757,6 +757,32 @@ export const loadOpenCV = () => {
 
 export function generateCustomID() {
   return uuidv4();
+}
+
+export function timeSince(date: Date) {
+  const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
+  let interval = seconds / 31536000;
+
+  if (interval > 1) {
+    return Math.floor(interval) + " year" + (Math.floor(interval) > 1 ? "s" : "") + " ago";
+  }
+  interval = seconds / 2592000;
+  if (interval > 1) {
+    return Math.floor(interval) + " month" + (Math.floor(interval) > 1 ? "s" : "") + " ago";
+  }
+  interval = seconds / 86400;
+  if (interval > 1) {
+    return Math.floor(interval) + " day" + (Math.floor(interval) > 1 ? "s" : "") + " ago";
+  }
+  interval = seconds / 3600;
+  if (interval > 1) {
+    return Math.floor(interval) + " hour" + (Math.floor(interval) > 1 ? "s" : "") + " ago";
+  }
+  interval = seconds / 60;
+  if (interval > 1) {
+    return Math.floor(interval) + " minute" + (Math.floor(interval) > 1 ? "s" : "") + " ago";
+  }
+  return Math.floor(seconds) + " second" + (Math.floor(seconds) > 1 ? "s" : "") + " ago";
 }
 
 //line pay

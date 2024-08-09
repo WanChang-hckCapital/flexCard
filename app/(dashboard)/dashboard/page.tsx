@@ -17,7 +17,6 @@ import {
 import { Progress } from "@/components/ui/progress"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
-import GenerateSPButton from "@/components/buttons/generate-subscription"
 import { fetchAllMember } from "@/lib/actions/admin.actions"
 import { ChartCard } from "@/components/chart/chart-card"
 import { SubscriptionsByDayChart } from "@/components/chart/admin-analysis/subscription-day-chart"
@@ -96,7 +95,7 @@ async function Dashboard({
                                     </CardDescription>
                                 </CardHeader>
                                 <CardFooter>
-                                    <GenerateSPButton />
+                                    {/* <GenerateSPButton /> */}
                                 </CardFooter>
                             </Card>
                             <Card>

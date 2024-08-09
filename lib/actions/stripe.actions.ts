@@ -4,12 +4,13 @@ import Stripe from 'stripe';
 import { connectToDB } from '../mongodb';
 import MemberModel from '../models/member';
 import SubscriptionModel from '../models/subscription';
-import TrialModel from '../models/trial';
 import ProductModel from '../models/product';
 import { revalidatePath } from 'next/cache';
 import { getIPCountryInfo } from './user.actions';
 import { v4 as uuidv4 } from 'uuid';
 import { generateTransactionAndUpdateSubscription } from './admin.actions';
+import OfferModel from '../models/offer';
+import { unsubscribe } from 'diagnostics_channel';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -52,16 +53,20 @@ export async function fetchUserSubscription(userId: string) {
   try {
     await connectToDB();
 
-    const member = await MemberModel.findOne({ user: userId }).populate('subscription trial');
+    const member = await MemberModel.findOne({ user: userId }).populate('subscription offers');
 
     if (!member || !member.subscription) {
       throw new Error('No subscription found for the user.');
     }
 
-    const trialId = member.trial.slice(-1)[0];
-    const trial = await TrialModel.findById(trialId);
+    const trialOffers = await member.offers.filter((offer: any) => offer.type === 'trial');
+    const trialId = trialOffers[0]._id;
+    const trial = await OfferModel.findById(trialId);
 
-    const planId = trial.trialPlan;
+    const unsubscribeOffers = member.offers.filter((offer: any) => offer.type === 'unsubscribe');
+    const isUnsubscribeOffer = unsubscribeOffers.length > 0;
+
+    const planId = trial.plan;
     const trialPlanDetails = await ProductModel.findById(planId).select('name price limitedCard');
 
     const subscriptionId = member.subscription.slice(-1)[0];
@@ -96,9 +101,10 @@ export async function fetchUserSubscription(userId: string) {
           price: trialPlanDetails.price,
           limitedCard: trialPlanDetails.limitedCard,
         },
-        trialStarted: trial.trialStartDate,
-        trialEnded: trial.trialEndDate,
+        trialStarted: trial.startDate,
+        trialEnded: trial.endDate,
       } : null,
+      unsubscribeOffer: isUnsubscribeOffer,
       status: subscription.status,
     };
 
@@ -145,7 +151,7 @@ export async function cancelUserSubscription(subscriptionId: string) {
   }
 }
 
-export async function pauseUserSubscription(subscriptionId: string) {
+export async function pauseUserSubscription(subscriptionId: string, authenticatedUserId: string) {
   try {
     await connectToDB();
 
@@ -187,6 +193,28 @@ export async function pauseUserSubscription(subscriptionId: string) {
       stripeSubscriptionId: subscription.stripeSubscriptionId,
       status: 'on offering',
     });
+
+    const existingOffer = await MemberModel.findOne({ user: authenticatedUserId }).select('offers');
+
+    if (!existingOffer) {
+      return { success: false, message: "No member found in Offer." };
+    }
+
+    const offering = new OfferModel({
+      plan: subscription.plan,
+      startDate: currentEndDate,
+      endDate: resumeDate,
+      type: 'unsubscribe',
+    });
+
+    await offering.save();
+
+    if (!Array.isArray(existingOffer.offers)) {
+      existingOffer.offers = [];
+    }
+
+    existingOffer.offers.push(offering._id);
+    await existingOffer.save();
 
     if (freeTransaction.success){
       subscription.estimatedEndDate = resumeDate;

@@ -1,71 +1,10 @@
-// 'use client'
-// import { Badge } from '@/components/ui/badge'
-// import { MembersListType } from '@/types'
-// import { ColumnDef } from '@tanstack/react-table'
-
-// export const columns: ColumnDef<MembersListType>[] = [
-//   {
-//     accessorKey: 'accountname',
-//     header: 'Customer',
-//     cell: ({ row }) => {
-//       return (
-//         <div>
-//           <span>{row.getValue('accountname')}</span>
-//           <span>{row.getValue('email')}</span>
-//         </div>
-
-//       )
-//     },
-//   },
-//   {
-//     accessorKey: 'usertype',
-//     header: 'Type',
-//     cell: ({ row }) => {
-//       return (
-//         <span className="text-muted-foreground">{row.getValue('usertype')}</span>
-//       )
-//     },
-//   },
-//   {
-//     accessorKey: 'cards',
-//     header: 'Cards',
-//     cell: ({ row }) => {
-//       const cardsQuantity = row.getValue('cards').length
-//       return (
-//         <span className="text-muted-foreground">{cardsQuantity}</span>
-//       )
-
-//       // return status ? (
-//       //   <Badge variant={'default'}>Live - {row.original.subDomainName}</Badge>
-//       // ) : (
-//       //   <Badge variant={'secondary'}>Draft</Badge>
-//       // )
-//     },
-//   },
-//   {
-//     accessorKey: 'estimatedEndDate',
-//     header: 'End Date',
-//     cell: ({ row }) => {
-//       const date = ` ${row.getValue('subcription').estimatedEndDate.toDateString()} ${row.getValue('subcription').estimatedEndDate.toLocaleTimeString()} `
-//       return <span className="text-muted-foreground">{date}</span>
-//     },
-//   },
-//   {
-//     accessorKey: 'lastLogin',
-//     header: 'Login',
-//     cell: ({ row }) => {
-//       const date = ` ${row.getValue('lastLogin').toDateString()} ${row.getValue('lastLogin').toLocaleTimeString()} `
-//       return <span className="text-muted-foreground">{date}</span>
-//     },
-//   },
-// ]
-
 "use client";
 
 import { Badge } from '@/components/ui/badge';
 import { ColumnDef } from '@tanstack/react-table';
 
 export interface MembersListType {
+    user: string;
     accountname: string;
     image: string;
     email: string;
@@ -164,6 +103,4 @@ export const columns: ColumnDef<MembersListType>[] = [
         },
     },
 ];
-
-export type fetchAllMemberFunction = (authenticatedUserId: string) => Promise<MembersListType[]>;
 

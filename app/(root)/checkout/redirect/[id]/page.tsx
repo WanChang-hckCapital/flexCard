@@ -21,7 +21,7 @@ const RedirectPage = async ({ params, searchParams }: Props) => {
     }
 
     const paymentStatus = await fetchTransactionStatusFromSubsciptionId(id, transactionId);
-
+    
     return (
         <div className="flex flex-col items-center justify-center min-h-screen">
             {paymentStatus.success === true ? (

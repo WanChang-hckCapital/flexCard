@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { Member, Usertype } from "../../types";
+import { Member, Role, Usertype } from "../../types";
 
 
 const memberSchema = new Schema<Member>({
@@ -23,6 +23,11 @@ const memberSchema = new Schema<Member>({
     phone: { type: String, default: null },
     shortdescription: { type: String, default: null },
     usertype: { type: String, default: Usertype.PERSONAL },
+    accountType: {
+        type: String,
+        default: "PUBLIC",
+    },
+    role: { type: String, default: Role.PERSONAL },
     onboarded: {
         type: Boolean,
         default: false,
@@ -41,6 +46,18 @@ const memberSchema = new Schema<Member>({
         {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Card",
+        },
+    ],
+    closeFriends: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Member",
+        },
+    ],
+    blockedUsers: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Member",
         },
     ],
     followers: [
@@ -66,10 +83,10 @@ const memberSchema = new Schema<Member>({
         ref: "Organization",
         default: null
     },
-    trial: [
+    offers: [
         {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Trial",
+            ref: "Offer",
         },
     ],
     totalViews: {

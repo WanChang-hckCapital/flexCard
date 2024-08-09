@@ -52,6 +52,7 @@ const Page = async ({ params }: Props) => {
         <CardEditorNavigation
           cardDetails={cardDetails}
           authaccountId={authaccountId}
+          cardId={params.cardId}
         />
         <div
           style={{ backgroundImage: "url('../paper-dark.svg')" }}

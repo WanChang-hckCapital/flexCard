@@ -133,35 +133,20 @@ function CardEditorNavigation({ cardDetails, authaccountId }: Props) {
     }
 
     try {
-      const isDuplicateCard = await checkDuplicateCard(authaccountId, cardDetails.cardID);
-      if (isDuplicateCard.success === false) {
-        toast.error(isDuplicateCard.message);
+      const isExistingCard = await checkDuplicateCard(authaccountId, cardDetails.cardID);
+      if (isExistingCard.success === false) {
+        toast.error(isExistingCard.message);
         return;
       } else {
         await upsertCardContent(
           authaccountId,
           {
-            cardID: cardDetails.cardID,
-            title: cardDetails.title,
-            status: cardDetails.status,
+            ...cardDetails,
             description: state.editor.description || '',
-            likes: cardDetails.likes,
-            followers: cardDetails.followers,
-            components: cardDetails.components,
-            lineFormatComponent: cardDetails.lineFormatComponent,
-            flexFormatHtml: cardDetails.flexFormatHtml,
-            creator: cardDetails.creator,
-            categories: [],
-            updatedAt: new Date(),
-            createdAt: new Date(),
-            totalViews: 0,
-            viewDetails: [],
-            updateHistory: []
           },
           strFlexFormatHtml,
           strLineFlexMessage,
           htmlFormat,
-          cardDetails.cardID
         )
         toast.success('Card saved successfully.');
       }

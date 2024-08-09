@@ -30,6 +30,7 @@ interface Props {
     name: string;
     price: number;
     description: string;
+    category: string;
     availablePromo: string;
     stripeProductId: string;
     monthlyDiscount: number;
@@ -80,6 +81,7 @@ const AddNewProduct = ({ btnTitle, authenticatedUserId, productDetails }: Props)
       name: productDetails?.name ? productDetails.name : '',
       price: productDetails?.price ? productDetails.price : 0,
       description: productDetails?.description ? productDetails.description : '',
+      category: productDetails?.category ? productDetails.category : '',
       availablePromo: productDetails?.availablePromo ? productDetails.availablePromo : '',
       stripeProductId: productDetails?.stripeProductId ? productDetails.stripeProductId : '',
       monthlyDiscount: productDetails?.monthlyDiscount ? productDetails.monthlyDiscount : 0,
@@ -103,6 +105,7 @@ const AddNewProduct = ({ btnTitle, authenticatedUserId, productDetails }: Props)
     resetField("name");
     resetField("price");
     resetField("description");
+    resetField("category");
     resetField("availablePromo");
     resetField("stripeProductId");
     resetField("monthlyDiscount");
@@ -128,6 +131,7 @@ const AddNewProduct = ({ btnTitle, authenticatedUserId, productDetails }: Props)
         name: values.name,
         price: values.price,
         description: values.description,
+        category: values.category,
         availablePromo: values.availablePromo,
         stripeProductId: values.stripeProductId,
         monthlyDiscount: values.monthlyDiscount,
@@ -213,6 +217,30 @@ const AddNewProduct = ({ btnTitle, authenticatedUserId, productDetails }: Props)
                   className='account-form_input no-focus'
                   {...field}
                 />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={control}
+          name='category'
+          render={({ field }) => (
+            <FormItem className='flex w-full flex-col gap-2'>
+              <FormLabel className='text-base-semibold text-light-2'>
+                Category
+              </FormLabel>
+              <FormControl>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="personal">Personal</SelectItem>
+                    <SelectItem value="organization">Organization</SelectItem>
+                  </SelectContent>
+                </Select>
               </FormControl>
               <FormMessage />
             </FormItem>
