@@ -1,17 +1,16 @@
-
-import { UUID } from "mongodb"
+import { UUID } from "mongodb";
 
 export enum BookingStatus {
-    PENDING = 'PENDING',
-    RENTED = 'RENTED',
-    RETURNED = 'RETURNED',
-    CANCELLED = 'CANCELLED'
+  PENDING = "PENDING",
+  RENTED = "RENTED",
+  RETURNED = "RETURNED",
+  CANCELLED = "CANCELLED",
 }
 
 export type Price = {
-    daily: number,
-    hourly: number
-}
+  daily: number;
+  hourly: number;
+};
 
 export type Member = {
     user: {},
@@ -68,17 +67,17 @@ export type Organization = {
 }
 
 export enum Usertype {
-    PERSONAL = 'PERSONAL',
-    PREMIUM = 'PREMIUM',
-    EXPERT = 'EXPERT',
-    ELITE = 'ELITE',
-    ORGANIZATION = 'ORGANIZATION',
-    BUSINESS = 'BUSINESS',
-    ENTERPRISE = 'ENTERPRISE',
-    SUPERUSER = 'SUPERUSER',
-    FLEXACCOUNTANT = 'FLEXACCOUNTANT',
-    FLEXHR = 'FLEXHR',
-    FLEXADMIN = 'FLEXADMIN',
+  PERSONAL = "PERSONAL",
+  PREMIUM = "PREMIUM",
+  EXPERT = "EXPERT",
+  ELITE = "ELITE",
+  ORGANIZATION = "ORGANIZATION",
+  BUSINESS = "BUSINESS",
+  ENTERPRISE = "ENTERPRISE",
+  SUPERUSER = "SUPERUSER",
+  FLEXACCOUNTANT = "FLEXACCOUNTANT",
+  FLEXHR = "FLEXHR",
+  FLEXADMIN = "FLEXADMIN",
 }
 
 export enum Role {
@@ -118,32 +117,32 @@ export type Comment = {
 }
 
 export type ViewDetail = {
-    viewerId: string;
-    viewedAt: Date;
+  viewerId: string;
+  viewedAt: Date;
 };
 
 export type Component = {
-    componentID: string,
-    componentType: string,
-    content: {},
-}
+  componentID: string;
+  componentType: string;
+  content: {};
+};
 
 export type UserImage = {
-    binaryCode: {},
-    name: string,
-}
+  binaryCode: {};
+  name: string;
+};
 
 export type Subscription = {
-    id: string,
-    planStarted: Date,
-    estimatedEndDate: Date,
-    paidTerms: number,
-    totalAmount: number,
-    plan: Product,
-    transaction: Transaction[],
-    stripeSubscriptionId: string,
-    status: string,
-}
+  id: string;
+  planStarted: Date;
+  estimatedEndDate: Date;
+  paidTerms: number;
+  totalAmount: number;
+  plan: Product;
+  transaction: Transaction[];
+  stripeSubscriptionId: string;
+  status: string;
+};
 
 export type Offer = {
     plan: Product,
@@ -153,14 +152,14 @@ export type Offer = {
 }
 
 export type Transaction = {
-    id: string,
-    transactionDate: Date,
-    transactionFees: number,
-    ip_address: string,
-    payment_types: string,
-    currency: string,
-    transactionStatus: boolean,
-}
+  id: string;
+  transactionDate: Date;
+  transactionFees: number;
+  ip_address: string;
+  payment_types: string;
+  currency: string;
+  transactionStatus: boolean;
+};
 
 export type Product = {
     name: string,
@@ -177,31 +176,62 @@ export type Product = {
 }
 
 export type Promotion = {
-    id: string,
-    name: string,
-    code: string,
-    discount: number,
-    dateRange: {
-        startDate: Date,
-        endDate: Date,
-    },
-    limitedQuantity: number,
-}
+  id: string;
+  name: string;
+  code: string;
+  discount: number;
+  dateRange: {
+    startDate: Date;
+    endDate: Date;
+  };
+  limitedQuantity: number;
+};
 
 export type Feedback = {
-    selectedReasons: string[];
-    otherReason: string;
-    hasUsedSimilar: boolean;
-    similarAppName: string;
-    feedbackComment: string;
-    isSkip: boolean;
-    feedbackDate: Date;
-    feedbackBy: {};
-}
+  selectedReasons: string[];
+  otherReason: string;
+  hasUsedSimilar: boolean;
+  similarAppName: string;
+  feedbackComment: string;
+  isSkip: boolean;
+  feedbackDate: Date;
+  feedbackBy: {};
+};
 
 export enum ItemStatus {
-    LISTED = 'listed',
-    UNLISTED = 'unlisted'
+  LISTED = "listed",
+  UNLISTED = "unlisted",
 }
+
+export type User = {
+  _id: string;
+  generatedId: string;
+  name: string;
+  email: string;
+  image: string;
+  emailVerified: string;
+};
+
+export type Friend = {
+  generatedId: string;
+  userA: {};
+  userB: {};
+  created_at?: Date;
+  updated_at?: Date;
+};
+
+export type FriendRequest = {
+  _id: string;
+  sender: {};
+  receiver: {};
+  status: number;
+};
+
+export type FollowRequest = {
+  _id: string;
+  sender: {};
+  receiver: {};
+  status: number;
+};
 
 // workspace

@@ -3,7 +3,7 @@ import Card from "./Card";
 import { fetchPersonalCards } from "@/lib/actions/user.actions";
 import ResponsiveGrid from "../responsive-grid";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/app/api/utils/authOptions";
 
 type Result = {
   cardId: string;
@@ -54,7 +54,7 @@ async function CardsTab({ authenticatedUserId, accountId, userType }: Props) {
   //   };
   // } else {
   result = await fetchPersonalCards(accountId);
-  const session = await getServerSession(authOptions)
+  const session = await getServerSession(authOptions);
 
   if (session) {
     const user = session?.user;
@@ -68,16 +68,13 @@ async function CardsTab({ authenticatedUserId, accountId, userType }: Props) {
   const styles: React.CSSProperties = {
     textAlign: "-webkit-center" as "center",
   };
-  
 
   return (
     <div style={styles}>
-      <section className='lg:mt-7 space-y-2 mx-auto'>
+      <section className="lg:mt-7 space-y-2 mx-auto">
         <ResponsiveGrid result={result} session={session} />
       </section>
-
     </div>
-
   );
 }
 

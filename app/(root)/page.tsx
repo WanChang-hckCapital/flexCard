@@ -1,11 +1,15 @@
-import MaxWContainer from '@/components/max-w-container'
-import Link from 'next/link'
-import { authOptions } from '../api/auth/[...nextauth]/route'
-import { getServerSession } from 'next-auth'
-import { fetchAllCards, getIPCountryInfo, updateLastLoginDateAndIP } from '@/lib/actions/user.actions'
-import Card from '@/components/shared/Card'
-import { Button } from '@/components/ui/button'
-import ResponsiveGrid from '@/components/responsive-grid'
+import MaxWContainer from "@/components/max-w-container";
+import Link from "next/link";
+import { authOptions } from "../api/utils/authOptions";
+import { getServerSession } from "next-auth";
+import {
+  fetchAllCards,
+  getIPCountryInfo,
+  updateLastLoginDateAndIP,
+} from "@/lib/actions/user.actions";
+import Card from "@/components/shared/Card";
+import { Button } from "@/components/ui/button";
+import ResponsiveGrid from "@/components/responsive-grid";
 
 type Result = {
   cardId: string;
@@ -41,14 +45,14 @@ async function Home() {
         <MaxWContainer>
           <h1>Be the first user to use our component.</h1>
           <Button>
-            <Link href='/workspace/create-card'>Try for free!</Link>
+            <Link href="/workspace/create-card">Try for free!</Link>
           </Button>
         </MaxWContainer>
       </div>
-    )
+    );
   }
 
-  const session = await getServerSession(authOptions)
+  const session = await getServerSession(authOptions);
 
   if (session) {
     const user = session?.user;
@@ -108,13 +112,11 @@ async function Home() {
     //   ))}
     // </div>
     <div className="flex flex-col min-h-screen dark:bg-black">
-      <section className='lg:mt-7 space-y-2 mx-auto'>
+      <section className="lg:mt-7 space-y-2 mx-auto">
         <ResponsiveGrid result={result} session={session} />
       </section>
     </div>
   );
-
-
 }
 
 export default Home;

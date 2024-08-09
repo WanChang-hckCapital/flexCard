@@ -1,28 +1,27 @@
-import { redirect } from 'next/navigation'
-import React, { useEffect, useState } from 'react'
-import CardEditorNavigation from './_components/card-editor-navigation'
-import CardEditorSidebar from './_components/card-editor-sidebar'
-import CardEditor from './_components/card-editor'
-import EditorProvider from '@/lib/editor/editor-provider'
-import { fetchCardDetails } from '@/lib/actions/workspace.actions'
-import { Card } from '@/types'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { redirect } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import CardEditorNavigation from "./_components/card-editor-navigation";
+import CardEditorSidebar from "./_components/card-editor-sidebar";
+import CardEditor from "./_components/card-editor";
+import EditorProvider from "@/lib/editor/editor-provider";
+import { fetchCardDetails } from "@/lib/actions/workspace.actions";
+import { Card } from "@/types";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/utils/authOptions";
 
 type Props = {
   params: {
-    cardId: string
-  }
-}
+    cardId: string;
+  };
+};
 
 const Page = async ({ params }: Props) => {
-
   const session = await getServerSession(authOptions);
   const user = session?.user;
 
   if (!user) {
-    redirect('/sign-in')
-  };
+    redirect("/sign-in");
+  }
 
   const authaccountId = user.id;
 
@@ -32,12 +31,15 @@ const Page = async ({ params }: Props) => {
     console.log("cardDetails: ", cardDetails);
   } catch (error) {
     console.error("Error fetching card details: ", error);
-    redirect('/');
+    redirect("/");
   }
 
-  if (!cardDetails || cardDetails.creatorID.toString() !== authaccountId.toString()) {
+  if (
+    !cardDetails ||
+    cardDetails.creatorID.toString() !== authaccountId.toString()
+  ) {
     console.error("Card not found or not owned by user");
-    redirect('/');
+    redirect("/");
   }
 
   cardDetails.status = "Modifying";
@@ -47,8 +49,7 @@ const Page = async ({ params }: Props) => {
       <EditorProvider
         authaccountId={authaccountId}
         cardId={cardDetails.cardID}
-        cardDetails={cardDetails}
-      >
+        cardDetails={cardDetails}>
         <CardEditorNavigation
           cardDetails={cardDetails}
           authaccountId={authaccountId}
@@ -57,15 +58,13 @@ const Page = async ({ params }: Props) => {
         <div
           style={{ backgroundImage: "url('../paper-dark.svg')" }}
           className="h-full flex justify-center">
-          <CardEditor
-            componentId={cardDetails.components}
-          />
+          <CardEditor componentId={cardDetails.components} />
         </div>
 
-        <CardEditorSidebar/>
+        <CardEditorSidebar />
       </EditorProvider>
     </div>
-  )
-}
+  );
+};
 
-export default Page
+export default Page;

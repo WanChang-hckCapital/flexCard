@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -12,27 +12,26 @@ import { Member, UserImage } from "@/types";
 
 interface LeftSidebarProps {
   session: Session | null;
-  userInfoImage: UserImage | null;
+  userInfoImage: UserImage | null | undefined;
 }
 
 function LeftSidebar({ session, userInfoImage }: LeftSidebarProps) {
-
   const router = useRouter();
   const pathname = usePathname();
 
   const userId = session?.user.id;
-  
+
   let userImage = null;
-  if (userInfoImage != null){
-      userImage = userInfoImage?.binaryCode.toString();
-  }else{
-      userImage = session?.user.image;
+  if (userInfoImage != null) {
+    userImage = userInfoImage?.binaryCode.toString();
+  } else {
+    userImage = session?.user.image;
   }
 
   return (
     // leftsidebar'>
-    <section className='custom-scrollbar leftsidebar'>
-      <div className='flex w-full flex-1 flex-col gap-6 px-6'>
+    <section className="custom-scrollbar leftsidebar">
+      <div className="flex w-full flex-1 flex-col gap-6 px-6">
         {sidebarLinks.map((link) => {
           const isActive =
             (pathname.includes(link.route) && link.route.length > 1) ||
@@ -53,36 +52,40 @@ function LeftSidebar({ session, userInfoImage }: LeftSidebarProps) {
                 height={24}
               />
 
-              <p className='text-light-1'>{link.label}</p>
+              <p className="text-light-1">{link.label}</p>
             </Link>
           );
         })}
       </div>
 
-      <div className='mt-10 px-6'>
-        {
-          session ? 
+      <div className="mt-10 px-6">
+        {session ? (
           <div className="text-center">
-            {
-              userImage ? (
+            {userImage ? (
               <Link className="leftsidebar_link" href={""}>
                 <Image
                   width={28}
                   height={28}
                   className="rounded-full"
                   src={userImage}
-                  alt='user image' />
-                <p className='align-center text-light-1'>{session.user.name?.split(' ')[0]}</p>
+                  alt="user image"
+                />
+                <p className="align-center text-light-1">
+                  {session.user.name?.split(" ")[0]}
+                </p>
               </Link>
             ) : (
-              <p className='align-center'>{session.user.name?.split(' ')[0]}</p>
+              <p className="align-center">{session.user.name?.split(" ")[0]}</p>
             )}
-          </div> : session ?
-            <SignOutButton /> : <SignInButton />
-        }
+          </div>
+        ) : session ? (
+          <SignOutButton />
+        ) : (
+          <SignInButton />
+        )}
       </div>
     </section>
   );
-};
+}
 
 export default LeftSidebar;
