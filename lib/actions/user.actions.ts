@@ -9,6 +9,10 @@ import { connectToDB } from "../mongodb";
 import Member from "../models/member";
 import Card from "../models/card";
 import Image from "../models/image";
+import UserModel from "../models/user";
+import FriendRequestModel from "../models/friendrequest";
+import FriendModel from "../models/friend";
+import FollowRequestModel from "../models/followrequest";
 import Organization from "../models/organization";
 import { Readable } from "stream";
 import { headers } from "next/headers";
@@ -1341,8 +1345,9 @@ export async function sendFlexMessageLiff(flexContent: string) {
 }
 
 import { MongoClient } from "mongodb";
+import { Friend, User } from "@/types";
 
-// get all possible member
+// get all possible member // need to remove this
 export async function fetchAllMembers() {
   try {
     const uri = process.env.MONGODB_URL || "your-mongodb-connection-string";
@@ -1360,14 +1365,668 @@ export async function fetchAllMembers() {
 
     await client.close();
 
-    // console.log("api called" + members);
-    // const plainMembers = members.map(member=>{
-    //   _id: member._id.toString(),
-    //   accountname: member_accountname,
-    // })
-
     return members;
   } catch (error: any) {
     throw new Error(`Failed to fetch member: ${error.message}`);
+  }
+}
+
+// fetch all user(public and private)
+export async function fetchAllUser(authenticatedUserId: string) {
+  try {
+    await connectToDB();
+
+    // fetch all member no matter public and private
+    const members = await MemberModel.find({}).select("user accountType");
+
+    // console.log("members" + members);
+
+    const userIds = members.map((member) => member.user);
+
+    // console.log("userIds" + userIds);
+
+    // filter out the current userId
+    const users = await UserModel.find({
+      _id: { $in: userIds, $ne: authenticatedUserId },
+    });
+
+    const usersWithIdAsString = await Promise.all(
+      users.map(async (user) => {
+        const member = members.find(
+          (member) => member.user.toString() === user._id.toString()
+        );
+
+        const friendStatus = await FriendModel.findOne({
+          $or: [
+            { userA: authenticatedUserId, userB: user._id },
+            { userA: user._id, userB: authenticatedUserId },
+          ],
+        });
+
+        // 1 is friend, 0 is not
+        const status = friendStatus ? "1" : "0";
+
+        return {
+          ...user.toObject(),
+          _id: user._id.toString(),
+          friendStatus: status,
+          accountType: member?.accountType || "public",
+        };
+      })
+    );
+
+    return usersWithIdAsString;
+  } catch (error: any) {
+    throw new Error(`Failed to fetch users: ${error.message}`);
+  }
+}
+
+// send friend request
+export async function sendFriendRequest(senderId: string, receiverId: string) {
+  try {
+    await connectToDB();
+
+    const sender = await UserModel.findById(senderId);
+
+    const receiver = await UserModel.findById(receiverId);
+
+    // console.log("sender:" + sender + "receiver:" + receiver);
+
+    if (!sender) {
+      throw new Error("Sender not found");
+    }
+
+    if (!receiver) {
+      throw new Error("Receiver not found");
+    }
+
+    const friendRequest = new FriendRequestModel({
+      sender: senderId,
+      receiver: receiverId,
+      status: 1,
+    });
+
+    // console.log("request:" + friendRequest);
+    await friendRequest.save();
+
+    return { success: true, message: "Friend request sent successfully" };
+  } catch (error: any) {
+    console.error("Error sending friend request:", error);
+    return { success: false, message: error.message };
+  }
+}
+
+// check friend request status
+export async function getFriendRequestStatus(
+  senderId: string,
+  receiverId: string
+) {
+  try {
+    await connectToDB();
+
+    const friendRequest = await FriendRequestModel.findOne({
+      sender: senderId,
+      receiver: receiverId,
+    });
+
+    // console.log("friend request:" + friendRequest);
+
+    if (friendRequest) {
+      return {
+        success: true,
+        message: "Friend request found",
+        status: friendRequest.status,
+      };
+    } else {
+      return { success: false, message: "No friend request found" };
+    }
+  } catch (error: any) {
+    console.error("Error checking friend request status:", error);
+    return { success: false, message: error.message };
+  }
+}
+
+// get current user all friend request
+export async function getCurrentUserAllFriendRequest(authenticatedId: string) {
+  try {
+    await connectToDB();
+
+    const allFriendRequests = await FriendRequestModel.find({
+      receiver: authenticatedId,
+    }).lean();
+
+    const friendRequestWithSenderName = await Promise.all(
+      allFriendRequests.map(async (friendRequest) => {
+        const senderId = friendRequest.sender.toString();
+        const senderUser: User | null = await UserModel.findById(
+          senderId
+        ).lean();
+        const senderName = senderUser ? senderUser.name : "Unknown";
+
+        return {
+          ...friendRequest,
+          senderName,
+        };
+      })
+    );
+
+    // console.log(
+    //   "friend request:" + JSON.stringify(friendRequestWithSenderName, null, 2)
+    // );
+
+    if (friendRequestWithSenderName.length > 0) {
+      return {
+        success: true,
+        friendRequests: friendRequestWithSenderName,
+        length: friendRequestWithSenderName,
+      };
+    } else {
+      return { success: false, message: "No Friend Requests found", length: 0 };
+    }
+  } catch (error: any) {
+    console.error(
+      "Error checking current user's friend request status:",
+      error
+    );
+    return { success: false, message: error.message };
+  }
+}
+
+// get each user's friend
+export async function getUserFriend(authenticatedId: string) {
+  try {
+    await connectToDB();
+
+    const userFriends: Friend[] = await FriendModel.find({
+      $or: [{ userA: authenticatedId }, { userB: authenticatedId }],
+    }).lean();
+
+    const friendsWithUserData = await Promise.all(
+      userFriends.map(async (friend) => {
+        const friendUserId =
+          friend.userA.toString() === authenticatedId
+            ? friend.userB.toString()
+            : friend.userA.toString();
+
+        const friendUser = await UserModel.findById(friendUserId).lean();
+
+        return {
+          ...friend,
+          friendUser: friendUser as User,
+        };
+      })
+    );
+
+    // console.log("data:" + JSON.stringify(friendsWithUserData, null, 2));
+
+    if (friendsWithUserData.length > 0) {
+      return {
+        success: true,
+        message: "Friend found",
+        friends: friendsWithUserData,
+      };
+    } else {
+      return { success: false, message: "No friend found" };
+    }
+  } catch (error: any) {
+    console.error("Error checking friend request status:", error);
+    return { success: false, message: error.message };
+  }
+}
+
+// accept friend request handler & let the user follow each other
+export async function acceptFriendRequest(
+  authenticatedId: string,
+  otherUserId: string,
+  friendRequestId: string
+) {
+  try {
+    await connectToDB();
+
+    console.log(authenticatedId);
+    console.log(friendRequestId);
+
+    const updatedFriendRequest = await FriendRequestModel.findByIdAndUpdate(
+      friendRequestId,
+      { status: 2 },
+      { new: true }
+    );
+
+    if (updatedFriendRequest) {
+      console.log(updatedFriendRequest);
+
+      const userA = updatedFriendRequest.sender;
+      const userB = updatedFriendRequest.receiver;
+
+      // insert into friendmodel
+      const newFriend = await FriendModel.create({
+        userA: userA,
+        userB: userB,
+      });
+
+      console.log("New Friend Entry: ", newFriend);
+
+      // authenticated user follows the other user
+      const followResultOne = await MemberModel.findOneAndUpdate(
+        { user: authenticatedId },
+        { $addToSet: { following: otherUserId } }
+      );
+
+      // authenticated user is followd by the other user
+      const followResultThree = await MemberModel.findOneAndUpdate(
+        { user: authenticatedId },
+        {
+          $addToSet: {
+            followers: { followersId: otherUserId, followedAt: new Date() },
+          },
+        }
+      );
+
+      // other user follow the authenticated user
+      const followResultTwo = await MemberModel.findOneAndUpdate(
+        { user: otherUserId },
+        { $addToSet: { following: authenticatedId } }
+      );
+
+      // other user is follwoed by authenticated user
+      const followResultFour = await MemberModel.findOneAndUpdate(
+        { user: otherUserId },
+        {
+          $addToSet: {
+            followers: { followersId: authenticatedId, followedAt: new Date() },
+          },
+        }
+      );
+
+      return {
+        success: true,
+        message: "Friend request accepted and added to friends list",
+        friendRequest: updatedFriendRequest,
+        newFriend: newFriend,
+      };
+    } else {
+      return { success: false, message: "Friend request not found" };
+    }
+  } catch (error: any) {
+    console.error("Error accepting friend request:", error);
+    return { success: false, message: error.message };
+  }
+}
+
+// decline friend request handler
+export async function declineFriendRequest(friendRequestId: string) {
+  try {
+    await connectToDB();
+
+    // console.log(friendRequestId);
+    const updatedFriendRequest = await FriendRequestModel.findByIdAndUpdate(
+      friendRequestId,
+      { status: 0 },
+      { new: true }
+    );
+
+    if (updatedFriendRequest) {
+      console.log(updatedFriendRequest);
+
+      return {
+        success: true,
+        message: "Decline Friend Request succesfully!",
+        friendRequest: updatedFriendRequest,
+      };
+    } else {
+      return { success: false, message: "Friend request not found" };
+    }
+  } catch (error: any) {
+    console.error("Error decline friend request:", error);
+    return { success: false, message: error.message };
+  }
+}
+
+// unfriend handler
+export async function unfriendFriend(
+  authenticatedId: string,
+  friendRequestId: string
+) {
+  try {
+    await connectToDB();
+
+    // console.log("authenticatedId:" + authenticatedId);
+    // console.log("friendRequestId:" + friendRequestId);
+
+    const friendRelation = await FriendModel.findOneAndDelete({
+      $or: [
+        { userA: authenticatedId, userB: friendRequestId },
+        { userA: friendRequestId, userB: authenticatedId },
+      ],
+    });
+
+    console.log(friendRelation);
+
+    if (!friendRelation) {
+      return { success: false, message: "Friend relation not found" };
+    }
+
+    return { success: true, message: "Successfully unfriended" };
+  } catch (error: any) {
+    console.error("Error when unfriending:", error);
+    return { success: false, message: error.message };
+  }
+}
+
+// unfollow existing friend
+export async function unfollowFriend(
+  authenticatedId: string,
+  friendRequestId: string
+) {
+  try {
+    await connectToDB();
+
+    // authenticated user remove the follwing
+    const removeFollowingFromCurrentUser = await MemberModel.findOneAndUpdate(
+      { user: authenticatedId },
+      { $pull: { following: friendRequestId } }
+    );
+
+    const removeFollowerFromTargetUser = await MemberModel.findOneAndUpdate(
+      { user: friendRequestId },
+      { $pull: { followers: { followersId: authenticatedId } } }
+    );
+
+    return {
+      success: true,
+      message: "Successfully unfollowed the user",
+    };
+  } catch (error: any) {
+    console.error("Error when unfollowing:", error);
+    return { success: false, message: error.message };
+  }
+}
+
+// unfollow before but still friend, want to follow back
+export async function followFriend(authenticatedId: string, friendId: string) {
+  try {
+    await connectToDB();
+
+    const followFromAuthUser = await MemberModel.findOneAndUpdate(
+      { user: authenticatedId },
+      { $addToSet: { following: friendId } }
+    );
+
+    // console.log("followFromAuthUser" + followFromAuthUser);
+
+    const followingFromOtherUser = await MemberModel.findOneAndUpdate(
+      { user: friendId },
+      {
+        $addToSet: {
+          followers: { followersId: authenticatedId, followedAt: new Date() },
+        },
+      }
+    );
+
+    // console.log("followingFromOtherUser" + followingFromOtherUser);
+
+    return { success: true, message: "Successfully followed" };
+  } catch (error: any) {
+    console.error("Error following user:", error);
+    return { success: false, message: error.message };
+  }
+}
+
+// get follow status of each friend
+export async function getFollowStatus(
+  authenticatedId: string,
+  friendId: string
+) {
+  try {
+    await connectToDB();
+
+    const member = await MemberModel.findOne({ user: authenticatedId });
+    // console.log("member" + member);
+    const isFollowing = member.following.includes(friendId);
+    console.log("isFollwing" + isFollowing);
+
+    return { success: true, isFollowing };
+  } catch (error: any) {
+    console.error("Error fetching follow status:", error);
+    return { success: false, message: error.message, isFollowing: false };
+  }
+}
+
+// follow private acc
+export async function followPrivateAcc(
+  authenticatedId: string,
+  followedId: string
+) {
+  try {
+    await connectToDB();
+
+    const privateAcc = await MemberModel.findOne({ user: followedId }).select(
+      "accountType"
+    );
+
+    if (!privateAcc || privateAcc.accountType !== "private") {
+      return {
+        success: false,
+        message: "Cannot follow. The account is not private.",
+      };
+    }
+    // go into follow request table
+
+    // const updateCurrentUserFollowing = await MemberModel.findOneAndUpdate(
+    //   { user: authenticatedId },
+    //   { $addToSet: { following: followedId } }
+    // );
+
+    // if (!updateCurrentUserFollowing) {
+    //   return {
+    //     success: false,
+    //     message: "Failed to update the following list.",
+    //   };
+    // }
+
+    // console.log("updateCurrentUserFollowing" + updateCurrentUserFollowing);
+
+    // const updatePrivateUserFollower = await MemberModel.findOneAndUpdate(
+    //   { user: followedId },
+    //   {
+    //     $addToSet: {
+    //       followers: { followersId: authenticatedId, followedAt: new Date() },
+    //     },
+    //   }
+    // );
+
+    // if (!updatePrivateUserFollower) {
+    //   return {
+    //     success: false,
+    //     message: "Failed to update the private user's followers list.",
+    //   };
+    // }
+
+    // console.log("updatePrivateUserFollower" + updatePrivateUserFollower);
+
+    return {
+      success: true,
+      message: "Successfully followed the private account.",
+    };
+  } catch (error: any) {
+    console.error("Error following private account:", error);
+    return { success: false, message: "Error following private account." };
+  }
+}
+
+// get follower for current acc
+export async function getAllFollowers(userId: string) {
+  try {
+    await connectToDB();
+
+    const member = await MemberModel.findOne({ user: userId }).populate({
+      path: "followers.followersId",
+      select: "name image _id",
+    });
+
+    if (!member) {
+      return { success: false, message: "User not found", followers: [] };
+    }
+
+    return {
+      success: true,
+      followers: member.followers.map((follower: any) => ({
+        _id: follower.followersId._id,
+        name: follower.followersId.name,
+        image: follower.followersId.image,
+        followedAt: follower.followedAt,
+      })),
+    };
+  } catch (error: any) {
+    console.error("Error fetching followers:", error);
+    return { success: false, message: error.message, followers: [] };
+  }
+}
+
+// get following for current acc
+export async function getAllFollowing(userId: string) {
+  try {
+    await connectToDB();
+
+    const member = await MemberModel.findOne({ user: userId }).populate({
+      path: "following",
+      select: "name image _id",
+    });
+
+    if (!member) {
+      return { success: false, message: "User not found", following: [] };
+    }
+
+    return {
+      success: true,
+      following: member.following.map((followingUser: any) => ({
+        _id: followingUser._id,
+        name: followingUser.name,
+        image: followingUser.image,
+      })),
+    };
+  } catch (error: any) {
+    console.error("Error fetching following users:", error);
+    return { success: false, message: error.message, following: [] };
+  }
+}
+
+// follow a public acc / no need approve from the user
+export async function sendFollowRequestPublic(
+  authenticatedId: string,
+  targetUserId: string
+) {
+  try {
+    await connectToDB();
+
+    // target public acc
+    const targetMember = await MemberModel.findOne({
+      user: targetUserId,
+    }).select("accountType");
+
+    if (!targetMember) {
+      return { success: false, message: "Target user not found" };
+    }
+
+    // check public
+    if (targetMember.accountType !== "public") {
+      return {
+        success: false,
+        message: "Cannot follow. The account is not public.",
+      };
+    }
+
+    // Update the authenticated user's following list
+    const updateFollowing = await MemberModel.findOneAndUpdate(
+      { user: authenticatedId },
+      { $addToSet: { following: targetUserId } },
+      { new: true }
+    );
+
+    // Update the target user's followers list
+    const updateFollowers = await MemberModel.findOneAndUpdate(
+      { user: targetUserId },
+      {
+        $addToSet: {
+          followers: { followersId: authenticatedId, followedAt: new Date() },
+        },
+      },
+      { new: true }
+    );
+
+    if (updateFollowing && updateFollowers) {
+      return {
+        success: true,
+        message: "Successfully followed the public account.",
+      };
+    } else {
+      return {
+        success: false,
+        message: "Failed to update follow relationship.",
+      };
+    }
+  } catch (error: any) {
+    console.error("Error following public account:", error);
+    return { success: false, message: "Error following public account." };
+  }
+}
+
+// follow a private acc/ need approval from the user
+export async function sendFollowRequestPrivate(
+  authenticatedId: string,
+  targetUserId: string
+) {
+  try {
+    await connectToDB();
+
+    const targetMember = await MemberModel.findOne({
+      user: targetUserId,
+    }).select("accountType");
+
+    if (!targetMember) {
+      return { success: false, message: "Target user not found" };
+    }
+
+    if (targetMember.accountType !== "private") {
+      return {
+        success: false,
+        message: "Cannot send follow request. The account is not private.",
+      };
+    }
+
+    // Check if a follow request already exists
+    const existingRequest = await FollowRequestModel.findOne({
+      sender: authenticatedId,
+      receiver: targetUserId,
+    });
+
+    if (existingRequest) {
+      return {
+        success: false,
+        message: "Follow request already sent.",
+      };
+    }
+
+    // Create a new follow request
+    const newFollowRequest = await FollowRequestModel.create({
+      sender: authenticatedId,
+      receiver: targetUserId,
+      status: 0,
+    });
+
+    if (newFollowRequest) {
+      return {
+        success: true,
+        message: "Follow request sent successfully.",
+      };
+    } else {
+      return {
+        success: false,
+        message: "Failed to send follow request.",
+      };
+    }
+  } catch (error: any) {
+    console.error("Error sending follow request:", error);
+    return { success: false, message: "Error sending follow request." };
   }
 }

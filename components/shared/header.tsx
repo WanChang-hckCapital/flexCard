@@ -90,15 +90,16 @@ async function Header({ session, userInfoImage }: HeaderProps) {
             />
           </Link>
 
-          {/* <Link href="/workspace/chatroom">
+          {/* add more friend page */}
+          <Link href="/workspace/add-friend">
             <Image
               width={24}
               height={24}
               className=""
-              src="/assets/friendlist.svg"
+              src="/assets/user.svg"
               alt="icon create"
             />
-          </Link> */}
+          </Link>
           {/* drop down menu*/}
           <DropdownMenu>
             <DropdownMenuTrigger>

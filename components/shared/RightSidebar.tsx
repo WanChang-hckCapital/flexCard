@@ -4,13 +4,17 @@ import { useState, useEffect } from "react";
 import { fetchAllMembers } from "@/lib/actions/user.actions";
 import { Member } from "@/types";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useRouter } from "next/navigation";
 
 function RightSidebar() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const router = useRouter();
+
   useEffect(() => {
+    // temp members, must fetch friend & follower
     const getMembers = async () => {
       try {
         setLoading(true);
@@ -32,8 +36,9 @@ function RightSidebar() {
     getMembers();
   }, []);
 
-  const showChatBox = (userID: string) => {
-    console.log("userID:" + userID);
+  const showChatBox = (userId: string) => {
+    console.log("userID:" + userId);
+    router.push(`/workspace/chatroom/${userId}`);
   };
 
   return (
@@ -49,7 +54,7 @@ function RightSidebar() {
                 <div
                   key={index}
                   className="p-2 bg-gray-700 rounded flex items-center gap-4 cursor-pointer hover:bg-gray-600"
-                  onClick={() => showChatBox(member.user)}
+                  // onClick={() => showChatBox(member.user)}
                 >
                   <Avatar className="h-6 w-6 border">
                     <AvatarImage src="/assets/user.svg" />

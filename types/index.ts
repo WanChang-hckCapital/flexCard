@@ -13,7 +13,7 @@ export type Price = {
 };
 
 export type Member = {
-  user: string;
+  user: {};
   generatedId: string;
   accountname: string;
   image: string;
@@ -37,6 +37,7 @@ export type Member = {
   viewDetails: ViewDetail[];
   updateHistory: [];
   lastlogin: Date;
+  accountType: string;
 };
 
 export type Organization = {
@@ -163,5 +164,36 @@ export enum ItemStatus {
   LISTED = "listed",
   UNLISTED = "unlisted",
 }
+
+export type User = {
+  _id: string;
+  generatedId: string;
+  name: string;
+  email: string;
+  image: string;
+  emailVerified: string;
+};
+
+export type Friend = {
+  generatedId: string;
+  userA: {};
+  userB: {};
+  created_at?: Date;
+  updated_at?: Date;
+};
+
+export type FriendRequest = {
+  _id: string;
+  sender: {};
+  receiver: {};
+  status: number;
+};
+
+export type FollowRequest = {
+  _id: string;
+  sender: {};
+  receiver: {};
+  status: number;
+};
 
 // workspace
