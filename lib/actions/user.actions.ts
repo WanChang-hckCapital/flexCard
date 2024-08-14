@@ -411,6 +411,44 @@ export async function checkIfFollowing({
   }
 }
 
+type CheckIfFollowerParams = {
+  authUserId: string;
+  accountId: string;
+};
+
+export async function checkIfFollower({
+  authUserId,
+  accountId,
+}: CheckIfFollowerParams): Promise<{
+  success: boolean;
+  isFollower: boolean;
+  message?: string;
+}> {
+  try {
+    await connectToDB();
+
+    const currentMember = await Member.findOne({ user: authUserId });
+    const accountMember = await Member.findOne({ user: accountId });
+
+    if (!currentMember || !accountMember) {
+      throw new Error("Current member or account member not found");
+    }
+
+    const isFollower = currentMember.followers.some(
+      (follower: any) =>
+        follower.followersId.toString() === accountId.toString()
+    );
+
+    return { success: true, isFollower };
+  } catch (error: any) {
+    return {
+      success: false,
+      isFollower: false,
+      message: `Failed to check follower status: ${error.message}`,
+    };
+  }
+}
+
 interface ParamUpdateMemberFollowData {
   authUserId: string;
   accountId: string;
@@ -1377,47 +1415,53 @@ export async function fetchAllUser(authenticatedUserId: string) {
     await connectToDB();
 
     // fetch all member no matter public and private
-    const members = await MemberModel.find({}).select("user accountType");
+    const members = await MemberModel.find({}).select("user accountType image");
 
-    // console.log("members" + members);
-
-    const userIds = members.map((member) => member.user);
-
-    // console.log("userIds" + userIds);
+    const userIds = members
+      .map((member) => member.user.toString())
+      .filter((userId) => userId !== authenticatedUserId);
 
     // filter out the current userId
     const users = await UserModel.find({
-      _id: { $in: userIds, $ne: authenticatedUserId },
-    });
+      _id: { $in: userIds },
+    }).select("name");
 
-    const usersWithIdAsString = await Promise.all(
+    const usersWithDetails = await Promise.all(
       users.map(async (user) => {
         const member = members.find(
           (member) => member.user.toString() === user._id.toString()
         );
 
-        const friendStatus = await FriendModel.findOne({
-          $or: [
-            { userA: authenticatedUserId, userB: user._id },
-            { userA: user._id, userB: authenticatedUserId },
-          ],
-        });
+        let imgUrl = null;
+        if (member && member.image && member.image.length > 0) {
+          const imageRecord = await Image.findOne({
+            _id: member?.image,
+          }).select("binaryCode");
 
-        // 1 is friend, 0 is not
-        const status = friendStatus ? "1" : "0";
+          imgUrl = imageRecord?.binaryCode || null;
+        }
 
         return {
-          ...user.toObject(),
-          _id: user._id.toString(),
-          friendStatus: status,
-          accountType: member?.accountType || "public",
+          userId: user._id.toString(),
+          name: user.name,
+          accountType: member?.accountType || "PUBLIC",
+          image: imgUrl,
         };
       })
     );
 
-    return usersWithIdAsString;
+    return {
+      success: true,
+      message: "Succesfully fetch the followers",
+      users: usersWithDetails,
+    };
   } catch (error: any) {
-    throw new Error(`Failed to fetch users: ${error.message}`);
+    console.error(`Failed to fetch users: ${error.message}`);
+    return {
+      success: false,
+      message: `Failed to fetch users: ${error.message}`,
+      users: [],
+    };
   }
 }
 
@@ -1792,90 +1836,41 @@ export async function getFollowStatus(
   }
 }
 
-// follow private acc
-export async function followPrivateAcc(
-  authenticatedId: string,
-  followedId: string
-) {
-  try {
-    await connectToDB();
-
-    const privateAcc = await MemberModel.findOne({ user: followedId }).select(
-      "accountType"
-    );
-
-    if (!privateAcc || privateAcc.accountType !== "private") {
-      return {
-        success: false,
-        message: "Cannot follow. The account is not private.",
-      };
-    }
-    // go into follow request table
-
-    // const updateCurrentUserFollowing = await MemberModel.findOneAndUpdate(
-    //   { user: authenticatedId },
-    //   { $addToSet: { following: followedId } }
-    // );
-
-    // if (!updateCurrentUserFollowing) {
-    //   return {
-    //     success: false,
-    //     message: "Failed to update the following list.",
-    //   };
-    // }
-
-    // console.log("updateCurrentUserFollowing" + updateCurrentUserFollowing);
-
-    // const updatePrivateUserFollower = await MemberModel.findOneAndUpdate(
-    //   { user: followedId },
-    //   {
-    //     $addToSet: {
-    //       followers: { followersId: authenticatedId, followedAt: new Date() },
-    //     },
-    //   }
-    // );
-
-    // if (!updatePrivateUserFollower) {
-    //   return {
-    //     success: false,
-    //     message: "Failed to update the private user's followers list.",
-    //   };
-    // }
-
-    // console.log("updatePrivateUserFollower" + updatePrivateUserFollower);
-
-    return {
-      success: true,
-      message: "Successfully followed the private account.",
-    };
-  } catch (error: any) {
-    console.error("Error following private account:", error);
-    return { success: false, message: "Error following private account." };
-  }
-}
-
 // get follower for current acc
 export async function getAllFollowers(userId: string) {
   try {
     await connectToDB();
 
-    const member = await MemberModel.findOne({ user: userId }).populate({
-      path: "followers.followersId",
-      select: "name image _id",
-    });
+    // console.log("userId :" + userId);
+    const member = await MemberModel.findOne({ user: userId });
 
     if (!member) {
       return { success: false, message: "User not found", followers: [] };
     }
 
+    const followersWithDetails = await Promise.all(
+      member.followers.map(async (follower: any) => {
+        const followerDetails = await MemberModel.findOne({
+          user: follower.followersId,
+        }).select("accountname user image _id");
+
+        const imgUrl = await Image.findOne({
+          _id: followerDetails?.image,
+        }).select("binaryCode");
+
+        return {
+          id: followerDetails?._id,
+          userId: followerDetails?.user,
+          name: followerDetails?.accountname || "Unknown",
+          image: imgUrl.binaryCode.toString(),
+          followedAt: follower.followedAt,
+        };
+      })
+    );
+
     return {
       success: true,
-      followers: member.followers.map((follower: any) => ({
-        _id: follower.followersId._id,
-        name: follower.followersId.name,
-        image: follower.followersId.image,
-        followedAt: follower.followedAt,
-      })),
+      followers: followersWithDetails,
     };
   } catch (error: any) {
     console.error("Error fetching followers:", error);
@@ -1888,22 +1883,34 @@ export async function getAllFollowing(userId: string) {
   try {
     await connectToDB();
 
-    const member = await MemberModel.findOne({ user: userId }).populate({
-      path: "following",
-      select: "name image _id",
-    });
+    const member = await MemberModel.findOne({ user: userId });
 
     if (!member) {
       return { success: false, message: "User not found", following: [] };
     }
 
+    const followingWithDetails = await Promise.all(
+      member.following.map(async (following: any) => {
+        const followeingDetails = await MemberModel.findOne({
+          user: following,
+        }).select("accountname user image _id");
+
+        const imgUrl = await Image.findOne({
+          _id: followeingDetails?.image,
+        }).select("binaryCode");
+
+        return {
+          id: followeingDetails?._id,
+          userId: followeingDetails?.user,
+          name: followeingDetails?.accountname || "Unknown",
+          image: imgUrl.binaryCode.toString(),
+        };
+      })
+    );
+
     return {
       success: true,
-      following: member.following.map((followingUser: any) => ({
-        _id: followingUser._id,
-        name: followingUser.name,
-        image: followingUser.image,
-      })),
+      following: followingWithDetails,
     };
   } catch (error: any) {
     console.error("Error fetching following users:", error);
@@ -1911,122 +1918,350 @@ export async function getAllFollowing(userId: string) {
   }
 }
 
-// follow a public acc / no need approve from the user
-export async function sendFollowRequestPublic(
-  authenticatedId: string,
-  targetUserId: string
-) {
-  try {
-    await connectToDB();
-
-    // target public acc
-    const targetMember = await MemberModel.findOne({
-      user: targetUserId,
-    }).select("accountType");
-
-    if (!targetMember) {
-      return { success: false, message: "Target user not found" };
-    }
-
-    // check public
-    if (targetMember.accountType !== "public") {
-      return {
-        success: false,
-        message: "Cannot follow. The account is not public.",
-      };
-    }
-
-    // Update the authenticated user's following list
-    const updateFollowing = await MemberModel.findOneAndUpdate(
-      { user: authenticatedId },
-      { $addToSet: { following: targetUserId } },
-      { new: true }
-    );
-
-    // Update the target user's followers list
-    const updateFollowers = await MemberModel.findOneAndUpdate(
-      { user: targetUserId },
-      {
-        $addToSet: {
-          followers: { followersId: authenticatedId, followedAt: new Date() },
-        },
-      },
-      { new: true }
-    );
-
-    if (updateFollowing && updateFollowers) {
-      return {
-        success: true,
-        message: "Successfully followed the public account.",
-      };
-    } else {
-      return {
-        success: false,
-        message: "Failed to update follow relationship.",
-      };
-    }
-  } catch (error: any) {
-    console.error("Error following public account:", error);
-    return { success: false, message: "Error following public account." };
-  }
-}
-
 // follow a private acc/ need approval from the user
-export async function sendFollowRequestPrivate(
+export async function sendFollowRequest(
   authenticatedId: string,
   targetUserId: string
 ) {
   try {
     await connectToDB();
 
+    const currentUser = await MemberModel.findOne({
+      user: authenticatedId,
+    }).select("accountType followers");
+
     const targetMember = await MemberModel.findOne({
       user: targetUserId,
-    }).select("accountType");
+    }).select("accountType followers");
 
-    if (!targetMember) {
-      return { success: false, message: "Target user not found" };
-    }
-
-    if (targetMember.accountType !== "private") {
+    if (!targetMember || !currentUser) {
       return {
         success: false,
-        message: "Cannot send follow request. The account is not private.",
+        message: "Target user or current user not found",
       };
     }
 
-    // Check if a follow request already exists
-    const existingRequest = await FollowRequestModel.findOne({
-      sender: authenticatedId,
-      receiver: targetUserId,
-    });
+    if (targetMember.accountType === "PUBLIC") {
+      const isAlreadyFollowing =
+        targetMember.followers.includes(authenticatedId);
 
-    if (existingRequest) {
-      return {
-        success: false,
-        message: "Follow request already sent.",
-      };
-    }
+      // console.log("isAlreadyFollowing: " + isAlreadyFollowing);
+      if (isAlreadyFollowing) {
+        return {
+          success: false,
+          message: "You are already following this user.",
+        };
+      }
 
-    // Create a new follow request
-    const newFollowRequest = await FollowRequestModel.create({
-      sender: authenticatedId,
-      receiver: targetUserId,
-      status: 0,
-    });
+      // update the follower for targetMembers
+      await MemberModel.findOneAndUpdate(
+        { user: targetUserId },
+        {
+          $push: {
+            followers: { followersId: authenticatedId, followedAt: new Date() },
+          },
+        },
+        { new: true, useFindAndModify: false }
+      );
 
-    if (newFollowRequest) {
+      // update the current user's following
+      await MemberModel.findOneAndUpdate(
+        { user: authenticatedId },
+        {
+          $push: { following: targetUserId },
+        },
+        { new: true, useFindAndModify: false }
+      );
+      await currentUser.save();
+
       return {
         success: true,
-        message: "Follow request sent successfully.",
+        message: "Successfully followed the user.",
       };
+    } else if (targetMember.accountType === "PRIVATE") {
+      const existingRequest = await FollowRequestModel.findOne({
+        sender: authenticatedId,
+        receiver: targetUserId,
+        status: 0, // find only pending request
+      });
+
+      console.log("existingRequest:" + existingRequest);
+
+      if (existingRequest) {
+        return {
+          success: false,
+          message: "Follow request already sent.",
+        };
+      }
+
+      // Create a new follow request
+      const newFollowRequest = await FollowRequestModel.create({
+        sender: authenticatedId,
+        receiver: targetUserId,
+        status: 0, // 0 indicates pending status, 1 indicates decline, 2 indicates accepted
+      });
+
+      // console.log("newFollowRequest" + newFollowRequest);
+
+      if (newFollowRequest) {
+        return {
+          success: true,
+          message: "Follow request sent successfully.",
+        };
+      } else {
+        return {
+          success: false,
+          message: "Failed to send follow request.",
+        };
+      }
     } else {
       return {
         success: false,
-        message: "Failed to send follow request.",
+        message: "Invalid account type.",
       };
     }
   } catch (error: any) {
     console.error("Error sending follow request:", error);
     return { success: false, message: "Error sending follow request." };
+  }
+}
+
+// check in followRequest Table
+export async function checkFollowRequestStatus({
+  senderId,
+  receiverId,
+}: {
+  senderId: string;
+  receiverId: string;
+}): Promise<{
+  success: boolean;
+  requestSent: boolean;
+  message?: string;
+}> {
+  try {
+    await connectToDB();
+
+    const existingRequest = await FollowRequestModel.findOne({
+      sender: senderId,
+      receiver: receiverId,
+      status: 0, // Pending status
+    });
+
+    return {
+      success: true,
+      requestSent: !!existingRequest,
+    };
+  } catch (error) {
+    console.error("Error checking follow request status:", error);
+    return {
+      success: false,
+      requestSent: false,
+      message: "Error checking follow request status",
+    };
+  }
+}
+
+// remove follower
+export async function removeFollower(
+  authUserId: string,
+  targetUserId: string
+): Promise<{ success: boolean; message: string }> {
+  try {
+    await connectToDB();
+
+    const updatedMember = await MemberModel.findOneAndUpdate(
+      { user: authUserId },
+      { $pull: { followers: { followersId: targetUserId } } },
+      { new: true }
+    );
+
+    if (!updatedMember) {
+      return { success: false, message: "User not found or update failed" };
+    }
+
+    return { success: true, message: "Follower removed successfully" };
+  } catch (error) {
+    console.error("Error removing follower:", error);
+    return { success: false, message: "Failed to remove follower" };
+  }
+}
+
+// remove following
+export async function removeFollowing(
+  authUserId: string,
+  targetUserId: string
+): Promise<{ success: boolean; message: string }> {
+  try {
+    await connectToDB();
+
+    const updatedMember = await MemberModel.findOneAndUpdate(
+      { user: authUserId },
+      { $pull: { following: targetUserId } },
+      { new: true }
+    );
+
+    authUserId;
+
+    if (!updatedMember) {
+      return { success: false, message: "User not found or update failed" };
+    }
+
+    return { success: true, message: "Following removed successfully" };
+  } catch (error) {
+    console.error("Error removing following:", error);
+    return { success: false, message: "Failed to remove following" };
+  }
+}
+
+// get account type for member
+export async function getAccountType(authenticatedId: string) {
+  try {
+    await connectToDB();
+
+    const member = await MemberModel.findOne({ user: authenticatedId }).select(
+      "user accountType"
+    );
+
+    if (!member) {
+      return {
+        success: false,
+        message: "Member not found",
+        accountType: null,
+      };
+    }
+
+    return {
+      success: true,
+      message: "Successfully fetched the account type",
+      accountType: member.accountType,
+    };
+  } catch (error: any) {
+    console.error(`Failed to fetch account type: ${error.message}`);
+    return {
+      success: false,
+      message: `Failed to fetch account type: ${error.message}`,
+      accountType: null,
+    };
+  }
+}
+
+// get pending followrequest if the account is a private acc
+export async function getFollowRequest(authenticatedId: string) {
+  try {
+    await connectToDB();
+
+    const followRequests = await FollowRequestModel.find({
+      receiver: authenticatedId,
+      status: 0, // pending
+    }).select("sender receiver status createdAt _id");
+
+    if (!followRequests || followRequests.length === 0) {
+      return {
+        success: false,
+        message: "No follow requests found",
+        followRequests: [],
+      };
+    }
+
+    const populatedFollowRequests = await Promise.all(
+      followRequests.map(async (request) => {
+        const senderMember = await MemberModel.findOne({
+          user: request.sender,
+        }).select("accountname image");
+
+        const imgUrl = await Image.findOne({
+          _id: senderMember?.image,
+        }).select("binaryCode");
+
+        return {
+          ...request.toObject(),
+          sender: senderMember ? senderMember.accountname : null,
+          image: imgUrl.binaryCode,
+        };
+      })
+    );
+
+    return {
+      success: true,
+      message: "Successfully fetched follow requests",
+      followRequests: populatedFollowRequests,
+    };
+  } catch (error: any) {
+    console.error(`Failed to fetch follow requests: ${error.message}`);
+    return {
+      success: false,
+      message: `Failed to fetch follow requests: ${error.message}`,
+      followRequests: [],
+    };
+  }
+}
+
+// accept follow request
+export async function acceptFollowRequest(followRequestId: string) {
+  try {
+    await connectToDB();
+
+    // console.log("followRequestId:" + followRequestId);
+
+    const updatedFollowRequest = await FollowRequestModel.findOneAndUpdate(
+      {
+        _id: followRequestId,
+        status: 0, // pending
+      },
+      { status: 2 }, // accepted
+      {
+        new: true,
+      }
+    );
+
+    if (!updatedFollowRequest) {
+      return {
+        success: false,
+        message: "Follow Request not found or update failed",
+      };
+    }
+
+    console.log("updatedFollowRequest sender" + updatedFollowRequest.sender);
+    console.log(
+      "updatedFollowRequest receiver" + updatedFollowRequest.receiver
+    );
+
+    const followFromAuthUser = await MemberModel.findOneAndUpdate(
+      { user: updatedFollowRequest.sender },
+      { $addToSet: { following: updatedFollowRequest.receiver } },
+      { new: true }
+    );
+
+    if (!followFromAuthUser) {
+      return {
+        success: false,
+        message: "Failed to update sender's following list",
+      };
+    }
+
+    const followingFromOtherUser = await MemberModel.findOneAndUpdate(
+      { user: updatedFollowRequest.receiver },
+      {
+        $addToSet: {
+          followers: {
+            followersId: updatedFollowRequest.sender,
+            followedAt: new Date(),
+          },
+        },
+      },
+      { new: true }
+    );
+
+    if (!followingFromOtherUser) {
+      return {
+        success: false,
+        message: "Failed to update receiver's followers list",
+      };
+    }
+
+    return { success: true, message: "Accept follow request successfully" };
+  } catch (error) {
+    console.error("Error accepting follow request", error);
+    return { success: false, message: "Failed to accept follow request." };
   }
 }

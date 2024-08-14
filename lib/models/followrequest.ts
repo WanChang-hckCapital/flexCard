@@ -8,11 +8,11 @@ const followRequestSchema = new Schema<FollowRequest>(
     // },
     sender: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Member",
     },
     receiver: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Member",
     },
     status: {
       type: Number,
