@@ -26,6 +26,8 @@ interface HeaderProps {
 async function Header({ session, userInfoImage }: HeaderProps) {
   const user = session?.user;
 
+  const userId = session?.user.id;
+
   let userImage = null;
   if (userInfoImage != null) {
     userImage = userInfoImage.binaryCode.toString();
@@ -80,7 +82,7 @@ async function Header({ session, userInfoImage }: HeaderProps) {
             />
           </Link>
 
-          <Link href="/workspace/chatroom">
+          <Link href={`/workspace/chatroom/${userId}`}>
             <Image
               width={24}
               height={24}

@@ -196,4 +196,22 @@ export type FollowRequest = {
   status: number;
 };
 
+export type Chatroom = {
+  _id: string;
+  name: string;
+  type: string;
+  participants: {};
+};
+
+export type ChatroomParticipants = {
+  userID: {};
+  chatroomID: {};
+  role: string;
+};
+
+export type Message = {
+  chatroomId: {};
+  senderId: {};
+  content: string;
+};
 // workspace
