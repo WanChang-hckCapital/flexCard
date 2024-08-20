@@ -2371,53 +2371,161 @@ export async function getFollowersAndFollowing(userId: string) {
   }
 }
 
-// get fetch message for particular chatroom
-export async function fetchMessages(chatroomId: string) {
+export async function fetchMessages(
+  chatroomId: string,
+  authenticatedUserId: string
+) {
   try {
+    const chatroom = await ChatroomModel.findById(chatroomId);
+    console.log("cahtrrom:" + chatroom);
+
+    if (!chatroom) {
+      throw new Error("Chatroom not found");
+    }
+
+    const participantsInfo = await Promise.all(
+      chatroom.participants.map(async (participant: any) => {
+        const participantInfo = await MemberModel.findOne({
+          user: participant,
+        }).lean();
+
+        let imgUrl = null;
+
+        if (participantInfo && participantInfo.image) {
+          const imageRecord = await Image.findOne({
+            _id: participantInfo.image,
+          }).select("binaryCode");
+          imgUrl = imageRecord?.binaryCode || null;
+        }
+        return {
+          ...participantInfo,
+          image: imgUrl,
+        };
+      })
+    );
+
+    const participantMap = new Map(
+      participantsInfo.map((participant: any) => [
+        participant.user.toString(),
+        participant,
+      ])
+    );
+
     const messages = await MessageModel.find({ chatroomId })
       .sort({ createdAt: 1 })
       .lean();
 
-    // console.log(messages[0]);
-    return { success: true, message: messages };
+    const messagesWithMemberData = messages.map((message: any) => {
+      const sender = participantMap.get(message.senderId.toString());
+      return {
+        ...message,
+        senderId: message.senderId,
+        image: sender?.image || null,
+        senderName: sender?.accountname || "Unknown",
+      };
+    });
+
+    return { success: true, message: messagesWithMemberData };
   } catch (error: any) {
     return { success: false, message: error.message };
   }
 }
 
-export async function sendMessage(
-  authenticatedId: string,
+export async function fetchMessagesWs(
   chatroomId: string,
-  content: string
+  authenticatedUserId: string
 ) {
   try {
-    await connectToDB();
-
-    const chatroom = await ChatroomModel.findOne({ _id: chatroomId });
-
-    console.log("chatroom:" + chatroom);
-
-    if (!chatroom) {
-      return { success: false, message: "Chatroom not found." };
+    const response = await fetch(
+      `http://localhost:8081/message/${chatroomId}/${authenticatedUserId}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    if (!response.ok) {
+      throw new Error(`Error fetching messages: ${response.statusText}`);
     }
 
-    // Send the message
-    const message = new MessageModel({
-      chatroomId: chatroom._id,
-      senderId: authenticatedId,
-      content: content,
-      createdAt: new Date(),
-    });
+    const data = await response.json();
+    // console.log("data success:" + data);
+    // console.log("data success length:" + data.messages.length);
+    // console.log("data success:" + data.message);
 
-    await message.save();
-    console.log("Message sent successfully:", message);
-
-    return { success: true, message: "Message sent successfully." };
-  } catch (error) {
-    console.error("Error sending message:", error);
-    return { success: false, message: "Failed to send message." };
+    return data;
+  } catch (error: any) {
+    console.error("Failed to fetch messages:", error);
+    return { success: false, message: error.message };
   }
 }
+
+// export async function sendMessage(
+//   authenticatedId: string,
+//   chatroomId: string,
+//   content: string
+// ) {
+//   try {
+//     await connectToDB();
+
+//     const chatroom = await ChatroomModel.findOne({ _id: chatroomId });
+
+//     console.log("chatroom:" + chatroom);
+
+//     if (!chatroom) {
+//       return { success: false, message: "Chatroom not found." };
+//     }
+
+//     // Send the message
+//     const message = new MessageModel({
+//       chatroomId: chatroom._id,
+//       senderId: authenticatedId,
+//       content: content,
+//       createdAt: new Date(),
+//     });
+
+//     await message.save();
+//     console.log("Message sent successfully:", message);
+
+//     return { success: true, message: "Message sent successfully." };
+//   } catch (error) {
+//     console.error("Error sending message:", error);
+//     return { success: false, message: "Failed to send message." };
+//   }
+// }
+
+// export async function sendMessageWs(
+//   senderId: string,
+//   chatroomId: string,
+//   content: string
+// ) {
+//   try {
+//     const response = await fetch("http://localhost:8081/sendMessage", {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json",
+//       },
+//       body: JSON.stringify({
+//         senderId,
+//         chatroomId,
+//         content,
+//       }),
+//     });
+
+//     const sendMessageResponse = await response.json();
+
+//     if (response.ok && sendMessageResponse.success) {
+//       console.log("Successfully sent message!");
+//     } else {
+//       console.log("Send Message failed!!");
+//     }
+//     return response;
+//   } catch (error: any) {
+//     console.error("Failed to send message:", error);
+//     return { ok: false };
+//   }
+// }
 
 // create a new chatroom
 export async function createOrGetChatroom(
@@ -2562,6 +2670,66 @@ export async function getImage(userId: string) {
       success: false,
       message: error.message || "An error occurred",
       image: null,
+    };
+  }
+}
+
+export async function getChatroomParticipantsImage(
+  chatroomId: string,
+  authenticatedUserId: string
+) {
+  try {
+    await connectToDB();
+
+    const chatroom = await ChatroomModel.findById(chatroomId).select(
+      "participants"
+    );
+
+    if (!chatroom) {
+      return {
+        success: false,
+        message: "Chatroom not found",
+      };
+    }
+
+    const filteredParticipants = chatroom.participants.filter(
+      (participant: any) => participant._id.toString() !== authenticatedUserId
+    );
+
+    const participantImages = await Promise.all(
+      filteredParticipants.map(async (participant: any) => {
+        const member = await MemberModel.findOne({
+          user: participant._id,
+        }).select("image");
+
+        let imgUrl = null;
+
+        if (member && member.image) {
+          const imageRecord = await Image.findById(member.image).select(
+            "binaryCode"
+          );
+
+          imgUrl = imageRecord?.binaryCode || null;
+        }
+
+        return {
+          participantId: participant._id,
+          image: imgUrl,
+        };
+      })
+    );
+
+    return {
+      success: true,
+      message: "Images retrieved successfully",
+      images: participantImages,
+    };
+  } catch (error: any) {
+    console.error("Error fetching participant images:", error);
+    return {
+      success: false,
+      message: error.message || "An error occurred",
+      images: null,
     };
   }
 }

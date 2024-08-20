@@ -3,14 +3,11 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SendIcon, PlusIcon } from "lucide-react";
-import Link from "next/link";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  fetchAllUser,
   getMutualFollowStatus,
   createOrGetChatroom,
-  sendMessage,
 } from "@/lib/actions/user.actions";
 import {
   Card,
@@ -20,43 +17,76 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getChatroomParticipantsImage } from "@/lib/actions/user.actions";
 
 interface Message {
   _id: string;
   content: string;
   senderId: string;
   createdAt: string;
+  sender: {
+    _id: string;
+    image: string | null;
+  };
 }
 
 interface ChatroomMainBarProps {
   chatrooms: any[];
   authenticatedUserId: string;
   selectedChatroom: string | null;
+  allUsers: any[];
   messages: Message[];
+  ws: WebSocket | null;
 }
 
 export default function ChatRoomMainBar({
   chatrooms,
   authenticatedUserId,
   selectedChatroom,
+  allUsers,
   messages,
+  ws,
 }: ChatroomMainBarProps) {
-  //   const [allUsers, setAllUsers] = useState<{
-  //     success: boolean;
-  //     users: any[];
-  //     message: string;
-  //   }>({
-  //     success: false,
-  //     users: [],
-  //     message: "",
-  //   });
-
   if (!selectedChatroom) {
     return <div>Select a chatroom to start chatting.</div>;
   }
 
-  //   console.log("selectedChatroom:" + selectedChatroom);
   const [messageContent, setMessageContent] = useState<string>("");
+  const [currentMessages, setCurrentMessages] = useState<Message[]>(messages);
+  const [participantImages, setParticipantImages] = useState<
+    { participantId: string; image: string | null }[]
+  >([]);
+
+  useEffect(() => {
+    const fetchParticipantImages = async () => {
+      if (selectedChatroom) {
+        const response = await getChatroomParticipantsImage(
+          selectedChatroom,
+          authenticatedUserId
+        );
+        if (response.success && response.images) {
+          setParticipantImages(response.images);
+        } else {
+          console.error(
+            "Failed to fetch participant images: ",
+            response.message
+          );
+        }
+      }
+    };
+
+    fetchParticipantImages();
+  }, [selectedChatroom]);
+
+  useEffect(() => {
+    // if (messages && messages.length > 0) {
+    setCurrentMessages(messages);
+    // }
+  }, [messages]);
+
+  const selectedChatroomData = chatrooms.find(
+    (chatroom) => chatroom._id === selectedChatroom
+  );
 
   // first time chatting
   const createChatBox = async (
@@ -107,66 +137,125 @@ export default function ChatRoomMainBar({
   const sendMessageHandler = async (
     senderId: string,
     chatroomId: string,
-    content: string
+    content: string,
+    ws: WebSocket
   ) => {
-    if (!content.trim()) return;
+    if (!content.trim() || !ws) return;
 
     console.log("senderId:" + senderId);
     console.log("chatroomId:" + chatroomId);
     console.log("content:" + content);
 
     try {
-      const sendMessageResponse = await sendMessage(
-        senderId,
-        chatroomId,
-        content
-      );
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        const message = {
+          type: "sendMessage",
+          senderId,
+          chatroomId,
+          content,
+        };
 
-      if (sendMessageResponse.success) {
-        console.log("Successfully send message!");
+        const newMessage: Message = {
+          _id: Date.now().toString(),
+          content,
+          senderId,
+          createdAt: new Date().toISOString(),
+          sender: {
+            _id: senderId,
+            image: null,
+          },
+        };
+
+        console.log("newMessage:" + newMessage);
+
+        setCurrentMessages((prevMessages) => [...prevMessages, newMessage]);
+
+        ws.send(JSON.stringify(message));
+
+        console.log("Message sent via WebSocket!");
       } else {
-        console.log("Send Message fail!!");
+        console.error("WebSocket is not open. Cannot send message.");
       }
     } catch (error: any) {
       console.error("Failed to send message:", error);
     }
+
     setMessageContent("");
+  };
+
+  const formatMessageTime = (dateString: string): string => {
+    const messageDate = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor(
+      (now.getTime() - messageDate.getTime()) / 1000
+    );
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+
+    if (diffInSeconds < 60) {
+      return `${diffInSeconds} seconds ago`;
+    } else if (diffInMinutes < 60) {
+      return `${diffInMinutes} minutes ago`;
+    } else if (diffInHours < 24) {
+      return `${diffInHours} hours ago`;
+    } else {
+      const day = messageDate.getDate();
+      const month = messageDate
+        .toLocaleString("en-US", { month: "short" })
+        .toUpperCase();
+      const time = messageDate.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
+      return `${day} ${month} AT ${time}`;
+    }
   };
 
   return (
     <>
       <div className="flex flex-col w-full">
         <div className="flex-1 overflow-auto p-4 md:p-6">
-          {messages.length > 0 ? (
-            messages.map((message: any) => (
-              <div
-                key={message._id}
-                className={`flex items-start gap-3 ${
-                  message.senderId === authenticatedUserId
-                    ? "justify-end"
-                    : "justify-start"
-                }`}
-              >
-                {message.senderId !== authenticatedUserId && (
-                  <Avatar className="h-8 w-8 border">
-                    <AvatarImage src="/path-to-other-avatar.jpg" />
-                    <AvatarFallback>?</AvatarFallback>
-                  </Avatar>
-                )}
+          {currentMessages.length > 0 ? (
+            currentMessages.map((message: Message) => {
+              const senderImage = participantImages.find(
+                (img) => img.participantId === message.senderId
+              )?.image;
+
+              return (
                 <div
-                  className={`max-w-[75%] rounded-lg p-3 text-sm ${
+                  key={message._id}
+                  className={`flex items-start gap-3 ${
                     message.senderId === authenticatedUserId
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
+                      ? "justify-end"
+                      : "justify-start"
                   }`}
                 >
-                  <p>{message.content}</p>
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    {new Date(message.createdAt).toLocaleTimeString()}
+                  {message.senderId !== authenticatedUserId && (
+                    <Avatar className="h-8 w-8 border">
+                      <AvatarImage
+                        src={senderImage || "/placeholder-user.jpg"}
+                      />
+                      <AvatarFallback>?</AvatarFallback>
+                    </Avatar>
+                  )}
+                  <div
+                    className={`max-w-[75%] rounded-lg p-3 text-sm ${
+                      message.senderId === authenticatedUserId
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    <p>{message.content}</p>
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      {/* {new Date(message.createdAt).toLocaleTimeString()} */}
+                      {formatMessageTime(message.createdAt)}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <p>No messages yet.</p>
           )}
@@ -239,71 +328,6 @@ export default function ChatRoomMainBar({
             )}
           </>
         )} */}
-        {/* <div className="flex h-14 items-center border-b px-4 md:px-6">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10 border">
-              <AvatarImage src="/placeholder-user.jpg" />
-              <AvatarFallback>AC</AvatarFallback>
-            </Avatar>
-            <div>
-              <div className="font-medium">Acme Inc</div>
-              <p className="text-muted-foreground text-sm">Online</p>
-            </div>
-          </div>
-          <div className="ml-auto flex items-center gap-2"></div>
-        </div>
-        <div className="flex-1 overflow-auto p-4 md:p-6">
-          <div className="grid gap-4">
-            <div className="flex items-start gap-3">
-              <Avatar className="h-8 w-8 border">
-                <AvatarImage src="/placeholder-user.jpg" />
-                <AvatarFallback>AC</AvatarFallback>
-              </Avatar>
-              <div className="max-w-[75%] rounded-lg bg-muted p-3 text-sm">
-                <p>Hey, how's it going?</p>
-                <div className="mt-2 text-xs text-muted-foreground">
-                  2:34 PM
-                </div>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 justify-end">
-              <div className="max-w-[75%] rounded-lg bg-primary p-3 text-sm text-primary-foreground">
-                <p>Pretty good, just working on some new features.</p>
-                <div className="mt-2 text-xs text-muted-foreground">
-                  2:35 PM
-                </div>
-              </div>
-              <Avatar className="h-8 w-8 border">
-                <AvatarImage src="/placeholder-user.jpg" />
-                <AvatarFallback>AC</AvatarFallback>
-              </Avatar>
-            </div>
-            <div className="flex items-start gap-3">
-              <Avatar className="h-8 w-8 border">
-                <AvatarImage src="/placeholder-user.jpg" />
-                <AvatarFallback>AC</AvatarFallback>
-              </Avatar>
-              <div className="max-w-[75%] rounded-lg bg-muted p-3 text-sm">
-                <p>That's great, let me know if you need any help!</p>
-                <div className="mt-2 text-xs text-muted-foreground">
-                  2:36 PM
-                </div>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 justify-end">
-              <div className="max-w-[75%] rounded-lg bg-primary p-3 text-sm text-primary-foreground">
-                <p>Will do, thanks!</p>
-                <div className="mt-2 text-xs text-muted-foreground">
-                  2:37 PM
-                </div>
-              </div>
-              <Avatar className="h-8 w-8 border">
-                <AvatarImage src="/placeholder-user.jpg" />
-                <AvatarFallback>AC</AvatarFallback>
-              </Avatar>
-            </div>
-          </div>
-        </div> */}
         <div className="border-t px-4 py-3 md:px-6">
           <div className="relative flex item-center">
             <Textarea
@@ -316,30 +340,23 @@ export default function ChatRoomMainBar({
               type="submit"
               size="icon"
               className="absolute right-3 top-1/2 transform -translate-y-1/2"
-              onClick={() =>
-                sendMessageHandler(
-                  authenticatedUserId,
-                  selectedChatroom,
-                  messageContent
-                )
-              }
+              onClick={() => {
+                if (ws) {
+                  sendMessageHandler(
+                    authenticatedUserId,
+                    selectedChatroom,
+                    messageContent,
+                    ws
+                  );
+                } else {
+                  console.error("WebSocket connection is not available.");
+                }
+              }}
             >
               <SendIcon className="w-4 h-4" />
-              {/* <span className="sr-only">Send</span> */}
             </Button>
           </div>
         </div>
-
-        {/* <h2 className="text-xl font-bold">{selectedChatroom._id}</h2> */}
-        {/* Render participants, messages, etc., using selectedChatroom */}
-        {/* <div>
-          <h3>Participants:</h3> */}
-        {/* <ul>
-          {selectedChatroom.participants.map((participant) => (
-            <li key={participant._id}>{participant.accountName}</li>
-          ))}
-        </ul> */}
-        {/* </div> */}
       </div>
     </>
   );

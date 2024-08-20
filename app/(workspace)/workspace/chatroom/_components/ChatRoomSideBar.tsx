@@ -215,7 +215,7 @@ export default function ChatRoomSideBar({
             <div
               key={chatroom._id}
               onClick={() => onSelectChatroom(chatroom.chatroomId)}
-              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer hover:bg-white-900 hover:text-black"
+              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer hover:bg-gray-200 hover:text-black"
             >
               <Avatar className="h-10 w-10 border">
                 <AvatarImage
@@ -234,11 +234,6 @@ export default function ChatRoomSideBar({
                   {chatroom.chatroomId}
                 </div>
               </div>
-              {/* {chatroom.lastMessageTime && (
-                <div className="text-xs text-muted-foreground">
-                  {chatroom.lastMessageTime}
-                </div>
-              )} */}
             </div>
           ))}
         </nav>
