@@ -6,8 +6,9 @@ import ChatRoomMainBar from "./ChatRoomMainComponent";
 
 interface Participant {
   _id: string;
-  accountName: string;
+  accountname: string;
   image: string;
+  user: string;
 }
 
 interface Message {
@@ -19,6 +20,7 @@ interface Message {
     _id: string;
     image: string | null;
   };
+  readStatus: { userId: string; readAt: string | null }[];
 }
 
 interface Chatroom {
@@ -44,6 +46,7 @@ export default function ChatRoomComponent({
   const [selectedChatroom, setSelectedChatroom] = useState<string | null>("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [ws, setWs] = useState<WebSocket | null>(null);
+  const [receiverInfo, setReceiverInfo] = useState<Participant | null>(null);
 
   useEffect(() => {
     const newWs = new WebSocket("ws://localhost:8080");
@@ -56,18 +59,35 @@ export default function ChatRoomComponent({
       const receivedMessage = JSON.parse(event.data);
 
       if (receivedMessage.type === "messages") {
-        console.log("Received messages:", receivedMessage.messages);
-        // console.log("receivedMessage" + receivedMessage.userInfo.image);
-
-        console.log("userifo image" + receivedMessage?.userInfo?.image);
+        // trigger when the user initially load the message
+        // console.log("Received messages:", receivedMessage.messages);
         setMessages(receivedMessage.messages);
-        // setUserImg(receivedMessage?.userInfo?.image);
+
+        setReceiverInfo(receivedMessage.receiverInfo);
       } else if (receivedMessage.type === "newMessage") {
-        console.log("New message received:", receivedMessage.message);
+        // trigger when the user send the message
+        // console.log("New message received:", receivedMessage.message);
         setMessages((prevMessages) => [
           ...prevMessages,
           receivedMessage.message,
         ]);
+      } else if (receivedMessage.type === "readStatusUpdated") {
+        // trigger when the user view the message
+        setMessages((prevMessages) => {
+          const messageExists = prevMessages.some(
+            (msg) => msg._id === receivedMessage.message._id
+          );
+
+          if (messageExists) {
+            return prevMessages.map((msg) =>
+              msg._id === receivedMessage.message._id
+                ? receivedMessage.message
+                : msg
+            );
+          } else {
+            return [...prevMessages, receivedMessage.message];
+          }
+        });
       } else if (receivedMessage.type === "error") {
         console.error("Error:", receivedMessage.message);
       }
@@ -109,8 +129,11 @@ export default function ChatRoomComponent({
           const receivedMessage = JSON.parse(event.data);
 
           if (receivedMessage.type === "messages") {
+            setReceiverInfo(receivedMessage.receiverInfo);
             resolve(receivedMessage);
             // console.log("receivedMessage" + receivedMessage.userInfo);
+            console.log("receivedMessage:" + receivedMessage.messages);
+
             ws.removeEventListener("message", handleMessage);
           } else if (receivedMessage.type === "error") {
             reject(receivedMessage.message);
@@ -134,7 +157,7 @@ export default function ChatRoomComponent({
     console.log("Selected Chatroom ID:", chatroomId);
 
     setMessages([]);
-    console.log("clear");
+    // console.log("clear");
 
     if (chatroomId && ws) {
       try {
@@ -148,6 +171,8 @@ export default function ChatRoomComponent({
 
         if (fetchMessagesResponse.success) {
           console.log("fetchMessagesResponse.messages");
+
+          // console.log("fetch message:" + fetchMessagesResponse.)
           setMessages(fetchMessagesResponse.messages);
         } else {
           console.error(
@@ -179,6 +204,7 @@ export default function ChatRoomComponent({
         allUsers={allUsers}
         messages={messages}
         ws={ws}
+        receiverInfo={receiverInfo}
       />
     </div>
   );

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { SendIcon, PlusIcon } from "lucide-react";
+import { SendIcon, PlusIcon, FileUp } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -17,7 +17,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getChatroomParticipantsImage } from "@/lib/actions/user.actions";
+import {
+  getChatroomParticipantsImage,
+  getImage,
+} from "@/lib/actions/user.actions";
+import { CheckCheck, Check } from "lucide-react";
+
+interface Participant {
+  _id: string;
+  accountname: string;
+  image: string;
+  user: string;
+}
 
 interface Message {
   _id: string;
@@ -28,6 +39,7 @@ interface Message {
     _id: string;
     image: string | null;
   };
+  readStatus: { userId: string; readAt: string | null }[];
 }
 
 interface ChatroomMainBarProps {
@@ -37,6 +49,7 @@ interface ChatroomMainBarProps {
   allUsers: any[];
   messages: Message[];
   ws: WebSocket | null;
+  receiverInfo: Participant | null;
 }
 
 export default function ChatRoomMainBar({
@@ -46,6 +59,7 @@ export default function ChatRoomMainBar({
   allUsers,
   messages,
   ws,
+  receiverInfo,
 }: ChatroomMainBarProps) {
   if (!selectedChatroom) {
     return <div>Select a chatroom to start chatting.</div>;
@@ -56,6 +70,7 @@ export default function ChatRoomMainBar({
   const [participantImages, setParticipantImages] = useState<
     { participantId: string; image: string | null }[]
   >([]);
+  const [receiverImage, setReceiverImage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchParticipantImages = async () => {
@@ -79,10 +94,58 @@ export default function ChatRoomMainBar({
   }, [selectedChatroom]);
 
   useEffect(() => {
-    // if (messages && messages.length > 0) {
     setCurrentMessages(messages);
-    // }
+
+    messages.forEach((message) => {
+      message.readStatus.forEach((status) => {
+        if (status.userId === authenticatedUserId && !status.readAt) {
+          console.log("yes, i seen the message");
+          updateReadStatus(message._id, authenticatedUserId);
+        } else {
+          console.log("i should not update the status");
+        }
+      });
+    });
   }, [messages]);
+
+  useEffect(() => {
+    console.log("Rendering with messages:", currentMessages);
+  }, [currentMessages]);
+
+  useEffect(() => {
+    const fetchReceiverImage = async () => {
+      if (receiverInfo && receiverInfo.user) {
+        console.log("receiverInfo._id" + receiverInfo.user);
+        const response = await getImage(receiverInfo.user);
+        if (response.success && response.image) {
+          setReceiverImage(response.image);
+        } else {
+          console.error(
+            "Failed to retrieve receiver's image:",
+            response.message
+          );
+        }
+      }
+    };
+
+    fetchReceiverImage();
+  }, [receiverInfo]);
+
+  const updateReadStatus = (messageId: string, userId: string) => {
+    console.log("Updating read status...");
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      const readStatusUpdate = {
+        type: "updateReadStatus",
+        messageId,
+        userId,
+        readAt: new Date().toISOString(),
+      };
+      ws.send(JSON.stringify(readStatusUpdate));
+      console.log("Read status updated:", readStatusUpdate);
+    } else {
+      console.error("WebSocket is not open, cannot update read status.");
+    }
+  };
 
   const selectedChatroomData = chatrooms.find(
     (chatroom) => chatroom._id === selectedChatroom
@@ -148,13 +211,20 @@ export default function ChatRoomMainBar({
 
     try {
       if (ws && ws.readyState === WebSocket.OPEN) {
+        // sent to ws
         const message = {
           type: "sendMessage",
           senderId,
           chatroomId,
           content,
+          readStatus: receiverInfo
+            ? [{ userId: receiverInfo.user, readAt: null }]
+            : [],
         };
 
+        console.log("send message:" + JSON.stringify(message));
+
+        // for frontend display
         const newMessage: Message = {
           _id: Date.now().toString(),
           content,
@@ -164,9 +234,12 @@ export default function ChatRoomMainBar({
             _id: senderId,
             image: null,
           },
+          readStatus: receiverInfo
+            ? [{ userId: receiverInfo.user, readAt: null }]
+            : [],
         };
 
-        console.log("newMessage:" + newMessage);
+        console.log("newMessage:" + JSON.stringify(newMessage));
 
         setCurrentMessages((prevMessages) => [...prevMessages, newMessage]);
 
@@ -194,11 +267,11 @@ export default function ChatRoomMainBar({
     const diffInDays = Math.floor(diffInHours / 24);
 
     if (diffInSeconds < 60) {
-      return `${diffInSeconds} seconds ago`;
+      return `${diffInSeconds} second${diffInSeconds === 1 ? "" : "s"} ago`;
     } else if (diffInMinutes < 60) {
-      return `${diffInMinutes} minutes ago`;
+      return `${diffInMinutes} minute${diffInMinutes === 1 ? "" : "s"} ago`;
     } else if (diffInHours < 24) {
-      return `${diffInHours} hours ago`;
+      return `${diffInHours} hour${diffInHours === 1 ? "" : "s"} ago`;
     } else {
       const day = messageDate.getDate();
       const month = messageDate
@@ -211,6 +284,10 @@ export default function ChatRoomMainBar({
       });
       return `${day} ${month} AT ${time}`;
     }
+  };
+
+  const viewSeenTime = () => {
+    console.log("seen time");
   };
 
   return (
@@ -243,13 +320,32 @@ export default function ChatRoomMainBar({
                   <div
                     className={`max-w-[75%] rounded-lg p-3 text-sm ${
                       message.senderId === authenticatedUserId
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground"
+                        ? "bg-primary text-white rounded-xl"
+                        : "bg-primary text-white rounded-xl"
                     }`}
                   >
-                    <p>{message.content}</p>
-                    <div className="mt-2 text-xs text-muted-foreground">
-                      {/* {new Date(message.createdAt).toLocaleTimeString()} */}
+                    <div className="flex justify-between items-center">
+                      <p className="text-base flex-1">{message.content}</p>
+                      {message.readStatus &&
+                        message.readStatus.length > 0 &&
+                        message.senderId === authenticatedUserId && (
+                          <div className="flex items-center ml-2">
+                            {message.readStatus.map((status) => (
+                              <span key={status.userId} className="ml-1">
+                                {status.readAt ? (
+                                  <CheckCheck
+                                    onClick={viewSeenTime}
+                                    className="w-4 h-4 text-green-400 curosr-pointer"
+                                  />
+                                ) : (
+                                  <Check className="w-4 h-4 text-gray-400" />
+                                )}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1">
                       {formatMessageTime(message.createdAt)}
                     </div>
                   </div>
@@ -257,7 +353,25 @@ export default function ChatRoomMainBar({
               );
             })
           ) : (
-            <p>No messages yet.</p>
+            <div className="flex flex-col items-center">
+              {receiverInfo && (
+                <>
+                  <Avatar className="h-[200px] w-[200px]  mb-4 border">
+                    <AvatarImage
+                      src={receiverImage || "/placeholder-user.jpg"}
+                    />
+                    <AvatarFallback>
+                      {receiverInfo.accountname
+                        ? receiverInfo.accountname.charAt(0)
+                        : "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <p>{receiverInfo.accountname}</p>
+                  <Button className="mt-2">View Profile</Button>
+                </>
+              )}
+              {/* <p>No messages yet.</p> */}
+            </div>
           )}
         </div>
         {/* {chatrooms.length > 0 ? (
@@ -355,6 +469,12 @@ export default function ChatRoomMainBar({
             >
               <SendIcon className="w-4 h-4" />
             </Button>
+            {/* <Button
+              size="icon"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2"
+            >
+              <FileUp className="w-4 h-4" />
+            </Button> */}
           </div>
         </div>
       </div>

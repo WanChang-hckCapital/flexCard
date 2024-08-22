@@ -2461,72 +2461,6 @@ export async function fetchMessagesWs(
   }
 }
 
-// export async function sendMessage(
-//   authenticatedId: string,
-//   chatroomId: string,
-//   content: string
-// ) {
-//   try {
-//     await connectToDB();
-
-//     const chatroom = await ChatroomModel.findOne({ _id: chatroomId });
-
-//     console.log("chatroom:" + chatroom);
-
-//     if (!chatroom) {
-//       return { success: false, message: "Chatroom not found." };
-//     }
-
-//     // Send the message
-//     const message = new MessageModel({
-//       chatroomId: chatroom._id,
-//       senderId: authenticatedId,
-//       content: content,
-//       createdAt: new Date(),
-//     });
-
-//     await message.save();
-//     console.log("Message sent successfully:", message);
-
-//     return { success: true, message: "Message sent successfully." };
-//   } catch (error) {
-//     console.error("Error sending message:", error);
-//     return { success: false, message: "Failed to send message." };
-//   }
-// }
-
-// export async function sendMessageWs(
-//   senderId: string,
-//   chatroomId: string,
-//   content: string
-// ) {
-//   try {
-//     const response = await fetch("http://localhost:8081/sendMessage", {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//       },
-//       body: JSON.stringify({
-//         senderId,
-//         chatroomId,
-//         content,
-//       }),
-//     });
-
-//     const sendMessageResponse = await response.json();
-
-//     if (response.ok && sendMessageResponse.success) {
-//       console.log("Successfully sent message!");
-//     } else {
-//       console.log("Send Message failed!!");
-//     }
-//     return response;
-//   } catch (error: any) {
-//     console.error("Failed to send message:", error);
-//     return { ok: false };
-//   }
-// }
-
 // create a new chatroom
 export async function createOrGetChatroom(
   authenticatedId: string,
@@ -2593,7 +2527,7 @@ export async function getCurrentUserChatroom(authenticatedId: string) {
             participantId: participantId.toString(),
             user: member.user,
             email: member.email,
-            accountName: member.accountname,
+            accountname: member.accountname,
             image: imgUrl,
           });
         } else {
@@ -2613,13 +2547,6 @@ export async function getCurrentUserChatroom(authenticatedId: string) {
         updatedAt: chatroom.updatedAt,
       });
     }
-
-    // console.log("chatroomDetails:" + chatroomDetails[0].chatroomId);
-    // console.log(
-    //   "participants:" +
-    //     chatroomDetails[0].participants[0].user +
-    //     chatroomDetails[0].participants[0].image
-    // );
 
     return {
       success: true,

@@ -213,5 +213,6 @@ export type Message = {
   chatroomId: {};
   senderId: {};
   content: string;
+  readStatus: [];
 };
 // workspace

@@ -17,6 +17,19 @@ const messageSchema = new Schema<Message>(
       type: String,
       required: true,
     },
+    readStatus: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Member",
+          required: true,
+        },
+        readAt: {
+          type: Date,
+          default: null,
+        },
+      },
+    ],
   },
   {
     timestamps: true,

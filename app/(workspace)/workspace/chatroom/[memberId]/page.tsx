@@ -84,16 +84,16 @@ export default async function ChatComponent({ params }: ChatRoomProps) {
   return (
     <div>
       <div className="flex h-screen w-full bg-background">
-        {allChatrooms.success ? (
-          <ChatRoomComponent
-            chatrooms={allChatrooms.chatrooms}
-            authenticatedUserId={memberId}
-            allUsers={allUsers.users}
-            allFollowerAndFollowing={allFollowerAndFollowing}
-          />
-        ) : (
+        {/* {allChatrooms.success ? ( */}
+        <ChatRoomComponent
+          chatrooms={allChatrooms.chatrooms}
+          authenticatedUserId={memberId}
+          allUsers={allUsers.users}
+          allFollowerAndFollowing={allFollowerAndFollowing}
+        />
+        {/* ) : (
           <SkeletonComponent />
-        )}
+        )} */}
       </div>
     </div>
   );
