@@ -21,6 +21,8 @@ interface Message {
     image: string | null;
   };
   readStatus: { userId: string; readAt: string | null }[];
+  imageAttach: string | null;
+  imageSrc: string;
 }
 
 interface Chatroom {
@@ -58,6 +60,8 @@ export default function ChatRoomComponent({
     newWs.onmessage = (event) => {
       const receivedMessage = JSON.parse(event.data);
 
+      // console.log("receivedMessage.message: " + receivedMessage.message);
+
       if (receivedMessage.type === "messages") {
         // trigger when the user initially load the message
         // console.log("Received messages:", receivedMessage.messages);
@@ -65,8 +69,13 @@ export default function ChatRoomComponent({
 
         setReceiverInfo(receivedMessage.receiverInfo);
       } else if (receivedMessage.type === "newMessage") {
-        // trigger when the user send the message
-        // console.log("New message received:", receivedMessage.message);
+        // trigger when send message send
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          receivedMessage.message,
+        ]);
+      } else if (receivedMessage.type === "messageSent") {
+        // TODO - remove in future
         setMessages((prevMessages) => [
           ...prevMessages,
           receivedMessage.message,

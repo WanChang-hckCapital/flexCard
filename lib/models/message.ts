@@ -15,7 +15,7 @@ const messageSchema = new Schema<Message>(
     },
     content: {
       type: String,
-      required: true,
+      // required: true,
     },
     readStatus: [
       {
@@ -29,6 +29,9 @@ const messageSchema = new Schema<Message>(
           default: null,
         },
       },
+    ],
+    imageAttach: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "Image", default: null },
     ],
   },
   {

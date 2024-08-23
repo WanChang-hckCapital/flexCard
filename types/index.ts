@@ -214,5 +214,6 @@ export type Message = {
   senderId: {};
   content: string;
   readStatus: [];
+  imageAttach: string | null;
 };
 // workspace

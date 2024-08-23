@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { SendIcon, PlusIcon, FileUp } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -21,7 +21,31 @@ import {
   getChatroomParticipantsImage,
   getImage,
 } from "@/lib/actions/user.actions";
-import { CheckCheck, Check } from "lucide-react";
+import {
+  CheckCheck,
+  Check,
+  Image,
+  Plus,
+  MapPin,
+  CircleUserRound,
+  File,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@radix-ui/react-dropdown-menu";
+import { X } from "lucide-react";
+import MessageImageModel from "./MessageImageModal";
+import { toast } from "sonner";
 
 interface Participant {
   _id: string;
@@ -40,6 +64,8 @@ interface Message {
     image: string | null;
   };
   readStatus: { userId: string; readAt: string | null }[];
+  imageAttach: string | null;
+  imageSrc: string;
 }
 
 interface ChatroomMainBarProps {
@@ -65,12 +91,18 @@ export default function ChatRoomMainBar({
     return <div>Select a chatroom to start chatting.</div>;
   }
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [messageContent, setMessageContent] = useState<string>("");
   const [currentMessages, setCurrentMessages] = useState<Message[]>(messages);
   const [participantImages, setParticipantImages] = useState<
     { participantId: string; image: string | null }[]
   >([]);
   const [receiverImage, setReceiverImage] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  // const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [currentImageSrc, setCurrentImageSrc] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchParticipantImages = async () => {
@@ -203,57 +235,125 @@ export default function ChatRoomMainBar({
     content: string,
     ws: WebSocket
   ) => {
-    if (!content.trim() || !ws) return;
+    if (!ws) return;
 
-    console.log("senderId:" + senderId);
-    console.log("chatroomId:" + chatroomId);
-    console.log("content:" + content);
+    // console.log("senderId:" + senderId);
+    // console.log("chatroomId:" + chatroomId);
+    // console.log("content:" + content);
+
+    let fileObjectId: string | null = null;
+    let imageSrc: string = "";
+
+    const sendMessage = (imageObjectId: string | null = null) => {
+      console.log("fileurl" + imageObjectId);
+      try {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          const message = {
+            type: "sendMessage",
+            senderId,
+            chatroomId,
+            content,
+            imageAttach: imageObjectId,
+            readStatus: receiverInfo
+              ? [{ userId: receiverInfo.user, readAt: null }]
+              : [],
+          };
+
+          // console.log("send message:" + JSON.stringify(message));
+
+          // For frontend display
+          const newMessage: Message = {
+            _id: Date.now().toString(),
+            senderId,
+            content,
+            imageAttach: imageObjectId,
+            createdAt: new Date().toISOString(),
+            sender: {
+              _id: senderId,
+              image: null,
+            },
+            readStatus: receiverInfo
+              ? [{ userId: receiverInfo.user, readAt: null }]
+              : [],
+            imageSrc,
+          };
+
+          // console.log("newMessage:" + JSON.stringify(newMessage));
+
+          setCurrentMessages((prevMessages) => [...prevMessages, newMessage]);
+
+          ws.send(JSON.stringify(message));
+
+          console.log("Message sent via WebSocket!");
+        } else {
+          console.error("WebSocket is not open. Cannot send message.");
+        }
+      } catch (error) {
+        console.error("Failed to send message:", error);
+      }
+
+      setMessageContent("");
+      setImagePreview(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    };
 
     try {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        // sent to ws
-        const message = {
-          type: "sendMessage",
-          senderId,
-          chatroomId,
-          content,
-          readStatus: receiverInfo
-            ? [{ userId: receiverInfo.user, readAt: null }]
-            : [],
-        };
+      const hasContent = content.trim() !== "";
+      const hasImage = fileInputRef.current?.files?.[0] != null;
 
-        console.log("send message:" + JSON.stringify(message));
+      if (hasContent && hasImage) {
+        // scenario 1: Both content and image
+        const file = fileInputRef.current?.files![0];
 
-        // for frontend display
-        const newMessage: Message = {
-          _id: Date.now().toString(),
-          content,
-          senderId,
-          createdAt: new Date().toISOString(),
-          sender: {
-            _id: senderId,
-            image: null,
-          },
-          readStatus: receiverInfo
-            ? [{ userId: receiverInfo.user, readAt: null }]
-            : [],
-        };
+        const formData = new FormData();
+        formData.append("file", file);
 
-        console.log("newMessage:" + JSON.stringify(newMessage));
+        const response = await fetch("/api/uploadMessageImage", {
+          method: "POST",
+          body: formData,
+        });
 
-        setCurrentMessages((prevMessages) => [...prevMessages, newMessage]);
+        if (response.ok) {
+          const result = await response.json();
+          fileObjectId = result.fileId;
 
-        ws.send(JSON.stringify(message));
+          sendMessage(fileObjectId);
+        } else {
+          console.error("Failed to upload image. Status:", response.status);
+          sendMessage();
+        }
+      } else if (hasContent && !hasImage) {
+        // scenario 2: Only content (no image)
+        sendMessage();
+      } else if (!hasContent && hasImage) {
+        // scenario 3: Only image (no content)
+        const file = fileInputRef.current?.files![0];
 
-        console.log("Message sent via WebSocket!");
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch("/api/uploadMessageImage", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          fileObjectId = result.fileId;
+
+          sendMessage(fileObjectId);
+        } else {
+          console.error("Failed to upload image. Status:", response.status);
+          sendMessage();
+        }
       } else {
-        console.error("WebSocket is not open. Cannot send message.");
+        toast.error("Message cannot be empty!!");
       }
-    } catch (error: any) {
-      console.error("Failed to send message:", error);
+    } catch (error) {
+      console.error("Error processing file or sending message:", error);
     }
-
-    setMessageContent("");
   };
 
   const formatMessageTime = (dateString: string): string => {
@@ -290,6 +390,54 @@ export default function ChatRoomMainBar({
     console.log("seen time");
   };
 
+  const handlePhotoUploadClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  // preview image save
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          //set the image preview
+          setImagePreview(reader.result);
+        } else {
+          console.error("Unexpected file data type:", typeof reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeFileUpload = () => {
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleFileUpload = () => {
+    console.log("handleFileUpload");
+  };
+
+  const handleLocationSharing = () => {
+    console.log("handleLocationSharing");
+  };
+
+  const handleImageClick = (imageSrc: string) => {
+    setCurrentImageSrc(imageSrc);
+    setModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setCurrentImageSrc(null);
+  };
+
   return (
     <>
       <div className="flex flex-col w-full">
@@ -316,6 +464,23 @@ export default function ChatRoomMainBar({
                       />
                       <AvatarFallback>?</AvatarFallback>
                     </Avatar>
+                  )}
+                  {message.imageAttach && message.imageSrc && (
+                    <>
+                      <div className="mb-2">
+                        <img
+                          src={message.imageSrc}
+                          alt="Attached"
+                          className="max-h-[300px] max-w-[300px] rounded-md border border-white cursor-pointer"
+                          onClick={() => handleImageClick(message.imageSrc)}
+                        />
+                      </div>
+                      <MessageImageModel
+                        isOpen={isModalOpen}
+                        imageSrc={currentImageSrc || ""}
+                        onClose={handleCloseModal}
+                      />
+                    </>
                   )}
                   <div
                     className={`max-w-[75%] rounded-lg p-3 text-sm ${
@@ -442,41 +607,102 @@ export default function ChatRoomMainBar({
             )}
           </>
         )} */}
-        <div className="border-t px-4 py-3 md:px-6">
-          <div className="relative flex item-center">
-            <Textarea
-              placeholder="Type your message..."
-              className="min-h-[48px] w-full rounded-2xl text-black resize-none pr-16"
-              value={messageContent}
-              onChange={(e) => setMessageContent(e.target.value)}
-            />
-            <Button
-              type="submit"
-              size="icon"
-              className="absolute right-3 top-1/2 transform -translate-y-1/2"
-              onClick={() => {
-                if (ws) {
-                  sendMessageHandler(
-                    authenticatedUserId,
-                    selectedChatroom,
-                    messageContent,
-                    ws
-                  );
-                } else {
-                  console.error("WebSocket connection is not available.");
-                }
-              }}
-            >
-              <SendIcon className="w-4 h-4" />
-            </Button>
-            {/* <Button
-              size="icon"
-              className="absolute right-3 top-1/2 transform -translate-y-1/2"
-            >
-              <FileUp className="w-4 h-4" />
-            </Button> */}
+        <div className="border-t px-4 py-3 md:px-6 flex items-center">
+          <div className="mr-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="ml-auto rounded-full"
+                >
+                  <PlusIcon className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="bg-black text-white border border-gray-100 rounded-lg shadow-md p-2 w-[200px] "
+              >
+                <DropdownMenuItem
+                  className="flex items-center text-2xl p-3"
+                  onClick={handlePhotoUploadClick}
+                >
+                  <Image className="mr-2 h-5 w-5" />
+                  Photo
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="flex items-center text-2xl p-3"
+                  onClick={handleFileUpload}
+                >
+                  <File className="mr-2 h-5 w-5" />
+                  File
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="flex items-center text-2xl p-3"
+                  onClick={handleLocationSharing}
+                >
+                  <MapPin className="mr-2 h-5 w-5" />
+                  Location
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <div className="relative flex-grow">
+            {imagePreview && (
+              <div className="relative max-h-[150px] max-w-[150px] mb-4 self-center">
+                <img
+                  src={imagePreview}
+                  alt="Selected"
+                  className="max-h-[150px] max-w-[150px] border border-gray-300 mr-4 mb-4"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-0 right-0 rounded-full p-1"
+                >
+                  <X
+                    className="w-4 h-4 text-gray-500"
+                    onClick={removeFileUpload}
+                  ></X>
+                </Button>
+              </div>
+            )}
+            <div className="relative flex item-center">
+              <Textarea
+                placeholder="Type your message..."
+                className="min-h-[36px] h-[36px] line-height w-full rounded-2xl text-black resize-none pr-16 overflow-hidden leading-[15px]"
+                value={messageContent}
+                onChange={(e) => setMessageContent(e.target.value)}
+              />
+              <Button
+                type="submit"
+                size="icon"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                onClick={() => {
+                  if (ws) {
+                    sendMessageHandler(
+                      authenticatedUserId,
+                      selectedChatroom,
+                      messageContent,
+                      ws
+                    );
+                  } else {
+                    console.error("WebSocket connection is not available.");
+                  }
+                }}
+              >
+                <SendIcon className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </div>
+        <input
+          type="file"
+          ref={fileInputRef}
+          accept="image/*"
+          style={{ display: "none" }}
+          onChange={handleFileChange}
+        />
       </div>
     </>
   );
