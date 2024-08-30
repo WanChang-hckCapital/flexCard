@@ -33,6 +33,14 @@ const messageSchema = new Schema<Message>(
     imageAttach: [
       { type: mongoose.Schema.Types.ObjectId, ref: "Image", default: null },
     ],
+    fileAttach: [{ type: mongoose.Schema.Types.ObjectId, default: null }],
+    locationLink: { type: String },
+    shopName: { type: String },
+    pictureLink: { type: String },
+    card: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Card",
+    },
   },
   {
     timestamps: true,

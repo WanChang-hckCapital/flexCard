@@ -23,6 +23,14 @@ interface Message {
   readStatus: { userId: string; readAt: string | null }[];
   imageAttach: string | null;
   imageSrc: string;
+  fileAttach: string | null;
+  fileSrc: string;
+  fileName: string;
+  locationLink: string | null;
+  shopName: string | null;
+  pictureLink: string | null;
+  card: string | null;
+  flexFormatHtmlContentText: string | null;
 }
 
 interface Chatroom {
@@ -60,7 +68,7 @@ export default function ChatRoomComponent({
     newWs.onmessage = (event) => {
       const receivedMessage = JSON.parse(event.data);
 
-      // console.log("receivedMessage.message: " + receivedMessage.message);
+      console.log(receivedMessage.message);
 
       if (receivedMessage.type === "messages") {
         // trigger when the user initially load the message

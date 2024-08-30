@@ -1084,6 +1084,8 @@ export async function fetchAllCards() {
           image: creator && creatorImage ? creatorImage.binaryCode : undefined,
         };
 
+        // console.log("card:" + card);
+
         const lineComponents = await Card.findOne({ _id: card }).select(
           "lineFormatComponent"
         );
@@ -1131,6 +1133,7 @@ export async function fetchAllCards() {
         return {
           cardId: card._id.toString(),
           title: card.title,
+          description: card.description,
           creator: creatorData,
           likes: likesDetails,
           followers: followers.map((follower) => ({
@@ -2431,36 +2434,6 @@ export async function fetchMessages(
   }
 }
 
-export async function fetchMessagesWs(
-  chatroomId: string,
-  authenticatedUserId: string
-) {
-  try {
-    const response = await fetch(
-      `http://localhost:8081/message/${chatroomId}/${authenticatedUserId}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    if (!response.ok) {
-      throw new Error(`Error fetching messages: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    // console.log("data success:" + data);
-    // console.log("data success length:" + data.messages.length);
-    // console.log("data success:" + data.message);
-
-    return data;
-  } catch (error: any) {
-    console.error("Failed to fetch messages:", error);
-    return { success: false, message: error.message };
-  }
-}
-
 // create a new chatroom
 export async function createOrGetChatroom(
   authenticatedId: string,
@@ -2660,3 +2633,24 @@ export async function getChatroomParticipantsImage(
     };
   }
 }
+
+// export async function resolveShortUrl(
+//   shortUrl: string
+// ): Promise<string | undefined> {
+//   try {
+//     const response = await fetch(
+//       `/api/resolve-url?url=${encodeURIComponent(shortUrl)}`
+//     );
+//     const data: { resolvedUrl?: string; error?: string } =
+//       await response.json();
+
+//     if (data.resolvedUrl) {
+//       console.log("Resolved URL:", data.resolvedUrl);
+//       return data.resolvedUrl;
+//     } else {
+//       console.error("Failed to resolve URL:", data.error);
+//     }
+//   } catch (error) {
+//     console.error("Error fetching resolved URL:", error);
+//   }
+// }

@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import { Readable } from "stream";
 import { GridFSBucket } from "mongodb";
 import mongoose from "mongoose";
-// import { revalidatePath } from "next/cache";
 
 export async function POST(req: Request) {
   try {
@@ -28,6 +27,10 @@ export async function POST(req: Request) {
 
     const uploadStream = bucket.openUploadStream(file.name, {
       contentType: file.type,
+      // metadata: {
+      //   originalName: file.name,
+      //   uploadDate: new Date(),
+      // },
     });
 
     const uploadPromise = new Promise((resolve, reject) => {
@@ -46,7 +49,7 @@ export async function POST(req: Request) {
 
     // revalidatePath("/workspace/create-card");
     // revalidatePath("/workspace/chatroom");
-    // console.log("fileId api:" + fileId);
+    console.log("fileId api:" + fileId);
     return NextResponse.json({
       message: "File uploaded successfully",
       fileId,

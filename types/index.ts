@@ -215,5 +215,10 @@ export type Message = {
   content: string;
   readStatus: [];
   imageAttach: string | null;
+  fileAttach: string | null;
+  locationLink: string | null;
+  shopName: string | null;
+  pictureLink: string | null;
+  card: {};
 };
 // workspace

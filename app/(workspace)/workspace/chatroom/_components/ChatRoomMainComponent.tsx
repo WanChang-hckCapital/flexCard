@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { SendIcon, PlusIcon, FileUp } from "lucide-react";
+import { SendIcon, PlusIcon, FileUp, FileDown } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -29,6 +29,8 @@ import {
   MapPin,
   CircleUserRound,
   File,
+  Menu,
+  LocateFixed,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -46,6 +48,13 @@ import {
 import { X } from "lucide-react";
 import MessageImageModel from "./MessageImageModal";
 import { toast } from "sonner";
+import { fetchAllCards } from "@/lib/actions/user.actions";
+import FlexCardModal from "./FlexCardModal";
+import Link from "next/link";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import { Loader } from "@googlemaps/js-api-loader";
+// import { resolveShortUrl } from "@/lib/actions/user.actions";
 
 interface Participant {
   _id: string;
@@ -66,6 +75,14 @@ interface Message {
   readStatus: { userId: string; readAt: string | null }[];
   imageAttach: string | null;
   imageSrc: string;
+  fileAttach: string | null;
+  fileSrc: string;
+  fileName: string;
+  locationLink: string | null;
+  shopName: string | null;
+  pictureLink: string | null;
+  card: string | null;
+  flexFormatHtmlContentText: string | null;
 }
 
 interface ChatroomMainBarProps {
@@ -76,6 +93,12 @@ interface ChatroomMainBarProps {
   messages: Message[];
   ws: WebSocket | null;
   receiverInfo: Participant | null;
+}
+
+declare global {
+  interface Window {
+    google: typeof google;
+  }
 }
 
 export default function ChatRoomMainBar({
@@ -91,7 +114,11 @@ export default function ChatRoomMainBar({
     return <div>Select a chatroom to start chatting.</div>;
   }
 
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const mapRef = useRef<HTMLDivElement>(null);
+  // const mapRefFromLink = useRef<HTMLDivElement>(null);
+  const mapRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const [messageContent, setMessageContent] = useState<string>("");
   const [currentMessages, setCurrentMessages] = useState<Message[]>(messages);
@@ -100,9 +127,27 @@ export default function ChatRoomMainBar({
   >([]);
   const [receiverImage, setReceiverImage] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  // const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [locationPreview, setLocationPreview] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string>("");
   const [isModalOpen, setModalOpen] = useState(false);
   const [currentImageSrc, setCurrentImageSrc] = useState<string | null>(null);
+
+  const [flexCards, setFlexCards] = useState<any[]>([]);
+  const [isFlexCardModalOpen, setFlexCardModalOpen] = useState(false);
+  const [selectedCard, setSelectedCard] = useState<any>(null);
+  const [map, setMap] = useState<L.Map | null>(null);
+  // const [marker, setMarker] = useState<L.Marker | null>(null);
+  // const [coordinates, setCoordinates] = useState<{
+  //   latitude: number;
+  //   longitude: number;
+  // } | null>(null);
+  const [isMapVisible, setMapVisible] = useState(false);
+  const [googleMap, setGoogleMap] = useState<google.maps.Map | null>(null);
+  const [marker, setMarker] = useState<google.maps.Marker | null>(null);
+  const [locationLink, setLocationLink] = useState<string>("");
+  const [shopName, setShopName] = useState<string | null>(null);
+  const [shopImage, setShopImage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchParticipantImages = async () => {
@@ -162,6 +207,198 @@ export default function ChatRoomMainBar({
 
     fetchReceiverImage();
   }, [receiverInfo]);
+
+  // useEffect(() => {
+  //   if (coordinates && locationPreview && mapRef.current) {
+  //     const { latitude, longitude } = coordinates;
+
+  //     if (!map) {
+  //       // Initialize the map
+  //       const newMap = L.map(mapRef.current).setView([latitude, longitude], 13);
+  //       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  //         attribution: "© OpenStreetMap contributors",
+  //       }).addTo(newMap);
+  //       setMap(newMap);
+  //     } else {
+  //       // Update the map view if the map already exists
+  //       map.setView([latitude, longitude], 13);
+
+  //       if (marker) {
+  //         marker.setLatLng([latitude, longitude]);
+  //       } else {
+  //         const newMarker = L.marker([latitude, longitude]).addTo(map);
+  //         setMarker(newMarker);
+  //       }
+  //     }
+  //   } else {
+  //     console.log("else");
+  //   }
+  // }, [coordinates, locationPreview, mapRef.current]);
+
+  // geolocation to get current location for messages
+  // useEffect(() => {
+  //   currentMessages.forEach((message) => {
+  //     if (message.locationLink && mapRefs.current[message._id]) {
+  //       const mapContainer = mapRefs.current[message._id];
+
+  //       if (mapContainer) {
+  //         const regex = /(-?\d+\.\d+),(-?\d+\.\d+)/;
+  //         const match = message.locationLink.match(regex);
+
+  //         if (match) {
+  //           const latitude = parseFloat(match[1]);
+  //           const longitude = parseFloat(match[2]);
+
+  //           const newMap = L.map(mapContainer).setView(
+  //             [latitude, longitude],
+  //             13
+  //           );
+  //           L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  //             attribution: "© OpenStreetMap contributors",
+  //           }).addTo(newMap);
+
+  //           const svgIcon = `data:image/svg+xml;charset=UTF-8,
+  //             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="red" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin">
+  //                 <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
+  //                 <circle cx="12" cy="10" r="3"/>
+  //             </svg>`;
+  //           const customIcon = L.icon({
+  //             iconUrl: svgIcon,
+  //           });
+
+  //           L.marker([latitude, longitude], { icon: customIcon }).addTo(newMap);
+  //         }
+  //       }
+  //     }
+  //   });
+  // }, [currentMessages]);
+
+  useEffect(() => {
+    currentMessages.forEach((message) => {
+      if (message.locationLink && mapRefs.current[message._id]) {
+        const mapContainer = mapRefs.current[message._id];
+
+        if (mapContainer && !mapContainer._leaflet_id) {
+          // Only initialize the map if it's not already initialized
+          const regex = /(-?\d+\.\d+),(-?\d+\.\d+)/;
+          const match = message.locationLink.match(regex);
+
+          if (match) {
+            const latitude = parseFloat(match[1]);
+            const longitude = parseFloat(match[2]);
+
+            // Initialize the map
+            const newMap = L.map(mapContainer).setView(
+              [latitude, longitude],
+              13
+            );
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+              attribution: "© OpenStreetMap contributors",
+            }).addTo(newMap);
+
+            const svgIcon = `data:image/svg+xml;charset=UTF-8,
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="red" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin">
+                  <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
+                  <circle cx="12" cy="10" r="3"/>
+              </svg>`;
+            const customIcon = L.icon({
+              iconUrl: svgIcon,
+            });
+
+            L.marker([latitude, longitude], { icon: customIcon }).addTo(newMap);
+          }
+        }
+      }
+    });
+  }, [currentMessages]);
+
+  // set the current location by default
+  // click again to reset the location
+  const initializeMap = useCallback(() => {
+    if (mapRef.current && !googleMap) {
+      const loader = new Loader({
+        apiKey: process.env.NEXT_PUBLIC_GOOGLEMAPS_API_KEY || "",
+        version: "weekly",
+        libraries: ["places"],
+      });
+
+      loader
+        .load()
+        .then(() => {
+          console.log("Google Maps API loaded");
+
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              const { latitude, longitude } = position.coords;
+
+              const newMap = new window.google.maps.Map(mapRef.current!, {
+                center: { lat: latitude, lng: longitude }, // current location
+                zoom: 8, // Default zoom level
+              });
+              setGoogleMap(newMap);
+
+              let initialMarker = new window.google.maps.Marker({
+                // set a initial marker
+                position: { lat: latitude, lng: longitude },
+                map: newMap,
+              });
+              setMarker(initialMarker);
+              console.log(
+                `Map centered at user's location: ${latitude}, ${longitude}`
+              );
+
+              newMap.addListener(
+                "click",
+                (event: google.maps.MapMouseEvent) => {
+                  const latLng = event.latLng;
+                  if (latLng) {
+                    const latitude = latLng.lat();
+                    const longitude = latLng.lng();
+                    console.log(`Selected location: ${latitude}, ${longitude}`);
+
+                    // remove existing marker
+                    if (initialMarker) {
+                      initialMarker.setMap(null);
+                    }
+
+                    initialMarker = new window.google.maps.Marker({
+                      position: latLng,
+                      map: newMap,
+                    });
+                    setMarker(initialMarker);
+
+                    const locationLink = `https://maps.google.com/?q=${latitude},${longitude}`;
+                    console.log("Generated Location Link:", locationLink);
+                    setLocationLink(locationLink);
+                  }
+                }
+              );
+            },
+            (error) => {
+              console.error("Error getting user's location:", error);
+              const newMap = new window.google.maps.Map(mapRef.current!, {
+                center: { lat: 25.105, lng: 121.597 }, // Default location // taipei
+                zoom: 8,
+              });
+              setGoogleMap(newMap);
+            }
+          );
+        })
+        .catch((e) => {
+          console.error("Error loading Google Maps API", e);
+        });
+    }
+  }, [googleMap, marker]);
+
+  useEffect(() => {
+    if (isMapVisible) {
+      initializeMap();
+    }
+  }, [isMapVisible, initializeMap]);
+
+  const handleDestinationSelect = () => {
+    setMapVisible(true);
+  };
 
   const updateReadStatus = (messageId: string, userId: string) => {
     console.log("Updating read status...");
@@ -237,15 +474,25 @@ export default function ChatRoomMainBar({
   ) => {
     if (!ws) return;
 
-    // console.log("senderId:" + senderId);
-    // console.log("chatroomId:" + chatroomId);
-    // console.log("content:" + content);
-
     let fileObjectId: string | null = null;
     let imageSrc: string = "";
+    let imageObjectId: string | null = null;
+    let fileName: string = "";
+    let fileSrc: string = "";
 
-    const sendMessage = (imageObjectId: string | null = null) => {
-      console.log("fileurl" + imageObjectId);
+    const cardData = selectedCard ? selectedCard : null;
+    const cardId = cardData?.cardId ? cardData?.cardId : null;
+    const cardFlexHtml = cardData?.flexHtml.content
+      ? cardData.flexHtml.content
+      : null;
+
+    const sendMessage = (
+      imageObjectId: string | null = null,
+      fileObjectId: string | null = null,
+      locationLink: string | null = null,
+      shopName: string | null = null,
+      pictureLink: string | null = null
+    ) => {
       try {
         if (ws && ws.readyState === WebSocket.OPEN) {
           const message = {
@@ -254,12 +501,19 @@ export default function ChatRoomMainBar({
             chatroomId,
             content,
             imageAttach: imageObjectId,
+            fileAttach: fileObjectId,
             readStatus: receiverInfo
               ? [{ userId: receiverInfo.user, readAt: null }]
               : [],
+            fileName,
+            locationLink,
+            shopName,
+            pictureLink,
+            card: cardId,
+            cardFlexHtml,
           };
 
-          // console.log("send message:" + JSON.stringify(message));
+          console.log("send message:" + JSON.stringify(message));
 
           // For frontend display
           const newMessage: Message = {
@@ -276,9 +530,17 @@ export default function ChatRoomMainBar({
               ? [{ userId: receiverInfo.user, readAt: null }]
               : [],
             imageSrc,
+            fileAttach: fileObjectId,
+            fileSrc,
+            fileName,
+            locationLink,
+            shopName,
+            pictureLink,
+            card: cardId,
+            flexFormatHtmlContentText: cardFlexHtml,
           };
 
-          // console.log("newMessage:" + JSON.stringify(newMessage));
+          console.log("frontend messgae:" + JSON.stringify(newMessage));
 
           setCurrentMessages((prevMessages) => [...prevMessages, newMessage]);
 
@@ -294,60 +556,95 @@ export default function ChatRoomMainBar({
 
       setMessageContent("");
       setImagePreview(null);
+      setFilePreview(null);
+      setLocationPreview(null);
+      setShopName(null); // Clear the shop name
+      setShopImage(null);
+      setSelectedCard(null);
+      handleRemoveMap(); // close the google map
+      if (imageInputRef.current) {
+        imageInputRef.current.value = "";
+      }
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
+      setFileName("");
     };
 
     try {
       const hasContent = content.trim() !== "";
-      const hasImage = fileInputRef.current?.files?.[0] != null;
+      const hasImage = imageInputRef.current?.files?.[0] != null;
+      const hasFile = fileInputRef.current?.files?.[0] != null;
+      // const isLocation = locationPreview != null;
+      const isLocation = locationLink != "";
+      const hasShopName = shopName != null;
+      const hasPictureLink = shopImage != null;
 
-      if (hasContent && hasImage) {
-        // scenario 1: Both content and image
-        const file = fileInputRef.current?.files![0];
+      if (hasContent || hasImage || hasFile || isLocation || cardData) {
+        if (hasImage) {
+          const file = imageInputRef.current?.files![0];
+          const formData = new FormData();
+          formData.append("file", file);
 
-        const formData = new FormData();
-        formData.append("file", file);
+          const response = await fetch("/api/uploadMessageImage", {
+            method: "POST",
+            body: formData,
+          });
 
-        const response = await fetch("/api/uploadMessageImage", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          fileObjectId = result.fileId;
-
-          sendMessage(fileObjectId);
-        } else {
-          console.error("Failed to upload image. Status:", response.status);
-          sendMessage();
+          if (response.ok) {
+            const result = await response.json();
+            imageObjectId = result.fileId;
+            imageSrc = URL.createObjectURL(file);
+          } else {
+            console.error("Failed to upload image. Status:", response.status);
+          }
         }
-      } else if (hasContent && !hasImage) {
-        // scenario 2: Only content (no image)
-        sendMessage();
-      } else if (!hasContent && hasImage) {
-        // scenario 3: Only image (no content)
-        const file = fileInputRef.current?.files![0];
+        if (hasFile) {
+          const file = fileInputRef.current?.files![0];
+          const formData = new FormData();
+          formData.append("file", file);
 
-        const formData = new FormData();
-        formData.append("file", file);
+          const response = await fetch("/api/uploadMessageFile", {
+            method: "POST",
+            body: formData,
+          });
 
-        const response = await fetch("/api/uploadMessageImage", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          fileObjectId = result.fileId;
-
-          sendMessage(fileObjectId);
-        } else {
-          console.error("Failed to upload image. Status:", response.status);
-          sendMessage();
+          if (response.ok) {
+            const result = await response.json();
+            fileObjectId = result.fileId;
+            fileName = file.name;
+          } else {
+            console.error("Failed to upload file. Status:", response.status);
+          }
         }
+        // if (isLocation) {
+        //   if (navigator.geolocation) {
+        //     navigator.geolocation.getCurrentPosition(
+        //       (position) => {
+        //         const { latitude, longitude } = position.coords;
+        //         locationLink = `https://maps.google.com/?q=${latitude},${longitude}`;
+        //         sendMessage(imageObjectId, fileObjectId, locationLink);
+        //       },
+        //       (error) => {
+        //         console.error("Error getting location:", error);
+        //         alert("Unable to retrieve your location. Please try again.");
+        //       }
+        //     );
+        //   } else {
+        //     alert("Geolocation is not supported by this browser.");
+        //   }
+        // }
+        // sendMessage(imageObjectId, fileObjectId, locationLink);
+        sendMessage(
+          imageObjectId,
+          fileObjectId,
+          locationLink,
+          shopName,
+          shopImage
+        );
+        // else {
+        //   sendMessage(imageObjectId, fileObjectId);
+        // }
       } else {
         toast.error("Message cannot be empty!!");
       }
@@ -390,14 +687,15 @@ export default function ChatRoomMainBar({
     console.log("seen time");
   };
 
+  // to choose photo to upload
   const handlePhotoUploadClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
+    if (imageInputRef.current) {
+      imageInputRef.current.click();
     }
   };
 
   // preview image save
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -413,19 +711,89 @@ export default function ChatRoomMainBar({
     }
   };
 
+  // preview file uplaod
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    console.log(file);
+    if (file) {
+      setFilePreview(file.name);
+      setFileName(file.name);
+    }
+  };
+
+  // preview the link
+  // const handleLocationPreview = () => {
+  //   if (navigator.geolocation) {
+  //     navigator.geolocation.getCurrentPosition(
+  //       (position) => {
+  //         const { latitude, longitude } = position.coords;
+  //         const locationLink = `https://maps.google.com/?q=${latitude},${longitude}`;
+  //         setLocationPreview(locationLink);
+  //         setCoordinates({ latitude, longitude });
+
+  //         if (map) {
+  //           map.setView([latitude, longitude], 13);
+
+  //           if (marker) {
+  //             (marker as google.maps.Marker).setPosition(latLng);
+  //           } else {
+  //             const newMarker = L.marker([latitude, longitude]).addTo(map);
+  //             setMarker(newMarker);
+  //           }
+  //         }
+  //       },
+  //       (error) => {
+  //         console.error("Error getting location:", error);
+  //         alert("Unable to retrieve your location. Please try again.");
+  //       }
+  //     );
+  //   } else {
+  //     alert("Geolocation is not supported by this browser.");
+  //   }
+  // };
+
+  // to view file upload
+  const handleFileUploadClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  // remove preview image, preview file, preview location
   const removeFileUpload = () => {
     setImagePreview(null);
+    setFilePreview(null);
+    setLocationPreview(null);
+    setSelectedCard(null);
+
+    if (map) {
+      map.remove();
+      setMap(null);
+    }
+
+    if (imageInputRef.current) {
+      imageInputRef.current.value = "";
+    }
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
 
-  const handleFileUpload = () => {
-    console.log("handleFileUpload");
-  };
+  // get all cards
+  const handleFetchAllCards = async () => {
+    try {
+      const response = await fetchAllCards();
 
-  const handleLocationSharing = () => {
-    console.log("handleLocationSharing");
+      if (response) {
+        console.log("All cards:", response);
+        setFlexCards(response);
+        setFlexCardModalOpen(true);
+      } else {
+        console.error("Failed to fetch cards:");
+      }
+    } catch (error) {
+      console.error("Error during card fetch:", error);
+    }
   };
 
   const handleImageClick = (imageSrc: string) => {
@@ -436,6 +804,122 @@ export default function ChatRoomMainBar({
   const handleCloseModal = () => {
     setModalOpen(false);
     setCurrentImageSrc(null);
+  };
+
+  const handleRemoveMap = () => {
+    setMapVisible(false);
+    if (googleMap) {
+      googleMap.getDiv().innerHTML = "";
+      setGoogleMap(null);
+    }
+    setMarker(null);
+  };
+
+  // get the shop name
+  // const handlePaste = async (
+  //   event: React.ClipboardEvent<HTMLTextAreaElement>
+  // ) => {
+  //   const pasteData = event.clipboardData.getData("Text");
+
+  //   const googleMapsLinkPattern = /https:\/\/maps\.app\.goo\.gl\/[A-Za-z0-9]+/;
+  //   const match = pasteData.match(googleMapsLinkPattern);
+
+  //   if (match) {
+  //     try {
+  //       const apiResponse = await fetch(
+  //         `/api/resolve-url?url=${encodeURIComponent(match[0])}`
+  //       );
+  //       const { resolvedUrl, error } = await apiResponse.json();
+
+  //       if (error) {
+  //         console.error("Failed to resolve URL:", error);
+  //         return;
+  //       }
+
+  //       const shopNameMatch = resolvedUrl.match(/place\/([^\/?]+)/);
+  //       if (shopNameMatch) {
+  //         const extractedShopName = decodeURIComponent(
+  //           shopNameMatch[1].replace(/\+/g, " ")
+  //         );
+  //         setShopName(extractedShopName);
+  //         console.log(`Shop Name: ${extractedShopName}`);
+  //       } else {
+  //         console.error("Shop name could not be extracted from the URL.");
+  //       }
+  //     } catch (error) {
+  //       console.error("Error resolving URL or extracting shop name:", error);
+  //     }
+  //   }
+  // };
+
+  const handlePaste = async (
+    event: React.ClipboardEvent<HTMLTextAreaElement>
+  ) => {
+    const pasteData = event.clipboardData.getData("Text");
+
+    const googleMapsLinkPattern = /https:\/\/maps\.app\.goo\.gl\/[A-Za-z0-9]+/;
+    const match = pasteData.match(googleMapsLinkPattern);
+
+    if (match) {
+      try {
+        // Resolve the short URL to get the full Google Maps URL
+        const apiResponse = await fetch(
+          `/api/resolve-url?url=${encodeURIComponent(match[0])}`
+        );
+        const { resolvedUrl, error } = await apiResponse.json();
+
+        if (error) {
+          console.error("Failed to resolve URL:", error);
+          return;
+        }
+
+        // Extract the shop name from the resolved URL
+        const shopNameMatch = resolvedUrl.match(/place\/([^\/?]+)/);
+        let extractedShopName = null;
+        if (shopNameMatch) {
+          extractedShopName = decodeURIComponent(
+            shopNameMatch[1].replace(/\+/g, " ")
+          );
+          setShopName(extractedShopName);
+          console.log(`Shop Name: ${extractedShopName}`);
+        } else {
+          console.error("Shop name could not be extracted from the URL.");
+        }
+
+        // If the shop name is found, use it to search for the place details
+        if (extractedShopName) {
+          const apiKey = process.env.NEXT_PUBLIC_GOOGLEMAPS_API_KEY;
+
+          // Use the extracted shop name to search for place details using the Text Search API
+          const placeDetailsResponse = await fetch(
+            `/api/place-details?query=${encodeURIComponent(extractedShopName)}`
+          );
+
+          const placeDetailsData = await placeDetailsResponse.json();
+
+          console.log(placeDetailsData);
+
+          if (
+            placeDetailsData.status === "OK" &&
+            placeDetailsData.results.length > 0
+          ) {
+            const place = placeDetailsData.results[0];
+            const photoReference = place.photos?.[0]?.photo_reference;
+
+            let shopImageUrl = null;
+            if (photoReference) {
+              shopImageUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoReference}&key=${apiKey}`;
+              setShopImage(shopImageUrl);
+              console.log(`Shop Image URL: ${shopImageUrl}`);
+            }
+          } else {
+            console.error("Failed to retrieve place details.");
+          }
+        }
+      } catch (error) {
+        console.error("Error resolving URL or fetching place details:", error);
+      }
+    }
   };
 
   return (
@@ -482,6 +966,115 @@ export default function ChatRoomMainBar({
                       />
                     </>
                   )}
+                  {/* {message.fileAttach && message.fileSrc && (
+                    <a
+                      href={message.fileSrc}
+                      download={message.fileName}
+                      className="block max-w-full rounded-md cursor-pointer"
+                    >
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex items-center justify-start w-full text-left text-blue-600 hover:text-black"
+                      >
+                        <FileDown className="mr-2 h-5 w-5 text-gray-500" />
+                        {message.fileName || "Download File"}
+                      </Button>
+                    </a>
+                  )} */}
+                  {message.fileAttach && message.fileSrc && (
+                    <div className="flex flex-col mb-2">
+                      <div className="flex items-start gap-2 mb-2">
+                        <div className="flex-shrink-0"></div>
+                        <a
+                          href={message.fileSrc}
+                          download={message.fileName}
+                          className="block max-w-full rounded-md cursor-pointer"
+                        >
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="flex items-center justify-start w-full text-left text-blue-600 hover:text-black"
+                          >
+                            {message.fileName || "Download File"}
+                          </Button>
+                        </a>
+                      </div>
+
+                      <img
+                        src={message.fileSrc}
+                        alt={message.fileName}
+                        className="max-h-[150px] max-w-[150px] rounded-md border border-gray-300"
+                      />
+                    </div>
+                  )}
+                  {message.locationLink && (
+                    <>
+                      <a
+                        href={message.locationLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block max-w-full rounded-md cursor-pointer"
+                      >
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="flex items-center justify-start w-full text-left text-blue-600 hover:text-black"
+                        >
+                          <MapPin className="mr-2 h-5 w-5 text-red-500" />
+                          View Location
+                        </Button>
+                        <div
+                          ref={(el) => (mapRefs.current[message._id] = el)}
+                          className="h-[200px] w-full rounded-md mt-2"
+                        ></div>
+                        {/* <div>{message.locationLink}</div> */}
+                      </a>
+                    </>
+                  )}
+                  {message.shopName && (
+                    <Card className="mb-4 shadow-lg">
+                      <a
+                        href={message.content}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block w-full cursor-pointer"
+                      >
+                        <CardHeader className="p-4">
+                          <div className="flex items-center">
+                            <MapPin className="mr-2 h-5 w-5 text-red-500" />
+                            <CardTitle className="text-lg font-semibold text-blue-600 hover:text-gray-600">
+                              {message.shopName}
+                            </CardTitle>
+                          </div>
+                        </CardHeader>
+                        {message.pictureLink && (
+                          <CardContent className="p-4">
+                            <img
+                              src={message.pictureLink}
+                              alt={message.shopName || ""}
+                              className="rounded-md max-w-full h-auto"
+                            />
+                          </CardContent>
+                        )}
+                      </a>
+                    </Card>
+                  )}
+                  <div className="flex justify-between max-h-[400px]">
+                    <div className="flex flex-col justify-center items-center my-2">
+                      {message.flexFormatHtmlContentText && (
+                        <Link href={`/cards/${message.card}`}>
+                          <div
+                            dangerouslySetInnerHTML={{
+                              __html: message.flexFormatHtmlContentText,
+                            }}
+                            className="text-center text-gray-800 font-medium cursor-pointer hover:underline"
+                          ></div>
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+
                   <div
                     className={`max-w-[75%] rounded-lg p-3 text-sm ${
                       message.senderId === authenticatedUserId
@@ -632,17 +1225,31 @@ export default function ChatRoomMainBar({
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="flex items-center text-2xl p-3"
-                  onClick={handleFileUpload}
+                  onClick={handleFileUploadClick}
                 >
                   <File className="mr-2 h-5 w-5" />
                   File
                 </DropdownMenuItem>
-                <DropdownMenuItem
+                {/* <DropdownMenuItem
                   className="flex items-center text-2xl p-3"
-                  onClick={handleLocationSharing}
+                  onClick={handleLocationPreview}
                 >
                   <MapPin className="mr-2 h-5 w-5" />
+                  Current Location
+                </DropdownMenuItem> */}
+                <DropdownMenuItem
+                  className="flex items-center text-2xl p-3"
+                  onClick={handleDestinationSelect}
+                >
+                  <LocateFixed className="mr-2 h-5 w-5" />
                   Location
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="flex items-center text-2xl p-3"
+                  onClick={handleFetchAllCards}
+                >
+                  <Menu className="mr-2 h-5 w-5" />
+                  FlexCard
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -667,12 +1274,135 @@ export default function ChatRoomMainBar({
                 </Button>
               </div>
             )}
+            {filePreview && (
+              <div className="relative max-w-full mb-4 self-center">
+                <div className="border border-gray-300 p-2 rounded-md">
+                  <span>{filePreview}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-0 right-0 rounded-full p-1"
+                    onClick={removeFileUpload}
+                  >
+                    <X className="w-4 h-4 text-gray-500" />
+                  </Button>
+                </div>
+              </div>
+            )}
+            {locationPreview && (
+              <div className="relative max-w-full mb-4 self-center">
+                <div className="border border-gray-300 p-2 rounded-md">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center"
+                    onClick={() => window.open(locationPreview, "_blank")}
+                  >
+                    {locationPreview}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-0 right-0 rounded-full p-1"
+                    onClick={removeFileUpload}
+                  >
+                    <X className="w-4 h-4 text-gray-500" />
+                  </Button>
+                </div>
+                {/* <div ref={mapRef} className="h-[200px] w-full rounded-md"></div> */}
+              </div>
+            )}
+            {selectedCard && (
+              <div className="mb-4 border border-gray-300 p-4 rounded-md">
+                <div className="flex justify-between items-center mb-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={removeFileUpload}
+                  >
+                    <X className="w-5 h-5 text-gray-500" />
+                  </Button>
+                </div>
+                <div className="flex justify-between max-h-[400px] overflow-y-auto">
+                  <div className="flex flex-col justify-center items-center my-2 w-1/2">
+                    <h3 className="text-lg font-bold mb-2">
+                      {selectedCard.title}
+                    </h3>
+                    <h3 className="text-lg font-bold mb-2">
+                      {selectedCard.cardId}
+                    </h3>
+                    <div
+                      dangerouslySetInnerHTML={{
+                        __html: selectedCard.flexHtml.content,
+                      }}
+                      className="text-center"
+                    ></div>
+                  </div>
+                  <div className="w-1/2 ml-4">
+                    <div
+                      dangerouslySetInnerHTML={{
+                        __html: selectedCard.description,
+                      }}
+                      className="text-sm text-gray-600"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            )}
+            {isMapVisible && (
+              <div>
+                <div
+                  ref={mapRef}
+                  style={{ width: "100%", height: "400px" }}
+                ></div>
+                <button onClick={handleRemoveMap}>Close Map</button>
+              </div>
+            )}
+
+            {shopName && (
+              <div className="flex justify-end mb-4">
+                <Card className="shadow-lg relative inline-block">
+                  <button
+                    onClick={() => {
+                      // Clear the shop details
+                      setShopName(null);
+                      setShopImage(null);
+                    }}
+                    className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+                  >
+                    &times;
+                  </button>
+                  <div className="block cursor-pointer">
+                    <CardHeader className="p-4">
+                      <div className="flex items-center">
+                        <MapPin className="mr-2 h-5 w-5 text-red-500" />
+                        <CardTitle className="text-lg font-semibold text-blue-600">
+                          {shopName}
+                        </CardTitle>
+                      </div>
+                    </CardHeader>
+                    {shopImage && (
+                      <CardContent className="p-4">
+                        <img
+                          src={shopImage}
+                          alt={shopName || ""}
+                          className="rounded-md max-w-full h-auto"
+                          style={{ maxWidth: "400px" }} // Adjust maxWidth as needed
+                        />
+                      </CardContent>
+                    )}
+                  </div>
+                </Card>
+              </div>
+            )}
+
             <div className="relative flex item-center">
               <Textarea
                 placeholder="Type your message..."
                 className="min-h-[36px] h-[36px] line-height w-full rounded-2xl text-black resize-none pr-16 overflow-hidden leading-[15px]"
                 value={messageContent}
                 onChange={(e) => setMessageContent(e.target.value)}
+                onPaste={handlePaste}
               />
               <Button
                 type="submit"
@@ -698,12 +1428,28 @@ export default function ChatRoomMainBar({
         </div>
         <input
           type="file"
-          ref={fileInputRef}
+          ref={imageInputRef}
           accept="image/*"
+          style={{ display: "none" }}
+          onChange={handleImageChange}
+        />
+        <input
+          type="file"
+          ref={fileInputRef}
           style={{ display: "none" }}
           onChange={handleFileChange}
         />
       </div>
+      <FlexCardModal
+        isOpen={isFlexCardModalOpen}
+        onClose={() => setFlexCardModalOpen(false)}
+        cards={flexCards}
+        onCardClick={(card) => {
+          console.log("Card clicked:", card);
+          setSelectedCard(card);
+          setFlexCardModalOpen(false);
+        }}
+      />
     </>
   );
 }

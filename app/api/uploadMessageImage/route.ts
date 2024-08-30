@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import { Readable } from "stream";
 import { GridFSBucket } from "mongodb";
 import mongoose from "mongoose";
-// import { revalidatePath } from "next/cache";
 
 export async function POST(req: Request) {
   try {
@@ -46,7 +45,7 @@ export async function POST(req: Request) {
 
     // revalidatePath("/workspace/create-card");
     // revalidatePath("/workspace/chatroom");
-    // console.log("fileId api:" + fileId);
+    console.log("imageId api:" + fileId);
     return NextResponse.json({
       message: "Image uploaded successfully",
       fileId,
