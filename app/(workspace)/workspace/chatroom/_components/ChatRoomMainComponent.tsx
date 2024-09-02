@@ -137,11 +137,11 @@ export default function ChatRoomMainBar({
   const [isFlexCardModalOpen, setFlexCardModalOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState<any>(null);
   const [map, setMap] = useState<L.Map | null>(null);
-  // const [marker, setMarker] = useState<L.Marker | null>(null);
-  // const [coordinates, setCoordinates] = useState<{
-  //   latitude: number;
-  //   longitude: number;
-  // } | null>(null);
+  const [lmarker, setLMarker] = useState<L.Marker | null>(null);
+  const [coordinates, setCoordinates] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
   const [isMapVisible, setMapVisible] = useState(false);
   const [googleMap, setGoogleMap] = useState<google.maps.Map | null>(null);
   const [marker, setMarker] = useState<google.maps.Marker | null>(null);
@@ -208,78 +208,38 @@ export default function ChatRoomMainBar({
     fetchReceiverImage();
   }, [receiverInfo]);
 
-  // useEffect(() => {
-  //   if (coordinates && locationPreview && mapRef.current) {
-  //     const { latitude, longitude } = coordinates;
+  useEffect(() => {
+    if (coordinates && locationPreview && mapRef.current) {
+      const { latitude, longitude } = coordinates;
 
-  //     if (!map) {
-  //       // Initialize the map
-  //       const newMap = L.map(mapRef.current).setView([latitude, longitude], 13);
-  //       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  //         attribution: "© OpenStreetMap contributors",
-  //       }).addTo(newMap);
-  //       setMap(newMap);
-  //     } else {
-  //       // Update the map view if the map already exists
-  //       map.setView([latitude, longitude], 13);
+      if (map) {
+        map.remove();
+        setMap(null);
+        console.log("map exist");
+      }
 
-  //       if (marker) {
-  //         marker.setLatLng([latitude, longitude]);
-  //       } else {
-  //         const newMarker = L.marker([latitude, longitude]).addTo(map);
-  //         setMarker(newMarker);
-  //       }
-  //     }
-  //   } else {
-  //     console.log("else");
-  //   }
-  // }, [coordinates, locationPreview, mapRef.current]);
+      // Initialize the new map
+      const newMap = L.map(mapRef.current).setView([latitude, longitude], 13);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap contributors",
+      }).addTo(newMap);
+      setMap(newMap);
 
-  // geolocation to get current location for messages
-  // useEffect(() => {
-  //   currentMessages.forEach((message) => {
-  //     if (message.locationLink && mapRefs.current[message._id]) {
-  //       const mapContainer = mapRefs.current[message._id];
-
-  //       if (mapContainer) {
-  //         const regex = /(-?\d+\.\d+),(-?\d+\.\d+)/;
-  //         const match = message.locationLink.match(regex);
-
-  //         if (match) {
-  //           const latitude = parseFloat(match[1]);
-  //           const longitude = parseFloat(match[2]);
-
-  //           const newMap = L.map(mapContainer).setView(
-  //             [latitude, longitude],
-  //             13
-  //           );
-  //           L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  //             attribution: "© OpenStreetMap contributors",
-  //           }).addTo(newMap);
-
-  //           const svgIcon = `data:image/svg+xml;charset=UTF-8,
-  //             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="red" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin">
-  //                 <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
-  //                 <circle cx="12" cy="10" r="3"/>
-  //             </svg>`;
-  //           const customIcon = L.icon({
-  //             iconUrl: svgIcon,
-  //           });
-
-  //           L.marker([latitude, longitude], { icon: customIcon }).addTo(newMap);
-  //         }
-  //       }
-  //     }
-  //   });
-  // }, [currentMessages]);
+      const newMarker = L.marker([latitude, longitude]).addTo(newMap);
+      setLMarker(newMarker);
+    }
+  }, [coordinates, locationPreview, mapRef.current]);
 
   useEffect(() => {
     currentMessages.forEach((message) => {
       if (message.locationLink && mapRefs.current[message._id]) {
         const mapContainer = mapRefs.current[message._id];
 
-        if (mapContainer && !mapContainer._leaflet_id) {
-          // Only initialize the map if it's not already initialized
+        if (mapContainer) {
+          if (mapContainer._leaflet_id) {
+            return;
+          }
+
           const regex = /(-?\d+\.\d+),(-?\d+\.\d+)/;
           const match = message.locationLink.match(regex);
 
@@ -287,7 +247,6 @@ export default function ChatRoomMainBar({
             const latitude = parseFloat(match[1]);
             const longitude = parseFloat(match[2]);
 
-            // Initialize the map
             const newMap = L.map(mapContainer).setView(
               [latitude, longitude],
               13
@@ -479,6 +438,7 @@ export default function ChatRoomMainBar({
     let imageObjectId: string | null = null;
     let fileName: string = "";
     let fileSrc: string = "";
+    let locationLink: string | null = "";
 
     const cardData = selectedCard ? selectedCard : null;
     const cardId = cardData?.cardId ? cardData?.cardId : null;
@@ -575,8 +535,8 @@ export default function ChatRoomMainBar({
       const hasContent = content.trim() !== "";
       const hasImage = imageInputRef.current?.files?.[0] != null;
       const hasFile = fileInputRef.current?.files?.[0] != null;
-      // const isLocation = locationPreview != null;
-      const isLocation = locationLink != "";
+      const isLocation = locationPreview != null;
+
       const hasShopName = shopName != null;
       const hasPictureLink = shopImage != null;
 
@@ -617,24 +577,23 @@ export default function ChatRoomMainBar({
             console.error("Failed to upload file. Status:", response.status);
           }
         }
-        // if (isLocation) {
-        //   if (navigator.geolocation) {
-        //     navigator.geolocation.getCurrentPosition(
-        //       (position) => {
-        //         const { latitude, longitude } = position.coords;
-        //         locationLink = `https://maps.google.com/?q=${latitude},${longitude}`;
-        //         sendMessage(imageObjectId, fileObjectId, locationLink);
-        //       },
-        //       (error) => {
-        //         console.error("Error getting location:", error);
-        //         alert("Unable to retrieve your location. Please try again.");
-        //       }
-        //     );
-        //   } else {
-        //     alert("Geolocation is not supported by this browser.");
-        //   }
-        // }
-        // sendMessage(imageObjectId, fileObjectId, locationLink);
+        if (isLocation) {
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+              (position) => {
+                const { latitude, longitude } = position.coords;
+                locationLink = `https://maps.google.com/?q=${latitude},${longitude}`;
+                sendMessage(imageObjectId, fileObjectId, locationLink);
+              },
+              (error) => {
+                console.error("Error getting location:", error);
+                alert("Unable to retrieve your location. Please try again.");
+              }
+            );
+          } else {
+            alert("Geolocation is not supported by this browser.");
+          }
+        }
         sendMessage(
           imageObjectId,
           fileObjectId,
@@ -642,9 +601,6 @@ export default function ChatRoomMainBar({
           shopName,
           shopImage
         );
-        // else {
-        //   sendMessage(imageObjectId, fileObjectId);
-        // }
       } else {
         toast.error("Message cannot be empty!!");
       }
@@ -721,36 +677,46 @@ export default function ChatRoomMainBar({
     }
   };
 
-  // preview the link
-  // const handleLocationPreview = () => {
-  //   if (navigator.geolocation) {
-  //     navigator.geolocation.getCurrentPosition(
-  //       (position) => {
-  //         const { latitude, longitude } = position.coords;
-  //         const locationLink = `https://maps.google.com/?q=${latitude},${longitude}`;
-  //         setLocationPreview(locationLink);
-  //         setCoordinates({ latitude, longitude });
+  // preview the location
+  const handleLocationPreview = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          const locationLink = `https://maps.google.com/?q=${latitude},${longitude}`;
+          setLocationPreview(locationLink);
+          setCoordinates({ latitude, longitude });
 
-  //         if (map) {
-  //           map.setView([latitude, longitude], 13);
+          if (mapRef.current) {
+            // Check if a map already exists and remove it
+            if (map) {
+              map.remove();
+              setMap(null);
+            }
 
-  //           if (marker) {
-  //             (marker as google.maps.Marker).setPosition(latLng);
-  //           } else {
-  //             const newMarker = L.marker([latitude, longitude]).addTo(map);
-  //             setMarker(newMarker);
-  //           }
-  //         }
-  //       },
-  //       (error) => {
-  //         console.error("Error getting location:", error);
-  //         alert("Unable to retrieve your location. Please try again.");
-  //       }
-  //     );
-  //   } else {
-  //     alert("Geolocation is not supported by this browser.");
-  //   }
-  // };
+            // Initialize the new map
+            const newMap = L.map(mapRef.current).setView(
+              [latitude, longitude],
+              13
+            );
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+              attribution: "© OpenStreetMap contributors",
+            }).addTo(newMap);
+            setMap(newMap);
+
+            const newMarker = L.marker([latitude, longitude]).addTo(newMap);
+            setLMarker(newMarker);
+          }
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          alert("Unable to retrieve your location. Please try again.");
+        }
+      );
+    } else {
+      alert("Geolocation is not supported by this browser.");
+    }
+  };
 
   // to view file upload
   const handleFileUploadClick = () => {
@@ -785,7 +751,7 @@ export default function ChatRoomMainBar({
       const response = await fetchAllCards();
 
       if (response) {
-        console.log("All cards:", response);
+        // console.log("All cards:", response);
         setFlexCards(response);
         setFlexCardModalOpen(true);
       } else {
@@ -814,43 +780,6 @@ export default function ChatRoomMainBar({
     }
     setMarker(null);
   };
-
-  // get the shop name
-  // const handlePaste = async (
-  //   event: React.ClipboardEvent<HTMLTextAreaElement>
-  // ) => {
-  //   const pasteData = event.clipboardData.getData("Text");
-
-  //   const googleMapsLinkPattern = /https:\/\/maps\.app\.goo\.gl\/[A-Za-z0-9]+/;
-  //   const match = pasteData.match(googleMapsLinkPattern);
-
-  //   if (match) {
-  //     try {
-  //       const apiResponse = await fetch(
-  //         `/api/resolve-url?url=${encodeURIComponent(match[0])}`
-  //       );
-  //       const { resolvedUrl, error } = await apiResponse.json();
-
-  //       if (error) {
-  //         console.error("Failed to resolve URL:", error);
-  //         return;
-  //       }
-
-  //       const shopNameMatch = resolvedUrl.match(/place\/([^\/?]+)/);
-  //       if (shopNameMatch) {
-  //         const extractedShopName = decodeURIComponent(
-  //           shopNameMatch[1].replace(/\+/g, " ")
-  //         );
-  //         setShopName(extractedShopName);
-  //         console.log(`Shop Name: ${extractedShopName}`);
-  //       } else {
-  //         console.error("Shop name could not be extracted from the URL.");
-  //       }
-  //     } catch (error) {
-  //       console.error("Error resolving URL or extracting shop name:", error);
-  //     }
-  //   }
-  // };
 
   const handlePaste = async (
     event: React.ClipboardEvent<HTMLTextAreaElement>
@@ -1230,20 +1159,20 @@ export default function ChatRoomMainBar({
                   <File className="mr-2 h-5 w-5" />
                   File
                 </DropdownMenuItem>
-                {/* <DropdownMenuItem
+                <DropdownMenuItem
                   className="flex items-center text-2xl p-3"
                   onClick={handleLocationPreview}
                 >
                   <MapPin className="mr-2 h-5 w-5" />
                   Current Location
-                </DropdownMenuItem> */}
-                <DropdownMenuItem
+                </DropdownMenuItem>
+                {/* <DropdownMenuItem
                   className="flex items-center text-2xl p-3"
                   onClick={handleDestinationSelect}
                 >
                   <LocateFixed className="mr-2 h-5 w-5" />
                   Location
-                </DropdownMenuItem>
+                </DropdownMenuItem> */}
                 <DropdownMenuItem
                   className="flex items-center text-2xl p-3"
                   onClick={handleFetchAllCards}
@@ -1309,7 +1238,7 @@ export default function ChatRoomMainBar({
                     <X className="w-4 h-4 text-gray-500" />
                   </Button>
                 </div>
-                {/* <div ref={mapRef} className="h-[200px] w-full rounded-md"></div> */}
+                <div ref={mapRef} className="h-[200px] w-full rounded-md"></div>
               </div>
             )}
             {selectedCard && (
@@ -1387,7 +1316,7 @@ export default function ChatRoomMainBar({
                           src={shopImage}
                           alt={shopName || ""}
                           className="rounded-md max-w-full h-auto"
-                          style={{ maxWidth: "400px" }} // Adjust maxWidth as needed
+                          style={{ maxWidth: "400px" }}
                         />
                       </CardContent>
                     )}
