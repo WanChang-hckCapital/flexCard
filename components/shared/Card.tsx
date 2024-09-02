@@ -11,7 +11,7 @@ import Link from "next/link";
 interface Props {
   id: string;
   title: string;
-  authenticatedUserId?: string;
+  authActiveProfileId?: string;
   creator: {
     accountname: string;
     image: string;
@@ -26,7 +26,7 @@ interface Props {
 }
 
 interface Like {
-  userId: string;
+  profileId: string;
   accountname: string;
   binarycode: string;
 }
@@ -34,7 +34,7 @@ interface Like {
 function Card({
   id,
   title,
-  authenticatedUserId,
+  authActiveProfileId,
   creator,
   likes,
   lineComponents,
@@ -44,7 +44,7 @@ function Card({
   const [likesData, setLikesData] = useState<Like[]>(likes);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [likeCount, setLikeCount] = useState<number>(likes.length);
-  const [isLiked, setIsLiked] = useState<boolean>(likes.some(like => like.userId === authenticatedUserId));
+  const [isLiked, setIsLiked] = useState<boolean>(likes.some(like => like.profileId === authActiveProfileId));
   const [likeButtonDisabled, setLikeButtonDisabled] = useState(false);
 
   const shareUrl = process.env.NEXT_PUBLIC_BASE_URL + `/cards/${id}`;
@@ -72,28 +72,8 @@ function Card({
     setIsDialogOpen(false);
   };
 
-  // const handleUpdateLikeButtonClick = async () => {
-  //   if (!authenticatedUserId) {
-  //     toast.error("You need to login first before actions.");
-  //     return;
-  //   }
-
-  //   try {
-  //     const updatedCard = await updateCardLikes({ authUserId: authenticatedUserId, cardId: id });
-  //     if (updatedCard.success === true) {
-  //       // setLikesData(updatedCard.data || []);
-  //       setLikeCount(updatedCard.data?.length || 0);
-  //       setIsLiked(!isLiked);
-  //     } else {
-  //       toast.error(updatedCard.message);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error updating member likes:', error);
-  //   }
-  // };
-
   const handleUpdateLikeButtonClick = async () => {
-    if (!authenticatedUserId) {
+    if (!authActiveProfileId) {
       toast.error("You need to login first before actions.");
       return;
     }
@@ -105,7 +85,7 @@ function Card({
     setIsLiked(!initialIsLiked);
 
     try {
-      const updatedCard = await updateCardLikes({ authUserId: authenticatedUserId, cardId: id });
+      const updatedCard = await updateCardLikes({ authActiveProfileId: authActiveProfileId, cardId: id });
       if (updatedCard.success === true) {
         setLikeCount(updatedCard.data?.length || 0);
         setIsLiked(!initialIsLiked);

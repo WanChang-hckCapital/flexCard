@@ -76,7 +76,7 @@ const organizationSchema = new Schema<Organization>({
         },
         verifiedBy: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Member",
+            ref: "Profile",
         },
     },
 }, {

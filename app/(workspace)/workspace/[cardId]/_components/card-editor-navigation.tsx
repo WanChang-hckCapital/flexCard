@@ -29,11 +29,11 @@ import { toast } from 'sonner'
 
 type Props = {
   cardDetails: any
-  authaccountId: string
+  authActiveProfileId: string
   cardId: string
 }
 
-function CardEditorNavigation({ cardDetails, authaccountId, cardId }: Props) {
+function CardEditorNavigation({ cardDetails, authActiveProfileId, cardId }: Props) {
   const router = useRouter()
   const { state, dispatch } = useEditor()
 
@@ -84,7 +84,7 @@ function CardEditorNavigation({ cardDetails, authaccountId, cardId }: Props) {
 
     try {
       const response = await upsertCardContent(
-        authaccountId,
+        authActiveProfileId,
         {
           ...cardDetails,
         },
@@ -96,7 +96,7 @@ function CardEditorNavigation({ cardDetails, authaccountId, cardId }: Props) {
 
       if(response) {
         toast.success('Card saved successfully.');
-        router.push(`/profile/${authaccountId}`);
+        router.push(`/profile/${authActiveProfileId}`);
       }
       else{
         toast.error('Oppse! Something went wrong, Please try again later.');

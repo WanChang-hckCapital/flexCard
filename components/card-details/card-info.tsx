@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { useState, useEffect } from 'react';
-import { checkIfFollowing, updateMemberFollow, updateCardLikes, fetchComments, addComment, addReply, likeComment } from '@/lib/actions/user.actions';
+import { checkIfFollowing, updateMemberFollow, updateCardLikes, fetchComments, addComment, addReply, likeComment, fetchCurrentActiveProfileId } from '@/lib/actions/user.actions';
 import { Button } from '../ui/button';
 import { MoreHorizontal, Heart, Share2, ChevronDown, ChevronUp, SendHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
@@ -38,6 +38,7 @@ export default function CardInfo({
     lineComponents,
     shareUrl
 }: CardInfoProps) {
+    const [authActiveProfileId, setAuthActiveProfileId] = useState<string | null>(null);
     const [isFollowing, setIsFollowing] = useState(false);
     const [isLiked, setIsLiked] = useState<boolean>(likes.some(like => like.userId === session?.user.id));
     const [likeCount, setLikeCount] = useState<number>(likes.length);
@@ -52,12 +53,25 @@ export default function CardInfo({
     const isDifferentUser = clientSession?.user.id !== creatorId;
 
     useEffect(() => {
+        async function fetchActiveProfileId() {
+            if (clientSession) {
+                const user = clientSession.user;
+                const authActiveProfileId = await fetchCurrentActiveProfileId(user.id);
+                setAuthActiveProfileId(authActiveProfileId);
+            }
+        }
+        fetchActiveProfileId();
+    }, [clientSession]);
+
+    useEffect(() => {
         async function fetchFollowStatus() {
             if (clientSession) {
                 const user = clientSession.user;
                 const authUserId = user.id;
+                const authActiveProfileId = await fetchCurrentActiveProfileId(authUserId);
+                
                 const accountId = creatorId;
-                const followStatus = await checkIfFollowing({ authUserId, accountId });
+                const followStatus = await checkIfFollowing({ authActiveProfileId, accountId });
 
                 if (followStatus.success === true) {
                     setIsFollowing(followStatus.isFollowing);
@@ -82,9 +96,11 @@ export default function CardInfo({
         if (clientSession) {
             const user = clientSession.user;
             const authUserId = user.id;
+            const authActiveProfileId = await fetchCurrentActiveProfileId(authUserId);
+
             const accountId = creatorId;
             const method = isFollowing ? 'UNFOLLOW' : 'FOLLOW';
-            await updateMemberFollow({ authUserId, accountId, method });
+            await updateMemberFollow({ authActiveProfileId, accountId, method });
             setIsFollowing(!isFollowing);
         }
     };
@@ -105,6 +121,8 @@ export default function CardInfo({
 
         const user = clientSession.user;
         const authUserId = user.id;
+        const authActiveProfileId = await fetchCurrentActiveProfileId(authUserId);
+
 
         const initialIsLiked = isLiked;
         const initialLikeCount = likeCount;
@@ -113,7 +131,7 @@ export default function CardInfo({
         setIsLiked(!initialIsLiked);
 
         try {
-            const updatedCard = await updateCardLikes({ authUserId, cardId });
+            const updatedCard = await updateCardLikes({ authActiveProfileId, cardId });
             if (updatedCard.success === true) {
                 setLikeCount(updatedCard.data?.length || 0);
                 setIsLiked(!initialIsLiked);
@@ -141,10 +159,11 @@ export default function CardInfo({
 
         const user = clientSession.user;
         const authUserId = user.id;
+        const authActiveProfileId = await fetchCurrentActiveProfileId(authUserId);
 
         try {
             if (parentCommentId) {
-                const response = await addReply(parentCommentId, authUserId, newComment);
+                const response = await addReply(parentCommentId, authActiveProfileId, newComment);
                 if (response.success) {
                     setComments(comments.map(comment => updateReplies(comment, parentCommentId, response.data)));
                     setParentCommentId(null);
@@ -152,7 +171,7 @@ export default function CardInfo({
                     toast.error(response.message);
                 }
             } else {
-                const response = await addComment(cardId, authUserId, newComment);
+                const response = await addComment(cardId, authActiveProfileId, newComment);
                 if (response.success) {
                     setComments([...comments, response.data]);
                 } else {
@@ -202,9 +221,10 @@ export default function CardInfo({
 
         const user = clientSession.user;
         const authUserId = user.id;
+        const authActiveProfileId = await fetchCurrentActiveProfileId(authUserId);
 
         try {
-            const response = await likeComment(commentId, authUserId);
+            const response = await likeComment(commentId, authActiveProfileId);
 
             if (response.success && response.data) {
                 setComments(comments.map(comment => updateLikes(comment, commentId, response.data.likes || [])));
@@ -273,9 +293,10 @@ export default function CardInfo({
                                             </Button>
                                         )}
                                     </div>
+                                    {/* might have problem here */}
                                     <div className="flex items-center gap-3 mt-1">
                                         <Button className="hover:scale-105" variant="none_bg" size="icon" onClick={(e) => { e.stopPropagation(); handleLikeComment(reply._id); }}>
-                                            {reply.likes && reply.likes.map((like: { user: string }) => like.user.toString()).includes(clientSession?.user.id.toString()) ? (
+                                            {reply.likes && reply.likes.map((like: { _id: string }) => like._id.toString()).includes(authActiveProfileId?.toString()) ? (
                                                 <Heart fill="#F47983" strokeWidth={0} className="cursor-pointer" />
                                             ) : (
                                                 <Heart className="cursor-pointer" />
@@ -310,7 +331,7 @@ export default function CardInfo({
                         />
                         <div className="ml-4">
                             <p className="text-lg">{creatorInfo.accountname}</p>
-                            <p className="text-sm text-gray-500">{userFollowers} followers</p>
+                            <p className="text-sm text-gray-500">{creatorInfo.followers} followers</p>
                         </div>
                     </div>
                     {clientSession && isDifferentUser && (

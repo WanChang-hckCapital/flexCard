@@ -1,9 +1,9 @@
 import { fetchAllProduct } from '@/lib/actions/admin.actions';
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
-import { fetchMemberRole } from '@/lib/actions/user.actions';
+import { fetchCurrentActiveProfileId, fetchProfleRole } from '@/lib/actions/user.actions';
 import ProductList from '@/components/product-list';
+import { authOptions } from '@/app/api/utils/authOptions';
 
 const ProductPage = async () => {
     const session = await getServerSession(authOptions);
@@ -14,12 +14,13 @@ const ProductPage = async () => {
     }
 
     const authenticatedUserId = user.id;
+    const authActiveProfileId = await fetchCurrentActiveProfileId(authenticatedUserId);
     let products = await fetchAllProduct();
 
     let isOrganization = false;
-    const currentMemberRole = await fetchMemberRole(authenticatedUserId);
-    if (currentMemberRole.success) {
-        isOrganization = currentMemberRole.data?.toUpperCase() === "ORGANIZATION";
+    const currentProfileRole = await fetchProfleRole(authActiveProfileId);
+    if (currentProfileRole.success) {
+        isOrganization = currentProfileRole.data?.toUpperCase() === "ORGANIZATION";
     }
 
     if (products) {

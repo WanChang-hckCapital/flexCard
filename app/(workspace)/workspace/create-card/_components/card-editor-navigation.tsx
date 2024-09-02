@@ -9,7 +9,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { checkDuplicateCard, upsertCardContent } from '@/lib/actions/workspace.actions'
-import { EditorElementsBtns } from '@/lib/constants'
 import { DeviceTypes, EditorElement, useEditor } from '@/lib/editor/editor-provider'
 import { createHtmlFromJson, generateCustomID } from '@/lib/utils'
 import { Card } from '@/types'
@@ -30,10 +29,10 @@ import { toast } from 'sonner'
 
 type Props = {
   cardDetails: Card
-  authaccountId: string
+  authActiveProfileId: string
 }
 
-function CardEditorNavigation({ cardDetails, authaccountId }: Props) {
+function CardEditorNavigation({ cardDetails, authActiveProfileId }: Props) {
   const router = useRouter()
   const { state, dispatch } = useEditor()
 
@@ -133,13 +132,13 @@ function CardEditorNavigation({ cardDetails, authaccountId }: Props) {
     }
 
     try {
-      const isExistingCard = await checkDuplicateCard(authaccountId, cardDetails.cardID);
+      const isExistingCard = await checkDuplicateCard(authActiveProfileId, cardDetails.cardID);
       if (isExistingCard.success === false) {
         toast.error(isExistingCard.message);
         return;
       } else {
         await upsertCardContent(
-          authaccountId,
+          authActiveProfileId,
           {
             ...cardDetails,
             description: state.editor.description || '',
@@ -151,7 +150,7 @@ function CardEditorNavigation({ cardDetails, authaccountId }: Props) {
         toast.success('Card saved successfully.');
       }
 
-      router.push(`/profile/${authaccountId}`);
+      router.push(`/profile/${authActiveProfileId}`);
     } catch (error) {
       toast.error('Oppse! Something went wrong, Please try again later.');
     }

@@ -139,7 +139,7 @@ async function Header({ session, userInfoImage }: HeaderProps) {
                       className="font-bold"
                       // href={`${session ? '/profile/66511403ce0e911348378718' : 'api/auth/signin'}`} >
                       // href={'/profile/6651901f2dc11fd640957e8a'} >
-                      href={"/profile/66511403ce0e911348378718"}
+                      href={"/profile/66b41db4e2c63bb042600381"}
                     >
                       other user test
                     </Link>
@@ -186,7 +186,7 @@ async function Header({ session, userInfoImage }: HeaderProps) {
                       <DropdownMenuItem className="justify-center">
                         <Link
                           className="font-bold"
-                          href={`${session ? "/profile/edit" : "api/auth/signin"
+                          href={`${session ? "/settings" : "api/auth/signin"
                             }`}
                         >
                           Settings

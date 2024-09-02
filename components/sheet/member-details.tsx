@@ -11,14 +11,14 @@ import {
 } from "@/components/ui/sheet";
 import { useState, useEffect } from "react";
 import { Button } from "../ui/button";
-import { fetchMemberDetails, verifyOrganizationStatus } from "@/lib/actions/admin.actions";
+import { fetchMemberProfileDetails, verifyOrganizationStatus } from "@/lib/actions/admin.actions";
 import { Card } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { toast } from "sonner";
 
 interface MemberDetailsSheetProps {
-    authenticatedUserId: string;
-    memberId: string;
+    authActiveProfileId: string;
+    selectedProfileId: string;
     open: boolean;
     setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
@@ -29,31 +29,31 @@ const formatDateString = (dateString: string) => {
     return date.toLocaleDateString();
 };
 
-const MemberDetailsSheet: React.FC<MemberDetailsSheetProps> = ({ authenticatedUserId, memberId, open, setOpen }) => {
-    const [memberDetails, setMemberDetails] = useState<any>(null);
+const MemberDetailsSheet: React.FC<MemberDetailsSheetProps> = ({ authActiveProfileId, selectedProfileId, open, setOpen }) => {
+    const [memberProfileDetails, setMemberProfileDetails] = useState<any>(null);
 
     useEffect(() => {
         const getMemberDetails = async () => {
-            const response = await fetchMemberDetails(memberId);
+            const response = await fetchMemberProfileDetails(selectedProfileId);
             if (response.success) {
-                setMemberDetails(response.data);
+                setMemberProfileDetails(response.data);
             }
         };
 
-        if (memberId && open) {
+        if (selectedProfileId && open) {
             getMemberDetails();
         }
-    }, [memberId, open]);
+    }, [selectedProfileId, open]);
 
     const handleVerifyClick = async () => {
-        if (memberDetails && memberDetails.organization) {
-            const response = await verifyOrganizationStatus(authenticatedUserId, memberDetails.organization._id);
+        if (memberProfileDetails && memberProfileDetails.organization) {
+            const response = await verifyOrganizationStatus(authActiveProfileId, memberProfileDetails.organization._id);
             if (response.success) {
                 toast.success("Organization verified successfully!");
-                setMemberDetails({
-                    ...memberDetails,
+                setMemberProfileDetails({
+                    ...memberProfileDetails,
                     organization: {
-                        ...memberDetails.organization,
+                        ...memberProfileDetails.organization,
                         verify: response.data,
                     }
                 });
@@ -69,107 +69,107 @@ const MemberDetailsSheet: React.FC<MemberDetailsSheetProps> = ({ authenticatedUs
                 <SheetHeader>
                     <SheetTitle>Member Details</SheetTitle>
                 </SheetHeader>
-                {memberDetails ? (
+                {memberProfileDetails ? (
                     <div>
                         <Card className="p-4 my-4">
                             <div className="flex justify-between mb-1">
                                 <p className="font-bold text-gray-500">User Type:</p>
-                                <p className="ml-2">{memberDetails.usertype}</p>
+                                <p className="ml-2">{memberProfileDetails.usertype}</p>
                             </div>
                             <div className="flex justify-between mb-1">
                                 <p className="font-bold text-gray-500">IP Address:</p>
-                                <p className="ml-2">{memberDetails.ip_address}</p>
+                                <p className="ml-2">{memberProfileDetails.ip_address}</p>
                             </div>
                             <div className="flex justify-between mb-1">
                                 <p className="font-bold text-gray-500">Country:</p>
-                                <p className="ml-2">{memberDetails.country}</p>
+                                <p className="ml-2">{memberProfileDetails.country}</p>
                             </div>
                         </Card>
-                        {memberDetails.organization && (
+                        {memberProfileDetails.organization && (
                             <div>
                                 <h2 className="font-bold text-lg my-4">Organization Information</h2>
                                 <Card className="p-4 my-4">
                                     <div className="flex justify-between mb-1">
                                         <p className="font-bold text-gray-500">Business Name:</p>
-                                        <p className="ml-2">{memberDetails.organization.businessName}</p>
+                                        <p className="ml-2">{memberProfileDetails.organization.businessName}</p>
                                     </div>
                                     <div className="flex justify-between mb-1">
                                         <p className="font-bold text-gray-500">Registration Number:</p>
-                                        <p className="ml-2">{memberDetails.organization.businessRegistrationNumber}</p>
+                                        <p className="ml-2">{memberProfileDetails.organization.businessRegistrationNumber}</p>
                                     </div>
                                     <div className="flex justify-between mb-1">
                                         <p className="font-bold text-gray-500">Business Location:</p>
-                                        <p className="ml-2">{memberDetails.organization.businessLocation}</p>
+                                        <p className="ml-2">{memberProfileDetails.organization.businessLocation}</p>
                                     </div>
                                     <div className="flex justify-between mb-1">
                                         <p className="font-bold text-gray-500">Business Type:</p>
-                                        <p className="ml-2">{memberDetails.organization.businessType}</p>
+                                        <p className="ml-2">{memberProfileDetails.organization.businessType}</p>
                                     </div>
                                     <div className="flex justify-between mb-1">
                                         <p className="font-bold text-gray-500">Legal Business Name:</p>
-                                        <p className="ml-2">{memberDetails.organization.legalBusinessName}</p>
+                                        <p className="ml-2">{memberProfileDetails.organization.legalBusinessName}</p>
                                     </div>
                                     <div className="flex justify-between mb-1">
                                         <p className="font-bold text-gray-500">Business Address:</p>
-                                        <p className="ml-2">{memberDetails.organization.businessAddress}</p>
+                                        <p className="ml-2">{memberProfileDetails.organization.businessAddress}</p>
                                     </div>
                                     <div className="flex justify-between mb-1">
                                         <p className="font-bold text-gray-500">Business Phone:</p>
-                                        <p className="ml-2">{memberDetails.organization.businessPhone}</p>
+                                        <p className="ml-2">{memberProfileDetails.organization.businessPhone}</p>
                                     </div>
                                     <div className="flex justify-between mb-1">
                                         <p className="font-bold text-gray-500">Industry:</p>
-                                        <p className="ml-2">{memberDetails.organization.industry}</p>
+                                        <p className="ml-2">{memberProfileDetails.organization.industry}</p>
                                     </div>
                                     <div className="flex justify-between mb-1">
                                         <p className="font-bold text-gray-500">Business Website:</p>
-                                        <p className="ml-2">{memberDetails.organization.businessWebsite}</p>
+                                        <p className="ml-2">{memberProfileDetails.organization.businessWebsite}</p>
                                     </div>
                                     <div className="flex justify-between mb-1">
                                         <p className="font-bold text-gray-500">Product Description:</p>
-                                        <p className="ml-2">{memberDetails.organization.businessProductDescription}</p>
+                                        <p className="ml-2">{memberProfileDetails.organization.businessProductDescription}</p>
                                     </div>
                                 </Card>
                                 <h2 className="font-bold text-lg my-4">Organization Bank Information</h2>
                                 <Card className="p-4 my-4">
                                     <div className="flex justify-between mb-1">
                                         <p className="font-bold text-gray-500">Account Holder:</p>
-                                        <p className="ml-2">{memberDetails.organization.bankAccountHolder}</p>
+                                        <p className="ml-2">{memberProfileDetails.organization.bankAccountHolder}</p>
                                     </div>
                                     <div className="flex justify-between mb-1">
                                         <p className="font-bold text-gray-500">Name:</p>
-                                        <p className="ml-2">{memberDetails.organization.bankName}</p>
+                                        <p className="ml-2">{memberProfileDetails.organization.bankName}</p>
                                     </div>
                                     <div className="flex justify-between mb-1">
                                         <p className="font-bold text-gray-500">Account Number:</p>
-                                        <p className="ml-2">{memberDetails.organization.bankAccountNumber}</p>
+                                        <p className="ml-2">{memberProfileDetails.organization.bankAccountNumber}</p>
                                     </div>
                                 </Card>
                                 <h2 className="font-bold text-lg my-4">Organization Verify Status</h2>
                                 <Card className="p-4 my-4">
-                                    {memberDetails.organization.verify && (
+                                    {memberProfileDetails.organization.verify && (
                                         <div>
                                             <div className="flex items-center justify-between mb-2">
                                                 <p className="font-bold text-gray-500">Verified:</p>
-                                                {memberDetails.organization.verify.verified ? (
+                                                {memberProfileDetails.organization.verify.verified ? (
                                                     <Badge variant="bgGreen" className="ml-2 text-[12px]">VERIFIED</Badge>
                                                 ) : (
                                                     <Badge variant="bgRed" className="ml-2 text-[12px]">PENDING</Badge>
                                                 )}
                                             </div>
-                                            {memberDetails.organization.verify.verifiedAt && (
+                                            {memberProfileDetails.organization.verify.verifiedAt && (
                                                 <div className="flex justify-between mb-1">
                                                     <p className="font-bold text-gray-500">Verified At:</p>
-                                                    <p className="ml-2">{formatDateString(memberDetails.organization.verify.verifiedAt)}</p>
+                                                    <p className="ml-2">{formatDateString(memberProfileDetails.organization.verify.verifiedAt)}</p>
                                                 </div>
                                             )}
-                                            {memberDetails.organization.verify.verifiedBy && (
+                                            {memberProfileDetails.organization.verify.verifiedBy && (
                                                 <div className="flex justify-between mb-1">
                                                     <p className="font-bold text-gray-500">Verified By:</p>
-                                                    <p className="ml-2">{memberDetails.organization.verify.verifiedBy}</p>
+                                                    <p className="ml-2">{memberProfileDetails.organization.verify.verifiedBy}</p>
                                                 </div>
                                             )}
-                                            {!memberDetails.organization.verify.verified && (
+                                            {!memberProfileDetails.organization.verify.verified && (
                                                 <Button
                                                     className="w-full mt-2"
                                                     variant="outline"

@@ -8,12 +8,12 @@ import { storeSubscription } from '@/lib/actions/admin.actions';
 
 interface CheckoutLinePayFormProps {
     productId: string;
-    authenticatedUserId: string;
+    authActiveProfileId: string;
     totalAmount: number;
     // paidTerms: string;
 }
 
-const CheckoutLinePayForm: React.FC<CheckoutLinePayFormProps> = ({ productId, authenticatedUserId, totalAmount }) => {
+const CheckoutLinePayForm: React.FC<CheckoutLinePayFormProps> = ({ productId, authActiveProfileId, totalAmount }) => {
     const [error, setError] = useState<string | null>(null);
     const [termsCondition, setTermsCondition] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -28,7 +28,7 @@ const CheckoutLinePayForm: React.FC<CheckoutLinePayFormProps> = ({ productId, au
 
         try {
             const subscription = await storeSubscription({
-                authenticatedUserId,
+                authActiveProfileId,
                 productId,
                 // paidTerms: Number(paidTerms),
                 paidTerms: 1,
@@ -36,7 +36,7 @@ const CheckoutLinePayForm: React.FC<CheckoutLinePayFormProps> = ({ productId, au
             });
 
             console.log("subscription: " + JSON.stringify(subscription));
-            console.log("authenticatedUserId: " + authenticatedUserId);
+            console.log("authActiveProfileId: " + authActiveProfileId);
 
             if (subscription.success) {
                 const { data } = await axios.post('/api/linepay/createPayment', {

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/utils/authOptions";
 import { redirect } from "next/navigation";
+import { fetchCurrentActiveProfileId } from "@/lib/actions/user.actions";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,7 @@ const CheckoutPage = async ({ searchParams }: CheckoutPageProps) => {
   }
 
   const authenticatedUserId = user.id;
+  const authActiveProfileId = await fetchCurrentActiveProfileId(authenticatedUserId);
 
   const productId = searchParams.productId;
 
@@ -41,7 +43,7 @@ const CheckoutPage = async ({ searchParams }: CheckoutPageProps) => {
       <CheckoutComponent
         product={product}
         productId={productId}
-        authenticatedUserId={authenticatedUserId}
+        authActiveProfileId={authActiveProfileId}
       />
     </div>
   );

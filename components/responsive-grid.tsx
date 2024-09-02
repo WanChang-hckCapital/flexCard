@@ -33,7 +33,7 @@ function getColumnsCount(pathname: string) {
     }
 }
 
-export default function ResponsiveGrid({ result, session }: any) {
+export default function ResponsiveGrid({ result, authActiveProfileId }: any) {
     const pathname = usePathname();
     const [columnsCount, setColumnsCount] = useState(getColumnsCount(pathname));
     const [loading, setLoading] = useState(true);
@@ -87,7 +87,7 @@ export default function ResponsiveGrid({ result, session }: any) {
                                     <div className={`h-auto max-w-fit max-sm:max-w-[360px] xxl:max-w-[230px] ${isProfilePage ? "max-w-[220px]" : ""} rounded-lg`}>
                                         <Card
                                             id={card.cardId}
-                                            authenticatedUserId={session?.user.id.toString() || undefined}
+                                            authActiveProfileId={authActiveProfileId}
                                             title={card.title}
                                             creator={card.creator}
                                             likes={card.likes}

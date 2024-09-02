@@ -17,7 +17,6 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/utils/authOptions";
-import { fetchAllMember } from "@/lib/actions/admin.actions";
 import { ChartCard } from "@/components/chart/chart-card";
 import { SubscriptionsByDayChart } from "@/components/chart/admin-analysis/subscription-day-chart";
 import { RANGE_OPTIONS, getRangeOption } from "@/lib/rangeOptions";
@@ -25,6 +24,8 @@ import { MembersByDayChart } from "@/components/chart/admin-analysis/member-day-
 import { MembersCountryTypeChart } from "@/components/chart/admin-analysis/member-country-chart";
 import { MembersTotalByTypeChart } from "@/components/chart/admin-analysis/member-totaltype-chart";
 import { redirect } from "next/navigation";
+import { fetchCurrentActiveProfileId } from "@/lib/actions/user.actions";
+import { fetchAllMember } from "@/lib/actions/admin.actions";
 
 interface DashboardProps {
   searchParams: {
@@ -48,7 +49,8 @@ async function Dashboard({ searchParams }: DashboardProps) {
     redirect("/sign-in");
   }
 
-  const authenticatedUserId = user.id;
+  const authUserId = user.id.toString();
+  const authActiveProfileId = await fetchCurrentActiveProfileId(authUserId);
 
   const totalSubscriptionRangeOption =
     getRangeOption(
@@ -71,13 +73,10 @@ async function Dashboard({ searchParams }: DashboardProps) {
       searchParams.totalMembersRangeTypeTo
     ) || RANGE_OPTIONS.last_7_days;
 
-  let members = await fetchAllMember(authenticatedUserId);
+  let members = await fetchAllMember(authActiveProfileId);
 
   if (!members) return null;
   members = members.map((member) => (member.toJSON ? member.toJSON() : member));
-
-  if (!members) return null;
-  members = members.map(member => member.toJSON ? member.toJSON() : member);
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-neutral-900 gap-4 p-4 lg:gap-6 lg:p-6">

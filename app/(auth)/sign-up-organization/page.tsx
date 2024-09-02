@@ -1,11 +1,12 @@
 import * as React from "react";
 import SignupOrganizationForm from '@/components/forms/signup-organization-form';
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { X } from "lucide-react";
+import { authOptions } from "@/app/api/utils/authOptions";
+import { fetchCurrentActiveProfileId } from "@/lib/actions/user.actions";
 
 async function Page() {
     const session = await getServerSession(authOptions)
@@ -15,7 +16,8 @@ async function Page() {
         redirect("/sign-in");
     }
 
-    const authenticatedUserId = user.id;
+    const authUserId = user.id.toString();
+    const authActiveProfileId = await fetchCurrentActiveProfileId(authUserId);
 
     return (
         <div>
@@ -26,7 +28,7 @@ async function Page() {
                 |&nbsp;
                 <h1 className="text-xl font-bold py-2 px-4">Join as Organization</h1>
             </header>
-            <SignupOrganizationForm authenticatedUserId={authenticatedUserId} />
+            <SignupOrganizationForm authActiveProfileId={authActiveProfileId} />
         </div>
     );
 };

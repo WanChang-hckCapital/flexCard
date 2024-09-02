@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { fetchCountMemberByDateRange } from '@/lib/actions/admin.actions';
+import { fetchCountMemberProfileByDateRange } from '@/lib/actions/admin.actions';
 import { startOfDay } from 'date-fns';
 
 type MembersByDayChartProps = {
@@ -16,7 +16,7 @@ export function MembersByDayChart({ startDate, endDate }: MembersByDayChartProps
 
     useEffect(() => {
         const fetchData = async () => {
-            const response = await fetchCountMemberByDateRange(startDate, endDate);
+            const response = await fetchCountMemberProfileByDateRange(startDate, endDate);
             setChartData(response.data || []);
         }
 
@@ -39,9 +39,9 @@ export function MembersByDayChart({ startDate, endDate }: MembersByDayChartProps
                 />
                 <Line
                     dot={false}
-                    dataKey="totalMembers"
+                    dataKey="totalProfiles"
                     type="monotone"
-                    name="Total Members"
+                    name="Total Member Profiles"
                     stroke="#8884d8"
                 />
             </LineChart>

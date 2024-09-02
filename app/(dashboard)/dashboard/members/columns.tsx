@@ -4,16 +4,15 @@ import { Badge } from '@/components/ui/badge';
 import { ColumnDef } from '@tanstack/react-table';
 
 export interface MembersListType {
-    user: string;
+    _id: string;
     accountname: string;
     image: string;
-    email: string;
     usertype: string;
     cards: Array<any>;
     subscription: {
         estimatedEndDate: Date;
     };
-    lastLogin: Date;
+    onboarded: boolean;
 }
 
 export const columns: ColumnDef<MembersListType>[] = [
@@ -21,21 +20,18 @@ export const columns: ColumnDef<MembersListType>[] = [
         accessorKey: 'accountname',
         header: 'Name',
         cell: ({ row }) => {
-            const image: any = row.original.image;
-            const accountname: any = row.original.accountname;
-            const email: any = row.original.email;
+            const image = row.original.image;
+            const accountname = row.original.accountname;
 
-            if (image && accountname && email) {
+            if (image && accountname) {
                 return (
                     <div className="flex gap-2">
-                        <img src={row.original.image} alt="Customer" className="w-10 h-10 rounded-full self-center" />
+                        <img src={image} alt="Customer" className="w-10 h-10 rounded-full self-center" />
                         <div className="text-center w-full">
-                            <span>{row.original.accountname}</span>
-                            <br/>
-                            <span className="text-muted-foreground">{row.original.email}</span>
+                            <span>{accountname}</span>
                         </div>
                     </div>
-                )
+                );
             } else {
                 return <span className="text-muted-foreground">Not yet onboarded</span>;
             }
@@ -45,15 +41,19 @@ export const columns: ColumnDef<MembersListType>[] = [
         accessorKey: 'usertype',
         header: 'Role',
         cell: ({ row }) => {
-            const usertype: any = row.getValue('usertype');
-            if (usertype.toUpperCase() == "FLEXADMIN") {
-                return <Badge variant="borderRed">{usertype}</Badge>;
-            } else if (usertype.toUpperCase() == "PERSONAL") {
-                return <Badge variant="borderPurple">{usertype}</Badge>;
-            } else if (usertype.toUpperCase() == "ORGANIZATION") {
-                return <Badge variant="borderBlue">{usertype}</Badge>;
-            } else if (usertype.toUpperCase() == "SUPERUSER") {
-                return <Badge variant="borderYellow">{usertype}</Badge>;
+            const usertype = row.getValue<string>('usertype').toUpperCase();
+
+            switch (usertype) {
+                case 'FLEXADMIN':
+                    return <Badge variant="borderRed">{usertype}</Badge>;
+                case 'PERSONAL':
+                    return <Badge variant="borderPurple">{usertype}</Badge>;
+                case 'ORGANIZATION':
+                    return <Badge variant="borderBlue">{usertype}</Badge>;
+                case 'SUPERUSER':
+                    return <Badge variant="borderYellow">{usertype}</Badge>;
+                default:
+                    return <Badge>{usertype}</Badge>;
             }
         },
     },
@@ -61,7 +61,7 @@ export const columns: ColumnDef<MembersListType>[] = [
         accessorKey: 'cards',
         header: 'Cards',
         cell: ({ row }) => {
-            const cards: any = row.getValue('cards');
+            const cards = row.getValue<any[]>('cards');
             return <span className="text-muted-foreground">{cards.length}</span>;
         },
     },
@@ -69,10 +69,11 @@ export const columns: ColumnDef<MembersListType>[] = [
         accessorKey: 'subscription',
         header: 'End Date',
         cell: ({ row }) => {
-            const subscription = row.getValue<{ estimatedEndDate: Date }>('subscription');
-            if (subscription && subscription.estimatedEndDate) {
+            const subscription = row.getValue<{ estimatedEndDate?: Date }>('subscription');
+
+            if (subscription?.estimatedEndDate) {
                 const endDate = new Date(subscription.estimatedEndDate);
-                return <span className="text-muted-foreground">{`${endDate.toDateString()}`}</span>;
+                return <span className="text-muted-foreground">{endDate.toDateString()}</span>;
             } else {
                 return <span className="text-muted-foreground">No subscription</span>;
             }
@@ -82,25 +83,14 @@ export const columns: ColumnDef<MembersListType>[] = [
         accessorKey: 'onboarded',
         header: 'Status',
         cell: ({ row }) => {
-            const onboarded: any = row.getValue('onboarded');
-            if (onboarded == true) {
-                return <Badge variant="bgPurple">Onboarded</Badge>;
-            } else {
-                return <Badge variant="bgRed">Onboarding</Badge>;
-            }
-        },
-    },
-    {
-        accessorKey: 'lastlogin',
-        header: 'Login',
-        cell: ({ row }) => {
-            const lastLogin: any = row.getValue('lastlogin');
-            if (lastLogin) {
-                return <span className="text-muted-foreground">{`${lastLogin.toDateString()}`}</span>;
-            } else {
-                return <span className="text-muted-foreground">Not yet onboarded</span>;
-            }
+            const onboarded = row.getValue<boolean>('onboarded');
+            return onboarded ? (
+                <Badge variant="bgPurple">Onboarded</Badge>
+            ) : (
+                <Badge variant="bgRed">Onboarding</Badge>
+            );
         },
     },
 ];
 
+// export type fetchAllMemberFunction = (authenticatedUserId: string) => Promise<MembersListType[]>;

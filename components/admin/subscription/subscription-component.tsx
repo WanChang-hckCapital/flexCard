@@ -17,10 +17,10 @@ interface SubscriptionComponentProps {
     subscription: any;
     limitedCard: number;
     cardsCount: number;
-    authenticatedUserId: string;
+    authActiveProfileId: string;
 }
 
-const SubscriptionComponent: React.FC<SubscriptionComponentProps> = ({ subscription, limitedCard, cardsCount, authenticatedUserId }) => {
+const SubscriptionComponent: React.FC<SubscriptionComponentProps> = ({ subscription, limitedCard, cardsCount, authActiveProfileId }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [currentSubscription, setCurrentSubscription] = useState(subscription);
@@ -28,7 +28,7 @@ const SubscriptionComponent: React.FC<SubscriptionComponentProps> = ({ subscript
     const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
 
     const fetchUpdatedSubscription = async () => {
-        const updatedSubscription = await fetchUserSubscription(authenticatedUserId);
+        const updatedSubscription = await fetchUserSubscription(authActiveProfileId);
         if (updatedSubscription.success) {
             setCurrentSubscription(updatedSubscription.subscription);
         } else {
@@ -53,7 +53,7 @@ const SubscriptionComponent: React.FC<SubscriptionComponentProps> = ({ subscript
         setLoading(true);
 
         try {
-            const result = await pauseUserSubscription(currentSubscription.id, authenticatedUserId);
+            const result = await pauseUserSubscription(currentSubscription.id, authActiveProfileId);
             if (result.success) {
                 await fetchUpdatedSubscription();
                 toast.success('You have accepted the offer. Your subscription has been paused for one month.');
@@ -77,7 +77,7 @@ const SubscriptionComponent: React.FC<SubscriptionComponentProps> = ({ subscript
         setLoading(true);
         const resultFeedback = await submitFeedback({
             ...feedbackData,
-            userId: authenticatedUserId,
+            profileId: authActiveProfileId,
         });
 
         if (resultFeedback.success) {

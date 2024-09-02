@@ -5,6 +5,7 @@ import {
   fetchSuggestedCards,
 } from "@/lib/actions/workspace.actions";
 import {
+  fetchCurrentActiveProfileId,
   getIPCountryInfo,
   updateCardViewData,
 } from "@/lib/actions/user.actions";
@@ -22,17 +23,20 @@ type Props = {
 
 const CardDetails = async ({ params }: Props) => {
   const cardDetails = await fetchCardDetails(params.cardId);
+
   const shareUrl = process.env.NEXT_PUBLIC_BASE_URL + `/cards/${params.cardId}`;
-  // if (!cardDetails) return redirect(`/`);
 
   const session = await getServerSession(authOptions);
-
-  if (session) {
-    const user = session?.user;
-    await updateCardViewData({ userId: user.id, cardId: params.cardId });
-  } else {
+  const user = session?.user;
+  
+  if (user) {
+    const authUserId = user?.id.toString();
+    const authActiveProfileId = await fetchCurrentActiveProfileId(authUserId);
+    
+    await updateCardViewData({ authActiveProfileId: authActiveProfileId, cardId: params.cardId });
+  }else{
     const geoInfo = await getIPCountryInfo();
-    await updateCardViewData({ userId: geoInfo.ip, cardId: params.cardId });
+    await updateCardViewData({ authActiveProfileId: geoInfo.ip, cardId: params.cardId });
   }
 
   const suggestedCards = await fetchSuggestedCards(params.cardId);

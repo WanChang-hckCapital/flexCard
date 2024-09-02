@@ -8,9 +8,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(req: Request) {
     try {
-        const { memberId, stripeProductId, interval } = await req.json() as { memberId: string; stripeProductId: string; interval: 'month' | 'year'; };
+        const { profileId, stripeProductId, interval } = await req.json() as { profileId: string; stripeProductId: string; interval: 'month' | 'year'; };
 
-        const result = await createStripeCustomerIfNotExists(memberId);
+        const result = await createStripeCustomerIfNotExists(profileId);
         const priceId = await getPriceIdByProductId(stripeProductId, interval);
 
         console.log("customerId", result.stripeCustomerId);

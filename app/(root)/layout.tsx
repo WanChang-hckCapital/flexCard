@@ -10,8 +10,8 @@ import Footer from "@/components/shared/footer";
 import LeftSidebar from "@/components/shared/LeftSidebar";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../api/utils/authOptions";
-import { fetchMemberImage } from "@/lib/actions/user.actions";
-import { fetchMember } from "@/lib/actions/admin.actions";
+import { fetchCurrentActiveProfileId, fetchMemberImage } from "@/lib/actions/user.actions";
+import { fetchMember, fetchProfile } from "@/lib/actions/admin.actions";
 import RightSidebarWrapper from "@/components/shared/RightSideWrapper";
 
 const fontSans = FontSans({
@@ -33,18 +33,22 @@ export default async function RootLayout({
   const session = await getServerSession(authOptions);
   const user = session?.user;
 
-  let userInfo = null;
-  let userImage = null;
+  let profileInfo = null;
+  let profileImage = null;
   if (user) {
-    userInfo = await fetchMember(user.id);
-    if (userInfo && typeof userInfo.toObject === "function") {
-      userInfo = userInfo.toObject();
+
+    const authUserId = user.id.toString();
+    const authActiveProfileId = await fetchCurrentActiveProfileId(authUserId);
+
+    profileInfo = await fetchProfile(authActiveProfileId);
+    if (profileInfo && typeof profileInfo.toObject === "function") {
+      profileInfo = profileInfo.toObject();
     }
 
-    if (userInfo.image) {
-      userImage = await fetchMemberImage(userInfo.image);
-      if (userImage && typeof userImage.toObject === "function") {
-        userImage = userImage.toObject();
+    if (profileInfo.image) {
+      profileImage = await fetchMemberImage(profileInfo.image);
+      if (profileImage && typeof profileImage.toObject === "function") {
+        profileImage = profileImage.toObject();
       }
     }
   }
@@ -59,13 +63,13 @@ export default async function RootLayout({
           )}
         >
           <main className="flex flex-row w-full">
-            <Header session={session} userInfoImage={userImage} />
-            <LeftSidebar session={session} userInfoImage={userImage} />
+            <Header session={session} userInfoImage={profileImage} />
+            <LeftSidebar session={session} userInfoImage={profileImage} />
             <section className="main-container">
               <div id="modal-root"></div>
               <div className="w-full">{children}</div>
             </section>
-            <RightSidebarWrapper />
+            {/* <RightSidebarWrapper /> */}
           </main>
           <SonnarToaster position="bottom-left" />
           {/* <Footer /> */}

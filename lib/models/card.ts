@@ -10,7 +10,7 @@ const cardSchema = new Schema<Card>({
     },
     creator: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Member',
+        ref: 'Profile',
         required: true,
     },
     title: {
@@ -25,13 +25,13 @@ const cardSchema = new Schema<Card>({
     likes: [
         {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Member",
+            ref: "Profile",
         }
     ],
     followers: [
         {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Member",
+            ref: "Profile",
         }
     ],
     categories: [
@@ -74,9 +74,9 @@ const cardSchema = new Schema<Card>({
     ],
     updateHistory: [
         {
-            userId: {
+            profileId: {
                 type: mongoose.Schema.Types.ObjectId,
-                ref: 'Member',
+                ref: 'Profile',
             },
             timestamp: {
                 type: Date,

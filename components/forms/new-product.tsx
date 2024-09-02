@@ -24,7 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 
 interface Props {
   btnTitle: string;
-  authenticatedUserId: string;
+  authActiveProfileId: string;
   productDetails?: {
     id: string;
     name: string;
@@ -52,7 +52,7 @@ interface Promotion {
   limitedQuantity: number;
 }
 
-const AddNewProduct = ({ btnTitle, authenticatedUserId, productDetails }: Props) => {
+const AddNewProduct = ({ btnTitle, authActiveProfileId, productDetails }: Props) => {
   const router = useRouter();
   const pathname = usePathname();
   const isEditMode = Boolean(productDetails);
@@ -123,7 +123,7 @@ const AddNewProduct = ({ btnTitle, authenticatedUserId, productDetails }: Props)
       result = await updateProduct({
         ...values,
         productId: productDetails.id,
-        authenticatedUserId,
+        authActiveProfileId,
         path: pathname,
       });
     } else {
@@ -139,7 +139,7 @@ const AddNewProduct = ({ btnTitle, authenticatedUserId, productDetails }: Props)
         limitedCard: values.limitedCard,
         limitedIP: values.limitedIP,
         features: values.features,
-        authenticatedUserId,
+        authActiveProfileId,
         path: pathname,
       });
     }

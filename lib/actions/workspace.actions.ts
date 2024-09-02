@@ -7,7 +7,7 @@ import { connectToDB } from "../mongodb";
 import { Card } from "@/types";
 import { v4 as uuidv4 } from 'uuid';
 import ComponentModel from "../models/component";
-import mongoose from "mongoose";
+import ProfileModel from "../models/profile";
 
 
 export async function fetchCardsByAccountId(accountId: string) {
@@ -22,6 +22,7 @@ export async function fetchCardsByAccountId(accountId: string) {
   }
 }
 
+//done convert to Profile Model
 export async function fetchCardDetails(cardId: string) {
   try {
     await connectToDB();
@@ -31,32 +32,33 @@ export async function fetchCardDetails(cardId: string) {
       throw new Error('Card not found');
     }
 
-    const creator = await Member.findOne({ user: card.creator }).select('accountname image');
+    const creator = await ProfileModel.findOne({ _id: card.creator }).select('accountname image followers');
     const creatorImage = await Image.findOne({ _id: creator?.image }).select('binaryCode');
     const creatorData = {
       accountname: creator ? creator.accountname : "Unknown",
-      image: creator && creatorImage ? creatorImage.binaryCode : undefined
+      image: creator && creatorImage ? creatorImage.binaryCode : undefined,
+      followers: creator.followers.length, 
     };
 
     const lineComponents = await CardMongodb.findById(cardId).select('lineFormatComponent');
 
     const likesDetails = await Promise.all(card.likes.map(async (likeId: any) => {
-      const likeUser = await Member.findOne({ user: likeId }).select('accountname image');
-      if (likeUser && likeUser.image) {
-        const imageDoc = await Image.findById(likeUser.image).select('binaryCode');
+      const likeUserProfile = await ProfileModel.findOne({ _id: likeId }).select('accountname image');
+      if (likeUserProfile && likeUserProfile.image) {
+        const imageDoc = await Image.findById(likeUserProfile.image).select('binaryCode');
         return {
-          accountname: likeUser.accountname,
+          accountname: likeUserProfile.accountname,
           binarycode: imageDoc ? imageDoc.binaryCode : undefined
         };
       }
       return {
-        accountname: likeUser ? likeUser.accountname : "Unknown",
+        accountname: likeUserProfile ? likeUserProfile.accountname : "Unknown",
         binarycode: undefined
       };
     }));
 
     const flexFormatHTML = await CardMongodb.findById(cardId).select('flexFormatHtml');
-    const followers = await Promise.all(card.followers.map((id: any) => Member.findOne({ user: id }).select('accountname')));
+    const followers = await Promise.all(card.followers.map((id: any) => ProfileModel.findOne({ _id: id }).select('accountname')));
     const lineFormatComponent = await ComponentModel.findById(lineComponents.lineFormatComponent).select('content');
     const flexFormatHTMLContent = await ComponentModel.findById(flexFormatHTML.flexFormatHtml).select('content');
 
@@ -84,6 +86,7 @@ export async function fetchCardDetails(cardId: string) {
   }
 }
 
+//done convert to Profile Model
 export async function fetchSuggestedCards(currentCardId: string) {
   try {
     await connectToDB();
@@ -102,7 +105,7 @@ export async function fetchSuggestedCards(currentCardId: string) {
     const suggestedCards = [...topLikedCards, ...additionalCards];
 
     const processedCards = await Promise.all(suggestedCards.map(async (card: any) => {
-      const creator = await Member.findOne({ user: card.creator }).select('accountname image');
+      const creator = await ProfileModel.findOne({ _id: card.creator }).select('accountname image');
       const creatorImage = await Image.findOne({ _id: creator?.image }).select('binaryCode');
       const creatorData = {
         accountname: creator ? creator.accountname : "Unknown",
@@ -112,23 +115,23 @@ export async function fetchSuggestedCards(currentCardId: string) {
       const lineComponents = await CardMongodb.findById(card._id).select('lineFormatComponent');
 
       const likesDetails = await Promise.all(card.likes.map(async (likeId: any) => {
-        const likeUser = await Member.findOne({ user: likeId }).select('accountname image');
-        if (likeUser && likeUser.image) {
-          const imageDoc = await Image.findById(likeUser.image).select('binaryCode');
+        const likeUserProfile = await ProfileModel.findOne({ _id: likeId }).select('accountname image');
+        if (likeUserProfile && likeUserProfile.image) {
+          const imageDoc = await Image.findById(likeUserProfile.image).select('binaryCode');
           return {
-            accountname: likeUser.accountname,
+            accountname: likeUserProfile.accountname,
             binarycode: imageDoc ? imageDoc.binaryCode : undefined
           };
         }
         return {
-          accountname: likeUser ? likeUser.accountname : "Unknown",
+          accountname: likeUserProfile ? likeUserProfile.accountname : "Unknown",
           binarycode: undefined
         };
       }));
 
       const flexFormatHTML = await CardMongodb.findById(card._id).select('flexFormatHtml');
 
-      const followers = await Promise.all(card.followers.map((id: any) => Member.findOne({ user: id }).select('accountname')));
+      const followers = await Promise.all(card.followers.map((id: any) => ProfileModel.findOne({ _id: id }).select('accountname')));
 
       const lineFormatComponent = await ComponentModel.findById(lineComponents.lineFormatComponent).select('content');
       const flexFormatHTMLContent = await ComponentModel.findById(flexFormatHTML.flexFormatHtml).select('content');
@@ -173,8 +176,9 @@ function generateCustomID() {
   return uuidv4();
 }
 
-export async function upsertCardContent(authaccountId: string, cardDetails: Card, cardContent: string, lineFormatCard: string, flexFormatHtml: string, cardId?: string) {
-  if (!authaccountId) return;
+// done convert to Profile Model but still need to check
+export async function upsertCardContent(authActiveProfileId: string, cardDetails: Card, cardContent: string, lineFormatCard: string, flexFormatHtml: string, cardId?: string) {
+  if (!authActiveProfileId) return;
 
   try {
     await connectToDB();
@@ -211,7 +215,7 @@ export async function upsertCardContent(authaccountId: string, cardDetails: Card
 
       const newCardContent = {
         cardID: cardDetails.cardID,
-        creator: authaccountId,
+        creator: authActiveProfileId,
         title: cardDetails.title,
         status: cardDetails.status,
         description: cardDetails.description,
@@ -223,11 +227,11 @@ export async function upsertCardContent(authaccountId: string, cardDetails: Card
       const newCard = new CardMongodb(newCardContent);
       await newCard.save();
 
-      const currentMember = await Member.findOne({ user: authaccountId });
+      const currentMemberProfile = await ProfileModel.findOne({ _id: authActiveProfileId });
 
-      if (currentMember) {
-        currentMember.cards.push(newCard);
-        await currentMember.save();
+      if (currentMemberProfile) {
+        currentMemberProfile.cards.push(newCard);
+        await currentMemberProfile.save();
       }
 
       return newCard;
@@ -278,16 +282,17 @@ export async function upsertCardContent(authaccountId: string, cardDetails: Card
   }
 }
 
+// done convert to Profile Model but still need to check
 export async function checkDuplicateCard(
-  authaccountId: string,
+  authActiveProfileId: string,
   cardId: string
 ): Promise<{ success: boolean; message?: string }> {
   try {
     await connectToDB();
 
-    const authenticatedUserId = await Member.findOne({ user: authaccountId });
+    const authenticatedProfile = await ProfileModel.findOne({ _id: authActiveProfileId });
 
-    if (!authenticatedUserId) {
+    if (!authenticatedProfile) {
       return { success: false, message: "You need to login before save the card" };
     }
 

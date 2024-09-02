@@ -9,6 +9,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { fetchAllPromotion } from "@/lib/actions/admin.actions";
+import { fetchCurrentActiveProfileId } from "@/lib/actions/user.actions";
 import { format } from "date-fns";
 import { Delete, PackageOpen, Pencil } from "lucide-react";
 import { getServerSession } from "next-auth";
@@ -23,6 +24,9 @@ async function Products() {
   if (!user) {
     redirect("/sign-in");
   }
+
+  const authUserId = user.id.toString();
+  const authActiveProfileId = await fetchCurrentActiveProfileId(authUserId);
 
   const promotions = await fetchAllPromotion();
 
@@ -64,7 +68,7 @@ async function Products() {
                 </Link>
                 <DeleteConfirmationButton
                   promoId={promotion.id}
-                  authenticatedUserId={user.id}
+                  authActiveProfileId={authActiveProfileId}
                 />
               </div>
               <div className="flex flex-col gap-2">

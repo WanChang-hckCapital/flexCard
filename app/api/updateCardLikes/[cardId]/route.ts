@@ -9,12 +9,12 @@ import { updateCardLikes } from '@/lib/actions/user.actions';
 export async function POST(req: Request, { params }: { params: { cardId: string } }) {
     const { cardId } = params;
     const url = new URL(req.url);
-    const authUserId = url.searchParams.get('authUserId');
+    const authActiveProfileId = url.searchParams.get('authActiveProfileId');
 
     console.log('update trigger with the cardId:', cardId);
 
-    if (!cardId || !authUserId) {
-        return NextResponse.json({ status: 'fail', message: 'Missing cardId or authUserId' }, { status: 400 });
+    if (!cardId || !authActiveProfileId) {
+        return NextResponse.json({ status: 'fail', message: 'Missing cardId or authActiveProfileId' }, { status: 400 });
     }
 
     try {
@@ -56,7 +56,7 @@ export async function POST(req: Request, { params }: { params: { cardId: string 
         //   };
         // }));
 
-        const updatedCard = await updateCardLikes({ authUserId: authUserId, cardId: cardId });
+        const updatedCard = await updateCardLikes({ authActiveProfileId: authActiveProfileId, cardId: cardId });
         if (updatedCard.success === false) {
             return NextResponse.json({ status: 'fail', message: updatedCard.message }, { status: 500 });
         }

@@ -10,29 +10,36 @@ import { getIPCountryInfo } from './user.actions';
 import { v4 as uuidv4 } from 'uuid';
 import { generateTransactionAndUpdateSubscription } from './admin.actions';
 import OfferModel from '../models/offer';
-import { unsubscribe } from 'diagnostics_channel';
+import ProfileModel from '../models/profile';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
-export async function createStripeCustomerIfNotExists(memberId: string) {
+// done convert to profile model but still need to check
+export async function createStripeCustomerIfNotExists(profileId: string) {
   await connectToDB();
 
-  const member = await MemberModel.findOne({ user: memberId }).select('stripeCustomerId email');
+  const member = await MemberModel.findOne({ profiles: profileId }).select("email");
 
   if (!member) {
-    throw new Error('Member not found');
+    throw new Error("Member not found");
   }
 
-  if (!member.stripeCustomerId) {
+  const profile = await ProfileModel.findOne({ _id: profileId }).select("stripeCustomerId");
+
+  if (!profile) {
+    throw new Error("Profile not found");
+  }
+
+  if (!profile.stripeCustomerId) {
     const customer = await stripe.customers.create({
       email: member.email,
     });
 
-    member.stripeCustomerId = customer.id;
-    await member.save();
+    profile.stripeCustomerId = customer.id;
+    await profile.save();
   }
 
-  return { stripeCustomerId: member.stripeCustomerId, email: member.email };
+  return { stripeCustomerId: profile.stripeCustomerId, email: member.email };
 }
 
 export async function getPriceIdByProductId(stripeProductId: string, interval: 'month' | 'year') {
@@ -49,27 +56,28 @@ export async function getPriceIdByProductId(stripeProductId: string, interval: '
   return prices.data[0].id;
 }
 
-export async function fetchUserSubscription(userId: string) {
+// done convert to profile model but still need to check
+export async function fetchUserSubscription(authActiveProfileId: string) {
   try {
     await connectToDB();
 
-    const member = await MemberModel.findOne({ user: userId }).populate('subscription offers');
+    const profile = await ProfileModel.findOne({ _id: authActiveProfileId }).populate('subscription offers');
 
-    if (!member || !member.subscription) {
+    if (!profile || !profile.subscription) {
       throw new Error('No subscription found for the user.');
     }
 
-    const trialOffers = await member.offers.filter((offer: any) => offer.type === 'trial');
+    const trialOffers = await profile.offers.filter((offer: any) => offer.type === 'trial');
     const trialId = trialOffers[0]._id;
     const trial = await OfferModel.findById(trialId);
 
-    const unsubscribeOffers = member.offers.filter((offer: any) => offer.type === 'unsubscribe');
+    const unsubscribeOffers = profile.offers.filter((offer: any) => offer.type === 'unsubscribe');
     const isUnsubscribeOffer = unsubscribeOffers.length > 0;
 
     const planId = trial.plan;
     const trialPlanDetails = await ProductModel.findById(planId).select('name price limitedCard');
 
-    const subscriptionId = member.subscription.slice(-1)[0];
+    const subscriptionId = profile.subscription.slice(-1)[0];
     const subscription = await SubscriptionModel.findById(subscriptionId).populate('plan transaction');
 
     console.log('subscription in stripe: ', subscription);
@@ -151,7 +159,8 @@ export async function cancelUserSubscription(subscriptionId: string) {
   }
 }
 
-export async function pauseUserSubscription(subscriptionId: string, authenticatedUserId: string) {
+// done convert to profile model but still need to check
+export async function pauseUserSubscription(subscriptionId: string, authActiveProfileId: string) {
   try {
     await connectToDB();
 
@@ -194,10 +203,10 @@ export async function pauseUserSubscription(subscriptionId: string, authenticate
       status: 'on offering',
     });
 
-    const existingOffer = await MemberModel.findOne({ user: authenticatedUserId }).select('offers');
+    const existingOffer = await ProfileModel.findOne({ _id: authActiveProfileId }).select('offers');
 
     if (!existingOffer) {
-      return { success: false, message: "No member found in Offer." };
+      return { success: false, message: "No profile found in Offer." };
     }
 
     const offering = new OfferModel({

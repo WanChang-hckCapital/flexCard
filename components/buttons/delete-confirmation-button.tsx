@@ -9,10 +9,10 @@ import { toast } from 'sonner';
 interface Props {
   promoId?: string;
   productId?: string;
-  authenticatedUserId: string;
+  authActiveProfileId: string;
 }
 
-function DeleteConfirmationButton({ promoId, productId, authenticatedUserId }: Props) {
+function DeleteConfirmationButton({ promoId, productId, authActiveProfileId }: Props) {
 
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
 
@@ -22,7 +22,7 @@ function DeleteConfirmationButton({ promoId, productId, authenticatedUserId }: P
 
   const handleDelete = async () => {
     if (promoId) {
-      const result = await deletePromotion({ promoId, authenticatedUserId });
+      const result = await deletePromotion({ promoId, authActiveProfileId });
 
       if (result.success) {
         toast.success("Promotion deleted successfully.");
@@ -31,10 +31,10 @@ function DeleteConfirmationButton({ promoId, productId, authenticatedUserId }: P
         toast.error("Failed to delete promotion." + result.message);
       }
     }else if (productId) {
-      const result = await deleteProduct({productId, authenticatedUserId});
+      const result = await deleteProduct({productId, authActiveProfileId});
 
       if (result.success) {
-        toast.success("PRoduct deleted successfully.");
+        toast.success("Product deleted successfully.");
         window.location.reload();
       }else{
         toast.error("Failed to delete product." + result.message);

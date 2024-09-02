@@ -7,6 +7,7 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { fetchCurrentActiveProfileId } from "@/lib/actions/user.actions";
 import { getServerSession } from "next-auth";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -18,6 +19,9 @@ async function Page() {
   if (!user) {
     redirect("/sign-in");
   }
+
+  const authUserId = user.id.toString();
+  const authActiveProfileId = await fetchCurrentActiveProfileId(authUserId);
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:p-6 bg-neutral-900 h-screen">
@@ -49,7 +53,7 @@ async function Page() {
       <div className="bg-black border border-neutral-600 px-[25%] py-[4%] rounded-xl w-full self-center">
         <AddNewPromotion
           btnTitle="Add"
-          authenticatedUserId={user.id}></AddNewPromotion>
+          authActiveProfileId={authActiveProfileId}></AddNewPromotion>
       </div>
     </main>
   );

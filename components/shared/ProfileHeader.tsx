@@ -11,7 +11,7 @@ import { RiUserUnfollowLine } from "react-icons/ri";
 
 interface Props {
   accountId: string;
-  authUserId?: string;
+  authActiveProfileId?: string;
   accountName: string;
   imgUrl?: string;
   shortdescription?: string;
@@ -25,7 +25,7 @@ interface Props {
 
 function ProfileHeader({
   accountId,
-  authUserId,
+  authActiveProfileId,
   accountName,
   imgUrl,
   shortdescription,
@@ -40,17 +40,17 @@ function ProfileHeader({
   const [isFollowing, setIsFollowing] = useState<boolean>(initialFollowingStatus);
   const [followersLength, setFollowersLength] = useState<number>(followers.length);
 
-  const isDifferentUser = accountId !== authUserId;
+  const isDifferentUser = accountId !== authActiveProfileId;
   const isOrganization = usertype.toUpperCase() == 'ORGANIZATION';
 
   const handleButtonClick = async (method: 'FOLLOW' | 'UNFOLLOW') => {
-    if (!authUserId) {
+    if (!authActiveProfileId) {
       toast.error('You need to login first before action.');
       return;
     }
 
     try {
-      const response = await updateMemberFollow({ authUserId, accountId, method });
+      const response = await updateMemberFollow({ authActiveProfileId, accountId, method });
       if (response.success === true){
         const { updatedFollowing, updateFollower } = response.data;
         if (method === "FOLLOW" && updatedFollowing.includes(accountId.toString())) {

@@ -8,12 +8,12 @@ import { storeSubscription } from '@/lib/actions/admin.actions';
 
 interface CheckoutECPayFormProps {
     productId: string;
-    authenticatedUserId: string;
+    authActiveProfileId: string;
     totalAmount: number;
     // paidTerms: string;
 }
 
-const CheckoutECPayForm: React.FC<CheckoutECPayFormProps> = ({ productId, totalAmount, authenticatedUserId }) => {
+const CheckoutECPayForm: React.FC<CheckoutECPayFormProps> = ({ productId, totalAmount, authActiveProfileId }) => {
     const [error, setError] = useState<string | null>(null);
     const [termsCondition, setTermsCondition] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -28,7 +28,7 @@ const CheckoutECPayForm: React.FC<CheckoutECPayFormProps> = ({ productId, totalA
 
         try {
             const subscription = await storeSubscription({
-                authenticatedUserId,
+                authActiveProfileId,
                 productId,
                 // paidTerms: Number(paidTerms),
                 paidTerms: 1,
@@ -36,7 +36,7 @@ const CheckoutECPayForm: React.FC<CheckoutECPayFormProps> = ({ productId, totalA
             });
     
             console.log("subscription: " + JSON.stringify(subscription));
-            console.log("authenticatedUserId: " + authenticatedUserId);
+            console.log("authActiveProfileId: " + authActiveProfileId);
     
             // need to change the order Id, ecpay cannot accept order id more than 20 
             if (subscription.success) {

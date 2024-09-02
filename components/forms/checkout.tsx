@@ -10,17 +10,16 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '../u
 import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from '@/components/ui/select';
 import CheckoutECPayForm from './checkout-ecpay-form';
 import CheckoutLinePayForm from './checkout-linepay-form';
-import TestForm from '@/types/test-form';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY!);
 
 interface CheckoutComponentProps {
     product: Product;
     productId: string;
-    authenticatedUserId: string;
+    authActiveProfileId: string;
 }
 
-const CheckoutComponent: React.FC<CheckoutComponentProps> = ({ product, productId, authenticatedUserId }) => {
+const CheckoutComponent: React.FC<CheckoutComponentProps> = ({ product, productId, authActiveProfileId }) => {
     const [paidTerms, setPaidTerms] = useState("1");
 
     const calculateDiscount = (price: number, terms: number, discountRate: number) => {
@@ -71,7 +70,7 @@ const CheckoutComponent: React.FC<CheckoutComponentProps> = ({ product, productI
                                         <CheckoutForm
                                             product={product}
                                             productId={productId}
-                                            authenticatedUserId={authenticatedUserId}
+                                            authActiveProfileId={authActiveProfileId}
                                             totalAmount={total}
                                             paidTerms={paidTerms}
                                             isSubscription={true}
@@ -80,7 +79,7 @@ const CheckoutComponent: React.FC<CheckoutComponentProps> = ({ product, productI
                                     <TabsContent value="ecpay">
                                         <CheckoutECPayForm
                                             productId={productId}
-                                            authenticatedUserId={authenticatedUserId}
+                                            authActiveProfileId={authActiveProfileId}
                                             totalAmount={total}
                                         // paidTerms={paidTerms}
                                         />
@@ -89,7 +88,7 @@ const CheckoutComponent: React.FC<CheckoutComponentProps> = ({ product, productI
                                     <TabsContent value="linepay">
                                         <CheckoutLinePayForm
                                             productId={productId}
-                                            authenticatedUserId={authenticatedUserId}
+                                            authActiveProfileId={authActiveProfileId}
                                             totalAmount={total}
                                         // paidTerms={paidTerms}
                                         />

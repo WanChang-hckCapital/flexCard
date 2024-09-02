@@ -10,7 +10,8 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { fetchUserSubscription } from "@/lib/actions/stripe.actions";
 import {
-  fetchMemberCardsLength,
+  fetchCurrentActiveProfileId,
+  fetchMemberProfileCardsLength,
   fetchProductPlanLimitedCardQuantity,
 } from "@/lib/actions/user.actions";
 import { getServerSession } from "next-auth";
@@ -28,8 +29,10 @@ async function Subscription() {
     redirect("/sign-in");
   }
 
-  const authenticatedUserId = user.id;
-  const subscriptionData = await fetchUserSubscription(user.id);
+  const authUserId = user.id.toString();
+  const authActiveProfileId = await fetchCurrentActiveProfileId(authUserId);
+  
+  const subscriptionData = await fetchUserSubscription(authActiveProfileId);
 
   if (!subscriptionData.success) {
     return (
@@ -70,7 +73,7 @@ async function Subscription() {
 
   const productId = subscriptionData.subscription?.plan.id;
   const limitedCard = await fetchProductPlanLimitedCardQuantity(productId);
-  const cardsCount = await fetchMemberCardsLength(authenticatedUserId);
+  const cardsCount = await fetchMemberProfileCardsLength(authActiveProfileId);
 
   console.log("limitedCard", limitedCard);
   console.log("cardsCount", cardsCount);
@@ -103,7 +106,7 @@ async function Subscription() {
               subscription={subscriptionData.subscription}
               limitedCard={limitedCard}
               cardsCount={cardsCount}
-              authenticatedUserId={authenticatedUserId}
+              authActiveProfileId={authActiveProfileId}
             />
             <Card>
               <CardContent>

@@ -26,8 +26,9 @@ import imageCompression from "browser-image-compression";
 import { CircleUser, Pencil } from "lucide-react";
 
 interface Props {
-  user: {
+  profile: {
     userId: string;
+    profileId: string;
     accountname: string;
     image: string;
     email: string;
@@ -37,7 +38,7 @@ interface Props {
   btnTitle: string;
 }
 
-const MemberProfile = ({ user, btnTitle }: Props) => {
+const MemberProfile = ({ profile, btnTitle }: Props) => {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -45,11 +46,11 @@ const MemberProfile = ({ user, btnTitle }: Props) => {
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [isFormDirty, setIsFormDirty] = useState(false);
   const [defaultValues, setDefaultValues] = useState({
-    accountname: user?.accountname ? user.accountname : "",
-    profile_image: user?.image ? user.image : "",
-    email: user?.email ? user.email : "",
-    phone: user?.phone ? user.phone : "",
-    shortdescription: user?.shortdescription ? user.shortdescription : "",
+    accountname: profile?.accountname ? profile.accountname : "",
+    profile_image: profile?.image ? profile.image : "",
+    email: profile?.email ? profile.email : "",
+    phone: profile?.phone ? profile.phone : "",
+    shortdescription: profile?.shortdescription ? profile.shortdescription : "",
   });
 
   const form = useForm<z.infer<typeof UserValidation>>({
@@ -61,9 +62,15 @@ const MemberProfile = ({ user, btnTitle }: Props) => {
 
     const geoInfo = await getIPCountryInfo();
 
+    if (!file && pathname !== "/profile/edit") {
+      toast.error("Please upload a profile image.");
+      return;
+    }
+
     if (file && fileUrl) {
       await updateMemberDetails({
-        userId: user.userId,
+        userId: profile.userId,
+        profileId: profile.profileId,
         accountname: values.accountname,
         email: values.email,
         password: values.password,
@@ -80,7 +87,8 @@ const MemberProfile = ({ user, btnTitle }: Props) => {
       });
     } else {
       await updateMemberDetails({
-        userId: user.userId,
+        userId: profile.userId,
+        profileId: profile.profileId,
         accountname: values.accountname,
         email: values.email,
         password: values.password,

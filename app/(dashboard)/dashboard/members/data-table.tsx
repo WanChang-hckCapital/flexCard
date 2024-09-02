@@ -36,7 +36,7 @@ import MemberDetailsSheet from "@/components/sheet/member-details";
 interface MemberDataTableProps<TData extends MembersListType, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  authenticatedUserId?: string;
+  authActiveProfileId?: string;
   filterValue: string;
   actionButtonText?: React.ReactNode;
   modalChildren?: React.ReactNode;
@@ -45,12 +45,12 @@ interface MemberDataTableProps<TData extends MembersListType, TValue> {
 export default function MemberDataTable<TData extends MembersListType, TValue>({
   columns,
   data,
-  authenticatedUserId,
+  authActiveProfileId,
 }: MemberDataTableProps<TData, TValue>) {
   const [filterText, setFilterText] = useState("");
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(6);
-  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const table = useReactTable({
@@ -71,7 +71,7 @@ export default function MemberDataTable<TData extends MembersListType, TValue>({
 
     console.log("Member ID: ", memberId);
 
-    setSelectedMemberId(memberId);
+    setSelectedProfileId(memberId);
     setIsSheetOpen(true);
   };
 
@@ -144,7 +144,7 @@ export default function MemberDataTable<TData extends MembersListType, TValue>({
                   className="cursor-pointer hover:bg-neutral-700"
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  onClick={() => handleRowClick(row.original.user)}
+                  onClick={() => handleRowClick(row.original._id)}
                 >
                   {row.getVisibleCells().map((cell) => {
                     const cellClass =
@@ -219,10 +219,10 @@ export default function MemberDataTable<TData extends MembersListType, TValue>({
           </Pagination>
         </div>
       </div>
-      {selectedMemberId && authenticatedUserId && (
+      {selectedProfileId && authActiveProfileId && (
         <MemberDetailsSheet
-          authenticatedUserId={authenticatedUserId}
-          memberId={selectedMemberId}
+          authActiveProfileId={authActiveProfileId}
+          selectedProfileId={selectedProfileId}
           open={isSheetOpen}
           setOpen={setIsSheetOpen}
         />

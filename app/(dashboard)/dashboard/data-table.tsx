@@ -50,37 +50,6 @@ export default function MemberDataTable<TData, TValue>({
 
   return (
     <>
-      {/* <div className="flex items-center justify-between">
-        <div className="flex items-center py-4 gap-2">
-          <Search />
-          <Input
-            placeholder="Search member email..."
-            value={
-              (table.getColumn(filterValue)?.getFilterValue() as string) ?? ''
-            }
-            onChange={(event) =>
-              table.getColumn(filterValue)?.setFilterValue(event.target.value)
-            }
-            className="h-12"
-          />
-        </div>
-        <Button
-          className="flex gap-2"
-          onClick={() => {
-            if (modalChildren)
-              setOpen(
-                <CustomModal
-                  title="Create A Funnel"
-                  subheading="Funnels are a like websites, but better! Try creating one!"
-                >
-                  {modalChildren}
-                </CustomModal>
-              )
-          }}
-        >
-          {actionButtonText}
-        </Button>
-      </div> */}
       <div className=" border bg-background rounded-lg">
         <Table className="">
           <TableHeader>
@@ -93,8 +62,8 @@ export default function MemberDataTable<TData, TValue>({
                         header.column.id === 'cards'
                           ? 'hidden md:table-cell text-center'
                           : header.column.id === 'usertype' || header.column.id === 'subscription'
-                          ? 'hidden sm:table-cell text-center'
-                          : 'text-center'
+                            ? 'hidden sm:table-cell text-center'
+                            : 'text-center'
                       }
                     >
                       {header.isPlaceholder
@@ -122,8 +91,8 @@ export default function MemberDataTable<TData, TValue>({
                         cell.column.id === 'cards'
                           ? 'hidden md:table-cell text-center'
                           : cell.column.id === 'usertype' || cell.column.id === 'subscription'
-                          ? 'hidden sm:table-cell text-center'
-                          : 'text-center'
+                            ? 'hidden sm:table-cell text-center'
+                            : 'text-center'
                       }
                     >
                       {flexRender(

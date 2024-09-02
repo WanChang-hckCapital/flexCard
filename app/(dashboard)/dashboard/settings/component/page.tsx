@@ -18,10 +18,10 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbS
 import AddNewUser from "@/components/forms/new-user"
 
 interface Props {
-    authenticatedUserId: string;
+    authActiveProfileId: string;
 }
 
-function Setting({ authenticatedUserId }: Props) {
+function Setting({ authActiveProfileId }: Props) {
     const [activeSection, setActiveSection] = useState('General');
     const [lineOAFollowers, setLineOAFollowers] = useState<string[]>([]);
     const router = useRouter();
@@ -105,7 +105,7 @@ function Setting({ authenticatedUserId }: Props) {
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent>
-                                    <AddNewUser btnTitle={"Submit"} authenticatedUserId={authenticatedUserId} />
+                                    <AddNewUser btnTitle={"Submit"} authActiveProfileId={authActiveProfileId} />
                                 </CardContent>
                             </Card>
                         )}

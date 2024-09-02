@@ -28,7 +28,7 @@ import { SelectSingleEventHandler } from "react-day-picker";
 
 interface Props {
   btnTitle: string;
-  authenticatedUserId: string;
+  authActiveProfileId: string;
   promoDetails?: {
     id: string;
     name: string;
@@ -42,7 +42,7 @@ interface Props {
   };
 }
 
-const AddNewPromotion = ({ btnTitle, authenticatedUserId, promoDetails }: Props) => {
+const AddNewPromotion = ({ btnTitle, authActiveProfileId, promoDetails }: Props) => {
   const router = useRouter();
   const pathname = usePathname();
   const isEditMode = Boolean(promoDetails);
@@ -84,7 +84,7 @@ const AddNewPromotion = ({ btnTitle, authenticatedUserId, promoDetails }: Props)
       result = await updatePromotion({
         ...values,
         promoId: promoDetails.id,
-        authenticatedUserId,
+        authActiveProfileId,
         path: pathname,
       });
     } else {
@@ -99,7 +99,7 @@ const AddNewPromotion = ({ btnTitle, authenticatedUserId, promoDetails }: Props)
           endDate: values.dateRange.endDate,
         },
         limitedQuantity: values.limitedQuantity,
-        authenticatedUserId: authenticatedUserId,
+        authActiveProfileId: authActiveProfileId,
       });
     }
 

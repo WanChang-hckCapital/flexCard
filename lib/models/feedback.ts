@@ -28,7 +28,7 @@ const feedbackSchema = new Schema<Feedback>({
     },
     feedbackBy: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Member",
+        ref: "Profile",
     },
 }, {
     timestamps: true

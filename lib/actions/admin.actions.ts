@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 import OfferModel from "../models/offer";
 import { Member, Usertype } from "@/types";
 import OrganizationModel from "../models/organization";
+import ProfileModel from "../models/profile";
 
 export async function authorizationAdmin(
     authenticatedUserId: string
@@ -37,28 +38,35 @@ function generateCustomID() {
     return uuidv4();
 }
 
-interface CreateMemberWithRoleParams {
+interface CreateMemberWithProfileRoleParams {
     email: string;
     userRole: string;
-    authenticatedUserId: string;
+    authActiveProfileId: string;
 }
 
-export async function createMemberWithRole({ email, userRole, authenticatedUserId }: CreateMemberWithRoleParams) {
+// convert to Profile Model but still need to check
+export async function createMemberWithProfileRole({ email, userRole, authActiveProfileId }: CreateMemberWithProfileRoleParams) {
     try {
         await connectToDB();
 
-        const admin = await MemberModel.findOne({ user: authenticatedUserId });
-        if (admin.usertype.toUpperCase() !== 'FLEXADMIN') {
+        const adminProfile = await ProfileModel.findOne({ _id: authActiveProfileId });
+        if (adminProfile.usertype.toUpperCase() !== 'FLEXADMIN') {
             throw new Error("User is not authorized to create member with role.");
         }
 
         const existingMember = await MemberModel.findOne({ email: email });
 
         if (!existingMember) {
+            const newProfile = new ProfileModel({
+                usertype: userRole,
+            });
+
+            await newProfile.save();
+
             const newMember = new MemberModel({
                 generatedId: generateCustomID(),
                 email: email,
-                usertype: userRole,
+                profiles: [newProfile._id],
             });
 
             await newMember.save();
@@ -71,12 +79,13 @@ export async function createMemberWithRole({ email, userRole, authenticatedUserI
     }
 }
 
-export async function fetchAllMember(authenticatedUserId: string) {
+//done convert to Profile Model but still need to check
+export async function fetchAllMember(authActiveProfileId: string) {
     try {
 
         await connectToDB();
 
-        const admin = await MemberModel.findOne({ user: authenticatedUserId });
+        const admin = await ProfileModel.findOne({ _id: authActiveProfileId }).select("usertype");
 
         if (admin.usertype.toUpperCase() !== 'FLEXADMIN') {
             throw new Error("Member has no authorization to fetch all members");
@@ -91,7 +100,29 @@ export async function fetchAllMember(authenticatedUserId: string) {
     }
 }
 
-export async function fetchMemberStats() {
+//done convert to Profile Model but still need to check
+export async function fetchAllMemberProfile(authActiveProfileId: string) {
+    try {
+
+        await connectToDB();
+
+        const admin = await ProfileModel.findOne({ _id: authActiveProfileId }).select("usertype");
+
+        if (admin.usertype.toUpperCase() !== 'FLEXADMIN') {
+            throw new Error("Member has no authorization to fetch all members");
+        }
+
+        const profiles = await ProfileModel.find();
+
+        return profiles;
+    } catch (error: any) {
+        console.error(`Failed to fetch Profile: ${error.message}`);
+        return null;
+    }
+}
+
+//done convert to Profile Model but still need to check
+export async function fetchMemberProfileStats() {
     try {
         await connectToDB();
 
@@ -101,27 +132,27 @@ export async function fetchMemberStats() {
         const lastWeekStart = startOfWeek(subWeeks(today, 1));
         const lastWeekEnd = endOfWeek(subWeeks(today, 1));
 
-        const currentWeekMembers = await MemberModel.find({
+        const currentWeekMembers = await ProfileModel.find({
             createdAt: { $gte: currentWeekStart, $lt: currentWeekEnd }
         });
 
-        const lastWeekMembers = await MemberModel.find({
+        const lastWeekMembers = await ProfileModel.find({
             createdAt: { $gte: lastWeekStart, $lt: lastWeekEnd }
         });
 
         // Helper function to categorize members
-        const categorizeMembers = (members: any[]) => {
+        const categorizeMemberProfiles = (profiles: any[]) => {
             return {
-                general: members.filter(member => member.usertype === 'PERSONAL' || member.usertype === 'ORGANIZATION'),
-                professional: members.filter(member => ['PREMIUM', 'EXPERT', 'ELITE'].includes(member.usertype)),
-                organization: members.filter(member => ['ORGANIZATION', 'BUSINESS', 'ENTERPRISE'].includes(member.usertype)),
-                admin: members.filter(member => member.usertype === 'FLEXADMIN'),
-                superuser: members.filter(member => member.usertype === 'SUPERUSER'),
+                general: profiles.filter(profile => profile.usertype === 'PERSONAL' || profile.usertype === 'ORGANIZATION'),
+                professional: profiles.filter(profile => ['PREMIUM', 'EXPERT', 'ELITE'].includes(profile.usertype)),
+                organization: profiles.filter(profile => ['ORGANIZATION', 'BUSINESS', 'ENTERPRISE'].includes(profile.usertype)),
+                admin: profiles.filter(profile => profile.usertype === 'FLEXADMIN'),
+                superuser: profiles.filter(profile => profile.usertype === 'SUPERUSER'),
             };
         };
 
-        const currentStats = categorizeMembers(currentWeekMembers);
-        const lastWeekStats = categorizeMembers(lastWeekMembers);
+        const currentStats = categorizeMemberProfiles(currentWeekMembers);
+        const lastWeekStats = categorizeMemberProfiles(lastWeekMembers);
 
         const calculateIncreaseRate = (currentCount: number, lastWeekCount: number) => {
             if (currentCount === 0 && lastWeekCount === 0) {
@@ -161,7 +192,7 @@ export async function fetchMemberStats() {
             },
         };
     } catch (error) {
-        console.error("Error fetching member stats:", error);
+        console.error("Error fetching member profile stats:", error);
         throw error;
     }
 }
@@ -180,8 +211,9 @@ interface TransactionsByDate {
     [date: string]: Transaction[];
 }
 
+//done convert to Profile Model but still need to check
 export async function fetchTransactionStats(
-    authenticatedUserId: string, startDate: Date | null, endDate: Date | null
+    authActiveProfileId: string, startDate: Date | null, endDate: Date | null
 ) {
     try {
         await connectToDB();
@@ -194,7 +226,7 @@ export async function fetchTransactionStats(
             startDate = subDays(endDate, 7);
         }
 
-        const user = await MemberModel.findOne({ user: authenticatedUserId });
+        const user = await ProfileModel.findOne({ _id: authActiveProfileId });
         const userType = user.usertype.toUpperCase();
 
         if (userType !== 'FLEXADMIN' && userType !== 'FLEXACCOUNTANT') {
@@ -331,6 +363,22 @@ export async function fetchTransactionStats(
 //     }
 // }
 
+export async function fetchProfile(profileId: string){
+    try {
+        await connectToDB();
+
+        const profile = await ProfileModel.findOne({ _id: profileId });
+
+        if (!profile) {
+            throw new Error("No profile found");
+        }
+
+        return profile;
+    } catch (error: any) {
+        throw new Error(`Failed to fetch Profile: ${error.message}`);
+    }
+}
+
 export async function fetchMember(userId: string) {
     try {
         await connectToDB();
@@ -343,60 +391,74 @@ export async function fetchMember(userId: string) {
     }
 }
 
-export async function fetchMemberDetails(
-    userId: string
+// done convert to Profile Model but still need to check, something should wrong here
+export async function fetchMemberProfileDetails(
+    profileId: string
 ): Promise<{ success: boolean; data?: any; message?: string }> {
     try {
         await connectToDB();
 
-        const member = await MemberModel.findOne({ user: userId })
-            .select("usertype ip_address country organization")
+        // neeed to fetch member details
+        // const member = await MemberModel.findOne({ user: userId })
+        //     .select("ip_address country profiles activeProfile")
+
+        // if (!member) {
+        //     return { success: false, message: "Member not found" };
+        // }
+
+        // const authActiveProfileId = member.profiles[member.activeProfile];
+
+        const profile = await ProfileModel.findOne({ _id: profileId })
+            .select("usertype organization")
             .populate({
                 path: "organization",
                 options: { lean: true }
             })
-            .lean<Member>();
+            // .lean<ProfileModel>();
 
-        if (!member) {
-            return { success: false, message: "Member not found" };
+        console.log("Profile: ", profile);
+
+        if (!profile) {
+            return { success: false, message: "Profile not found" };
         }
 
         let verifiedAdminName = null;
-        if (member.organization && member.organization.verify.verifiedBy) {
-            const verifiedAdmin = await MemberModel.findOne({ user: member.organization.verify.verifiedBy}).select("accountname").lean<Member>();
+        if (profile.organization && profile.organization.verify.verifiedBy) {
+            const verifiedAdmin = await ProfileModel.findOne({ _id: profile.organization.verify.verifiedBy}).select("accountname");
             if (verifiedAdmin) {
                 verifiedAdminName = verifiedAdmin.accountname;
             }
         }
 
-        const restructureMemberOrganization = member.organization ? {
-            ...member.organization,
+        const restructureProfileOrganization = profile.organization ? {
+            ...profile.organization,
             verify: {
-                ...member.organization.verify,
+                ...profile.organization.verify,
                 verifiedBy: verifiedAdminName,
             }
         } : null;
 
-        const structuredMember = {
-            ...member,
-            organization: restructureMemberOrganization,
+        const structuredProfile = {
+            ...profile,
+            organization: restructureProfileOrganization,
         };
 
-        return { success: true, data: structuredMember };
+        return { success: true, data: structuredProfile };
     } catch (error: any) {
         return { success: false, message: error.message };
     }
 }
 
+// done convert to Profile Model
 export async function verifyOrganizationStatus(
-    authenticatedUserId: string, organizationId: string
+    authActiveProfileId: string, organizationId: string
 ): Promise<{ success: boolean; data?: any; message?: string }> {
     try {
         await connectToDB();
 
-        const member = await MemberModel.findOne({ user: authenticatedUserId }).select("usertype accountname");
+        const profile = await ProfileModel.findOne({ _id: authActiveProfileId }).select("usertype accountname");
 
-        if (member.usertype.toUpperCase() !== 'FLEXADMIN' && member.usertype.toUpperCase() !== 'FLEXHR') {
+        if (profile.usertype.toUpperCase() !== 'FLEXADMIN' && profile.usertype.toUpperCase() !== 'FLEXHR') {
             return { success: false, message: "User is not authorized to verify organization status." };
         }
 
@@ -408,10 +470,10 @@ export async function verifyOrganizationStatus(
 
         organization.verify.verified = true;
         organization.verify.verifiedAt = new Date();
-        organization.verify.verifiedBy = authenticatedUserId;
+        organization.verify.verifiedBy = authActiveProfileId;
 
         const returnOrganizationVerifyDetails = organization.verify;
-        returnOrganizationVerifyDetails.verifiedBy = member.accountname;
+        returnOrganizationVerifyDetails.verifiedBy = profile.accountname;
 
         await organization.save();
 
@@ -448,9 +510,10 @@ export async function verifyOrganizationStatus(
 //     }
 // }
 
-export async function fetchCountMemberByDateRange(
+//done convert to Profile Model but still need to check
+export async function fetchCountMemberProfileByDateRange(
     startDate: Date | null, endDate: Date | null
-): Promise<{ success: boolean; data?: { date: string; totalMembers: number }[]; message?: string }> {
+): Promise<{ success: boolean; data?: { date: string; totalProfiles: number }[]; message?: string }> {
     try {
         await connectToDB();
 
@@ -459,27 +522,27 @@ export async function fetchCountMemberByDateRange(
             modifiedEndDate = endOfDay(new Date(endDate));
         }
 
-        const members = await MemberModel.find({
+        const profiles = await ProfileModel.find({
             createdAt: { $gte: startDate, $lte: modifiedEndDate }
         }).sort({ createdAt: 'asc' });
 
-        const dayArray: { date: string; totalMembers: number }[] = [];
+        const dayArray: { date: string; totalProfiles: number }[] = [];
 
-        if (members && members.length > 0) {
-            let currentDate = startDate || (members.length ? startOfDay(members[0].createdAt) : new Date());
+        if (profiles && profiles.length > 0) {
+            let currentDate = startDate || (profiles.length ? startOfDay(profiles[0].createdAt) : new Date());
             while (currentDate <= modifiedEndDate) {
                 dayArray.push({
                     date: currentDate.toISOString().slice(0, 10),
-                    totalMembers: 0
+                    totalProfiles: 0
                 });
                 currentDate = new Date(currentDate.setDate(currentDate.getDate() + 1));
             }
 
-            members.forEach((member: { createdAt: Date }) => {
-                const memberDateStr = member.createdAt.toISOString().slice(0, 10);
-                const day = dayArray.find(day => day.date === memberDateStr);
+            profiles.forEach((profile: { createdAt: Date }) => {
+                const profileDateStr = profile.createdAt.toISOString().slice(0, 10);
+                const day = dayArray.find(day => day.date === profileDateStr);
                 if (day) {
-                    day.totalMembers += 1;
+                    day.totalProfiles += 1;
                 }
             });
         }
@@ -490,7 +553,8 @@ export async function fetchCountMemberByDateRange(
     }
 }
 
-export async function fetchTotalMemberByDateRange(
+//done convert to Profile Model but still need to check
+export async function fetchTotalMemberProfileByDateRange(
     startDate: Date | null, endDate: Date | null
 ): Promise<{ success: boolean; data?: any[]; message?: string }> {
     try {
@@ -501,57 +565,57 @@ export async function fetchTotalMemberByDateRange(
             modifiedEndDate = endOfDay(new Date(endDate));
         }
 
-        const members = await MemberModel.find({
+        const profiles = await ProfileModel.find({
             createdAt: { $gte: startDate, $lte: modifiedEndDate }
         }).sort({ createdAt: 'asc' });
 
-        const dayArray: { date: string; totalMembers: number; totalPersonal: number; totalOrganization: number }[] = [];
+        const dayArray: { date: string; totalProfiles: number; totalPersonalProfile: number; totalOrganizationProfile: number }[] = [];
 
-        let totalMembers = 0;
-        let totalPersonal = 0;
-        let totalOrganization = 0;
+        let totalProfiles = 0;
+        let totalPersonalProfile = 0;
+        let totalOrganizationProfile = 0;
 
-        let currentDate = startDate || (members.length ? startOfDay(members[0].createdAt) : new Date());
+        let currentDate = startDate || (profiles.length ? startOfDay(profiles[0].createdAt) : new Date());
 
         while (currentDate <= modifiedEndDate) {
             dayArray.push({
                 date: currentDate.toISOString().slice(0, 10),
-                totalMembers: 0,
-                totalPersonal: 0,
-                totalOrganization: 0
+                totalProfiles: 0,
+                totalPersonalProfile: 0,
+                totalOrganizationProfile: 0
             });
             currentDate = new Date(currentDate.setDate(currentDate.getDate() + 1));
         }
 
-        members.forEach((member: { createdAt: Date, usertype: string }) => {
-            const memberDateStr = member.createdAt.toISOString().slice(0, 10);
+        profiles.forEach((profile: { createdAt: Date, usertype: string }) => {
+            const memberDateStr = profile.createdAt.toISOString().slice(0, 10);
             const day = dayArray.find(day => day.date === memberDateStr);
 
             if (day) {
-                day.totalMembers += 1;
-                totalMembers += 1;
+                day.totalProfiles += 1;
+                totalProfiles += 1;
 
-                if (member.usertype === 'PERSONAL') {
-                    day.totalPersonal += 1;
-                    totalPersonal += 1;
-                } else if (member.usertype === 'ORGANIZATION') {
-                    day.totalOrganization += 1;
-                    totalOrganization += 1;
+                if (profile.usertype === 'PERSONAL') {
+                    day.totalPersonalProfile += 1;
+                    totalPersonalProfile += 1;
+                } else if (profile.usertype === 'ORGANIZATION') {
+                    day.totalOrganizationProfile += 1;
+                    totalOrganizationProfile += 1;
                 }
             }
         });
 
         dayArray.reduce((acc, day) => {
-            day.totalMembers = acc.totalMembers + day.totalMembers;
-            day.totalPersonal = acc.totalPersonal + day.totalPersonal;
-            day.totalOrganization = acc.totalOrganization + day.totalOrganization;
+            day.totalProfiles = acc.totalProfiles + day.totalProfiles;
+            day.totalPersonalProfile = acc.totalPersonalProfile + day.totalPersonalProfile;
+            day.totalOrganizationProfile = acc.totalOrganizationProfile + day.totalOrganizationProfile;
 
             return {
-                totalMembers: day.totalMembers,
-                totalPersonal: day.totalPersonal,
-                totalOrganization: day.totalOrganization
+                totalProfiles: day.totalProfiles,
+                totalPersonalProfile: day.totalPersonalProfile,
+                totalOrganizationProfile: day.totalOrganizationProfile
             };
-        }, { totalMembers: 0, totalPersonal: 0, totalOrganization: 0 });
+        }, { totalProfiles: 0, totalPersonalProfile: 0, totalOrganizationProfile: 0 });
 
         return {
             success: true,
@@ -604,6 +668,7 @@ function checkAndReturnUserType(productName: string, planCategory: string) {
     }
 }
 
+//done convert to Profile Model
 export async function fetchTransactionStatusFromSubsciptionId(
     subscriptionId: string, transactionId: string
 ): Promise<{ success: boolean; status?: boolean; estimatedEndDate?: Date; message?: string }> {
@@ -628,13 +693,13 @@ export async function fetchTransactionStatusFromSubsciptionId(
 
         const planCategory = product.category;
 
-        const member = await MemberModel.findOne({ subscription: { $in: [subscriptionId] } }).select("user");
+        const profile = await ProfileModel.findOne({ subscription: { $in: [subscriptionId] } }).select("_id"); //not sure working or not
 
         const newUserType = checkAndReturnUserType(product.name, planCategory);
 
         let returnMessage: string;
         if (transaction.transactionStatus == true) {
-            const result = await updateUserType(member.user, newUserType);
+            const result = await updateUserType(profile._id, newUserType);
             if (result.success) {
                 returnMessage = "Thank you for subscribing to our service. Your subscription is now active.";
             } else {
@@ -659,25 +724,25 @@ export async function fetchTransactionStatusFromSubsciptionId(
     }
 }
 
-export async function updateUserType(memberId: string, userType: any) {
+//done convert to Profile Model
+export async function updateUserType(profileId: string, userType: any) {
     try {
         await connectToDB();
 
-        const member = await MemberModel.findOne({ user: memberId });
+        const profile = await ProfileModel.findOne({ _id: profileId });
 
-        if (!member) {
-            throw new Error("Member not found");
+        if (!profile) {
+            throw new Error("Profile not found");
         }
 
-        member.usertype = userType;
-        await member.save();
+        profile.usertype = userType;
+        await profile.save();
 
         return { success: true };
     } catch (error: any) {
         return { success: false, message: error.message };
     }
 }
-
 
 export async function fetchSubscriptionByDateRange(
     startDate: Date | null, endDate: Date | null
@@ -727,10 +792,11 @@ interface ParamsProductDetails {
     features: { name: string }[];
     limitedCard: number;
     limitedIP: number;
-    authenticatedUserId: string;
+    authActiveProfileId: string;
     path: string;
 }
 
+// done convert to Profile Model but still need to check
 export async function insertNewProduct({
     name,
     description,
@@ -743,13 +809,13 @@ export async function insertNewProduct({
     features,
     limitedCard,
     limitedIP,
-    authenticatedUserId,
+    authActiveProfileId,
     path,
 }: ParamsProductDetails): Promise<{ success: boolean; message?: string }> {
     try {
         await connectToDB();
 
-        const user = await MemberModel.findOne({ user: authenticatedUserId });
+        const user = await ProfileModel.findOne({ _id: authActiveProfileId });
         if (user.usertype.toUpperCase() !== "FLEXADMIN") {
             throw new Error("User is not authorized to add new product");
         }
@@ -809,13 +875,14 @@ export async function fetchProductById(productId: string): Promise<any> {
     }
 }
 
+//done convert to Profile Model
 export async function storeSubscription({
-    authenticatedUserId,
+    authActiveProfileId,
     productId,
     paidTerms,
     totalAmount,
 }: {
-    authenticatedUserId: string;
+    authActiveProfileId: string;
     productId: string;
     paidTerms: number;
     totalAmount: number;
@@ -823,18 +890,20 @@ export async function storeSubscription({
     try {
         await connectToDB();
 
-        const member = await MemberModel.findOne({ user: authenticatedUserId }).populate('offers');
+        console.log("authActiveProfileId in storeSubscription: ", authActiveProfileId);
 
-        if (!member) {
-            return { success: false, message: 'Member not found' };
+        const profile = await ProfileModel.findOne({ _id: authActiveProfileId }).populate('offers');
+
+        if (!profile) {
+            return { success: false, message: 'Profile not found' };
         }
 
         let planStarted;
         let estimatedEndDate;
         let hasTrialOffer = false;
 
-        if (member.offers && member.offers.length > 0) {
-            for (const offerId of member.offers) {
+        if (profile.offers && profile.offers.length > 0) {
+            for (const offerId of profile.offers) {
                 const offer = await OfferModel.findById(offerId);
 
                 if (offer && offer.type === 'trial') {
@@ -849,7 +918,7 @@ export async function storeSubscription({
             estimatedEndDate = new Date(planStarted);
             estimatedEndDate.setMonth(planStarted.getMonth() + paidTerms);
 
-            return await createSubscription(member, productId, paidTerms, totalAmount, planStarted, estimatedEndDate);
+            return await createSubscription(profile, productId, paidTerms, totalAmount, planStarted, estimatedEndDate);
         } else {
             const trialStartDate = new Date();
             const trialEndDate = new Date(trialStartDate);
@@ -864,14 +933,14 @@ export async function storeSubscription({
 
             await trial.save();
 
-            member.offers.push(trial._id);
-            await member.save();
+            profile.offers.push(trial._id);
+            await profile.save();
 
             planStarted = trialEndDate;
             estimatedEndDate = new Date(planStarted);
             estimatedEndDate.setMonth(planStarted.getMonth() + paidTerms);
 
-            return await createSubscription(member, productId, paidTerms, totalAmount, planStarted, estimatedEndDate);
+            return await createSubscription(profile, productId, paidTerms, totalAmount, planStarted, estimatedEndDate);
         }
     } catch (error: any) {
         console.error('Error storing subscription:', error);
@@ -880,7 +949,7 @@ export async function storeSubscription({
 }
 
 async function createSubscription(
-    member: any,
+    profile: any,
     productId: string,
     paidTerms: number,
     totalAmount: number,
@@ -900,8 +969,8 @@ async function createSubscription(
 
         await subscription.save();
 
-        member.subscription.push(subscription._id);
-        await member.save();
+        profile.subscription.push(subscription._id);
+        await profile.save();
 
         return { success: true, data: subscription._id.toString() };
     } catch (error: any) {
@@ -926,7 +995,7 @@ export async function fetchSubsriptionById(orderId: string): Promise<any> {
     }
 }
 
-export async function fetchSubsriptionTotalAmountById(orderId: string): Promise<any> {
+export async function   fetchSubsriptionTotalAmountById(orderId: string): Promise<any> {
     try {
         await connectToDB();
 
@@ -1016,11 +1085,12 @@ interface ParamsUpdate {
     features: { name: string }[];
     limitedCard: number;
     limitedIP: number;
-    authenticatedUserId: string;
+    authActiveProfileId: string;
     productId: string;
     path: string;
 }
 
+// done convert to Profile Model but still need to check
 export async function updateProduct({
     name,
     description,
@@ -1033,14 +1103,14 @@ export async function updateProduct({
     features,
     limitedCard,
     limitedIP,
-    authenticatedUserId,
+    authActiveProfileId,
     productId,
     path,
 }: ParamsUpdate): Promise<{ success: boolean; message?: string }> {
     try {
         await connectToDB();
 
-        const user = await MemberModel.findOne({ user: authenticatedUserId });
+        const user = await ProfileModel.findOne({ _id: authActiveProfileId });
         if (user.usertype.toUpperCase() !== "FLEXADMIN") {
             throw new Error("User is not authorized to update product");
         }
@@ -1075,13 +1145,14 @@ export async function updateProduct({
     }
 }
 
-export async function deleteProduct({ productId, authenticatedUserId }
-    : { productId: string; authenticatedUserId: string }
+//done convert to Profile Model but still need to check
+export async function deleteProduct({ productId, authActiveProfileId }
+    : { productId: string; authActiveProfileId: string }
 ): Promise<{ success: boolean; message?: string }> {
     try {
         await connectToDB();
 
-        const user = await MemberModel.findOne({ user: authenticatedUserId });
+        const user = await ProfileModel.findOne({ _id: authActiveProfileId });
         if (user.usertype.toUpperCase() !== "FLEXADMIN") {
             throw new Error("User is not authorized to delete product");
         }
@@ -1104,21 +1175,22 @@ interface ParamsPromotionDetails {
         endDate: Date;
     };
     limitedQuantity: number;
-    authenticatedUserId: string;
+    authActiveProfileId: string;
 }
 
+//done convert to Profile Model but still need to check
 export async function insertNewPromotion({
     name,
     code,
     discount,
     dateRange,
     limitedQuantity,
-    authenticatedUserId,
+    authActiveProfileId,
 }: ParamsPromotionDetails): Promise<{ success: boolean; message?: string }> {
     try {
         await connectToDB();
 
-        const user = await MemberModel.findOne({ user: authenticatedUserId });
+        const user = await ProfileModel.findOne({ _id: authActiveProfileId });
         if (user.usertype.toUpperCase() !== "FLEXADMIN") {
             throw new Error("User is not authorized to add new product");
         }
@@ -1176,24 +1248,25 @@ interface ParamsPromoUpdate {
         endDate: Date;
     };
     limitedQuantity: number;
-    authenticatedUserId: string;
+    authActiveProfileId: string;
     promoId: string;
     path: string;
 }
 
+// done convert to Profile Model but still need to check
 export async function updatePromotion({
     name,
     discount,
     dateRange,
     limitedQuantity,
-    authenticatedUserId,
+    authActiveProfileId,
     promoId,
     path,
 }: ParamsPromoUpdate): Promise<{ success: boolean; message?: string }> {
     try {
         await connectToDB();
 
-        const user = await MemberModel.findOne({ user: authenticatedUserId });
+        const user = await ProfileModel.findOne({ _id: authActiveProfileId });
         if (user.usertype.toUpperCase() !== "FLEXADMIN") {
             throw new Error("User is not authorized to update product");
         }
@@ -1219,13 +1292,14 @@ export async function updatePromotion({
     }
 }
 
-export async function deletePromotion({ promoId, authenticatedUserId }
-    : { promoId: string; authenticatedUserId: string }
+//done convert to Profile Model but still need to check
+export async function deletePromotion({ promoId, authActiveProfileId }
+    : { promoId: string; authActiveProfileId: string }
 ): Promise<{ success: boolean; message?: string }> {
     try {
         await connectToDB();
 
-        const user = await MemberModel.findOne({ user: authenticatedUserId });
+        const user = await ProfileModel.findOne({ _id: authActiveProfileId });
         if (user.usertype.toUpperCase() !== "FLEXADMIN") {
             throw new Error("User is not authorized to delete promotion");
         }

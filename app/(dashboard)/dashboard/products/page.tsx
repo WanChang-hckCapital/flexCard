@@ -9,6 +9,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { fetchAllProduct } from "@/lib/actions/admin.actions";
+import { fetchCurrentActiveProfileId } from "@/lib/actions/user.actions";
 import { PackageOpen, Pencil } from "lucide-react";
 import { getServerSession } from "next-auth";
 import Link from "next/link";
@@ -22,6 +23,9 @@ async function Products() {
   if (!user) {
     redirect("/sign-in");
   }
+
+  const authUserId = user.id.toString();
+  const authActiveProfileId = await fetchCurrentActiveProfileId(authUserId);
 
   const products = await fetchAllProduct();
 
@@ -64,7 +68,7 @@ async function Products() {
                   </Link>
                   <DeleteConfirmationButton
                     productId={product.id}
-                    authenticatedUserId={user.id}
+                    authActiveProfileId={authActiveProfileId}
                   />
                 </div>
               </div>

@@ -1,30 +1,35 @@
 import { redirect } from "next/navigation";
-import { fetchMember } from "@/lib/actions/admin.actions";
+import { fetchProfile } from "@/lib/actions/admin.actions";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/utils/authOptions";
 import MemberProfile from "@/components/forms/member-profile";
+import { fetchCurrentActiveProfileId } from "@/lib/actions/user.actions";
 
 async function Page() {
   const session = await getServerSession(authOptions);
   const user = session?.user;
 
-  if (!user) return null;
+  if (!user) return redirect("/sign-in");
 
-  let userInfo = await fetchMember(user.id);
-  if (userInfo && typeof userInfo.toObject === "function") {
-    userInfo = userInfo.toObject();
+  const authUserId = user.id.toString();
+  const authActiveProfileId = await fetchCurrentActiveProfileId(authUserId);
+
+  let profileInfo = await fetchProfile(authActiveProfileId);
+  if (profileInfo && typeof profileInfo.toObject === "function") {
+    profileInfo = profileInfo.toObject();
   }
 
-  if (userInfo?.onboarded) redirect("/");
+  if (profileInfo?.onboarded) redirect("/");
 
-  const userData = {
+  const profileData = {
     userId: user.id,
-    accountname: userInfo ? userInfo?.accountname : "",
-    image: userInfo ? userInfo?.image : user.image,
-    email: userInfo ? userInfo?.email : user.email,
-    password: userInfo ? userInfo?.password : "",
-    phone: userInfo ? userInfo?.phone : "",
-    shortdescription: userInfo ? userInfo?.shortdescription : "",
+    profileId: authActiveProfileId,
+    accountname: profileInfo ? profileInfo?.accountname : "",
+    image: profileInfo ? profileInfo?.image : user.image,
+    email: profileInfo ? profileInfo?.email : user.email,
+    password: profileInfo ? profileInfo?.password : "",
+    phone: profileInfo ? profileInfo?.phone : "",
+    shortdescription: profileInfo ? profileInfo?.shortdescription : "",
   };
 
   return (
@@ -35,7 +40,7 @@ async function Page() {
       </p>
 
       <section className="mt-9 bg-dark-2 pl-10 pr-10 pb-10 pt-6 rounded-xl">
-        <MemberProfile user={userData} btnTitle="Continue" />
+        <MemberProfile profile={profileData} btnTitle="Continue" />
       </section>
     </main>
   );

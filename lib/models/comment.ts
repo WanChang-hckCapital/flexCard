@@ -14,7 +14,7 @@ const commentSchema = new Schema<Comment>({
     },
     commentBy: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Member',
+        ref: 'Profile',
         required: true,
     },
     commentDate: {
@@ -24,13 +24,13 @@ const commentSchema = new Schema<Comment>({
     likes: [
         {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Member',
+            ref: 'Profile',
         }
     ],
     replies: [
         {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Comment',
+            ref: 'Profile',
         }
     ]
 }, {

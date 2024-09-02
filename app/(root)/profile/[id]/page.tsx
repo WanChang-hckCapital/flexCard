@@ -4,6 +4,7 @@ import { personalTabs } from "@/constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import {
+  fetchCurrentActiveProfileId,
   fetchMemberImage,
   getIPCountryInfo,
   updateProfileViewData,
@@ -12,53 +13,64 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/utils/authOptions";
 import ProfileHeader from "@/components/shared/ProfileHeader";
 import CardsTab from "@/components/shared/CardsTab";
-import { fetchMember } from "@/lib/actions/admin.actions";
+import { fetchMember, fetchProfile } from "@/lib/actions/admin.actions";
 
 async function Page({ params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
 
+  let authActiveProfileId = "";
+  let authProfileIdFromParams = "";
   if (session) {
     const user = session?.user;
     const authUserId = user.id.toString();
-    await updateProfileViewData({ userId: params.id, authUserId: authUserId });
+
+    authActiveProfileId = await fetchCurrentActiveProfileId(authUserId);
+
+    authProfileIdFromParams = params.id;
+
+    await updateProfileViewData({ profileId: authProfileIdFromParams, authUserId: authActiveProfileId });
   } else {
     const geoInfo = await getIPCountryInfo();
-    await updateProfileViewData({ userId: params.id, authUserId: geoInfo.ip });
+    await updateProfileViewData({ profileId: authProfileIdFromParams, authUserId: geoInfo.ip });
   }
 
   const tempUrl = "https://hckcapital.net";
 
-  let userInfo = await fetchMember(params.id);
-  if (userInfo && typeof userInfo.toObject === "function") {
-    userInfo = userInfo.toObject();
+  let profileInfo = await fetchProfile(authProfileIdFromParams);
+  if (profileInfo && typeof profileInfo.toObject === "function") {
+    profileInfo = profileInfo.toObject();
   }
 
-  const followersIds = userInfo.followers.map(
+  const followersIds = profileInfo.followers.map(
     (follower: { followersId: { toString: () => string } }) =>
       follower.followersId.toString()
   );
-  const isFollowing = followersIds.includes(session?.user.id.toString());
+  const isFollowing = followersIds.includes(authActiveProfileId);
 
-  let userImage = await fetchMemberImage(userInfo.image);
-  if (userImage && typeof userImage.toObject === "function") {
-    userImage = userImage.toObject();
+  let profileImage = await fetchMemberImage(profileInfo.image);
+  if (profileImage && typeof profileImage.toObject === "function") {
+    profileImage = profileImage.toObject();
   }
 
-  if (session?.user.id.toString() === params.id && !userInfo?.onboarded)
+  console.log("authActiveProfileId", authActiveProfileId);
+  console.log("authProfileIdFromParams", authProfileIdFromParams);
+  console.log("profileInfo onboarded", profileInfo);
+
+  if (authActiveProfileId.toString() === authProfileIdFromParams.toString() && !profileInfo?.onboarded)
     redirect("/onboarding");
 
   return (
     <section>
       <ProfileHeader
-        accountId={userInfo.user.toString()}
-        authUserId={session?.user.id.toString()}
-        accountName={userInfo.accountname}
-        imgUrl={userImage.binaryCode}
-        shortdescription={userInfo.shortdescription}
-        usertype={userInfo.usertype}
-        cards={userInfo.cards.length}
-        followers={userInfo.followers}
-        following={userInfo.following}
+        accountId={authProfileIdFromParams}
+        authActiveProfileId={authActiveProfileId}
+        accountName={profileInfo.accountname}
+        imgUrl={profileImage.binaryCode}
+        shortdescription={profileInfo.shortdescription}
+        usertype={profileInfo.usertype}
+        cards={profileInfo.cards.length}
+        followers={profileInfo.followers}
+        following={profileInfo.following}
         // webUrl={userInfo.organization.webUrl}
         webUrl={tempUrl}
         initialFollowingStatus={isFollowing}
@@ -80,7 +92,7 @@ async function Page({ params }: { params: { id: string } }) {
 
                 {tab.label === "CARDS" && (
                   <p className="ml-1 rounded-sm bg-light-4 px-2 py-1 !text-tiny-medium text-light-2">
-                    {userInfo.cards.length}
+                    {profileInfo.cards.length}
                   </p>
                 )}
               </TabsTrigger>
@@ -92,8 +104,8 @@ async function Page({ params }: { params: { id: string } }) {
               value={tab.value}
               className="w-full text-light-1">
               <CardsTab
-                authenticatedUserId={session?.user.id.toString()}
-                accountId={params.id}
+                authenticatedProfileId={authActiveProfileId}
+                profileId={authProfileIdFromParams}
                 userType="PERSONAL"
               />
             </TabsContent>

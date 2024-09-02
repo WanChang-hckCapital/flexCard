@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
-import { fetchMemberImage, fetchUser } from "@/lib/actions/user.actions";
+import { fetchCurrentActiveProfileId, fetchMemberImage, fetchUser } from "@/lib/actions/user.actions";
 import MemberProfile from "@/components/forms/member-profile";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/utils/authOptions";
-import { fetchMember } from "@/lib/actions/admin.actions";
+import { fetchMember, fetchProfile } from "@/lib/actions/admin.actions";
 
 async function Page() {
   const session = await getServerSession(authOptions);
@@ -13,26 +13,30 @@ async function Page() {
     redirect("/sign-in");
   }
 
-  const userInfo = await fetchMember(user.id);
-  if (!userInfo?.onboarded) redirect("/onboarding");
+  const authUserId = user.id.toString();
+  const authActiveProfileId = await fetchCurrentActiveProfileId(authUserId);
 
-  let userImage = null;
-  if (userInfo.image != null) {
-    userImage = await fetchMemberImage(userInfo.image);
-    if (typeof userImage.toObject === "function") {
-      userImage = userImage.toObject();
+  const profileInfo = await fetchProfile(authActiveProfileId);
+  if (!profileInfo?.onboarded) redirect("/onboarding");
+
+  let profileImage = null;
+  if (profileInfo.image != null) {
+    profileImage = await fetchMemberImage(profileInfo.image);
+    if (typeof profileImage.toObject === "function") {
+      profileImage = profileImage.toObject();
     }
   } else {
-    userImage = user?.image;
+    profileImage = user?.image;
   }
 
-  const userData = {
-    userId: user.id,
-    accountname: userInfo ? userInfo?.accountname : "",
-    image: userImage.binaryCode,
-    email: userInfo ? userInfo?.email : user.email,
-    phone: userInfo ? userInfo?.phone : "",
-    shortdescription: userInfo ? userInfo?.shortdescription : "",
+  const profileData = {
+    userId: authUserId, //backend need this
+    profileId: authActiveProfileId,
+    accountname: profileInfo ? profileInfo?.accountname : "",
+    image: profileInfo.binaryCode,
+    email: profileInfo ? profileInfo?.email : user.email,
+    phone: profileInfo ? profileInfo?.phone : "",
+    shortdescription: profileInfo ? profileInfo?.shortdescription : "",
   };
 
   return (
@@ -43,7 +47,7 @@ async function Page() {
       </p>
 
       <section className="mt-9 bg-dark-2 pl-10 pr-10 pb-10 pt-6 rounded-xl">
-        <MemberProfile user={userData} btnTitle="Continue" />
+        <MemberProfile profile={profileData} btnTitle="Continue" />
       </section>
     </main>
   );

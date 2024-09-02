@@ -35,10 +35,10 @@ interface FormData {
 }
 
 interface Props {
-    authenticatedUserId: string;
+    authActiveProfileId: string;
 }
 
-const SignupOrganizationForm = ({authenticatedUserId}: Props) => {
+const SignupOrganizationForm = ({authActiveProfileId}: Props) => {
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState<Partial<FormData>>({});
     const [errors, setErrors] = useState<{ message: string, step: number }[]>([]);
@@ -129,7 +129,7 @@ const SignupOrganizationForm = ({authenticatedUserId}: Props) => {
             bankAccountHolder: finalData.accountHolderName,
             bankName: finalData.bank,
             bankAccountNumber: finalData.accountNumber,
-            authenticatedUserId: authenticatedUserId,
+            authActiveProfileId: authActiveProfileId,
         }
 
         const result = await signUpOrganization(finalFormData);
