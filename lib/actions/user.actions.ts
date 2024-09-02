@@ -14,6 +14,9 @@ import FriendRequestModel from "../models/friendrequest";
 import FriendModel from "../models/friend";
 import FollowRequestModel from "../models/followrequest";
 import OrganizationModel from "../models/organization";
+import ChatroomModel from "../models/chatroomtable";
+import MessageModel from "../models/message";
+import Organization from "../models/organization";
 import { Readable } from "stream";
 import { headers } from "next/headers";
 import { addMinutes, startOfDay, subMinutes } from "date-fns";
@@ -557,6 +560,44 @@ export async function checkIfFollowing({
             success: false,
             isFollowing: false,
             message: `Failed to check following status: ${error.message}`,
+        };
+    }
+}
+
+type CheckIfFollowerParams = {
+    authUserId: string;
+    accountId: string;
+};
+
+export async function checkIfFollower({
+    authUserId,
+    accountId,
+}: CheckIfFollowerParams): Promise<{
+    success: boolean;
+    isFollower: boolean;
+    message?: string;
+}> {
+    try {
+        await connectToDB();
+
+        const currentMember = await Member.findOne({ user: authUserId });
+        const accountMember = await Member.findOne({ user: accountId });
+
+        if (!currentMember || !accountMember) {
+            throw new Error("Current member or account member not found");
+        }
+
+        const isFollower = currentMember.followers.some(
+            (follower: any) =>
+                follower.followersId.toString() === accountId.toString()
+        );
+
+        return { success: true, isFollower };
+    } catch (error: any) {
+        return {
+            success: false,
+            isFollower: false,
+            message: `Failed to check follower status: ${error.message}`,
         };
     }
 }
@@ -1991,47 +2032,53 @@ export async function fetchAllUser(authenticatedUserId: string) {
         await connectToDB();
 
         // fetch all member no matter public and private
-        const members = await MemberModel.find({}).select("user accountType");
+        const members = await MemberModel.find({}).select("user accountType image");
 
-        // console.log("members" + members);
-
-        const userIds = members.map((member) => member.user);
-
-        // console.log("userIds" + userIds);
+        const userIds = members
+            .map((member) => member.user.toString())
+            .filter((userId) => userId !== authenticatedUserId);
 
         // filter out the current userId
         const users = await UserModel.find({
-            _id: { $in: userIds, $ne: authenticatedUserId },
-        });
+            _id: { $in: userIds },
+        }).select("name");
 
-        const usersWithIdAsString = await Promise.all(
+        const usersWithDetails = await Promise.all(
             users.map(async (user) => {
                 const member = members.find(
                     (member) => member.user.toString() === user._id.toString()
                 );
 
-                const friendStatus = await FriendModel.findOne({
-                    $or: [
-                        { userA: authenticatedUserId, userB: user._id },
-                        { userA: user._id, userB: authenticatedUserId },
-                    ],
-                });
+                let imgUrl = null;
+                if (member && member.image && member.image.length > 0) {
+                    const imageRecord = await Image.findOne({
+                        _id: member?.image,
+                    }).select("binaryCode");
 
-                // 1 is friend, 0 is not
-                const status = friendStatus ? "1" : "0";
+                    imgUrl = imageRecord?.binaryCode || null;
+                }
 
                 return {
-                    ...user.toObject(),
-                    _id: user._id.toString(),
-                    friendStatus: status,
-                    accountType: member?.accountType || "public",
+                    userId: user._id.toString(),
+                    name: user.name,
+                    accountType: member?.accountType || "PUBLIC",
+                    image: imgUrl,
                 };
             })
         );
 
-        return usersWithIdAsString;
+        return {
+            success: true,
+            message: "Succesfully fetch the followers",
+            users: usersWithDetails,
+        };
     } catch (error: any) {
-        throw new Error(`Failed to fetch users: ${error.message}`);
+        console.error(`Failed to fetch users: ${error.message}`);
+        return {
+            success: false,
+            message: `Failed to fetch users: ${error.message}`,
+            users: [],
+        };
     }
 }
 
@@ -2651,10 +2698,8 @@ export async function getAllFollowers(userId: string) {
     try {
         await connectToDB();
 
-        const member = await MemberModel.findOne({ user: userId }).populate({
-            path: "followers.followersId",
-            select: "name image _id",
-        });
+        // console.log("userId :" + userId);
+        const member = await MemberModel.findOne({ user: userId });
 
         if (!member) {
             return { success: false, message: "User not found", followers: [] };
@@ -2680,22 +2725,47 @@ export async function getAllFollowing(userId: string) {
     try {
         await connectToDB();
 
-        const member = await MemberModel.findOne({ user: userId }).populate({
-            path: "following",
-            select: "name image _id",
-        });
+        const member = await MemberModel.findOne({ user: userId });
 
         if (!member) {
             return { success: false, message: "User not found", following: [] };
         }
 
+        //     return {
+        //         success: true,
+        //         following: member.following.map((followingUser: any) => ({
+        //             _id: followingUser._id,
+        //             name: followingUser.name,
+        //             image: followingUser.image,
+        //         })),
+        //     };
+        // } catch (error: any) {
+        //     console.error("Error fetching following users:", error);
+        //     return { success: false, message: error.message, following: [] };
+        // }
+
+        const followingWithDetails = await Promise.all(
+            member.following.map(async (following: any) => {
+                const followeingDetails = await MemberModel.findOne({
+                    user: following,
+                }).select("accountname user image _id");
+
+                const imgUrl = await Image.findOne({
+                    _id: followeingDetails?.image,
+                }).select("binaryCode");
+
+                return {
+                    id: followeingDetails?._id,
+                    userId: followeingDetails?.user,
+                    name: followeingDetails?.accountname || "Unknown",
+                    image: imgUrl.binaryCode.toString(),
+                };
+            })
+        );
+
         return {
             success: true,
-            following: member.following.map((followingUser: any) => ({
-                _id: followingUser._id,
-                name: followingUser.name,
-                image: followingUser.image,
-            })),
+            following: followingWithDetails,
         };
     } catch (error: any) {
         console.error("Error fetching following users:", error);
@@ -2703,118 +2773,105 @@ export async function getAllFollowing(userId: string) {
     }
 }
 
-// follow a public acc / no need approve from the user
-export async function sendFollowRequestPublic(
-    authenticatedId: string,
-    targetUserId: string
-) {
-    try {
-        await connectToDB();
-
-        // target public acc
-        const targetMember = await MemberModel.findOne({
-            user: targetUserId,
-        }).select("accountType");
-
-        if (!targetMember) {
-            return { success: false, message: "Target user not found" };
-        }
-
-        // check public
-        if (targetMember.accountType !== "public") {
-            return {
-                success: false,
-                message: "Cannot follow. The account is not public.",
-            };
-        }
-
-        // Update the authenticated user's following list
-        const updateFollowing = await MemberModel.findOneAndUpdate(
-            { user: authenticatedId },
-            { $addToSet: { following: targetUserId } },
-            { new: true }
-        );
-
-        // Update the target user's followers list
-        const updateFollowers = await MemberModel.findOneAndUpdate(
-            { user: targetUserId },
-            {
-                $addToSet: {
-                    followers: { followersId: authenticatedId, followedAt: new Date() },
-                },
-            },
-            { new: true }
-        );
-
-        if (updateFollowing && updateFollowers) {
-            return {
-                success: true,
-                message: "Successfully followed the public account.",
-            };
-        } else {
-            return {
-                success: false,
-                message: "Failed to update follow relationship.",
-            };
-        }
-    } catch (error: any) {
-        console.error("Error following public account:", error);
-        return { success: false, message: "Error following public account." };
-    }
-}
-
 // follow a private acc/ need approval from the user
-export async function sendFollowRequestPrivate(
+export async function sendFollowRequest(
     authenticatedId: string,
     targetUserId: string
 ) {
     try {
         await connectToDB();
 
+        const currentUser = await MemberModel.findOne({
+            user: authenticatedId,
+        }).select("accountType followers");
+
         const targetMember = await MemberModel.findOne({
             user: targetUserId,
-        }).select("accountType");
+        }).select("accountType followers");
 
-        if (!targetMember) {
-            return { success: false, message: "Target user not found" };
-        }
-
-        if (targetMember.accountType !== "private") {
+        if (!targetMember || !currentUser) {
             return {
                 success: false,
-                message: "Cannot send follow request. The account is not private.",
+                message: "Target user or current user not found",
             };
         }
 
-        // Check if a follow request already exists
-        const existingRequest = await FollowRequestModel.findOne({
-            sender: authenticatedId,
-            receiver: targetUserId,
-        });
+        if (targetMember.accountType === "PUBLIC") {
+            const isAlreadyFollowing =
+                targetMember.followers.includes(authenticatedId);
 
-        if (existingRequest) {
-            return {
-                success: false,
-                message: "Follow request already sent.",
-            };
-        }
+            if (isAlreadyFollowing) {
+                return {
+                    success: false,
+                    message: "You are already following this user.",
+                };
+            }
 
-        // Create a new follow request
-        const newFollowRequest = await FollowRequestModel.create({
-            sender: authenticatedId,
-            receiver: targetUserId,
-            status: 0,
-        });
+            // update the follower for targetMembers
+            await MemberModel.findOneAndUpdate(
+                { user: targetUserId },
+                {
+                    $push: {
+                        followers: { followersId: authenticatedId, followedAt: new Date() },
+                    },
+                },
+                { new: true, useFindAndModify: false }
+            );
 
-        if (newFollowRequest) {
+            // update the current user's following
+            await MemberModel.findOneAndUpdate(
+                { user: authenticatedId },
+                {
+                    $push: { following: targetUserId },
+                },
+                { new: true, useFindAndModify: false }
+            );
+            await currentUser.save();
+
             return {
                 success: true,
-                message: "Follow request sent successfully.",
+                message: "Successfully followed the user.",
             };
+        } else if (targetMember.accountType === "PRIVATE") {
+            const existingRequest = await FollowRequestModel.findOne({
+                sender: authenticatedId,
+                receiver: targetUserId,
+                status: 0, // find only pending request
+            });
+
+            console.log("existingRequest:" + existingRequest);
+
+            if (existingRequest) {
+                return {
+                    success: false,
+                    message: "Follow request already sent.",
+                };
+            }
+
+            // Create a new follow request
+            const newFollowRequest = await FollowRequestModel.create({
+                sender: authenticatedId,
+                receiver: targetUserId,
+                status: 0, // 0 indicates pending status, 1 indicates decline, 2 indicates accepted
+            });
+
+            // console.log("newFollowRequest" + newFollowRequest);
+
+            if (newFollowRequest) {
+                return {
+                    success: true,
+                    message: "Follow request sent successfully.",
+                };
+            } else {
+                return {
+                    success: false,
+                    message: "Failed to send follow request.",
+                };
+            }
         } else {
             return {
                 success: false,
-                message: "Failed to send follow request.",
+                message: "Invalid account type.",
             };
         }
     } catch (error: any) {
@@ -2822,3 +2879,629 @@ export async function sendFollowRequestPrivate(
         return { success: false, message: "Error sending follow request." };
     }
 }
+
+// check in followRequest Table
+export async function checkFollowRequestStatus({
+    senderId,
+    receiverId,
+}: {
+    senderId: string;
+    receiverId: string;
+}): Promise<{
+    success: boolean;
+    requestSent: boolean;
+    message?: string;
+}> {
+    try {
+        await connectToDB();
+
+        const existingRequest = await FollowRequestModel.findOne({
+            sender: senderId,
+            receiver: receiverId,
+            status: 0, // Pending status
+        });
+
+        return {
+            success: true,
+            requestSent: !!existingRequest,
+        };
+    } catch (error) {
+        console.error("Error checking follow request status:", error);
+        return {
+            success: false,
+            requestSent: false,
+            message: "Error checking follow request status",
+        };
+    }
+}
+
+// remove follower
+export async function removeFollower(
+    authUserId: string,
+    targetUserId: string
+): Promise<{ success: boolean; message: string }> {
+    try {
+        await connectToDB();
+
+        const updatedMember = await MemberModel.findOneAndUpdate(
+            { user: authUserId },
+            { $pull: { followers: { followersId: targetUserId } } },
+            { new: true }
+        );
+
+        if (!updatedMember) {
+            return { success: false, message: "User not found or update failed" };
+        }
+
+        return { success: true, message: "Follower removed successfully" };
+    } catch (error) {
+        console.error("Error removing follower:", error);
+        return { success: false, message: "Failed to remove follower" };
+    }
+}
+
+// remove following
+export async function removeFollowing(
+    authUserId: string,
+    targetUserId: string
+): Promise<{ success: boolean; message: string }> {
+    try {
+        await connectToDB();
+
+        const updatedMember = await MemberModel.findOneAndUpdate(
+            { user: authUserId },
+            { $pull: { following: targetUserId } },
+            { new: true }
+        );
+
+        authUserId;
+
+        if (!updatedMember) {
+            return { success: false, message: "User not found or update failed" };
+        }
+
+        return { success: true, message: "Following removed successfully" };
+    } catch (error) {
+        console.error("Error removing following:", error);
+        return { success: false, message: "Failed to remove following" };
+    }
+}
+
+// get account type for member
+export async function getAccountType(authenticatedId: string) {
+    try {
+        await connectToDB();
+
+        const member = await MemberModel.findOne({ user: authenticatedId }).select(
+            "user accountType"
+        );
+
+        if (!member) {
+            return {
+                success: false,
+                message: "Member not found",
+                accountType: null,
+            };
+        }
+
+        return {
+            success: true,
+            message: "Successfully fetched the account type",
+            accountType: member.accountType,
+        };
+    } catch (error: any) {
+        console.error(`Failed to fetch account type: ${error.message}`);
+        return {
+            success: false,
+            message: `Failed to fetch account type: ${error.message}`,
+            accountType: null,
+        };
+    }
+}
+
+// get pending followrequest if the account is a private acc
+export async function getFollowRequest(authenticatedId: string) {
+    try {
+        await connectToDB();
+
+        const followRequests = await FollowRequestModel.find({
+            receiver: authenticatedId,
+            status: 0, // pending
+        }).select("sender receiver status createdAt _id");
+
+        if (!followRequests || followRequests.length === 0) {
+            return {
+                success: false,
+                message: "No follow requests found",
+                followRequests: [],
+            };
+        }
+
+        const populatedFollowRequests = await Promise.all(
+            followRequests.map(async (request) => {
+                const senderMember = await MemberModel.findOne({
+                    user: request.sender,
+                }).select("accountname image");
+
+                const imgUrl = await Image.findOne({
+                    _id: senderMember?.image,
+                }).select("binaryCode");
+
+                return {
+                    ...request.toObject(),
+                    sender: senderMember ? senderMember.accountname : null,
+                    image: imgUrl.binaryCode,
+                };
+            })
+        );
+
+        return {
+            success: true,
+            message: "Successfully fetched follow requests",
+            followRequests: populatedFollowRequests,
+        };
+    } catch (error: any) {
+        console.error(`Failed to fetch follow requests: ${error.message}`);
+        return {
+            success: false,
+            message: `Failed to fetch follow requests: ${error.message}`,
+            followRequests: [],
+        };
+    }
+}
+
+// accept follow request
+export async function acceptFollowRequest(followRequestId: string) {
+    try {
+        await connectToDB();
+
+        // console.log("followRequestId:" + followRequestId);
+
+        const updatedFollowRequest = await FollowRequestModel.findOneAndUpdate(
+            {
+                _id: followRequestId,
+                status: 0, // pending
+            },
+            { status: 2 }, // accepted
+            {
+                new: true,
+            }
+        );
+
+        if (!updatedFollowRequest) {
+            return {
+                success: false,
+                message: "Follow Request not found or update failed",
+            };
+        }
+
+        console.log("updatedFollowRequest sender" + updatedFollowRequest.sender);
+        console.log(
+            "updatedFollowRequest receiver" + updatedFollowRequest.receiver
+        );
+
+        const followFromAuthUser = await MemberModel.findOneAndUpdate(
+            { user: updatedFollowRequest.sender },
+            { $addToSet: { following: updatedFollowRequest.receiver } },
+            { new: true }
+        );
+
+        if (!followFromAuthUser) {
+            return {
+                success: false,
+                message: "Failed to update sender's following list",
+            };
+        }
+
+        const followingFromOtherUser = await MemberModel.findOneAndUpdate(
+            { user: updatedFollowRequest.receiver },
+            {
+                $addToSet: {
+                    followers: {
+                        followersId: updatedFollowRequest.sender,
+                        followedAt: new Date(),
+                    },
+                },
+            },
+            { new: true }
+        );
+
+        if (!followingFromOtherUser) {
+            return {
+                success: false,
+                message: "Failed to update receiver's followers list",
+            };
+        }
+
+        return { success: true, message: "Accept follow request successfully" };
+    } catch (error) {
+        console.error("Error accepting follow request", error);
+        return { success: false, message: "Failed to accept follow request." };
+    }
+}
+
+// getMutualFollowStatus
+export async function getMutualFollowStatus(
+    authenticatedId: string,
+    targetUserId: string
+) {
+    try {
+        await connectToDB();
+
+        const isMutualFollow = await MemberModel.findOne({
+            $and: [
+                { "followers.followersId": targetUserId },
+                { "followers.followersId": authenticatedId },
+            ],
+        });
+
+        return {
+            success: true,
+            message: isMutualFollow
+                ? "Users mutually follow each other."
+                : "Users do not follow each other.",
+            mutualFollow: !!isMutualFollow,
+        };
+    } catch (error) {
+        console.error("Error finding mutual follow status: ", error);
+        return {
+            success: false,
+            message: "Failed to determine follow status.",
+            mutualFollow: false,
+        };
+    }
+}
+
+// get all follower and following of userID
+export async function getFollowersAndFollowing(userId: string) {
+    try {
+        await connectToDB();
+
+        const member = await MemberModel.findOne({ user: userId });
+
+        if (!member) {
+            return {
+                success: false,
+                message: "User not found",
+                followers: [],
+                following: [],
+            };
+        }
+
+        const followersWithDetails = await Promise.all(
+            member.followers.map(async (follower: any) => {
+                const followerDetails = await MemberModel.findOne({
+                    user: follower.followersId,
+                }).select("accountname user image _id");
+
+                const imgUrl = await Image.findOne({
+                    _id: followerDetails?.image,
+                }).select("binaryCode");
+
+                return {
+                    id: followerDetails?._id,
+                    userId: followerDetails?.user,
+                    name: followerDetails?.accountname || "Unknown",
+                    image: imgUrl?.binaryCode.toString(),
+                    followedAt: follower.followedAt,
+                };
+            })
+        );
+
+        const followingWithDetails = await Promise.all(
+            member.following.map(async (following: any) => {
+                const followeingDetails = await MemberModel.findOne({
+                    user: following,
+                }).select("accountname user image _id");
+
+                const imgUrl = await Image.findOne({
+                    _id: followeingDetails?.image,
+                }).select("binaryCode");
+
+                return {
+                    id: followeingDetails?._id,
+                    userId: followeingDetails?.user,
+                    name: followeingDetails?.accountname || "Unknown",
+                    image: imgUrl?.binaryCode.toString(),
+                };
+            })
+        );
+
+        return {
+            success: true,
+            message: "",
+            followers: followersWithDetails,
+            following: followingWithDetails,
+        };
+    } catch (error: any) {
+        console.error("Error fetching followers and following:", error);
+        return {
+            success: false,
+            message: error.message || "An error occurred",
+            followers: [],
+            following: [],
+        };
+    }
+}
+
+// wan chang part error here
+export async function fetchMessages(
+    chatroomId: string,
+    authenticatedUserId: string
+) {
+    try {
+        const chatroom = await ChatroomModel.findById(chatroomId);
+        console.log("cahtrrom:" + chatroom);
+
+        if (!chatroom) {
+            throw new Error("Chatroom not found");
+        }
+
+        const participantsInfo = await Promise.all(
+            chatroom.participants.map(async (participant: any) => {
+                const participantInfo = await MemberModel.findOne({
+                    user: participant,
+                }).lean();
+
+                let imgUrl = null;
+
+                if (participantInfo && participantInfo.image) {
+                    const imageRecord = await Image.findOne({
+                        _id: participantInfo.image,
+                    }).select("binaryCode");
+                    imgUrl = imageRecord?.binaryCode || null;
+                }
+                return {
+                    ...participantInfo,
+                    image: imgUrl,
+                };
+            })
+        );
+
+        const participantMap = new Map(
+            participantsInfo.map((participant: any) => [
+                participant.user.toString(),
+                participant,
+            ])
+        );
+
+        const messages = await MessageModel.find({ chatroomId })
+            .sort({ createdAt: 1 })
+            .lean();
+
+        const messagesWithMemberData = messages.map((message: any) => {
+            const sender = participantMap.get(message.senderId.toString());
+            return {
+                ...message,
+                senderId: message.senderId,
+                image: sender?.image || null,
+                senderName: sender?.accountname || "Unknown",
+            };
+        });
+
+        return { success: true, message: messagesWithMemberData };
+    } catch (error: any) {
+        return { success: false, message: error.message };
+    }
+}
+
+// create a new chatroom
+export async function createOrGetChatroom(
+    authenticatedId: string,
+    targetUserId: string
+) {
+    try {
+        let chatroom = await ChatroomModel.findOne({
+            type: "PERSONAL",
+            participants: { $all: [authenticatedId, targetUserId] },
+        });
+
+        if (chatroom) {
+            console.log("Existing chatroom found: " + chatroom._id);
+        } else {
+            // Create new chatroom if not found
+            chatroom = await ChatroomModel.create({
+                type: "PERSONAL",
+                name: "Personal Chat",
+                participants: [authenticatedId, targetUserId],
+            });
+            await chatroom.save();
+
+            console.log("Newly created chatroom: " + chatroom._id);
+        }
+
+        return { success: true, chatroom };
+    } catch (error: any) {
+        console.error("Error in createOrGetChatroom: ", error);
+        return { success: false, message: error.message };
+    }
+}
+
+export async function getCurrentUserChatroom(authenticatedId: string) {
+    try {
+        await connectToDB();
+
+        const chatrooms = await ChatroomModel.find({
+            participants: authenticatedId,
+        });
+
+        const chatroomDetails = [];
+
+        for (const chatroom of chatrooms) {
+            const otherParticipants = chatroom.participants.filter(
+                (participantId: any) => !participantId.equals(authenticatedId)
+            );
+
+            const participantsDetails = [];
+
+            for (const participantId of otherParticipants) {
+                const member = await MemberModel.findOne({ user: participantId });
+
+                if (member) {
+                    let imgUrl = null;
+                    if (member && member.image && member.image.length > 0) {
+                        const imageRecord = await Image.findOne({
+                            _id: member?.image,
+                        }).select("binaryCode");
+
+                        imgUrl = imageRecord?.binaryCode || null;
+                    }
+
+                    participantsDetails.push({
+                        participantId: participantId.toString(),
+                        user: member.user,
+                        email: member.email,
+                        accountname: member.accountname,
+                        image: imgUrl,
+                    });
+                } else {
+                    participantsDetails.push({
+                        participantId: participantId.toString(),
+                        error: `No member found for participant ID: ${participantId.toString()}`,
+                    });
+                }
+            }
+
+            chatroomDetails.push({
+                chatroomId: chatroom._id.toString(),
+                name: chatroom.name,
+                type: chatroom.type,
+                participants: participantsDetails,
+                createdAt: chatroom.createdAt,
+                updatedAt: chatroom.updatedAt,
+            });
+        }
+
+        return {
+            success: true,
+            message: "Chatrooms found!",
+            chatrooms: chatroomDetails,
+        };
+    } catch (error) {
+        console.error("Error finding chatroom: ", error);
+        return {
+            success: false,
+            message: "Failed to find chatrooms.",
+            chatrooms: [],
+        };
+    }
+}
+
+// getImage of account
+export async function getImage(userId: string) {
+    try {
+        await connectToDB();
+
+        const member = await MemberModel.findOne({ user: userId }).select("image");
+
+        if (!member) {
+            return {
+                success: false,
+                message: "User not found",
+            };
+        }
+
+        let imgUrl = null;
+        if (member && member.image && member.image.length > 0) {
+            const imageRecord = await Image.findOne({
+                _id: member?.image,
+            }).select("binaryCode");
+
+            imgUrl = imageRecord?.binaryCode || null;
+        }
+
+        return {
+            success: true,
+            message: "Image retrieved successfully",
+            image: imgUrl,
+        };
+    } catch (error: any) {
+        console.error("Error fetching member:", error);
+        return {
+            success: false,
+            message: error.message || "An error occurred",
+            image: null,
+        };
+    }
+}
+
+export async function getChatroomParticipantsImage(
+    chatroomId: string,
+    authenticatedUserId: string
+) {
+    try {
+        await connectToDB();
+
+        const chatroom = await ChatroomModel.findById(chatroomId).select(
+            "participants"
+        );
+
+        if (!chatroom) {
+            return {
+                success: false,
+                message: "Chatroom not found",
+            };
+        }
+
+        const filteredParticipants = chatroom.participants.filter(
+            (participant: any) => participant._id.toString() !== authenticatedUserId
+        );
+
+        const participantImages = await Promise.all(
+            filteredParticipants.map(async (participant: any) => {
+                const member = await MemberModel.findOne({
+                    user: participant._id,
+                }).select("image");
+
+                let imgUrl = null;
+
+                if (member && member.image) {
+                    const imageRecord = await Image.findById(member.image).select(
+                        "binaryCode"
+                    );
+
+                    imgUrl = imageRecord?.binaryCode || null;
+                }
+
+                return {
+                    participantId: participant._id,
+                    image: imgUrl,
+                };
+            })
+        );
+
+        return {
+            success: true,
+            message: "Images retrieved successfully",
+            images: participantImages,
+        };
+    } catch (error: any) {
+        console.error("Error fetching participant images:", error);
+        return {
+            success: false,
+            message: error.message || "An error occurred",
+            images: null,
+        };
+    }
+}
+
+// export async function resolveShortUrl(
+//   shortUrl: string
+// ): Promise<string | undefined> {
+//   try {
+//     const response = await fetch(
+//       `/api/resolve-url?url=${encodeURIComponent(shortUrl)}`
+//     );
+//     const data: { resolvedUrl?: string; error?: string } =
+//       await response.json();
+
+//     if (data.resolvedUrl) {
+//       console.log("Resolved URL:", data.resolvedUrl);
+//       return data.resolvedUrl;
+//     } else {
+//       console.error("Failed to resolve URL:", data.error);
+//     }
+//   } catch (error) {
+//     console.error("Error fetching resolved URL:", error);
+//   }
+// }

@@ -240,4 +240,29 @@ export type FollowRequest = {
   status: number;
 };
 
+export type Chatroom = {
+  _id: string;
+  name: string;
+  type: string;
+  participants: {};
+};
+
+export type ChatroomParticipants = {
+  userID: {};
+  chatroomID: {};
+  role: string;
+};
+
+export type Message = {
+  chatroomId: {};
+  senderId: {};
+  content: string;
+  readStatus: [];
+  imageAttach: string | null;
+  fileAttach: string | null;
+  locationLink: string | null;
+  shopName: string | null;
+  pictureLink: string | null;
+  card: {};
+};
 // workspace

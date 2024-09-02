@@ -3,26 +3,35 @@ import Link from "next/link";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { SendIcon, PlusIcon } from "lucide-react";
-import { Session } from "next-auth";
 import { UserImage } from "@/types";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/utils/authOptions";
+import { redirect } from "next/navigation";
 
-interface ChatRoomProps {
-  session: Session | null;
-  userInfoImage: UserImage | null | undefined;
-}
+export default async function ChatRoomComponent() {
+  // const user = session?.user;
+  const session = await getServerSession(authOptions);
 
-export default async function Component({
-  session,
-  userInfoImage,
-}: ChatRoomProps) {
+  console.log("session user email:" + session?.user.email);
+  console.log("session user id:" + session?.user.id);
+  console.log("session user name:" + session?.user.name);
+  console.log("session user image:" + session?.user.image);
+
   const user = session?.user;
 
-  let userImage = null;
-  if (userInfoImage != null) {
-    userImage = userInfoImage.binaryCode.toString();
-  } else {
-    userImage = user?.image;
+  if (!user) {
+    redirect("/sign-in");
   }
+
+  // console.log("user:" + user);
+
+  // let userImage = null;
+  // if (userInfoImage != null) {
+  //   userImage = userInfoImage.binaryCode.toString();
+  //   console.log("userImage" + userImage);
+  // } else {
+  //   userImage = user?.image;
+  // }
 
   return (
     <div>

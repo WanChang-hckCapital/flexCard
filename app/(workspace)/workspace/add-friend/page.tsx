@@ -1,19 +1,15 @@
 import React from "react";
 import {
   fetchAllUser,
-  getUserFriend,
-  getCurrentUserAllFriendRequest,
+  getAccountType,
+  getFollowRequest,
 } from "@/lib/actions/user.actions";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/utils/authOptions";
 import { redirect } from "next/navigation";
 import FriendItem from "./_component/FriendItem";
-import FriendRequestList from "./_component/ReceiveRequestList";
-import MyFriendList from "./_component/MyFriendList";
-// import { getAccountType } from "@/lib/actions/user.actions";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import NavBar from "./_component/NavBar";
-import { Badge } from "@/components/ui/badge";
+import FollowRequestModal from "./_component/FollowRequestModal";
 
 export default async function Page() {
   const session = await getServerSession(authOptions);
@@ -26,101 +22,78 @@ export default async function Page() {
 
   const authenticatedUserId = user.id;
 
-  // Fetch all possible friends
-  let allUsers: any[] = [];
+  // Fetch all possible users
+  let allUsers: { success: boolean; users: any[]; message: string } = {
+    success: false,
+    users: [],
+    message: "",
+  };
   let unAddedUser: any[] = [];
   try {
     allUsers = await fetchAllUser(authenticatedUserId);
 
     // filter all the unadded user
-    unAddedUser = allUsers.filter((user) => user.friendStatus === "0");
+    if (allUsers.success) {
+      unAddedUser = allUsers.users;
+    } else {
+      console.error("Failed to fetch users:", allUsers.message);
+    }
   } catch (error) {
     console.error("Failed to fetch users:", error);
   }
 
-  // Fetch current user's friends
-  let userFriends: any[] = [];
+  let accountType = "Unknown";
+  let followRequests: any[] = [];
   try {
-    const response = await getUserFriend(authenticatedUserId);
-    if (response.success && response.friends) {
-      userFriends = response.friends;
+    const accountTypeResponse = await getAccountType(authenticatedUserId);
+    if (accountTypeResponse.success) {
+      accountType = accountTypeResponse.accountType;
+
+      console.log("accountType:" + accountType);
+      if (accountType === "PRIVATE") {
+        const followRequestResponse = await getFollowRequest(
+          authenticatedUserId
+        );
+        if (followRequestResponse.success) {
+          followRequests = followRequestResponse.followRequests;
+          console.log("followRequests frontend:" + followRequests);
+        } else {
+          console.error(
+            "Failed to fetch follow requests:",
+            followRequestResponse.message
+          );
+        }
+      }
     } else {
-      console.error(response.message);
+      console.error(
+        "Failed to fetch account type:",
+        accountTypeResponse.message
+      );
     }
   } catch (error) {
-    console.error("Failed to fetch user's friends:", error);
+    console.error("Failed to fetch account type:", error);
   }
-
-  // fetch all current user's friend requests
-  let friendRequests: any[] = [];
-  try {
-    const response = await getCurrentUserAllFriendRequest(authenticatedUserId);
-    if (response.success && response.friendRequests) {
-      friendRequests = response.friendRequests;
-    } else {
-      console.error(response.message);
-    }
-  } catch (error) {
-    console.error("Failed to fetch user's friend requests:", error);
-  }
-
-  //   const { success, accountType, message } = await getAccountType(
-  //     authenticatedUserId
-  //   );
-
-  //   if (success) {
-  //     console.log("Account Type:", accountType);
-  //   } else {
-  //     console.error("Failed to fetch account type:", message);
-  //   }
 
   return (
     <div className="flex flex-col min-h-screen w-full">
       <NavBar />
 
       <div className="flex flex-col flex-1 items-center justify-start p-4 pt-16">
-        <Tabs defaultValue="friendrequest" className="w-11/12 pt-10">
-          <div className="relative w-11/12 flex justify-start space-x-4 mb-4">
-            {/* <Badge variant="outline">My Profile</Badge> */}
-            {/* <Badge variant="outline">Suggestion</Badge> */}
-          </div>
-          <TabsList className="flex justify-between w-full mb-2">
-            <TabsTrigger value="friendrequest" className="w-1/2 text-center">
-              Follow Request
-            </TabsTrigger>
-            {/* <TabsTrigger value="followers" className="w-1/2 text-center">
-              Followers
-            </TabsTrigger>
-            <TabsTrigger value="following" className="w-1/2 text-center">
-              Following
-            </TabsTrigger> */}
-            {/* <TabsTrigger value="friendrequest" className="w-1/2 text-center">
-              Friend Request
-            </TabsTrigger> */}
-
-            {/* <TabsTrigger value="yourfriends" className="w-1/2 text-center">
-              Your Friends
-            </TabsTrigger> */}
-          </TabsList>
-          <TabsContent value="friendrequest">
-            <div className="grid gap-2">
-              <FriendRequestList authenticatedUserId={authenticatedUserId} />
-            </div>
-          </TabsContent>
-          <TabsContent value="yourfriends">
-            <div className="grid gap-2">
-              <MyFriendList
-                userFriends={userFriends}
-                authenticatedUserId={authenticatedUserId}
-              />
-            </div>
-          </TabsContent>
-        </Tabs>
         <div className="flex-1 mt-4 overflow-y-auto w-11/12">
           <div className="grid gap-2">
-            <div className="text-sm font-medium text-muted-foreground">
+            {/* <div className="text-sm font-medium text-muted-foreground">
               Suggestion
-            </div>
+            </div> */}
+            {/* {accountType === "PRIVATE" && (
+              <div className="flex items-center gap-2">
+                <Badge className="cursor-pointer" variant="bgRed">
+                  Follow Request:{followRequests.length}
+                </Badge>
+              </div>
+            )} */}
+            {accountType === "PRIVATE" && (
+              <FollowRequestModal initialFollowRequests={followRequests} />
+            )}
             {unAddedUser.length === 0 ? (
               <p>No users found</p>
             ) : (
