@@ -14,10 +14,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const response = await fetch(url, { redirect: "follow" });
-    const resolvedUrl = response.url;
-
-    const { data } = await axios.get(resolvedUrl);
+    const { data } = await axios.get(url);
     const dom = new JSDOM(data);
     const document = dom.window.document;
 
@@ -32,23 +29,11 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    const image = metaTags["og:image"] || null;
-    const siteName = metaTags["og:site_name"] || null;
-    const description =
-      metaTags["og:description"] || metaTags["description"] || null;
-
-    const result = {
-      resolvedUrl,
-      image,
-      siteName,
-      description,
-    };
-
-    return NextResponse.json(result);
-  } catch (error) {
-    console.error("Error fetching the URL:", error);
+    return NextResponse.json({ metaTags });
+  } catch (error: any) {
+    console.error("Error fetching meta tags:", error.message);
     return NextResponse.json(
-      { error: "Failed to resolve URL or fetch meta tags" },
+      { error: "Failed to fetch meta tags" },
       { status: 500 }
     );
   }

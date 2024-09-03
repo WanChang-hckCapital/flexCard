@@ -31,6 +31,15 @@ interface Message {
   pictureLink: string | null;
   card: string | null;
   flexFormatHtmlContentText: string | null;
+  youtubeMetadata?: {
+    title: string;
+    description: string;
+    thumbnail: string;
+    url: string;
+  } | null;
+  shopImage: string | null;
+  siteName: string | null;
+  shopDescription: string | null;
 }
 
 interface Chatroom {
