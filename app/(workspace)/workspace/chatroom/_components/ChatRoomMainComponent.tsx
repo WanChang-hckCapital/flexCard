@@ -54,7 +54,6 @@ import Link from "next/link";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Loader } from "@googlemaps/js-api-loader";
-// import { resolveShortUrl } from "@/lib/actions/user.actions";
 
 interface Participant {
   _id: string;
@@ -1071,7 +1070,7 @@ export default function ChatRoomMainBar({
               return (
                 <div
                   key={message._id}
-                  className={`flex items-start gap-3 ${
+                  className={`flex items-start mb-3 ${
                     message.senderId === authenticatedUserId
                       ? "justify-end"
                       : "justify-start"
@@ -1102,22 +1101,6 @@ export default function ChatRoomMainBar({
                       />
                     </>
                   )}
-                  {/* {message.fileAttach && message.fileSrc && (
-                    <a
-                      href={message.fileSrc}
-                      download={message.fileName}
-                      className="block max-w-full rounded-md cursor-pointer"
-                    >
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="flex items-center justify-start w-full text-left text-blue-600 hover:text-black"
-                      >
-                        <FileDown className="mr-2 h-5 w-5 text-gray-500" />
-                        {message.fileName || "Download File"}
-                      </Button>
-                    </a>
-                  )} */}
                   {message.fileAttach && message.fileSrc && (
                     <div className="flex flex-col mb-2">
                       <div className="flex items-start gap-2 mb-2">
@@ -1157,20 +1140,19 @@ export default function ChatRoomMainBar({
                           size="sm"
                           className="flex items-center justify-start w-full text-left text-blue-600 hover:text-black"
                         >
-                          <MapPin className="mr-2 h-5 w-5 text-red-500" />
+                          {/* <MapPin className="mr-2 h-5 w-5 text-red-500" /> */}
                           View Location
                         </Button>
                         <div
                           ref={(el) => (mapRefs.current[message._id] = el)}
                           className="h-[200px] w-full rounded-md mt-2"
                         ></div>
-                        {/* <div>{message.locationLink}</div> */}
                       </a>
                     </>
                   )}
                   {message.shopName && (
-                    <div className="flex justify-end mb-4">
-                      <Card className="shadow-lg relative inline-block max-w-md">
+                    <div className="flex justify-center mb-4">
+                      <Card className="shadow-lg relative max-w-md w-full min-h-[350px]">
                         <a
                           href={message.content || "#"}
                           target="_blank"
@@ -1180,7 +1162,7 @@ export default function ChatRoomMainBar({
                           <div className="block cursor-pointer">
                             <CardHeader className="p-4">
                               <div className="flex items-center">
-                                <MapPin className="mr-2 h-5 w-5 text-red-500" />
+                                {/* <MapPin className="mr-2 h-5 w-5 text-red-500" /> */}
                                 <CardTitle className="text-base font-semibold text-blue-600 hover:text-gray-600">
                                   {message.shopName}
                                 </CardTitle>
@@ -1191,18 +1173,18 @@ export default function ChatRoomMainBar({
                                 <img
                                   src={message.shopImage}
                                   alt={message.shopName || ""}
-                                  className="rounded-t-md w-full h-auto"
+                                  className="rounded-t-md w-full h-[200px] object-cover"
                                 />
                               </CardContent>
                             )}
                             <CardContent className="p-4">
                               {message.siteName && (
-                                <p className="text-gray-500 text-sm mb-2">
+                                <p className="text-gray-500 text-sm mb-2 hover:text-gray-600">
                                   {message.siteName}
                                 </p>
                               )}
                               {message.shopDescription && (
-                                <p className="text-gray-700">
+                                <p className="text-gray-700 hover:text-gray-600">
                                   {message.shopDescription}
                                 </p>
                               )}
@@ -1213,61 +1195,82 @@ export default function ChatRoomMainBar({
                     </div>
                   )}
                   {message.youtubeMetadata && (
-                    <div className="flex justify-center">
-                      <Card className="mb-4 shadow-lg relative max-w-xs w-full">
+                    <div className="flex justify-center mb-4">
+                      <Card className="shadow-lg relative max-w-md w-full min-h-[350px]">
                         <a
-                          href={message.youtubeMetadata.url}
+                          href={message.youtubeMetadata.url || "#"}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="block w-full cursor-pointer"
+                          className="block cursor-pointer"
                         >
-                          <CardHeader className="p-4">
-                            <div className="flex items-center">
-                              <img
-                                src={message.youtubeMetadata.thumbnail}
-                                alt="Thumbnail"
-                                className="h-12 w-12 mr-4 rounded"
-                              />
-                              <CardTitle className="text-base font-semibold text-blue-600 hover:text-gray-600">
-                                {message.youtubeMetadata.title}
-                              </CardTitle>
-                            </div>
-                            <CardDescription className="mt-2 text-xs text-gray-500">
-                              {message.youtubeMetadata.description}
-                            </CardDescription>
-                          </CardHeader>
+                          <div className="block cursor-pointer">
+                            <CardHeader className="p-4">
+                              <div className="flex items-center">
+                                <CardTitle className="text-base font-semibold text-blue-600 hover:text-gray-600">
+                                  {message.youtubeMetadata.title}
+                                </CardTitle>
+                              </div>
+                            </CardHeader>
+                            {message.youtubeMetadata.thumbnail && (
+                              <CardContent className="p-0">
+                                <img
+                                  src={message.youtubeMetadata.thumbnail}
+                                  alt={message.youtubeMetadata.thumbnail || ""}
+                                  className="rounded-t-md w-full h-[200px] object-cover"
+                                />
+                              </CardContent>
+                            )}
+                            <CardContent className="p-4">
+                              {message.youtubeMetadata.description && (
+                                <p className="text-gray-500 text-sm mb-2 hover:text-gray-600">
+                                  {message.youtubeMetadata.description}
+                                </p>
+                              )}
+                            </CardContent>
+                          </div>
                         </a>
                       </Card>
                     </div>
                   )}
                   {message.facebookMetadata && (
-                    <div className="flex justify-center">
-                      <Card className="mb-4 shadow-lg relative max-w-xs w-full">
+                    <div className="flex justify-center mb-4">
+                      <Card className="shadow-lg relative max-w-md w-full min-h-[350px]">
                         <a
-                          href={message.facebookMetadata.url}
+                          href={message.facebookMetadata.url || "#"}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="block w-full cursor-pointer"
+                          className="block cursor-pointer"
                         >
-                          <CardHeader className="p-4">
-                            <div className="flex items-center">
-                              <img
-                                src={message.facebookMetadata.thumbnail}
-                                alt="Thumbnail"
-                                className="h-12 w-12 mr-4 rounded"
-                              />
-                              <CardTitle className="text-base font-semibold text-blue-600 hover:text-gray-600">
-                                {message.facebookMetadata.title}
-                              </CardTitle>
-                            </div>
-                            <CardDescription className="mt-2 text-xs text-gray-500">
-                              {message.facebookMetadata.description}
-                            </CardDescription>
-                          </CardHeader>
+                          <div className="block cursor-pointer">
+                            <CardHeader className="p-4">
+                              <div className="flex items-center">
+                                <CardTitle className="text-base font-semibold text-blue-600 hover:text-gray-600">
+                                  {message.facebookMetadata.title}
+                                </CardTitle>
+                              </div>
+                            </CardHeader>
+                            {message.facebookMetadata.thumbnail && (
+                              <CardContent className="p-0">
+                                <img
+                                  src={message.facebookMetadata.thumbnail}
+                                  alt={message.facebookMetadata.thumbnail || ""}
+                                  className="rounded-t-md w-full object-cover"
+                                />
+                              </CardContent>
+                            )}
+                            <CardContent className="p-4">
+                              {message.facebookMetadata.description && (
+                                <p className="text-gray-500 text-sm mb-2 hover:text-gray-600">
+                                  {message.facebookMetadata.description}
+                                </p>
+                              )}
+                            </CardContent>
+                          </div>
                         </a>
                       </Card>
                     </div>
                   )}
+
                   <div className="flex justify-between max-h-[400px]">
                     <div className="flex flex-col justify-center items-center my-2">
                       {message.flexFormatHtmlContentText && (

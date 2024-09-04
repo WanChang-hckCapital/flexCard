@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import ChatRoomSideBar from "./ChatRoomSideBar";
 import ChatRoomMainBar from "./ChatRoomMainComponent";
+import Spinner from "./Spinner";
 
 interface Participant {
   _id: string;
@@ -66,6 +67,7 @@ export default function ChatRoomComponent({
   const [messages, setMessages] = useState<Message[]>([]);
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [receiverInfo, setReceiverInfo] = useState<Participant | null>(null);
+  const [messageLoading, setMessageLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const newWs = new WebSocket("ws://localhost:8080");
@@ -82,8 +84,8 @@ export default function ChatRoomComponent({
       if (receivedMessage.type === "messages") {
         // trigger when the user initially load the message
         // console.log("Received messages:", receivedMessage.messages);
+        setMessageLoading(true);
         setMessages(receivedMessage.messages);
-
         setReceiverInfo(receivedMessage.receiverInfo);
       } else if (receivedMessage.type === "newMessage") {
         // trigger when send message send
@@ -116,6 +118,7 @@ export default function ChatRoomComponent({
         });
       } else if (receivedMessage.type === "error") {
         console.error("Error:", receivedMessage.message);
+        setMessageLoading(false);
       }
     };
 
@@ -125,6 +128,7 @@ export default function ChatRoomComponent({
 
     newWs.onerror = (error) => {
       console.error("WebSocket error:", error);
+      setMessageLoading(false);
     };
 
     setWs(newWs);
@@ -183,6 +187,7 @@ export default function ChatRoomComponent({
     console.log("Selected Chatroom ID:", chatroomId);
 
     setMessages([]);
+    setMessageLoading(true);
     // console.log("clear");
 
     if (chatroomId && ws) {
@@ -208,13 +213,15 @@ export default function ChatRoomComponent({
         }
       } catch (error) {
         console.error("Error fetching messages:", error);
+      } finally {
+        setMessageLoading(false);
       }
     }
   };
 
   return (
     <div className="flex h-full w-full">
-      <div className="hidden w-64 border-r bg-background md:block w-4/12">
+      <div className="hidden w-64 border-r bg-background md:block">
         <ChatRoomSideBar
           chatrooms={chatrooms}
           authenticatedUserId={authenticatedUserId}
@@ -223,15 +230,21 @@ export default function ChatRoomComponent({
           allFollowerAndFollowing={allFollowerAndFollowing}
         />
       </div>
-      <ChatRoomMainBar
-        chatrooms={chatrooms}
-        authenticatedUserId={authenticatedUserId}
-        selectedChatroom={selectedChatroom}
-        allUsers={allUsers}
-        messages={messages}
-        ws={ws}
-        receiverInfo={receiverInfo}
-      />
+      <div className="flex h-full w-full">
+        {messageLoading ? (
+          <Spinner />
+        ) : (
+          <ChatRoomMainBar
+            chatrooms={chatrooms}
+            authenticatedUserId={authenticatedUserId}
+            selectedChatroom={selectedChatroom}
+            allUsers={allUsers}
+            messages={messages}
+            ws={ws}
+            receiverInfo={receiverInfo}
+          />
+        )}
+      </div>
     </div>
   );
 }
