@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import ChatRoomSideBar from "./ChatRoomSideBar";
 import ChatRoomMainBar from "./ChatRoomMainComponent";
 import Spinner from "./Spinner";
@@ -68,6 +68,8 @@ export default function ChatRoomComponent({
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [receiverInfo, setReceiverInfo] = useState<Participant | null>(null);
   const [messageLoading, setMessageLoading] = useState<boolean>(false);
+  const [skip, setSkip] = useState<number>(0); // number use to skip
+  const chatWindowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const newWs = new WebSocket("ws://localhost:8080");
@@ -83,8 +85,8 @@ export default function ChatRoomComponent({
 
       if (receivedMessage.type === "messages") {
         // trigger when the user initially load the message
-        // console.log("Received messages:", receivedMessage.messages);
-        setMessageLoading(true);
+        console.log("Received messages:", receivedMessage.messages);
+        setMessageLoading(false);
         setMessages(receivedMessage.messages);
         setReceiverInfo(receivedMessage.receiverInfo);
       } else if (receivedMessage.type === "newMessage") {
@@ -143,7 +145,8 @@ export default function ChatRoomComponent({
   function fetchMessagesWs(
     chatroomId: string,
     authenticatedUserId: string,
-    ws: WebSocket
+    ws: WebSocket,
+    skip: number
   ): Promise<any> {
     return new Promise((resolve, reject) => {
       if (ws.readyState == WebSocket.OPEN) {
@@ -151,6 +154,8 @@ export default function ChatRoomComponent({
           type: "fetchMessages",
           chatroomId,
           authenticatedUserId,
+          skip,
+          limit: 20,
         };
 
         ws.send(JSON.stringify(message));
@@ -183,10 +188,10 @@ export default function ChatRoomComponent({
   }
 
   const handleSelectChatroom = async (chatroomId: string) => {
-    setSelectedChatroom(chatroomId);
     console.log("Selected Chatroom ID:", chatroomId);
-
+    setSelectedChatroom(chatroomId);
     setMessages([]);
+    setSkip(0);
     setMessageLoading(true);
     // console.log("clear");
 
@@ -195,13 +200,15 @@ export default function ChatRoomComponent({
         const fetchMessagesResponse = await fetchMessagesWs(
           chatroomId,
           authenticatedUserId,
-          ws
+          ws,
+          0
         );
 
         console.log("Messages fetched:", fetchMessagesResponse.messages);
 
         if (fetchMessagesResponse.success) {
           console.log("fetchMessagesResponse.messages");
+          setSkip(20);
 
           // console.log("fetch message:" + fetchMessagesResponse.)
           setMessages(fetchMessagesResponse.messages);

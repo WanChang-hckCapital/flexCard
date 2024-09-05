@@ -54,6 +54,8 @@ import Link from "next/link";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Loader } from "@googlemaps/js-api-loader";
+import LoadingSpinner from "./LoadingSpinner";
+import { fetchPreviousMessage } from "@/lib/actions/user.actions";
 
 interface Participant {
   _id: string;
@@ -99,6 +101,12 @@ interface Message {
   shopDescription: string | null;
 }
 
+interface OldMessage {
+  success: boolean;
+  message: string;
+  messages: Message[];
+}
+
 interface ChatroomMainBarProps {
   chatrooms: any[];
   authenticatedUserId: string;
@@ -133,6 +141,9 @@ export default function ChatRoomMainBar({
   const mapRef = useRef<HTMLDivElement>(null);
   // const mapRefFromLink = useRef<HTMLDivElement>(null);
   const mapRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  const hasScrolled = useRef(false); // to prevent scrollto bottom for every messages is loaded
 
   const [messageContent, setMessageContent] = useState<string>("");
   const [currentMessages, setCurrentMessages] = useState<Message[]>(messages);
@@ -165,6 +176,9 @@ export default function ChatRoomMainBar({
   const [shopDescription, setShopDescription] = useState<string | null>(null);
   const [siteName, setSiteName] = useState<string | null>(null);
 
+  const [isFetchingOlderMessages, setIsFetchingOlderMessages] = useState(false);
+  const [hasMoreMessages, setHasMoreMessages] = useState(true);
+
   const [youtubeMetadata, setYoutubeMetadata] = useState<{
     title: string;
     description: string;
@@ -180,27 +194,6 @@ export default function ChatRoomMainBar({
   } | null>(null);
 
   useEffect(() => {
-    const fetchParticipantImages = async () => {
-      if (selectedChatroom) {
-        const response = await getChatroomParticipantsImage(
-          selectedChatroom,
-          authenticatedUserId
-        );
-        if (response.success && response.images) {
-          setParticipantImages(response.images);
-        } else {
-          console.error(
-            "Failed to fetch participant images: ",
-            response.message
-          );
-        }
-      }
-    };
-
-    fetchParticipantImages();
-  }, [selectedChatroom]);
-
-  useEffect(() => {
     setCurrentMessages(messages);
 
     messages.forEach((message) => {
@@ -214,10 +207,6 @@ export default function ChatRoomMainBar({
       });
     });
   }, [messages]);
-
-  useEffect(() => {
-    console.log("Rendering with messages:", currentMessages);
-  }, [currentMessages]);
 
   useEffect(() => {
     const fetchReceiverImage = async () => {
@@ -301,8 +290,8 @@ export default function ChatRoomMainBar({
     });
   }, [currentMessages]);
 
-  // set the current location by default
-  // click again to reset the location
+  // // set the current location by default
+  // // click again to reset the location
   const initializeMap = useCallback(() => {
     if (mapRef.current && !googleMap) {
       const loader = new Loader({
@@ -384,6 +373,112 @@ export default function ChatRoomMainBar({
       initializeMap();
     }
   }, [isMapVisible, initializeMap]);
+
+  useEffect(() => {
+    const fetchParticipantImages = async () => {
+      if (selectedChatroom) {
+        const response = await getChatroomParticipantsImage(
+          selectedChatroom,
+          authenticatedUserId
+        );
+        if (response.success && response.images) {
+          setParticipantImages(response.images);
+        } else {
+          console.error(
+            "Failed to fetch participant images: ",
+            response.message
+          );
+        }
+      }
+    };
+
+    fetchParticipantImages();
+  }, [selectedChatroom]);
+
+  useEffect(() => {
+    setCurrentMessages(messages);
+  }, [messages]);
+
+  // scroll to bottom
+  const scrollToBottom = () => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight + 200;
+    }
+  };
+
+  // only move this when the message load initially
+  useEffect(() => {
+    if (currentMessages.length === 20) {
+      scrollToBottom();
+    }
+  }, [currentMessages]);
+
+  const fetchOlderMessages = async () => {
+    if (isFetchingOlderMessages || !hasMoreMessages) return;
+
+    setIsFetchingOlderMessages(true);
+
+    const scrollHeightBeforeFetch = chatContainerRef.current?.scrollHeight || 0;
+    const scrollTopBeforeFetch = chatContainerRef.current?.scrollTop || 0;
+
+    const currentLength = currentMessages.length;
+    console.log("Fetching older messages, current length:", currentLength);
+
+    try {
+      const limit = 20;
+      const skip = currentLength;
+      const oldMessagesResponse: any = await fetchPreviousMessage(
+        selectedChatroom!,
+        authenticatedUserId,
+        skip,
+        limit
+      );
+
+      if (
+        oldMessagesResponse.success &&
+        oldMessagesResponse.messages.length > 0
+      ) {
+        setCurrentMessages((prevMessages) => [
+          ...oldMessagesResponse.messages,
+          ...prevMessages,
+        ]);
+
+        setTimeout(() => {
+          if (chatContainerRef.current) {
+            const scrollHeightAfterFetch =
+              chatContainerRef.current.scrollHeight;
+            chatContainerRef.current.scrollTop =
+              scrollTopBeforeFetch +
+              (scrollHeightAfterFetch - scrollHeightBeforeFetch);
+          }
+        }, 0);
+
+        if (oldMessagesResponse.messages.length < limit) {
+          setHasMoreMessages(false);
+        }
+      } else {
+        setHasMoreMessages(false);
+      }
+    } catch (error) {
+      console.error("Error fetching older messages:", error);
+    } finally {
+      setIsFetchingOlderMessages(false);
+    }
+  };
+
+  const handleScroll = () => {
+    if (chatContainerRef.current && chatContainerRef.current.scrollTop === 0) {
+      fetchOlderMessages();
+    }
+  };
+
+  // Attach and detach the scroll event listener
+  useEffect(() => {
+    chatContainerRef.current?.addEventListener("scroll", handleScroll);
+    return () =>
+      chatContainerRef.current?.removeEventListener("scroll", handleScroll);
+  }, [hasMoreMessages, isFetchingOlderMessages]);
 
   const handleDestinationSelect = () => {
     setMapVisible(true);
@@ -1060,7 +1155,8 @@ export default function ChatRoomMainBar({
   return (
     <>
       <div className="flex flex-col w-full">
-        <div className="flex-1 overflow-auto p-4 md:p-6">
+        <div className="flex-1 overflow-auto p-4 md:p-6" ref={chatContainerRef}>
+          {isFetchingOlderMessages && <LoadingSpinner />}
           {currentMessages.length > 0 ? (
             currentMessages.map((message: Message) => {
               const senderImage = participantImages.find(
@@ -1077,10 +1173,8 @@ export default function ChatRoomMainBar({
                   }`}
                 >
                   {message.senderId !== authenticatedUserId && (
-                    <Avatar className="h-8 w-8 border">
-                      <AvatarImage
-                        src={senderImage || "/placeholder-user.jpg"}
-                      />
+                    <Avatar className="h-8 w-8 border mr-4">
+                      <AvatarImage src={senderImage || ""} />
                       <AvatarFallback>?</AvatarFallback>
                     </Avatar>
                   )}

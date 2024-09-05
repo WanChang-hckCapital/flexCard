@@ -2634,23 +2634,47 @@ export async function getChatroomParticipantsImage(
   }
 }
 
-// export async function resolveShortUrl(
-//   shortUrl: string
-// ): Promise<string | undefined> {
-//   try {
-//     const response = await fetch(
-//       `/api/resolve-url?url=${encodeURIComponent(shortUrl)}`
-//     );
-//     const data: { resolvedUrl?: string; error?: string } =
-//       await response.json();
+export async function fetchPreviousMessage(
+  chatroomId: string,
+  authenticatedUserId: string,
+  skip: number,
+  limit: number
+) {
+  try {
+    await connectToDB();
 
-//     if (data.resolvedUrl) {
-//       console.log("Resolved URL:", data.resolvedUrl);
-//       return data.resolvedUrl;
-//     } else {
-//       console.error("Failed to resolve URL:", data.error);
-//     }
-//   } catch (error) {
-//     console.error("Error fetching resolved URL:", error);
-//   }
-// }
+    console.log("skip");
+    console.log(skip);
+
+    const sender = await MemberModel.findOne({ user: authenticatedUserId });
+
+    if (!sender) {
+      return {
+        success: false,
+        message: "Sender not found",
+        messages: [],
+      };
+    }
+
+    const messages = await MessageModel.find({ chatroomId: chatroomId })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    const sortedMessages = messages.reverse();
+
+    return {
+      success: true,
+      message: "Messages fetched successfully",
+      messages: sortedMessages,
+    };
+  } catch (error) {
+    console.error("Error fetching previous messages:", error);
+    return {
+      success: false,
+      message: "An error occurred while fetching messages",
+      messages: [],
+    };
+  }
+}
