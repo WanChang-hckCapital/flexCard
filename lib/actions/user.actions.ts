@@ -2302,8 +2302,138 @@ export async function getMutualFollowStatus(
   }
 }
 
-// get all follower and following of userID
+// get all follower and following of userID that havent chat before
 export async function getFollowersAndFollowing(userId: string) {
+  try {
+    await connectToDB();
+
+    const member = await MemberModel.findOne({ user: userId });
+
+    if (!member) {
+      return {
+        success: false,
+        message: "User not found",
+        followers: [],
+        following: [],
+      };
+    }
+
+    const chatroomExists = async (user1Id: string, user2Id: string) => {
+      const chatroom = await ChatroomModel.findOne({
+        participants: { $all: [user1Id, user2Id] },
+        type: "PERSONAL",
+      });
+      return !!chatroom;
+    };
+
+    const followersWithDetails = await Promise.all(
+      member.followers.map(async (follower: any) => {
+        const followerId = follower.followersId;
+
+        const chatroomExistsForFollower = await chatroomExists(
+          userId,
+          followerId
+        );
+
+        if (chatroomExistsForFollower) {
+          return null;
+        }
+
+        const followerDetails = await MemberModel.findOne({
+          user: followerId,
+        }).select("accountname user image _id");
+
+        if (!followerDetails) {
+          return null;
+        }
+
+        const imgUrl = await Image.findOne({
+          _id: followerDetails.image,
+        }).select("binaryCode");
+
+        return {
+          id: followerDetails._id,
+          userId: followerDetails.user,
+          name: followerDetails.accountname || "Unknown",
+          image: imgUrl?.binaryCode.toString(),
+          followedAt: follower.followedAt,
+        };
+      })
+    );
+
+    //   member.following.map(async (following: any) => {
+    //     const followeingDetails = await MemberModel.findOne({
+    //       user: following,
+    //     }).select("accountname user image _id");
+
+    //     const imgUrl = await Image.findOne({
+    //       _id: followeingDetails?.image,
+    //     }).select("binaryCode");
+
+    //     return {
+    //       id: followeingDetails?._id,
+    //       userId: followeingDetails?.user,
+    //       name: followeingDetails?.accountname || "Unknown",
+    //       image: imgUrl?.binaryCode.toString(),
+    //     };
+    //   })
+    // );
+    const followingWithDetails = await Promise.all(
+      member.following.map(async (followingId: string) => {
+        const chatroomExistsForFollowing = await chatroomExists(
+          userId,
+          followingId
+        );
+
+        if (chatroomExistsForFollowing) {
+          return null;
+        }
+
+        const followingDetails = await MemberModel.findOne({
+          user: followingId,
+        }).select("accountname user image _id");
+
+        if (!followingDetails) {
+          return null;
+        }
+
+        const imgUrl = await Image.findOne({
+          _id: followingDetails.image,
+        }).select("binaryCode");
+
+        return {
+          id: followingDetails._id,
+          userId: followingDetails.user,
+          name: followingDetails.accountname || "Unknown",
+          image: imgUrl?.binaryCode.toString(),
+        };
+      })
+    );
+
+    const filteredFollowers = followersWithDetails.filter(Boolean);
+    const filteredFollowing = followingWithDetails.filter(Boolean);
+
+    // console.log(filteredFollowing);
+
+    return {
+      success: true,
+      message: "",
+      followers: filteredFollowers,
+      following: filteredFollowing,
+    };
+  } catch (error: any) {
+    console.error("Error fetching followers and following:", error);
+    return {
+      success: false,
+      message: error.message || "An error occurred",
+      followers: [],
+      following: [],
+    };
+  }
+}
+
+// used to create group chat, fetch all follower and following
+export async function getAllFollowersAndFollowing(userId: string) {
   try {
     await connectToDB();
 
@@ -2320,18 +2450,24 @@ export async function getFollowersAndFollowing(userId: string) {
 
     const followersWithDetails = await Promise.all(
       member.followers.map(async (follower: any) => {
+        const followerId = follower.followersId;
+
         const followerDetails = await MemberModel.findOne({
-          user: follower.followersId,
+          user: followerId,
         }).select("accountname user image _id");
 
+        if (!followerDetails) {
+          return null;
+        }
+
         const imgUrl = await Image.findOne({
-          _id: followerDetails?.image,
+          _id: followerDetails.image,
         }).select("binaryCode");
 
         return {
-          id: followerDetails?._id,
-          userId: followerDetails?.user,
-          name: followerDetails?.accountname || "Unknown",
+          id: followerDetails._id,
+          userId: followerDetails.user,
+          name: followerDetails.accountname || "Unknown",
           image: imgUrl?.binaryCode.toString(),
           followedAt: follower.followedAt,
         };
@@ -2339,19 +2475,23 @@ export async function getFollowersAndFollowing(userId: string) {
     );
 
     const followingWithDetails = await Promise.all(
-      member.following.map(async (following: any) => {
-        const followeingDetails = await MemberModel.findOne({
-          user: following,
+      member.following.map(async (followingId: string) => {
+        const followingDetails = await MemberModel.findOne({
+          user: followingId,
         }).select("accountname user image _id");
 
+        if (!followingDetails) {
+          return null;
+        }
+
         const imgUrl = await Image.findOne({
-          _id: followeingDetails?.image,
+          _id: followingDetails.image,
         }).select("binaryCode");
 
         return {
-          id: followeingDetails?._id,
-          userId: followeingDetails?.user,
-          name: followeingDetails?.accountname || "Unknown",
+          id: followingDetails._id,
+          userId: followingDetails.user,
+          name: followingDetails.accountname || "Unknown",
           image: imgUrl?.binaryCode.toString(),
         };
       })
@@ -2374,81 +2514,29 @@ export async function getFollowersAndFollowing(userId: string) {
   }
 }
 
-export async function fetchMessages(
-  chatroomId: string,
-  authenticatedUserId: string
-) {
-  try {
-    const chatroom = await ChatroomModel.findById(chatroomId);
-    console.log("cahtrrom:" + chatroom);
-
-    if (!chatroom) {
-      throw new Error("Chatroom not found");
-    }
-
-    const participantsInfo = await Promise.all(
-      chatroom.participants.map(async (participant: any) => {
-        const participantInfo = await MemberModel.findOne({
-          user: participant,
-        }).lean();
-
-        let imgUrl = null;
-
-        if (participantInfo && participantInfo.image) {
-          const imageRecord = await Image.findOne({
-            _id: participantInfo.image,
-          }).select("binaryCode");
-          imgUrl = imageRecord?.binaryCode || null;
-        }
-        return {
-          ...participantInfo,
-          image: imgUrl,
-        };
-      })
-    );
-
-    const participantMap = new Map(
-      participantsInfo.map((participant: any) => [
-        participant.user.toString(),
-        participant,
-      ])
-    );
-
-    const messages = await MessageModel.find({ chatroomId })
-      .sort({ createdAt: 1 })
-      .lean();
-
-    const messagesWithMemberData = messages.map((message: any) => {
-      const sender = participantMap.get(message.senderId.toString());
-      return {
-        ...message,
-        senderId: message.senderId,
-        image: sender?.image || null,
-        senderName: sender?.accountname || "Unknown",
-      };
-    });
-
-    return { success: true, message: messagesWithMemberData };
-  } catch (error: any) {
-    return { success: false, message: error.message };
-  }
-}
-
-// create a new chatroom
+// create a new personal chatroom
 export async function createOrGetChatroom(
   authenticatedId: string,
   targetUserId: string
 ) {
   try {
+    console.log(
+      "Looking for existing chatroom between:",
+      authenticatedId,
+      "and",
+      targetUserId
+    );
+
     let chatroom = await ChatroomModel.findOne({
       type: "PERSONAL",
       participants: { $all: [authenticatedId, targetUserId] },
     });
 
     if (chatroom) {
-      console.log("Existing chatroom found: " + chatroom._id);
+      console.log("Existing chatroom found:", chatroom._id);
     } else {
-      // Create new chatroom if not found
+      console.log("No existing chatroom found, creating new one");
+
       chatroom = await ChatroomModel.create({
         type: "PERSONAL",
         name: "Personal Chat",
@@ -2456,12 +2544,68 @@ export async function createOrGetChatroom(
       });
       await chatroom.save();
 
-      console.log("Newly created chatroom: " + chatroom._id);
+      console.log("Newly created chatroom:", chatroom);
     }
 
-    return { success: true, chatroom };
+    const chatroomPlain = chatroom.toObject();
+
+    // Check all fields of the chatroom object
+    console.log("Chatroom ID:", chatroomPlain._id);
+    console.log("Chatroom participants:", chatroomPlain.participants);
+    console.log("Chatroom name:", chatroomPlain.name);
+
+    return { success: true, chatroom: chatroomPlain };
   } catch (error: any) {
-    console.error("Error in createOrGetChatroom: ", error);
+    console.error("Error in createOrGetChatroom:", error);
+    return { success: false, message: error.message };
+  }
+}
+
+// create group chatroom
+export async function createGroupChatroom(
+  authenticatedId: string,
+  participantIdArray: string[],
+  groupName: string
+) {
+  try {
+    console.log("array");
+    console.log(participantIdArray);
+
+    if (!groupName) {
+      throw new Error("Group name is required.");
+    }
+    if (!Array.isArray(participantIdArray) || participantIdArray.length === 0) {
+      throw new Error("At least one participant is required.");
+    }
+
+    // remove duplicate user id
+    const participants = [authenticatedId, ...participantIdArray].filter(
+      (id, index, self) => self.indexOf(id) === index
+    );
+
+    console.log("Participants array:", participants);
+
+    // Create the group chatroom
+    const groupChatroom = await ChatroomModel.create({
+      type: "GROUP",
+      name: groupName,
+      participants: participants,
+    });
+
+    await groupChatroom.save();
+
+    console.log("Newly created group chatroom:", groupChatroom);
+
+    const chatroomPlain = groupChatroom.toObject();
+
+    // Check all fields of the chatroom object
+    console.log("Chatroom ID:", chatroomPlain._id);
+    console.log("Chatroom participants:", chatroomPlain.participants);
+    console.log("Chatroom name:", chatroomPlain.name);
+
+    return { success: true, chatroom: chatroomPlain };
+  } catch (error: any) {
+    console.error("Error in createOrGetChatroom:", error);
     return { success: false, message: error.message };
   }
 }

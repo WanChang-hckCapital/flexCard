@@ -31,6 +31,7 @@ import {
   File,
   Menu,
   LocateFixed,
+  CircleEllipsis,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -56,6 +57,15 @@ import "leaflet/dist/leaflet.css";
 import { Loader } from "@googlemaps/js-api-loader";
 import LoadingSpinner from "./LoadingSpinner";
 import { fetchPreviousMessage } from "@/lib/actions/user.actions";
+
+interface Chatroom {
+  _id: string;
+  name: string;
+  type: string;
+  participants: Participant[];
+  chatroomId: string;
+  createdAt: string;
+}
 
 interface Participant {
   _id: string;
@@ -108,9 +118,10 @@ interface OldMessage {
 }
 
 interface ChatroomMainBarProps {
-  chatrooms: any[];
+  chatrooms: Chatroom[];
   authenticatedUserId: string;
   selectedChatroom: string | null;
+  selectedChatroomData: Chatroom | null;
   allUsers: any[];
   messages: Message[];
   ws: WebSocket | null;
@@ -127,6 +138,7 @@ export default function ChatRoomMainBar({
   chatrooms,
   authenticatedUserId,
   selectedChatroom,
+  selectedChatroomData,
   allUsers,
   messages,
   ws,
@@ -135,6 +147,9 @@ export default function ChatRoomMainBar({
   if (!selectedChatroom) {
     return <div>Select a chatroom to start chatting.</div>;
   }
+
+  // console.log("chatroom info");
+  // console.log(JSON.stringify(selectedChatroomData));
 
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -500,9 +515,9 @@ export default function ChatRoomMainBar({
     }
   };
 
-  const selectedChatroomData = chatrooms.find(
-    (chatroom) => chatroom._id === selectedChatroom
-  );
+  // const selectedChatroomData = chatrooms.find(
+  //   (chatroom) => chatroom._id === selectedChatroom
+  // );
 
   // first time chatting
   const createChatBox = async (
@@ -1155,7 +1170,15 @@ export default function ChatRoomMainBar({
   return (
     <>
       <div className="flex flex-col w-full">
-        <div className="flex-1 overflow-auto p-4 md:p-6" ref={chatContainerRef}>
+        <div className="sticky top-0 z-10 w-full shadow-sm p-2">
+          <div className="flex justify-end">
+            <CircleEllipsis />
+          </div>
+        </div>
+        <div
+          className="flex-1 overflow-auto p-4 md:p-6 mt-12"
+          ref={chatContainerRef}
+        >
           {isFetchingOlderMessages && <LoadingSpinner />}
           {currentMessages.length > 0 ? (
             currentMessages.map((message: Message) => {
@@ -1421,12 +1444,41 @@ export default function ChatRoomMainBar({
             })
           ) : (
             <div className="flex flex-col items-center">
-              {receiverInfo && (
+              {/* <div>{JSON.stringify(selectedChatroomData)}</div> */}
+              {selectedChatroomData && selectedChatroomData.type == "GROUP" && (
                 <>
                   <Avatar className="h-[200px] w-[200px]  mb-4 border">
-                    <AvatarImage
-                      src={receiverImage || "/placeholder-user.jpg"}
-                    />
+                    <AvatarImage src="/assets/users.svg" />
+                    <AvatarFallback>?</AvatarFallback>
+                  </Avatar>
+                  <p>{selectedChatroomData.name}</p>
+                  <Button className="mt-2">
+                    You were added at{" "}
+                    {new Date(
+                      selectedChatroomData.createdAt
+                    ).toLocaleDateString()}
+                  </Button>
+                </>
+              )}
+              {selectedChatroomData &&
+                selectedChatroomData.type == "PERSONAL" && (
+                  <>
+                    {/* <div>{JSON.stringify(selectedChatroomData)}</div> */}
+                    <Avatar className="h-[200px] w-[200px]  mb-4 border">
+                      <AvatarImage
+                        src={selectedChatroomData.participants[0].image || ""}
+                      />
+                      <AvatarFallback>?</AvatarFallback>
+                    </Avatar>
+                    <p>{selectedChatroomData.participants[0].accountname}</p>
+                    <Button className="mt-2">View Profile</Button>
+                  </>
+                )}
+              {/* {receiverInfo && (
+              todo - remove?
+                <>
+                  <Avatar className="h-[200px] w-[200px]  mb-4 border">
+                    <AvatarImage src={receiverImage || ""} />
                     <AvatarFallback>
                       {receiverInfo.accountname
                         ? receiverInfo.accountname.charAt(0)
@@ -1436,8 +1488,7 @@ export default function ChatRoomMainBar({
                   <p>{receiverInfo.accountname}</p>
                   <Button className="mt-2">View Profile</Button>
                 </>
-              )}
-              {/* <p>No messages yet.</p> */}
+              )} */}
             </div>
           )}
         </div>
@@ -1546,13 +1597,6 @@ export default function ChatRoomMainBar({
                   <MapPin className="mr-2 h-5 w-5" />
                   Current Location
                 </DropdownMenuItem>
-                {/* <DropdownMenuItem
-                  className="flex items-center text-2xl p-3"
-                  onClick={handleDestinationSelect}
-                >
-                  <LocateFixed className="mr-2 h-5 w-5" />
-                  Location
-                </DropdownMenuItem> */}
                 <DropdownMenuItem
                   className="flex items-center text-2xl p-3"
                   onClick={handleFetchAllCards}

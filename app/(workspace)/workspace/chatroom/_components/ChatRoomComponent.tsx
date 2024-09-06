@@ -46,22 +46,26 @@ interface Message {
 interface Chatroom {
   _id: string;
   name: string;
+  type: string;
   participants: Participant[];
   chatroomId: string;
+  createdAt: string;
 }
 
 interface ChatRoomClientProps {
   chatrooms: Chatroom[];
   authenticatedUserId: string;
   allUsers: any[];
-  allFollowerAndFollowing: { followers: any[]; following: any[] };
+  allFollowerAndFollowingForPersonal: { followers: any[]; following: any[] };
+  allFollowerAndFollowingForGroup: { followers: any[]; following: any[] };
 }
 
 export default function ChatRoomComponent({
   chatrooms,
   authenticatedUserId,
   allUsers,
-  allFollowerAndFollowing,
+  allFollowerAndFollowingForPersonal,
+  allFollowerAndFollowingForGroup,
 }: ChatRoomClientProps) {
   const [selectedChatroom, setSelectedChatroom] = useState<string | null>("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -70,6 +74,8 @@ export default function ChatRoomComponent({
   const [messageLoading, setMessageLoading] = useState<boolean>(false);
   const [skip, setSkip] = useState<number>(0); // number use to skip
   const chatWindowRef = useRef<HTMLDivElement>(null);
+  const [selectedChatroomData, setSelectedChatroomData] =
+    useState<Chatroom | null>(null);
 
   useEffect(() => {
     const newWs = new WebSocket("ws://localhost:8080");
@@ -197,6 +203,19 @@ export default function ChatRoomComponent({
 
     if (chatroomId && ws) {
       try {
+        const selectedChatroomData = chatrooms.find(
+          (chatroom) => chatroom.chatroomId === chatroomId
+        );
+
+        if (!selectedChatroomData) {
+          console.error("Chatroom not found");
+          setMessageLoading(false);
+          return;
+        }
+
+        // console.log("Chatroom info:", selectedChatroomData);
+        setSelectedChatroomData(selectedChatroomData);
+
         const fetchMessagesResponse = await fetchMessagesWs(
           chatroomId,
           authenticatedUserId,
@@ -234,7 +253,10 @@ export default function ChatRoomComponent({
           authenticatedUserId={authenticatedUserId}
           onSelectChatroom={handleSelectChatroom}
           allUsers={allUsers}
-          allFollowerAndFollowing={allFollowerAndFollowing}
+          allFollowerAndFollowingForPersonal={
+            allFollowerAndFollowingForPersonal
+          }
+          allFollowerAndFollowingForGroup={allFollowerAndFollowingForGroup}
         />
       </div>
       <div className="flex h-full w-full">
@@ -245,6 +267,7 @@ export default function ChatRoomComponent({
             chatrooms={chatrooms}
             authenticatedUserId={authenticatedUserId}
             selectedChatroom={selectedChatroom}
+            selectedChatroomData={selectedChatroomData}
             allUsers={allUsers}
             messages={messages}
             ws={ws}

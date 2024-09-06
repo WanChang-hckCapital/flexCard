@@ -5,6 +5,7 @@ import {
   getCurrentUserChatroom,
   fetchAllUser,
   getFollowersAndFollowing,
+  getAllFollowersAndFollowing,
 } from "@/lib/actions/user.actions";
 import ChatRoomSideBar from "../_components/ChatRoomSideBar";
 import ChatRoomMainBar from "../_components/ChatRoomMainComponent";
@@ -70,7 +71,14 @@ export default async function ChatComponent({ params }: ChatRoomProps) {
     isLoading = false;
   }
 
-  let allFollowerAndFollowing: AllFollowerAndFollowing = {
+  let allFollowerAndFollowingForPersonal: AllFollowerAndFollowing = {
+    success: false,
+    message: "",
+    followers: [],
+    following: [],
+  };
+
+  let allFollowerAndFollowingForGroup: AllFollowerAndFollowing = {
     success: false,
     message: "",
     followers: [],
@@ -78,7 +86,17 @@ export default async function ChatComponent({ params }: ChatRoomProps) {
   };
 
   try {
-    allFollowerAndFollowing = await getFollowersAndFollowing(memberId);
+    // all following/follower user but havent create personal chatroom before
+    allFollowerAndFollowingForPersonal = await getFollowersAndFollowing(
+      memberId
+    );
+  } catch (error: any) {}
+
+  try {
+    // for group
+    allFollowerAndFollowingForGroup = await getAllFollowersAndFollowing(
+      memberId
+    );
   } catch (error: any) {}
 
   return (
@@ -89,7 +107,10 @@ export default async function ChatComponent({ params }: ChatRoomProps) {
           chatrooms={allChatrooms.chatrooms}
           authenticatedUserId={memberId}
           allUsers={allUsers.users}
-          allFollowerAndFollowing={allFollowerAndFollowing}
+          allFollowerAndFollowingForPersonal={
+            allFollowerAndFollowingForPersonal
+          }
+          allFollowerAndFollowingForGroup={allFollowerAndFollowingForGroup}
         />
         {/* ) : (
           <SkeletonComponent />
