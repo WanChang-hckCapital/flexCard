@@ -224,8 +224,9 @@ export default function ChatRoomSideBar({
                     <div
                       key={follower.id}
                       className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer hover:bg-gray-200"
-                      onClick={() => createNewPersonalChatroom(follower.userId)}
+                      onClick={() => createNewPersonalChatroom(follower.id)}
                     >
+                      <div className="text-black">{follower.id}</div>
                       <Avatar className="h-8 w-8 border">
                         <AvatarImage src={follower.image} />
                         <AvatarFallback>

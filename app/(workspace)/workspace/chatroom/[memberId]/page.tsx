@@ -63,6 +63,9 @@ export default async function ChatComponent({ params }: ChatRoomProps) {
   try {
     allChatrooms = await getCurrentUserChatroom(memberId);
 
+    console.log("chatrrom");
+    console.log(allChatrooms);
+
     allUsers = await fetchAllUser(memberId);
 
     isLoading = false;
@@ -90,6 +93,8 @@ export default async function ChatComponent({ params }: ChatRoomProps) {
     allFollowerAndFollowingForPersonal = await getFollowersAndFollowing(
       memberId
     );
+    // console.log("page");
+    // console.log(allFollowerAndFollowingForPersonal);
   } catch (error: any) {}
 
   try {

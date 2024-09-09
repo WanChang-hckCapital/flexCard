@@ -148,9 +148,6 @@ export default function ChatRoomMainBar({
     return <div>Select a chatroom to start chatting.</div>;
   }
 
-  // console.log("chatroom info");
-  // console.log(JSON.stringify(selectedChatroomData));
-
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);

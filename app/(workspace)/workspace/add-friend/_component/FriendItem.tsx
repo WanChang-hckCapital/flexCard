@@ -32,9 +32,12 @@ const FriendItem: React.FC<FriendItemProps> = ({ user, senderId }) => {
         if (user.accountType === "PUBLIC") {
           // Check if the current user is following the target user for public accounts
           const followStatus = await checkIfFollowing({
-            authUserId: senderId,
+            authActiveProfileId: senderId,
             accountId: user.userId,
           });
+
+          console.log("follow sattus");
+          console.log(followStatus);
 
           if (followStatus.success) {
             setIsFollowing(followStatus.isFollowing);
