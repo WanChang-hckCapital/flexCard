@@ -31,6 +31,7 @@ import {
   File,
   Menu,
   LocateFixed,
+  CircleEllipsis,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -54,7 +55,17 @@ import Link from "next/link";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Loader } from "@googlemaps/js-api-loader";
-// import { resolveShortUrl } from "@/lib/actions/user.actions";
+import LoadingSpinner from "./LoadingSpinner";
+import { fetchPreviousMessage } from "@/lib/actions/user.actions";
+
+interface Chatroom {
+  _id: string;
+  name: string;
+  type: string;
+  participants: Participant[];
+  chatroomId: string;
+  createdAt: string;
+}
 
 interface Participant {
   _id: string;
@@ -83,12 +94,34 @@ interface Message {
   pictureLink: string | null;
   card: string | null;
   flexFormatHtmlContentText: string | null;
+  youtubeMetadata?: {
+    title: string;
+    description: string;
+    thumbnail: string;
+    url: string;
+  } | null;
+  facebookMetadata?: {
+    title: string;
+    description: string;
+    thumbnail: string;
+    url: string;
+  } | null;
+  shopImage: string | null;
+  siteName: string | null;
+  shopDescription: string | null;
+}
+
+interface OldMessage {
+  success: boolean;
+  message: string;
+  messages: Message[];
 }
 
 interface ChatroomMainBarProps {
-  chatrooms: any[];
+  chatrooms: Chatroom[];
   authenticatedUserId: string;
   selectedChatroom: string | null;
+  selectedChatroomData: Chatroom | null;
   allUsers: any[];
   messages: Message[];
   ws: WebSocket | null;
@@ -105,6 +138,7 @@ export default function ChatRoomMainBar({
   chatrooms,
   authenticatedUserId,
   selectedChatroom,
+  selectedChatroomData,
   allUsers,
   messages,
   ws,
@@ -114,11 +148,17 @@ export default function ChatRoomMainBar({
     return <div>Select a chatroom to start chatting.</div>;
   }
 
+  // console.log("chatroom info");
+  // console.log(JSON.stringify(selectedChatroomData));
+
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   // const mapRefFromLink = useRef<HTMLDivElement>(null);
   const mapRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  const hasScrolled = useRef(false); // to prevent scrollto bottom for every messages is loaded
 
   const [messageContent, setMessageContent] = useState<string>("");
   const [currentMessages, setCurrentMessages] = useState<Message[]>(messages);
@@ -137,38 +177,36 @@ export default function ChatRoomMainBar({
   const [isFlexCardModalOpen, setFlexCardModalOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState<any>(null);
   const [map, setMap] = useState<L.Map | null>(null);
-  // const [marker, setMarker] = useState<L.Marker | null>(null);
-  // const [coordinates, setCoordinates] = useState<{
-  //   latitude: number;
-  //   longitude: number;
-  // } | null>(null);
+  const [lmarker, setLMarker] = useState<L.Marker | null>(null);
+  const [coordinates, setCoordinates] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
   const [isMapVisible, setMapVisible] = useState(false);
   const [googleMap, setGoogleMap] = useState<google.maps.Map | null>(null);
   const [marker, setMarker] = useState<google.maps.Marker | null>(null);
   const [locationLink, setLocationLink] = useState<string>("");
   const [shopName, setShopName] = useState<string | null>(null);
   const [shopImage, setShopImage] = useState<string | null>(null);
+  const [shopDescription, setShopDescription] = useState<string | null>(null);
+  const [siteName, setSiteName] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchParticipantImages = async () => {
-      if (selectedChatroom) {
-        const response = await getChatroomParticipantsImage(
-          selectedChatroom,
-          authenticatedUserId
-        );
-        if (response.success && response.images) {
-          setParticipantImages(response.images);
-        } else {
-          console.error(
-            "Failed to fetch participant images: ",
-            response.message
-          );
-        }
-      }
-    };
+  const [isFetchingOlderMessages, setIsFetchingOlderMessages] = useState(false);
+  const [hasMoreMessages, setHasMoreMessages] = useState(true);
 
-    fetchParticipantImages();
-  }, [selectedChatroom]);
+  const [youtubeMetadata, setYoutubeMetadata] = useState<{
+    title: string;
+    description: string;
+    thumbnail: string;
+    url: string;
+  } | null>(null);
+
+  const [facebookMetadata, setFacebookMetadata] = useState<{
+    title: string;
+    description: string;
+    thumbnail: string;
+    url: string;
+  } | null>(null);
 
   useEffect(() => {
     setCurrentMessages(messages);
@@ -184,10 +222,6 @@ export default function ChatRoomMainBar({
       });
     });
   }, [messages]);
-
-  useEffect(() => {
-    console.log("Rendering with messages:", currentMessages);
-  }, [currentMessages]);
 
   useEffect(() => {
     const fetchReceiverImage = async () => {
@@ -208,78 +242,38 @@ export default function ChatRoomMainBar({
     fetchReceiverImage();
   }, [receiverInfo]);
 
-  // useEffect(() => {
-  //   if (coordinates && locationPreview && mapRef.current) {
-  //     const { latitude, longitude } = coordinates;
+  useEffect(() => {
+    if (coordinates && locationPreview && mapRef.current) {
+      const { latitude, longitude } = coordinates;
 
-  //     if (!map) {
-  //       // Initialize the map
-  //       const newMap = L.map(mapRef.current).setView([latitude, longitude], 13);
-  //       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  //         attribution: "© OpenStreetMap contributors",
-  //       }).addTo(newMap);
-  //       setMap(newMap);
-  //     } else {
-  //       // Update the map view if the map already exists
-  //       map.setView([latitude, longitude], 13);
+      if (map) {
+        map.remove();
+        setMap(null);
+        // console.log("map exist");
+      }
 
-  //       if (marker) {
-  //         marker.setLatLng([latitude, longitude]);
-  //       } else {
-  //         const newMarker = L.marker([latitude, longitude]).addTo(map);
-  //         setMarker(newMarker);
-  //       }
-  //     }
-  //   } else {
-  //     console.log("else");
-  //   }
-  // }, [coordinates, locationPreview, mapRef.current]);
+      // Initialize the new map
+      const newMap = L.map(mapRef.current).setView([latitude, longitude], 13);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap contributors",
+      }).addTo(newMap);
+      setMap(newMap);
 
-  // geolocation to get current location for messages
-  // useEffect(() => {
-  //   currentMessages.forEach((message) => {
-  //     if (message.locationLink && mapRefs.current[message._id]) {
-  //       const mapContainer = mapRefs.current[message._id];
-
-  //       if (mapContainer) {
-  //         const regex = /(-?\d+\.\d+),(-?\d+\.\d+)/;
-  //         const match = message.locationLink.match(regex);
-
-  //         if (match) {
-  //           const latitude = parseFloat(match[1]);
-  //           const longitude = parseFloat(match[2]);
-
-  //           const newMap = L.map(mapContainer).setView(
-  //             [latitude, longitude],
-  //             13
-  //           );
-  //           L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  //             attribution: "© OpenStreetMap contributors",
-  //           }).addTo(newMap);
-
-  //           const svgIcon = `data:image/svg+xml;charset=UTF-8,
-  //             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="red" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin">
-  //                 <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
-  //                 <circle cx="12" cy="10" r="3"/>
-  //             </svg>`;
-  //           const customIcon = L.icon({
-  //             iconUrl: svgIcon,
-  //           });
-
-  //           L.marker([latitude, longitude], { icon: customIcon }).addTo(newMap);
-  //         }
-  //       }
-  //     }
-  //   });
-  // }, [currentMessages]);
+      const newMarker = L.marker([latitude, longitude]).addTo(newMap);
+      setLMarker(newMarker);
+    }
+  }, [coordinates, locationPreview, mapRef.current]);
 
   useEffect(() => {
     currentMessages.forEach((message) => {
       if (message.locationLink && mapRefs.current[message._id]) {
         const mapContainer = mapRefs.current[message._id];
 
-        if (mapContainer && !mapContainer._leaflet_id) {
-          // Only initialize the map if it's not already initialized
+        if (mapContainer) {
+          if (mapContainer._leaflet_id) {
+            return;
+          }
+
           const regex = /(-?\d+\.\d+),(-?\d+\.\d+)/;
           const match = message.locationLink.match(regex);
 
@@ -287,7 +281,6 @@ export default function ChatRoomMainBar({
             const latitude = parseFloat(match[1]);
             const longitude = parseFloat(match[2]);
 
-            // Initialize the map
             const newMap = L.map(mapContainer).setView(
               [latitude, longitude],
               13
@@ -312,8 +305,8 @@ export default function ChatRoomMainBar({
     });
   }, [currentMessages]);
 
-  // set the current location by default
-  // click again to reset the location
+  // // set the current location by default
+  // // click again to reset the location
   const initializeMap = useCallback(() => {
     if (mapRef.current && !googleMap) {
       const loader = new Loader({
@@ -396,6 +389,112 @@ export default function ChatRoomMainBar({
     }
   }, [isMapVisible, initializeMap]);
 
+  useEffect(() => {
+    const fetchParticipantImages = async () => {
+      if (selectedChatroom) {
+        const response = await getChatroomParticipantsImage(
+          selectedChatroom,
+          authenticatedUserId
+        );
+        if (response.success && response.images) {
+          setParticipantImages(response.images);
+        } else {
+          console.error(
+            "Failed to fetch participant images: ",
+            response.message
+          );
+        }
+      }
+    };
+
+    fetchParticipantImages();
+  }, [selectedChatroom]);
+
+  useEffect(() => {
+    setCurrentMessages(messages);
+  }, [messages]);
+
+  // scroll to bottom
+  const scrollToBottom = () => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight + 200;
+    }
+  };
+
+  // only move this when the message load initially
+  useEffect(() => {
+    if (currentMessages.length === 20) {
+      scrollToBottom();
+    }
+  }, [currentMessages]);
+
+  const fetchOlderMessages = async () => {
+    if (isFetchingOlderMessages || !hasMoreMessages) return;
+
+    setIsFetchingOlderMessages(true);
+
+    const scrollHeightBeforeFetch = chatContainerRef.current?.scrollHeight || 0;
+    const scrollTopBeforeFetch = chatContainerRef.current?.scrollTop || 0;
+
+    const currentLength = currentMessages.length;
+    console.log("Fetching older messages, current length:", currentLength);
+
+    try {
+      const limit = 20;
+      const skip = currentLength;
+      const oldMessagesResponse: any = await fetchPreviousMessage(
+        selectedChatroom!,
+        authenticatedUserId,
+        skip,
+        limit
+      );
+
+      if (
+        oldMessagesResponse.success &&
+        oldMessagesResponse.messages.length > 0
+      ) {
+        setCurrentMessages((prevMessages) => [
+          ...oldMessagesResponse.messages,
+          ...prevMessages,
+        ]);
+
+        setTimeout(() => {
+          if (chatContainerRef.current) {
+            const scrollHeightAfterFetch =
+              chatContainerRef.current.scrollHeight;
+            chatContainerRef.current.scrollTop =
+              scrollTopBeforeFetch +
+              (scrollHeightAfterFetch - scrollHeightBeforeFetch);
+          }
+        }, 0);
+
+        if (oldMessagesResponse.messages.length < limit) {
+          setHasMoreMessages(false);
+        }
+      } else {
+        setHasMoreMessages(false);
+      }
+    } catch (error) {
+      console.error("Error fetching older messages:", error);
+    } finally {
+      setIsFetchingOlderMessages(false);
+    }
+  };
+
+  const handleScroll = () => {
+    if (chatContainerRef.current && chatContainerRef.current.scrollTop === 0) {
+      fetchOlderMessages();
+    }
+  };
+
+  // Attach and detach the scroll event listener
+  useEffect(() => {
+    chatContainerRef.current?.addEventListener("scroll", handleScroll);
+    return () =>
+      chatContainerRef.current?.removeEventListener("scroll", handleScroll);
+  }, [hasMoreMessages, isFetchingOlderMessages]);
+
   const handleDestinationSelect = () => {
     setMapVisible(true);
   };
@@ -416,9 +515,9 @@ export default function ChatRoomMainBar({
     }
   };
 
-  const selectedChatroomData = chatrooms.find(
-    (chatroom) => chatroom._id === selectedChatroom
-  );
+  // const selectedChatroomData = chatrooms.find(
+  //   (chatroom) => chatroom._id === selectedChatroom
+  // );
 
   // first time chatting
   const createChatBox = async (
@@ -470,7 +569,19 @@ export default function ChatRoomMainBar({
     senderId: string,
     chatroomId: string,
     content: string,
-    ws: WebSocket
+    ws: WebSocket,
+    youtubeMetadata?: {
+      title: string;
+      description: string;
+      thumbnail: string;
+      url: string;
+    } | null,
+    facebookMetadata?: {
+      title: string;
+      description: string;
+      thumbnail: string;
+      url: string;
+    } | null
   ) => {
     if (!ws) return;
 
@@ -479,6 +590,8 @@ export default function ChatRoomMainBar({
     let imageObjectId: string | null = null;
     let fileName: string = "";
     let fileSrc: string = "";
+    let locationLink: string | null = "";
+    let pictureLink: string | null = "";
 
     const cardData = selectedCard ? selectedCard : null;
     const cardId = cardData?.cardId ? cardData?.cardId : null;
@@ -486,12 +599,25 @@ export default function ChatRoomMainBar({
       ? cardData.flexHtml.content
       : null;
 
+    if (!youtubeMetadata) {
+      youtubeMetadata =
+        (await fetchMetadataForYoutubeContent(content)) || undefined;
+    }
+
+    if (!facebookMetadata) {
+      facebookMetadata =
+        (await fetchMetadataForFacebookContent(content)) || undefined;
+    }
+
     const sendMessage = (
       imageObjectId: string | null = null,
       fileObjectId: string | null = null,
       locationLink: string | null = null,
       shopName: string | null = null,
-      pictureLink: string | null = null
+      pictureLink: string | null = null,
+      shopImage: string | null = null,
+      siteName: string | null = null,
+      shopDescription: string | null = null
     ) => {
       try {
         if (ws && ws.readyState === WebSocket.OPEN) {
@@ -511,6 +637,11 @@ export default function ChatRoomMainBar({
             pictureLink,
             card: cardId,
             cardFlexHtml,
+            youtubeMetadata: youtubeMetadata || null,
+            facebookMetadata: facebookMetadata || null,
+            shopImage,
+            siteName,
+            shopDescription,
           };
 
           console.log("send message:" + JSON.stringify(message));
@@ -538,9 +669,28 @@ export default function ChatRoomMainBar({
             pictureLink,
             card: cardId,
             flexFormatHtmlContentText: cardFlexHtml,
+            youtubeMetadata: youtubeMetadata
+              ? {
+                  title: youtubeMetadata.title,
+                  description: youtubeMetadata.description,
+                  thumbnail: youtubeMetadata.thumbnail,
+                  url: youtubeMetadata.url,
+                }
+              : null,
+            facebookMetadata: facebookMetadata
+              ? {
+                  title: facebookMetadata.title,
+                  description: facebookMetadata.description,
+                  thumbnail: facebookMetadata.thumbnail,
+                  url: facebookMetadata.url,
+                }
+              : null,
+            shopImage,
+            siteName,
+            shopDescription,
           };
 
-          console.log("frontend messgae:" + JSON.stringify(newMessage));
+          // console.log("frontend messgae:" + JSON.stringify(newMessage));
 
           setCurrentMessages((prevMessages) => [...prevMessages, newMessage]);
 
@@ -560,8 +710,13 @@ export default function ChatRoomMainBar({
       setLocationPreview(null);
       setShopName(null); // Clear the shop name
       setShopImage(null);
+      setSiteName(null);
+      setShopDescription(null);
       setSelectedCard(null);
       handleRemoveMap(); // close the google map
+      setYoutubeMetadata(null);
+      setFacebookMetadata(null);
+
       if (imageInputRef.current) {
         imageInputRef.current.value = "";
       }
@@ -575,8 +730,8 @@ export default function ChatRoomMainBar({
       const hasContent = content.trim() !== "";
       const hasImage = imageInputRef.current?.files?.[0] != null;
       const hasFile = fileInputRef.current?.files?.[0] != null;
-      // const isLocation = locationPreview != null;
-      const isLocation = locationLink != "";
+      const isLocation = locationPreview != null;
+
       const hasShopName = shopName != null;
       const hasPictureLink = shopImage != null;
 
@@ -617,34 +772,33 @@ export default function ChatRoomMainBar({
             console.error("Failed to upload file. Status:", response.status);
           }
         }
-        // if (isLocation) {
-        //   if (navigator.geolocation) {
-        //     navigator.geolocation.getCurrentPosition(
-        //       (position) => {
-        //         const { latitude, longitude } = position.coords;
-        //         locationLink = `https://maps.google.com/?q=${latitude},${longitude}`;
-        //         sendMessage(imageObjectId, fileObjectId, locationLink);
-        //       },
-        //       (error) => {
-        //         console.error("Error getting location:", error);
-        //         alert("Unable to retrieve your location. Please try again.");
-        //       }
-        //     );
-        //   } else {
-        //     alert("Geolocation is not supported by this browser.");
-        //   }
-        // }
-        // sendMessage(imageObjectId, fileObjectId, locationLink);
+        if (isLocation) {
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+              (position) => {
+                const { latitude, longitude } = position.coords;
+                locationLink = `https://maps.google.com/?q=${latitude},${longitude}`;
+                sendMessage(imageObjectId, fileObjectId, locationLink);
+              },
+              (error) => {
+                console.error("Error getting location:", error);
+                alert("Unable to retrieve your location. Please try again.");
+              }
+            );
+          } else {
+            alert("Geolocation is not supported by this browser.");
+          }
+        }
         sendMessage(
           imageObjectId,
           fileObjectId,
           locationLink,
           shopName,
-          shopImage
+          pictureLink,
+          shopImage,
+          siteName,
+          shopDescription
         );
-        // else {
-        //   sendMessage(imageObjectId, fileObjectId);
-        // }
       } else {
         toast.error("Message cannot be empty!!");
       }
@@ -721,36 +875,46 @@ export default function ChatRoomMainBar({
     }
   };
 
-  // preview the link
-  // const handleLocationPreview = () => {
-  //   if (navigator.geolocation) {
-  //     navigator.geolocation.getCurrentPosition(
-  //       (position) => {
-  //         const { latitude, longitude } = position.coords;
-  //         const locationLink = `https://maps.google.com/?q=${latitude},${longitude}`;
-  //         setLocationPreview(locationLink);
-  //         setCoordinates({ latitude, longitude });
+  // preview the location
+  const handleLocationPreview = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          const locationLink = `https://maps.google.com/?q=${latitude},${longitude}`;
+          setLocationPreview(locationLink);
+          setCoordinates({ latitude, longitude });
 
-  //         if (map) {
-  //           map.setView([latitude, longitude], 13);
+          if (mapRef.current) {
+            // Check if a map already exists and remove it
+            if (map) {
+              map.remove();
+              setMap(null);
+            }
 
-  //           if (marker) {
-  //             (marker as google.maps.Marker).setPosition(latLng);
-  //           } else {
-  //             const newMarker = L.marker([latitude, longitude]).addTo(map);
-  //             setMarker(newMarker);
-  //           }
-  //         }
-  //       },
-  //       (error) => {
-  //         console.error("Error getting location:", error);
-  //         alert("Unable to retrieve your location. Please try again.");
-  //       }
-  //     );
-  //   } else {
-  //     alert("Geolocation is not supported by this browser.");
-  //   }
-  // };
+            // Initialize the new map
+            const newMap = L.map(mapRef.current).setView(
+              [latitude, longitude],
+              13
+            );
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+              attribution: "© OpenStreetMap contributors",
+            }).addTo(newMap);
+            setMap(newMap);
+
+            const newMarker = L.marker([latitude, longitude]).addTo(newMap);
+            setLMarker(newMarker);
+          }
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          alert("Unable to retrieve your location. Please try again.");
+        }
+      );
+    } else {
+      alert("Geolocation is not supported by this browser.");
+    }
+  };
 
   // to view file upload
   const handleFileUploadClick = () => {
@@ -785,7 +949,7 @@ export default function ChatRoomMainBar({
       const response = await fetchAllCards();
 
       if (response) {
-        console.log("All cards:", response);
+        // console.log("All cards:", response);
         setFlexCards(response);
         setFlexCardModalOpen(true);
       } else {
@@ -815,117 +979,207 @@ export default function ChatRoomMainBar({
     setMarker(null);
   };
 
-  // get the shop name
-  // const handlePaste = async (
-  //   event: React.ClipboardEvent<HTMLTextAreaElement>
-  // ) => {
-  //   const pasteData = event.clipboardData.getData("Text");
+  const fetchMetadataForYoutubeContent = async (content: string) => {
+    const youtubeLinkPattern =
+      /https:\/\/www\.youtube\.com\/watch\?v=[A-Za-z0-9_-]+/;
+    const match = content.match(youtubeLinkPattern);
 
-  //   const googleMapsLinkPattern = /https:\/\/maps\.app\.goo\.gl\/[A-Za-z0-9]+/;
-  //   const match = pasteData.match(googleMapsLinkPattern);
+    if (match) {
+      const youtubeUrl = match[0];
+      try {
+        const response = await fetch(
+          `/api/fetch-meta?url=${encodeURIComponent(youtubeUrl)}`
+        );
+        const { metaTags, error } = await response.json();
 
-  //   if (match) {
-  //     try {
-  //       const apiResponse = await fetch(
-  //         `/api/resolve-url?url=${encodeURIComponent(match[0])}`
-  //       );
-  //       const { resolvedUrl, error } = await apiResponse.json();
+        if (error) {
+          console.error("Failed to fetch metadata:", error);
+          return null;
+        }
 
-  //       if (error) {
-  //         console.error("Failed to resolve URL:", error);
-  //         return;
-  //       }
+        return {
+          title: metaTags["og:title"] || metaTags["title"] || "Untitled",
+          description:
+            metaTags["og:description"] ||
+            metaTags["description"] ||
+            "No description",
+          thumbnail: metaTags["og:image"] || "",
+          url: youtubeUrl,
+        };
+      } catch (error) {
+        console.error("Error fetching metadata:", error);
+        return null;
+      }
+    }
+    return null;
+  };
 
-  //       const shopNameMatch = resolvedUrl.match(/place\/([^\/?]+)/);
-  //       if (shopNameMatch) {
-  //         const extractedShopName = decodeURIComponent(
-  //           shopNameMatch[1].replace(/\+/g, " ")
-  //         );
-  //         setShopName(extractedShopName);
-  //         console.log(`Shop Name: ${extractedShopName}`);
-  //       } else {
-  //         console.error("Shop name could not be extracted from the URL.");
-  //       }
-  //     } catch (error) {
-  //       console.error("Error resolving URL or extracting shop name:", error);
-  //     }
-  //   }
-  // };
+  const fetchMetadataForFacebookContent = async (content: string) => {
+    const facebookPostPattern =
+      /https:\/\/www\.facebook\.com\/[A-Za-z0-9\.]+\/posts\/[A-Za-z0-9]+/;
+    const match = content.match(facebookPostPattern);
+
+    if (match) {
+      const youtubeUrl = match[0];
+      try {
+        const response = await fetch(
+          `/api/fetch-meta?url=${encodeURIComponent(youtubeUrl)}`
+        );
+        const { metaTags, error } = await response.json();
+
+        if (error) {
+          console.error("Failed to fetch metadata:", error);
+          return null;
+        }
+
+        return {
+          title: metaTags["og:title"] || metaTags["title"] || "Untitled",
+          description:
+            metaTags["og:description"] ||
+            metaTags["description"] ||
+            "No description",
+          thumbnail: metaTags["og:image"] || "",
+          url: youtubeUrl,
+        };
+      } catch (error) {
+        console.error("Error fetching metadata:", error);
+        return null;
+      }
+    }
+    return null;
+  };
 
   const handlePaste = async (
     event: React.ClipboardEvent<HTMLTextAreaElement>
   ) => {
     const pasteData = event.clipboardData.getData("Text");
 
+    const youtubeLinkPattern =
+      /https:\/\/www\.youtube\.com\/watch\?v=[A-Za-z0-9_-]+/;
     const googleMapsLinkPattern = /https:\/\/maps\.app\.goo\.gl\/[A-Za-z0-9]+/;
-    const match = pasteData.match(googleMapsLinkPattern);
+    // const facebookPostPattern =
+    //   /https:\/\/www\.facebook\.com\/[A-Za-z0-9\.]+\/posts\/[A-Za-z0-9]+/;
 
-    if (match) {
-      try {
-        // Resolve the short URL to get the full Google Maps URL
-        const apiResponse = await fetch(
-          `/api/resolve-url?url=${encodeURIComponent(match[0])}`
-        );
-        const { resolvedUrl, error } = await apiResponse.json();
+    const facebookPostPattern =
+      /https:\/\/www\.facebook\.com\/share\/p\/[A-Za-z0-9]+/;
 
-        if (error) {
-          console.error("Failed to resolve URL:", error);
-          return;
-        }
+    let metadataUpdated = false;
 
-        // Extract the shop name from the resolved URL
-        const shopNameMatch = resolvedUrl.match(/place\/([^\/?]+)/);
-        let extractedShopName = null;
-        if (shopNameMatch) {
-          extractedShopName = decodeURIComponent(
-            shopNameMatch[1].replace(/\+/g, " ")
+    if (youtubeLinkPattern.test(pasteData)) {
+      const youtubeUrl = pasteData.match(youtubeLinkPattern)?.[0];
+      if (youtubeUrl) {
+        try {
+          const response = await fetch(
+            `/api/fetch-meta?url=${encodeURIComponent(youtubeUrl)}`
           );
-          setShopName(extractedShopName);
-          console.log(`Shop Name: ${extractedShopName}`);
-        } else {
-          console.error("Shop name could not be extracted from the URL.");
-        }
-
-        // If the shop name is found, use it to search for the place details
-        if (extractedShopName) {
-          const apiKey = process.env.NEXT_PUBLIC_GOOGLEMAPS_API_KEY;
-
-          // Use the extracted shop name to search for place details using the Text Search API
-          const placeDetailsResponse = await fetch(
-            `/api/place-details?query=${encodeURIComponent(extractedShopName)}`
-          );
-
-          const placeDetailsData = await placeDetailsResponse.json();
-
-          console.log(placeDetailsData);
-
-          if (
-            placeDetailsData.status === "OK" &&
-            placeDetailsData.results.length > 0
-          ) {
-            const place = placeDetailsData.results[0];
-            const photoReference = place.photos?.[0]?.photo_reference;
-
-            let shopImageUrl = null;
-            if (photoReference) {
-              shopImageUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoReference}&key=${apiKey}`;
-              setShopImage(shopImageUrl);
-              console.log(`Shop Image URL: ${shopImageUrl}`);
-            }
-          } else {
-            console.error("Failed to retrieve place details.");
+          const { metaTags, error } = await response.json();
+          if (error) {
+            console.error("Failed to fetch metadata:", error);
+            return;
           }
+
+          const metadata = {
+            title: metaTags["og:title"] || metaTags["title"] || "Untitled",
+            description:
+              metaTags["og:description"] ||
+              metaTags["description"] ||
+              "No description",
+            thumbnail: metaTags["og:image"] || "",
+            url: youtubeUrl,
+          };
+
+          setYoutubeMetadata(metadata);
+          metadataUpdated = true;
+        } catch (error) {
+          console.error("Error fetching YouTube metadata:", error);
         }
-      } catch (error) {
-        console.error("Error resolving URL or fetching place details:", error);
+      }
+    } else if (googleMapsLinkPattern.test(pasteData)) {
+      const googleMapsUrl = pasteData.match(googleMapsLinkPattern)?.[0];
+      if (googleMapsUrl) {
+        try {
+          const apiResponse = await fetch(
+            `/api/resolve-url?url=${encodeURIComponent(googleMapsUrl)}`
+          );
+          const { resolvedUrl, image, siteName, description, error } =
+            await apiResponse.json();
+
+          if (error) {
+            console.error("Failed to resolve URL:", error);
+            return;
+          }
+
+          setShopImage(image);
+          setSiteName(siteName);
+          setShopDescription(description);
+
+          const shopNameMatch = resolvedUrl.match(/place\/([^\/?]+)/);
+          if (shopNameMatch) {
+            const extractedShopName = decodeURIComponent(
+              shopNameMatch[1].replace(/\+/g, " ")
+            );
+            setShopName(extractedShopName);
+          } else {
+            console.error("Shop name could not be extracted from the URL.");
+          }
+
+          metadataUpdated = true;
+        } catch (error) {
+          console.error(
+            "Error resolving URL or fetching place details:",
+            error
+          );
+        }
+      }
+    } else if (facebookPostPattern.test(pasteData)) {
+      const facebookPostUrl = pasteData.match(facebookPostPattern)?.[0];
+      if (facebookPostUrl) {
+        try {
+          const response = await fetch(
+            `/api/fetch-meta?url=${encodeURIComponent(facebookPostUrl)}`
+          );
+          const { metaTags, error } = await response.json();
+
+          if (error) {
+            console.error("Failed to fetch metadata:", error);
+            return;
+          }
+
+          const metadata = {
+            title: metaTags["og:title"] || "Untitled",
+            description: metaTags["og:description"] || "No description",
+            thumbnail: metaTags["og:image"] || "",
+            url: facebookPostUrl,
+          };
+
+          setFacebookMetadata(metadata);
+          metadataUpdated = true;
+        } catch (error) {
+          console.error("Error fetching Facebook metadata:", error);
+        }
       }
     }
+
+    if (!metadataUpdated) {
+      setMessageContent((prevContent) => prevContent + pasteData);
+    }
+
+    event.preventDefault(); // Prevent default pasting behavior
   };
 
   return (
     <>
       <div className="flex flex-col w-full">
-        <div className="flex-1 overflow-auto p-4 md:p-6">
+        <div className="sticky top-0 z-10 w-full shadow-sm p-2">
+          <div className="flex justify-end">
+            <CircleEllipsis />
+          </div>
+        </div>
+        <div
+          className="flex-1 overflow-auto p-4 md:p-6 mt-12"
+          ref={chatContainerRef}
+        >
+          {isFetchingOlderMessages && <LoadingSpinner />}
           {currentMessages.length > 0 ? (
             currentMessages.map((message: Message) => {
               const senderImage = participantImages.find(
@@ -935,17 +1189,15 @@ export default function ChatRoomMainBar({
               return (
                 <div
                   key={message._id}
-                  className={`flex items-start gap-3 ${
+                  className={`flex items-start mb-3 ${
                     message.senderId === authenticatedUserId
                       ? "justify-end"
                       : "justify-start"
                   }`}
                 >
                   {message.senderId !== authenticatedUserId && (
-                    <Avatar className="h-8 w-8 border">
-                      <AvatarImage
-                        src={senderImage || "/placeholder-user.jpg"}
-                      />
+                    <Avatar className="h-8 w-8 border mr-4">
+                      <AvatarImage src={senderImage || ""} />
                       <AvatarFallback>?</AvatarFallback>
                     </Avatar>
                   )}
@@ -966,22 +1218,6 @@ export default function ChatRoomMainBar({
                       />
                     </>
                   )}
-                  {/* {message.fileAttach && message.fileSrc && (
-                    <a
-                      href={message.fileSrc}
-                      download={message.fileName}
-                      className="block max-w-full rounded-md cursor-pointer"
-                    >
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="flex items-center justify-start w-full text-left text-blue-600 hover:text-black"
-                      >
-                        <FileDown className="mr-2 h-5 w-5 text-gray-500" />
-                        {message.fileName || "Download File"}
-                      </Button>
-                    </a>
-                  )} */}
                   {message.fileAttach && message.fileSrc && (
                     <div className="flex flex-col mb-2">
                       <div className="flex items-start gap-2 mb-2">
@@ -1021,45 +1257,137 @@ export default function ChatRoomMainBar({
                           size="sm"
                           className="flex items-center justify-start w-full text-left text-blue-600 hover:text-black"
                         >
-                          <MapPin className="mr-2 h-5 w-5 text-red-500" />
+                          {/* <MapPin className="mr-2 h-5 w-5 text-red-500" /> */}
                           View Location
                         </Button>
                         <div
                           ref={(el) => (mapRefs.current[message._id] = el)}
                           className="h-[200px] w-full rounded-md mt-2"
                         ></div>
-                        {/* <div>{message.locationLink}</div> */}
                       </a>
                     </>
                   )}
                   {message.shopName && (
-                    <Card className="mb-4 shadow-lg">
-                      <a
-                        href={message.content}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block w-full cursor-pointer"
-                      >
-                        <CardHeader className="p-4">
-                          <div className="flex items-center">
-                            <MapPin className="mr-2 h-5 w-5 text-red-500" />
-                            <CardTitle className="text-lg font-semibold text-blue-600 hover:text-gray-600">
-                              {message.shopName}
-                            </CardTitle>
+                    <div className="flex justify-center mb-4">
+                      <Card className="shadow-lg relative max-w-md w-full min-h-[350px]">
+                        <a
+                          href={message.content || "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block cursor-pointer"
+                        >
+                          <div className="block cursor-pointer">
+                            <CardHeader className="p-4">
+                              <div className="flex items-center">
+                                {/* <MapPin className="mr-2 h-5 w-5 text-red-500" /> */}
+                                <CardTitle className="text-base font-semibold text-blue-600 hover:text-gray-600">
+                                  {message.shopName}
+                                </CardTitle>
+                              </div>
+                            </CardHeader>
+                            {message.shopImage && (
+                              <CardContent className="p-0">
+                                <img
+                                  src={message.shopImage}
+                                  alt={message.shopName || ""}
+                                  className="rounded-t-md w-full h-[200px] object-cover"
+                                />
+                              </CardContent>
+                            )}
+                            <CardContent className="p-4">
+                              {message.siteName && (
+                                <p className="text-gray-500 text-sm mb-2 hover:text-gray-600">
+                                  {message.siteName}
+                                </p>
+                              )}
+                              {message.shopDescription && (
+                                <p className="text-gray-700 hover:text-gray-600">
+                                  {message.shopDescription}
+                                </p>
+                              )}
+                            </CardContent>
                           </div>
-                        </CardHeader>
-                        {message.pictureLink && (
-                          <CardContent className="p-4">
-                            <img
-                              src={message.pictureLink}
-                              alt={message.shopName || ""}
-                              className="rounded-md max-w-full h-auto"
-                            />
-                          </CardContent>
-                        )}
-                      </a>
-                    </Card>
+                        </a>
+                      </Card>
+                    </div>
                   )}
+                  {message.youtubeMetadata && (
+                    <div className="flex justify-center mb-4">
+                      <Card className="shadow-lg relative max-w-md w-full min-h-[350px]">
+                        <a
+                          href={message.youtubeMetadata.url || "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block cursor-pointer"
+                        >
+                          <div className="block cursor-pointer">
+                            <CardHeader className="p-4">
+                              <div className="flex items-center">
+                                <CardTitle className="text-base font-semibold text-blue-600 hover:text-gray-600">
+                                  {message.youtubeMetadata.title}
+                                </CardTitle>
+                              </div>
+                            </CardHeader>
+                            {message.youtubeMetadata.thumbnail && (
+                              <CardContent className="p-0">
+                                <img
+                                  src={message.youtubeMetadata.thumbnail}
+                                  alt={message.youtubeMetadata.thumbnail || ""}
+                                  className="rounded-t-md w-full h-[200px] object-cover"
+                                />
+                              </CardContent>
+                            )}
+                            <CardContent className="p-4">
+                              {message.youtubeMetadata.description && (
+                                <p className="text-gray-500 text-sm mb-2 hover:text-gray-600">
+                                  {message.youtubeMetadata.description}
+                                </p>
+                              )}
+                            </CardContent>
+                          </div>
+                        </a>
+                      </Card>
+                    </div>
+                  )}
+                  {message.facebookMetadata && (
+                    <div className="flex justify-center mb-4">
+                      <Card className="shadow-lg relative max-w-md w-full min-h-[350px]">
+                        <a
+                          href={message.facebookMetadata.url || "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block cursor-pointer"
+                        >
+                          <div className="block cursor-pointer">
+                            <CardHeader className="p-4">
+                              <div className="flex items-center">
+                                <CardTitle className="text-base font-semibold text-blue-600 hover:text-gray-600">
+                                  {message.facebookMetadata.title}
+                                </CardTitle>
+                              </div>
+                            </CardHeader>
+                            {message.facebookMetadata.thumbnail && (
+                              <CardContent className="p-0">
+                                <img
+                                  src={message.facebookMetadata.thumbnail}
+                                  alt={message.facebookMetadata.thumbnail || ""}
+                                  className="rounded-t-md w-full object-cover"
+                                />
+                              </CardContent>
+                            )}
+                            <CardContent className="p-4">
+                              {message.facebookMetadata.description && (
+                                <p className="text-gray-500 text-sm mb-2 hover:text-gray-600">
+                                  {message.facebookMetadata.description}
+                                </p>
+                              )}
+                            </CardContent>
+                          </div>
+                        </a>
+                      </Card>
+                    </div>
+                  )}
+
                   <div className="flex justify-between max-h-[400px]">
                     <div className="flex flex-col justify-center items-center my-2">
                       {message.flexFormatHtmlContentText && (
@@ -1083,7 +1411,11 @@ export default function ChatRoomMainBar({
                     }`}
                   >
                     <div className="flex justify-between items-center">
-                      <p className="text-base flex-1">{message.content}</p>
+                      {!message.youtubeMetadata &&
+                        !message.shopName &&
+                        !message.facebookMetadata && (
+                          <p className="text-base flex-1">{message.content}</p>
+                        )}
                       {message.readStatus &&
                         message.readStatus.length > 0 &&
                         message.senderId === authenticatedUserId && (
@@ -1112,12 +1444,41 @@ export default function ChatRoomMainBar({
             })
           ) : (
             <div className="flex flex-col items-center">
-              {receiverInfo && (
+              {/* <div>{JSON.stringify(selectedChatroomData)}</div> */}
+              {selectedChatroomData && selectedChatroomData.type == "GROUP" && (
                 <>
                   <Avatar className="h-[200px] w-[200px]  mb-4 border">
-                    <AvatarImage
-                      src={receiverImage || "/placeholder-user.jpg"}
-                    />
+                    <AvatarImage src="/assets/users.svg" />
+                    <AvatarFallback>?</AvatarFallback>
+                  </Avatar>
+                  <p>{selectedChatroomData.name}</p>
+                  <Button className="mt-2">
+                    You were added at{" "}
+                    {new Date(
+                      selectedChatroomData.createdAt
+                    ).toLocaleDateString()}
+                  </Button>
+                </>
+              )}
+              {selectedChatroomData &&
+                selectedChatroomData.type == "PERSONAL" && (
+                  <>
+                    {/* <div>{JSON.stringify(selectedChatroomData)}</div> */}
+                    <Avatar className="h-[200px] w-[200px]  mb-4 border">
+                      <AvatarImage
+                        src={selectedChatroomData.participants[0].image || ""}
+                      />
+                      <AvatarFallback>?</AvatarFallback>
+                    </Avatar>
+                    <p>{selectedChatroomData.participants[0].accountname}</p>
+                    <Button className="mt-2">View Profile</Button>
+                  </>
+                )}
+              {/* {receiverInfo && (
+              todo - remove?
+                <>
+                  <Avatar className="h-[200px] w-[200px]  mb-4 border">
+                    <AvatarImage src={receiverImage || ""} />
                     <AvatarFallback>
                       {receiverInfo.accountname
                         ? receiverInfo.accountname.charAt(0)
@@ -1127,8 +1488,7 @@ export default function ChatRoomMainBar({
                   <p>{receiverInfo.accountname}</p>
                   <Button className="mt-2">View Profile</Button>
                 </>
-              )}
-              {/* <p>No messages yet.</p> */}
+              )} */}
             </div>
           )}
         </div>
@@ -1230,19 +1590,12 @@ export default function ChatRoomMainBar({
                   <File className="mr-2 h-5 w-5" />
                   File
                 </DropdownMenuItem>
-                {/* <DropdownMenuItem
+                <DropdownMenuItem
                   className="flex items-center text-2xl p-3"
                   onClick={handleLocationPreview}
                 >
                   <MapPin className="mr-2 h-5 w-5" />
                   Current Location
-                </DropdownMenuItem> */}
-                <DropdownMenuItem
-                  className="flex items-center text-2xl p-3"
-                  onClick={handleDestinationSelect}
-                >
-                  <LocateFixed className="mr-2 h-5 w-5" />
-                  Location
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="flex items-center text-2xl p-3"
@@ -1309,7 +1662,7 @@ export default function ChatRoomMainBar({
                     <X className="w-4 h-4 text-gray-500" />
                   </Button>
                 </div>
-                {/* <div ref={mapRef} className="h-[200px] w-full rounded-md"></div> */}
+                <div ref={mapRef} className="h-[200px] w-full rounded-md"></div>
               </div>
             )}
             {selectedCard && (
@@ -1361,12 +1714,13 @@ export default function ChatRoomMainBar({
 
             {shopName && (
               <div className="flex justify-end mb-4">
-                <Card className="shadow-lg relative inline-block">
+                <Card className="shadow-lg relative inline-block max-w-md">
                   <button
                     onClick={() => {
-                      // Clear the shop details
                       setShopName(null);
                       setShopImage(null);
+                      setSiteName(null);
+                      setShopDescription(null);
                     }}
                     className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
                   >
@@ -1382,18 +1736,90 @@ export default function ChatRoomMainBar({
                       </div>
                     </CardHeader>
                     {shopImage && (
-                      <CardContent className="p-4">
+                      <CardContent className="p-0">
                         <img
                           src={shopImage}
                           alt={shopName || ""}
-                          className="rounded-md max-w-full h-auto"
-                          style={{ maxWidth: "400px" }} // Adjust maxWidth as needed
+                          className="rounded-t-md w-full h-auto"
                         />
                       </CardContent>
                     )}
+                    <CardContent className="p-4">
+                      {siteName && (
+                        <p className="text-gray-500 text-sm mb-2">{siteName}</p>
+                      )}
+                      {shopDescription && (
+                        <p className="text-gray-700">{shopDescription}</p>
+                      )}
+                    </CardContent>
                   </div>
                 </Card>
               </div>
+            )}
+
+            {youtubeMetadata && (
+              <Card className="mb-4 shadow-lg relative">
+                <button
+                  onClick={() => setYoutubeMetadata(null)}
+                  className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+                >
+                  &times;
+                </button>
+                <a
+                  href={youtubeMetadata.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full cursor-pointer"
+                >
+                  <CardHeader className="p-4">
+                    <div className="flex items-center">
+                      <img
+                        src={youtubeMetadata.thumbnail}
+                        alt="Thumbnail"
+                        className="h-10 w-10 mr-2"
+                      />
+                      <CardTitle className="text-lg font-semibold text-blue-600 hover:text-gray-600">
+                        {youtubeMetadata.title}
+                      </CardTitle>
+                    </div>
+                    <CardDescription>
+                      {youtubeMetadata.description}
+                    </CardDescription>
+                  </CardHeader>
+                </a>
+              </Card>
+            )}
+            {facebookMetadata && (
+              <Card className="mb-4 shadow-lg relative">
+                <button
+                  onClick={() => setFacebookMetadata(null)}
+                  className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+                >
+                  &times;
+                </button>
+                <a
+                  href={facebookMetadata.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full cursor-pointer"
+                >
+                  <CardHeader className="p-4">
+                    <div className="flex items-center">
+                      <img
+                        src={facebookMetadata.thumbnail}
+                        alt="Thumbnail"
+                        className="h-10 w-10 mr-2"
+                      />
+                      <CardTitle className="text-lg font-semibold text-blue-600 hover:text-gray-600">
+                        {facebookMetadata.title}
+                      </CardTitle>
+                    </div>
+                    <CardDescription>
+                      {facebookMetadata.description}
+                    </CardDescription>
+                  </CardHeader>
+                </a>
+              </Card>
             )}
 
             <div className="relative flex item-center">
@@ -1414,7 +1840,9 @@ export default function ChatRoomMainBar({
                       authenticatedUserId,
                       selectedChatroom,
                       messageContent,
-                      ws
+                      ws,
+                      youtubeMetadata,
+                      facebookMetadata
                     );
                   } else {
                     console.error("WebSocket connection is not available.");

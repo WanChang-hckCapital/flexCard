@@ -20,6 +20,11 @@ import {
 import ChatRoomSearchBar from "./ChatRoomSearchBar";
 import { Dialog, DialogContent, DialogOverlay } from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
+import {
+  createOrGetChatroom,
+  createGroupChatroom,
+} from "@/lib/actions/user.actions";
+import { toast } from "sonner";
 
 interface AllFollowerAndFollowing {
   success: boolean;
@@ -38,8 +43,10 @@ interface Participant {
 interface Chatroom {
   _id: string;
   name: string;
+  type: string;
   participants: Participant[];
   chatroomId: string;
+  createdAt: string;
 }
 
 interface ChatroomSideBarProps {
@@ -49,7 +56,8 @@ interface ChatroomSideBarProps {
   //   allFollowerAndFollowing: AllFollowerAndFollowing;
   onSelectChatroom: (chatroomId: string) => void;
   allUsers: any[];
-  allFollowerAndFollowing: { followers: any[]; following: any[] };
+  allFollowerAndFollowingForPersonal: { followers: any[]; following: any[] };
+  allFollowerAndFollowingForGroup: { followers: any[]; following: any[] };
 }
 
 export default function ChatRoomSideBar({
@@ -57,17 +65,18 @@ export default function ChatRoomSideBar({
   authenticatedUserId,
   onSelectChatroom,
   allUsers,
-  allFollowerAndFollowing,
+  allFollowerAndFollowingForPersonal,
+  allFollowerAndFollowingForGroup,
 }: ChatroomSideBarProps) {
   const [isPersonalModalOpen, setIsPersonalModalOpen] = useState(false);
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
 
-  const [selectedParticipants, setSelectedParticipants] = useState<string[]>(
-    []
-  );
+  const [selectedParticipants, setSelectedParticipants] = useState<string[]>([
+    authenticatedUserId,
+  ]);
   const [groupChatName, setGroupChatName] = useState("");
 
-  const createNewPersonalChat = () => {
+  const showNewPersonalChat = () => {
     console.log("new chat");
     setIsPersonalModalOpen(true);
   };
@@ -83,7 +92,7 @@ export default function ChatRoomSideBar({
 
   const closeGroupModal = () => {
     setIsGroupModalOpen(false);
-    setSelectedParticipants([]);
+    setSelectedParticipants([authenticatedUserId]); // reset to including the current user
     // setIsConfirmingGroup(false);
   };
 
@@ -95,10 +104,73 @@ export default function ChatRoomSideBar({
     );
   };
 
-  const handleCreateGroupChat = () => {
+  // create new group chatroom
+  const handleCreateGroupChat = async () => {
     console.log("Creating group chat with name:", groupChatName);
     console.log("Participants:", selectedParticipants);
     closeGroupModal();
+
+    try {
+      const newGroupChatroom = await createGroupChatroom(
+        authenticatedUserId,
+        selectedParticipants,
+        groupChatName
+      );
+
+      console.log(newGroupChatroom);
+
+      if (newGroupChatroom.success) {
+        // console.log(
+        //   "Group Chatroom created successfully:",
+        //   newGroupChatroom.chatroom
+        // );
+        toast.success(`Group Chatroom created ${groupChatName} successfully!`);
+      } else {
+        console.error(
+          "Failed to create or retrieve group chatroom:",
+          newGroupChatroom.message
+        );
+        toast.error("Error: " + newGroupChatroom.message);
+      }
+    } catch (error: any) {
+      console.error("Error in creating new group chatroom:", error);
+      toast.error(
+        "An error occurred while creating or retrieving the group chatroom."
+      );
+    }
+  };
+
+  // create personal chatroom
+  const createNewPersonalChatroom = async (participantId: string) => {
+    console.log(
+      "Attempting to create or get chatroom for participant:",
+      participantId
+    );
+
+    try {
+      const newChatroom = await createOrGetChatroom(
+        authenticatedUserId,
+        participantId
+      );
+
+      console.log(newChatroom);
+
+      if (newChatroom.success) {
+        console.log("Chatroom created successfully:", newChatroom.chatroom);
+        toast.success("Chatroom created successfully!");
+      } else {
+        console.error(
+          "Failed to create or retrieve chatroom:",
+          newChatroom.message
+        );
+        toast.error("Error: " + newChatroom.message);
+      }
+    } catch (error: any) {
+      console.error("Error in createNewPersonalChatroom:", error);
+      toast.error(
+        "An error occurred while creating or retrieving the chatroom."
+      );
+    }
   };
 
   return (
@@ -120,7 +192,7 @@ export default function ChatRoomSideBar({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={createNewPersonalChat}>
+            <DropdownMenuItem onClick={showNewPersonalChat}>
               <UserIcon className="mr-2 h-4 w-4" />
               New Chat
             </DropdownMenuItem>
@@ -146,51 +218,52 @@ export default function ChatRoomSideBar({
                 <X className="h-5 w-5 text-gray-500" />
               </button>
               <h3 className="text-lg font-semibold text-black">New Chat</h3>
-              {/* <p className="text-black">Select a follower to start a chat:</p> */}
               <div className="mt-4 max-h-64 overflow-y-auto">
-                {allFollowerAndFollowing.followers.map((follower) => (
-                  <div
-                    key={follower._id}
-                    className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer hover:bg-gray-200"
-                  >
-                    <Avatar className="h-8 w-8 border">
-                      <AvatarImage
-                        src={follower.image || "/placeholder-user.jpg"}
-                      />
-                      <AvatarFallback>{follower.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 overflow-hidden">
-                      <div className="font-medium truncate text-black">
-                        {follower.name}
+                {allFollowerAndFollowingForPersonal.followers.map(
+                  (follower) => (
+                    <div
+                      key={follower.id}
+                      className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer hover:bg-gray-200"
+                      onClick={() => createNewPersonalChatroom(follower.userId)}
+                    >
+                      <Avatar className="h-8 w-8 border">
+                        <AvatarImage src={follower.image} />
+                        <AvatarFallback>
+                          {follower.name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 overflow-hidden">
+                        <div className="font-medium truncate text-black">
+                          {follower.name}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-                {allFollowerAndFollowing.following.map((following) => (
-                  <div
-                    key={following._id}
-                    className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer hover:bg-gray-200"
-                    // onClick={() => startChatWithUser(follower._id)}
-                  >
-                    <Avatar className="h-8 w-8 border">
-                      <AvatarImage
-                        src={following.image || "/placeholder-user.jpg"}
-                      />
-                      <AvatarFallback>
-                        {following.name.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 overflow-hidden">
-                      <div className="font-medium truncate text-black">
-                        {following.name}
+                  )
+                )}
+                {allFollowerAndFollowingForPersonal.following.map(
+                  (following) => (
+                    <div
+                      key={following.id}
+                      className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer hover:bg-gray-200"
+                      onClick={() =>
+                        createNewPersonalChatroom(following.userId)
+                      }
+                    >
+                      <Avatar className="h-8 w-8 border">
+                        <AvatarImage src={following.image} />
+                        <AvatarFallback>
+                          {following.name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 overflow-hidden">
+                        <div className="font-medium truncate text-black">
+                          {following.name}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                )}
               </div>
-              {/* <Button onClick={closePersonalModal} className="mt-4 w-full">
-                Close
-              </Button> */}
             </div>
           </DialogContent>
         </Dialog>
@@ -219,22 +292,18 @@ export default function ChatRoomSideBar({
                   placeholder="Enter group chat name"
                   value={groupChatName}
                   onChange={(e) => setGroupChatName(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md"
+                  className="w-full p-2 border border-gray-300 rounded-md text-black"
                 />
-                {/* <Button onClick={handleCreateGroupChat} className="mt-4 w-full">
-                  Create Group Chat
-                </Button> */}
               </div>
               <div className="mt-4 max-h-64 overflow-y-auto">
-                {allFollowerAndFollowing.followers.map((follower) => (
+                {allFollowerAndFollowingForGroup.followers.map((follower) => (
                   <div
-                    key={follower._id}
+                    key={follower.id}
                     className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer hover:bg-gray-200"
                   >
                     <input
                       type="checkbox"
-                      checked={selectedParticipants.includes(follower._id)}
-                      onChange={() => handleCheckboxChange(follower._id)}
+                      onChange={() => handleCheckboxChange(follower.userId)}
                       className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
                     />
                     <Avatar className="h-8 w-8 border">
@@ -250,15 +319,14 @@ export default function ChatRoomSideBar({
                     </div>
                   </div>
                 ))}
-                {allFollowerAndFollowing.following.map((following) => (
+                {allFollowerAndFollowingForGroup.following.map((following) => (
                   <div
-                    key={following._id}
+                    key={following.id}
                     className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer hover:bg-gray-200"
                   >
                     <input
                       type="checkbox"
-                      checked={selectedParticipants.includes(following._id)}
-                      onChange={() => handleCheckboxChange(following._id)}
+                      onChange={() => handleCheckboxChange(following.userId)}
                       className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
                     />
                     <Avatar className="h-8 w-8 border">
@@ -397,22 +465,28 @@ export default function ChatRoomSideBar({
               onClick={() => onSelectChatroom(chatroom.chatroomId)}
               className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer hover:bg-gray-200 hover:text-black"
             >
-              <Avatar className="h-10 w-10 border">
-                <AvatarImage
-                  src={
-                    chatroom.participants[0].image || "/placeholder-user.jpg"
-                  }
-                />
-                <AvatarFallback>?</AvatarFallback>
-              </Avatar>
+              {chatroom.type == "PERSONAL" && (
+                <Avatar className="h-10 w-10 border">
+                  <AvatarImage src={chatroom.participants[0].image} />
+                  <AvatarFallback>?</AvatarFallback>
+                </Avatar>
+              )}
+              {chatroom.type == "GROUP" && (
+                <Avatar className="h-10 w-10 border">
+                  <AvatarImage src="/assets/users.svg" />
+                  <AvatarFallback>?</AvatarFallback>
+                </Avatar>
+              )}
+
               <div className="flex-1 overflow-hidden">
-                <div className="font-medium truncate">
-                  {chatroom.participants[0].accountname}
-                </div>
-                {/* <div className="font-medium truncate">{chatroom.name}</div> */}
-                {/* <div className="font-medium truncate">
-                  {chatroom.chatroomId}
-                </div> */}
+                {chatroom.type == "PERSONAL" && (
+                  <div className="font-medium truncate">
+                    {chatroom.participants[0].accountname}
+                  </div>
+                )}
+                {chatroom.type == "GROUP" && (
+                  <div className="font-medium truncate">{chatroom.name}</div>
+                )}
               </div>
             </div>
           ))}

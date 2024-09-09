@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import ChatRoomSideBar from "./ChatRoomSideBar";
 import ChatRoomMainBar from "./ChatRoomMainComponent";
+import Spinner from "./Spinner";
 
 interface Participant {
   _id: string;
@@ -31,32 +32,50 @@ interface Message {
   pictureLink: string | null;
   card: string | null;
   flexFormatHtmlContentText: string | null;
+  youtubeMetadata?: {
+    title: string;
+    description: string;
+    thumbnail: string;
+    url: string;
+  } | null;
+  shopImage: string | null;
+  siteName: string | null;
+  shopDescription: string | null;
 }
 
 interface Chatroom {
   _id: string;
   name: string;
+  type: string;
   participants: Participant[];
   chatroomId: string;
+  createdAt: string;
 }
 
 interface ChatRoomClientProps {
   chatrooms: Chatroom[];
   authenticatedUserId: string;
   allUsers: any[];
-  allFollowerAndFollowing: { followers: any[]; following: any[] };
+  allFollowerAndFollowingForPersonal: { followers: any[]; following: any[] };
+  allFollowerAndFollowingForGroup: { followers: any[]; following: any[] };
 }
 
 export default function ChatRoomComponent({
   chatrooms,
   authenticatedUserId,
   allUsers,
-  allFollowerAndFollowing,
+  allFollowerAndFollowingForPersonal,
+  allFollowerAndFollowingForGroup,
 }: ChatRoomClientProps) {
   const [selectedChatroom, setSelectedChatroom] = useState<string | null>("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [receiverInfo, setReceiverInfo] = useState<Participant | null>(null);
+  const [messageLoading, setMessageLoading] = useState<boolean>(false);
+  const [skip, setSkip] = useState<number>(0); // number use to skip
+  const chatWindowRef = useRef<HTMLDivElement>(null);
+  const [selectedChatroomData, setSelectedChatroomData] =
+    useState<Chatroom | null>(null);
 
   useEffect(() => {
     const newWs = new WebSocket("ws://localhost:8080");
@@ -72,9 +91,9 @@ export default function ChatRoomComponent({
 
       if (receivedMessage.type === "messages") {
         // trigger when the user initially load the message
-        // console.log("Received messages:", receivedMessage.messages);
+        console.log("Received messages:", receivedMessage.messages);
+        setMessageLoading(false);
         setMessages(receivedMessage.messages);
-
         setReceiverInfo(receivedMessage.receiverInfo);
       } else if (receivedMessage.type === "newMessage") {
         // trigger when send message send
@@ -107,6 +126,7 @@ export default function ChatRoomComponent({
         });
       } else if (receivedMessage.type === "error") {
         console.error("Error:", receivedMessage.message);
+        setMessageLoading(false);
       }
     };
 
@@ -116,6 +136,7 @@ export default function ChatRoomComponent({
 
     newWs.onerror = (error) => {
       console.error("WebSocket error:", error);
+      setMessageLoading(false);
     };
 
     setWs(newWs);
@@ -130,7 +151,8 @@ export default function ChatRoomComponent({
   function fetchMessagesWs(
     chatroomId: string,
     authenticatedUserId: string,
-    ws: WebSocket
+    ws: WebSocket,
+    skip: number
   ): Promise<any> {
     return new Promise((resolve, reject) => {
       if (ws.readyState == WebSocket.OPEN) {
@@ -138,6 +160,8 @@ export default function ChatRoomComponent({
           type: "fetchMessages",
           chatroomId,
           authenticatedUserId,
+          skip,
+          limit: 20,
         };
 
         ws.send(JSON.stringify(message));
@@ -170,24 +194,40 @@ export default function ChatRoomComponent({
   }
 
   const handleSelectChatroom = async (chatroomId: string) => {
-    setSelectedChatroom(chatroomId);
     console.log("Selected Chatroom ID:", chatroomId);
-
+    setSelectedChatroom(chatroomId);
     setMessages([]);
+    setSkip(0);
+    setMessageLoading(true);
     // console.log("clear");
 
     if (chatroomId && ws) {
       try {
+        const selectedChatroomData = chatrooms.find(
+          (chatroom) => chatroom.chatroomId === chatroomId
+        );
+
+        if (!selectedChatroomData) {
+          console.error("Chatroom not found");
+          setMessageLoading(false);
+          return;
+        }
+
+        // console.log("Chatroom info:", selectedChatroomData);
+        setSelectedChatroomData(selectedChatroomData);
+
         const fetchMessagesResponse = await fetchMessagesWs(
           chatroomId,
           authenticatedUserId,
-          ws
+          ws,
+          0
         );
 
         console.log("Messages fetched:", fetchMessagesResponse.messages);
 
         if (fetchMessagesResponse.success) {
           console.log("fetchMessagesResponse.messages");
+          setSkip(20);
 
           // console.log("fetch message:" + fetchMessagesResponse.)
           setMessages(fetchMessagesResponse.messages);
@@ -199,30 +239,42 @@ export default function ChatRoomComponent({
         }
       } catch (error) {
         console.error("Error fetching messages:", error);
+      } finally {
+        setMessageLoading(false);
       }
     }
   };
 
   return (
     <div className="flex h-full w-full">
-      <div className="hidden w-64 border-r bg-background md:block w-4/12">
+      <div className="hidden w-64 border-r bg-background md:block">
         <ChatRoomSideBar
           chatrooms={chatrooms}
           authenticatedUserId={authenticatedUserId}
           onSelectChatroom={handleSelectChatroom}
           allUsers={allUsers}
-          allFollowerAndFollowing={allFollowerAndFollowing}
+          allFollowerAndFollowingForPersonal={
+            allFollowerAndFollowingForPersonal
+          }
+          allFollowerAndFollowingForGroup={allFollowerAndFollowingForGroup}
         />
       </div>
-      <ChatRoomMainBar
-        chatrooms={chatrooms}
-        authenticatedUserId={authenticatedUserId}
-        selectedChatroom={selectedChatroom}
-        allUsers={allUsers}
-        messages={messages}
-        ws={ws}
-        receiverInfo={receiverInfo}
-      />
+      <div className="flex h-full w-full">
+        {messageLoading ? (
+          <Spinner />
+        ) : (
+          <ChatRoomMainBar
+            chatrooms={chatrooms}
+            authenticatedUserId={authenticatedUserId}
+            selectedChatroom={selectedChatroom}
+            selectedChatroomData={selectedChatroomData}
+            allUsers={allUsers}
+            messages={messages}
+            ws={ws}
+            receiverInfo={receiverInfo}
+          />
+        )}
+      </div>
     </div>
   );
 }
