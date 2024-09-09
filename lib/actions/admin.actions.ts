@@ -11,7 +11,7 @@ import { endOfDay, endOfWeek, startOfDay, startOfWeek, subDays, subWeeks } from 
 import axios from "axios";
 import { v4 as uuidv4 } from 'uuid';
 import OfferModel from "../models/offer";
-import { Member, Usertype } from "@/types";
+import { MemberType, Usertype } from "@/types";
 import OrganizationModel from "../models/organization";
 import ProfileModel from "../models/profile";
 

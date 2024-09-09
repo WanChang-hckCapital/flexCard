@@ -1,8 +1,8 @@
 import mongoose, { Schema } from "mongoose";
-import { Member, Role, Usertype } from "../../types";
+import { MemberType, Role, Usertype } from "../../types";
 
 
-const memberSchema = new Schema<Member>(
+const memberSchema = new Schema<MemberType>(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,

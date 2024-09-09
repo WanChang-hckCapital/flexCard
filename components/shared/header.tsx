@@ -17,6 +17,7 @@ import SignInButton from "../buttons/signin-button";
 import SignOutButton from "../buttons/signout-button";
 import Searchbar from "../Searchbar";
 import { UserImage } from "@/types";
+import { fetchCurrentActiveProfileId } from "@/lib/actions/user.actions";
 
 interface HeaderProps {
   session: Session | null;
@@ -24,9 +25,16 @@ interface HeaderProps {
 }
 
 async function Header({ session, userInfoImage }: HeaderProps) {
-  const user = session?.user;
+  let authActiveProfileId = "";
+  let userId = "";
+  let user = null;
 
-  const userId = session?.user.id;
+  if(session) {
+    user = session?.user;
+    userId = user.id.toString();
+
+    authActiveProfileId = await fetchCurrentActiveProfileId(userId);
+  }
 
   let userImage = null;
   if (userInfoImage != null) {
@@ -176,7 +184,7 @@ async function Header({ session, userInfoImage }: HeaderProps) {
                     <DropdownMenuItem className="justify-center">
                       <Link
                         className="flex font-bold"
-                        href={`${session ? `/profile/${user?.id}` : "api/auth/signin"
+                        href={`${session ? `/profile/${authActiveProfileId}` : "api/auth/signin"
                           }`}
                       >
                         My Card

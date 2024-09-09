@@ -2,7 +2,7 @@
 
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState, useEffect } from "react";
+import { ChangeEvent, useState } from "react";
 import { useRouter } from 'next/navigation';
 import { businessLocations, businessTypes, industries, banks } from "@/lib/constants";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -15,16 +15,21 @@ import Stepper from "@/components/ui/stepper";
 import { Card } from "@/components/ui/card";
 import { signUpOrganization } from "@/lib/actions/user.actions";
 import { toast } from "sonner";
+import imageCompression from "browser-image-compression";
+import { ProfileValidation } from "@/lib/validations/new-profile";
+import { Textarea } from "../ui/textarea";
+import { CircleUser, Pencil } from "lucide-react";
+import Image from 'next/image';
 
 interface FormData {
     businessLocation: string;
     businessType: string;
     legalBusinessName: string;
-    businessRegistrationNumber: string;
+    companyRegistrationNumber: string;
     businessName: string;
     address1: string;
     address2: string;
-    businessPhone: string;
+    businessPhoneNumber: string;
     industry: string;
     businessWebsite: string;
     productDescription: string;
@@ -32,61 +37,52 @@ interface FormData {
     bank: string;
     accountNumber: string;
     confirmAccountNumber: string;
+    profile_image: string;
+    accountname: string;
+    email: string;
+    phone: string;
+    shortdescription: string;
 }
 
 interface Props {
     authActiveProfileId: string;
-    organization?: any;
-    isEditMode?: boolean;
 }
 
-const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode = false }: Props) => {
+const AddEntrepreneurForm = ({ authActiveProfileId }: Props) => {
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState<Partial<FormData>>({});
+    const [file, setFiles] = useState<File | null>(null);
+    const [fileUrl, setFileUrl] = useState<string | null>(null);
     const [errors, setErrors] = useState<{ message: string, step: number }[]>([]);
     const router = useRouter();
 
     const form = useForm<FormData>({
-        resolver: zodResolver(step === 1 ? BusinessValidation : BankValidation),
+        resolver: zodResolver(step === 1 ? ProfileValidation : step === 2 ? BusinessValidation : BankValidation),
         defaultValues: {
             businessLocation: '',
             businessType: '',
             legalBusinessName: '',
-            businessRegistrationNumber: '',
+            companyRegistrationNumber: '',
             businessName: '',
             address1: '',
             address2: '',
-            businessPhone: '',
+            businessPhoneNumber: '',
             industry: '',
             businessWebsite: '',
             productDescription: '',
             accountHolderName: '',
             bank: '',
             accountNumber: '',
-            confirmAccountNumber: ''
+            confirmAccountNumber: '',
+            profile_image: '',
+            accountname: '',
+            email: '',
+            phone: '',
+            shortdescription: '',
         },
     });
 
-    const { control, handleSubmit, register, formState: { errors: formErrors }, trigger, getValues, setValue } = form;
-
-    useEffect(() => {
-        if (organization && isEditMode) {
-            setValue("businessLocation", organization.businessLocation || "");
-            setValue("businessType", organization.businessType || "");
-            setValue("legalBusinessName", organization.legalBusinessName || "");
-            setValue("businessRegistrationNumber", organization.businessRegistrationNumber || "");
-            setValue("businessName", organization.businessName || "");
-            setValue("address1", organization.businessAddress || "");
-            setValue("address2", organization.address2 || "");
-            setValue("businessPhone", organization.businessPhone || "");
-            setValue("industry", organization.industry || "");
-            setValue("businessWebsite", organization.businessWebsite || "");
-            setValue("productDescription", organization.businessProductDescription || "");
-            setValue("accountHolderName", organization.bankAccountHolder || "");
-            setValue("bank", organization.bankName || "");
-            setValue("accountNumber", organization.bankAccountNumber || "");
-        }
-    }, [organization, isEditMode, setValue]);
+    const { control, handleSubmit, register, formState: { errors: formErrors }, trigger, getValues } = form;
 
     const onNextStep = async () => {
         const valid = await trigger();
@@ -101,10 +97,10 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
             "businessLocation",
             "businessType",
             "legalBusinessName",
-            "businessRegistrationNumber",
+            "companyRegistrationNumber",
             "businessName",
             "address1",
-            "businessPhone",
+            "businessPhoneNumber",
             "industry",
             "productDescription",
         ]);
@@ -130,40 +126,68 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
             setErrors(newErrors);
         } else {
             setFormData(prevData => ({ ...prevData, ...getValues() }));
-            setStep(3);
+            setStep(4);
+        }
+    };
+
+    const handleImage = async (e: ChangeEvent<HTMLInputElement>, fieldChange: (value: string) => void) => {
+        const fileReader = new FileReader();
+        if (e.target.files && e.target.files.length > 0) {
+            const file = e.target.files[0];
+            setFiles(file);
+            if (!file.type.includes("image")) return;
+            try {
+                const compressedFile = await imageCompression(file, { maxSizeMB: 0.5, maxWidthOrHeight: 1920 });
+                fileReader.onload = async (event) => {
+                    const imageDataUrl = event.target?.result?.toString() || "";
+                    fieldChange(imageDataUrl);
+                    setFileUrl(imageDataUrl);
+                };
+                fileReader.readAsDataURL(compressedFile);
+            } catch (error) {
+                toast.error("Error compressing image");
+            }
         }
     };
 
     const onSubmit: SubmitHandler<FormData> = async (data) => {
         const finalData = { ...formData, ...data };
-        const finalFormData = {
-            businessType: finalData.businessType,
-            businessLocation: finalData.businessLocation,
-            legalBusinessName: finalData.legalBusinessName,
-            businessRegistrationNumber: finalData.businessRegistrationNumber,
-            businessName: finalData.businessName,
-            businessAddress: `${finalData.address1} ${finalData.address2}`,
-            businessPhone: finalData.businessPhone,
-            industry: finalData.industry,
-            businessWebsite: finalData.businessWebsite,
-            businessProductDescription: finalData.productDescription,
-            bankAccountHolder: finalData.accountHolderName,
-            bankName: finalData.bank,
-            bankAccountNumber: finalData.accountNumber,
-            authActiveProfileId: authActiveProfileId,
-            createNewProfile: !isEditMode,
-        }
+        if (file && fileUrl) {
+            const finalFormData = {
+                businessType: finalData.businessType,
+                businessLocation: finalData.businessLocation,
+                legalBusinessName: finalData.legalBusinessName,
+                businessRegistrationNumber: finalData.companyRegistrationNumber,
+                businessName: finalData.businessName,
+                businessAddress: `${finalData.address1} ${finalData.address2}`,
+                businessPhone: finalData.businessPhoneNumber,
+                industry: finalData.industry,
+                businessWebsite: finalData.businessWebsite,
+                businessProductDescription: finalData.productDescription,
+                bankAccountHolder: finalData.accountHolderName,
+                bankName: finalData.bank,
+                bankAccountNumber: finalData.accountNumber,
+                authActiveProfileId: authActiveProfileId,
+                createNewProfile: true,
+                accountname: finalData.accountname,
+                email: finalData.email,
+                phone: finalData.phone,
+                shortdescription: finalData.shortdescription,
+                profile_image: {
+                    binaryCode: fileUrl || "",
+                    name: file.name
+                }
+            };
 
-        console.log("Final Form Data: ", finalFormData);
+            const result = await signUpOrganization(finalFormData);
 
-        const result = await signUpOrganization(finalFormData);
-
-        if (result.success === false) {
-            setErrors([{ message: result.message || "", step: 3 }]);
-        } else {
-            toast.success(isEditMode ? "Profile updated successfully!" : "Sign up successful, enjoy flexCard.");
-            router.push('/');
-        }
+            if (result.success === false) {
+                setErrors([{ message: result.message || "", step: 3 }]);
+            } else {
+                toast.success("Sign up Successful, Enjoy flexCard.");
+                router.push('/');
+            }
+        };
     };
 
     const handleStepClick = async (clickedStep: number) => {
@@ -178,7 +202,7 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
         <div className="container mx-auto p-6 bg-black text-white min-h-screen flex">
             <div className="w-[25%] p-6">
                 <Stepper
-                    steps={['Verify Your Business', 'Add Your Bank', 'Review and finish']}
+                    steps={['Profile Info', 'Verify Your Business', 'Add Your Bank', 'Review and Finish']}
                     currentStep={step - 1}
                     onStepClick={handleStepClick}
                 />
@@ -188,7 +212,123 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
                     <form onSubmit={handleSubmit(onSubmit)}>
                         {step === 1 && (
                             <div>
-                                <h1 className="text-[28px] font-bold mb-4">{isEditMode ? "Edit your business information" : "Tell us about your business"}</h1>
+                                <h1 className="text-[28px] font-bold mb-4">Profile Information</h1>
+                                <FormField
+                                    control={control}
+                                    name="profile_image"
+                                    render={({ field }) => (
+                                        <FormItem className="flex items-center gap-4 justify-center relative">
+                                            <div className="relative group">
+                                                <FormLabel className="account-form_image-label">
+                                                    {field.value.length !== 0 ? (
+                                                        <Image
+                                                            src={field.value}
+                                                            alt="profile_icon"
+                                                            width={96}
+                                                            height={96}
+                                                            priority
+                                                            className="rounded-full object-contain"
+                                                        />
+                                                    ) : (
+                                                        <CircleUser
+                                                            width={96}
+                                                            height={96}
+                                                            className="rounded-full object-contain text-gray-500"
+                                                        />
+                                                    )}
+                                                </FormLabel>
+                                                <div className="absolute inset-0 flex items-center justify-center cursor-pointer rounded-full bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                    <Pencil size={24} className="text-white" />
+                                                    <FormControl className="absolute inset-0 opacity-0 cursor-pointer">
+                                                        <Input
+                                                            type="file"
+                                                            accept="image/*"
+                                                            placeholder="Add profile photo"
+                                                            className="account-form_image-input w-full h-full"
+                                                            onChange={(e) => handleImage(e, field.onChange)}
+                                                        />
+                                                    </FormControl>
+                                                </div>
+                                            </div>
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={control}
+                                    name="accountname"
+                                    render={({ field }) => (
+                                        <FormItem className="mb-4 mt-8">
+                                            <FormLabel>Account Nickname</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    className="account-form_input"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage>{formErrors.accountname?.message}</FormMessage>
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={control}
+                                    name="email"
+                                    render={({ field }) => (
+                                        <FormItem className="mb-4">
+                                            <FormLabel>Email</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="email"
+                                                    className="account-form_input"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage>{formErrors.email?.message}</FormMessage>
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={control}
+                                    name="phone"
+                                    render={({ field }) => (
+                                        <FormItem className="mb-4">
+                                            <FormLabel>Phone Number</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    className="account-form_input"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage>{formErrors.phone?.message}</FormMessage>
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={control}
+                                    name="shortdescription"
+                                    render={({ field }) => (
+                                        <FormItem className="mb-4">
+                                            <FormLabel>Short Description</FormLabel>
+                                            <FormControl>
+                                                <Textarea
+                                                    className="account-form_input"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage>{formErrors.shortdescription?.message}</FormMessage>
+                                        </FormItem>
+                                    )}
+                                />
+                                <Button variant="purple" type="button" onClick={onNextStep} className="mt-4 w-full">
+                                    Continue
+                                </Button>
+                            </div>
+                        )}
+                        {step === 2 && (
+                            <div>
+                                <h1 className="text-[28px] font-bold mb-4">Tell us about your business</h1>
+                                <h2 className="text-xl text-slate-400 font-bold mb-4">
+                                    flexCard gathers this information to better support your business and fulfill the obligations of regulators, financial partners, and our Services Agreement.
+                                </h2>
                                 <FormField
                                     control={control}
                                     name="businessLocation"
@@ -243,7 +383,6 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
                                                 <Input
                                                     className='account-form_input'
                                                     {...field}
-                                                    disabled={isEditMode}
                                                 />
                                             </FormControl>
                                             <FormMessage>{formErrors.legalBusinessName?.message}</FormMessage>
@@ -252,7 +391,7 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
                                 />
                                 <FormField
                                     control={control}
-                                    name="businessRegistrationNumber"
+                                    name="companyRegistrationNumber"
                                     render={({ field }) => (
                                         <FormItem className="mb-4">
                                             <FormLabel>Company Registration Number</FormLabel>
@@ -260,10 +399,9 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
                                                 <Input
                                                     className='account-form_input'
                                                     {...field}
-                                                    disabled={isEditMode}
                                                 />
                                             </FormControl>
-                                            <FormMessage>{formErrors.businessRegistrationNumber?.message}</FormMessage>
+                                            <FormMessage>{formErrors.companyRegistrationNumber?.message}</FormMessage>
                                         </FormItem>
                                     )}
                                 />
@@ -307,7 +445,7 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
                                 />
                                 <FormField
                                     control={control}
-                                    name="businessPhone"
+                                    name="businessPhoneNumber"
                                     render={({ field }) => (
                                         <FormItem className="mb-4">
                                             <FormLabel>Business Phone Number</FormLabel>
@@ -317,7 +455,7 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
                                                     {...field}
                                                 />
                                             </FormControl>
-                                            <FormMessage>{formErrors.businessPhone?.message}</FormMessage>
+                                            <FormMessage>{formErrors.businessPhoneNumber?.message}</FormMessage>
                                         </FormItem>
                                     )}
                                 />
@@ -380,7 +518,7 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
                                 </Button>
                             </div>
                         )}
-                        {step === 2 && (
+                        {step === 3 && (
                             <div>
                                 <h1 className="text-[28px] font-bold mb-4">Add your bank to verify company details</h1>
                                 <h2 className="text-xl text-slate-400 font-bold mb-4">We will verify your company details base on your bank details.</h2>
@@ -459,11 +597,11 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
                                 </Button>
                             </div>
                         )}
-                        {step === 3 && (
+                        {step === 4 && (
                             <div>
                                 <h1 className="text-[28px] font-bold mb-4">Review and finish up</h1>
                                 <h2 className="text-xl text-slate-400 font-bold mb-4">
-                                    You&apos;re almost ready to get started with flexCard. Take a moment to review and confirm your information.
+                                    You&apos;re almost ready to get started with felxCard. Take a moment to review and confirm your information.
                                 </h2>
                                 {errors.length > 0 && (
                                     <div className="bg-red-500 text-white p-3 mb-4 rounded">
@@ -494,10 +632,10 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
                                         <p>{formData.businessLocation}</p>
                                         <p>{formData.businessType}</p>
                                         <p>{formData.legalBusinessName}</p>
-                                        <p>{formData.businessRegistrationNumber}</p>
+                                        <p>{formData.companyRegistrationNumber}</p>
                                         <p>{formData.businessName}</p>
                                         <p>{formData.address1} {formData.address2}</p>
-                                        <p>{formData.businessPhone}</p>
+                                        <p>{formData.businessPhoneNumber}</p>
                                         <p>{formData.industry}</p>
                                         <p>{formData.businessWebsite}</p>
                                         <p>{formData.productDescription}</p>
@@ -534,4 +672,4 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
     );
 };
 
-export default SignupOrganizationForm;
+export default AddEntrepreneurForm;

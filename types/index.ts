@@ -12,7 +12,7 @@ export type Price = {
   hourly: number;
 };
 
-export type Member = {
+export type MemberType = {
     user: {},
     generatedId: string,
     email: string,
@@ -27,8 +27,10 @@ export type Member = {
 }
 
 export type Profile = {
+  _id: string;
+  email: string,
   accountname: string,
-  image: string,
+  image: { binaryCode: string }[];
   shortdescription: string,
   usertype: string,
   accountType: string,
@@ -51,7 +53,7 @@ export type Profile = {
 
 export type Organization = {
     document: [],
-    employees: Member[],
+    employees: MemberType[],
     businessType: string,
     businessLocation: string,
     legalBusinessName: string,
