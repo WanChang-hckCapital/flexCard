@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { fetchTotalMemberByDateRange } from '@/lib/actions/admin.actions';
+import { fetchTotalMemberProfileByDateRange } from '@/lib/actions/admin.actions';
 
 type MembersTotalByTypeChartProps = {
     startDate: Date | null;
@@ -15,7 +15,7 @@ export function MembersTotalByTypeChart({ startDate, endDate }: MembersTotalByTy
 
     useEffect(() => {
         const fetchData = async () => {
-            const response = await fetchTotalMemberByDateRange(startDate, endDate);
+            const response = await fetchTotalMemberProfileByDateRange(startDate, endDate);
             setChartData(response.data || []);
         }
 
@@ -32,7 +32,7 @@ export function MembersTotalByTypeChart({ startDate, endDate }: MembersTotalByTy
                 <Tooltip
                     contentStyle={{ background: "#151c2c", border: "none", borderRadius: "15px" }}
                     formatter={(value, name, props) => {
-                        let label = name === 'totalPersonal' ? 'Personal' : 'Organization';
+                        let label = name === 'totalPersonalProfile' ? 'Personal' : 'Organization';
                         return [
                             `${value} ${label}`, 
                             `Date: ${props.payload.date}`
@@ -46,8 +46,8 @@ export function MembersTotalByTypeChart({ startDate, endDate }: MembersTotalByTy
                         name="Total Members"
                         stroke="#8884d8"
                     /> */}
-                <Line type="monotone" dataKey="totalPersonal" stroke="#8884d8" />
-                <Line type="monotone" dataKey="totalOrganization" stroke="#82ca9d" />
+                <Line type="monotone" dataKey="totalPersonalProfile" stroke="#8884d8" />
+                <Line type="monotone" dataKey="totalOrganizationProfile" stroke="#82ca9d" />
             </LineChart>
         </ResponsiveContainer>
     );

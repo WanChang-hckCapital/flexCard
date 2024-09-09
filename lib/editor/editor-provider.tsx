@@ -728,20 +728,20 @@ export type EditorContextData = {
 export const EditorContext = createContext<{
   state: EditorState
   dispatch: Dispatch<EditorAction>
-  authaccountId: string
+  authActiveProfileId: string
   cardId: string
   cardDetails: Card | null
 }>({
   state: initialState,
   dispatch: () => undefined,
-  authaccountId: '',
+  authActiveProfileId: '',
   cardId: '',
   cardDetails: null,
 })
 
 type EditorProps = {
   children: React.ReactNode
-  authaccountId: string
+  authActiveProfileId: string
   cardId: string
   cardDetails: any
 }
@@ -754,7 +754,7 @@ const EditorProvider = (props: EditorProps) => {
       value={{
         state,
         dispatch,
-        authaccountId: props.authaccountId,
+        authActiveProfileId: props.authActiveProfileId,
         cardId: props.cardId,
         cardDetails: props.cardDetails,
       }}

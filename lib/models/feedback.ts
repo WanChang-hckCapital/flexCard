@@ -5,14 +5,12 @@ import { Feedback } from "../../types";
 const feedbackSchema = new Schema<Feedback>({
     selectedReasons: {
         type: [String],
-        required: true,
     },
     otherReason: {
         type: String,
     },
     hasUsedSimilar: {
         type: Boolean,
-        required: true,
     },
     similarAppName: {
         type: String,
@@ -30,8 +28,7 @@ const feedbackSchema = new Schema<Feedback>({
     },
     feedbackBy: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Member",
-        required: true,
+        ref: "Profile",
     },
 }, {
     timestamps: true

@@ -157,20 +157,20 @@ const ButtonStyles = (element: any) => ({
     element.style === "primary"
       ? element.color || "#17c950"
       : element.style === "secondary"
-      ? element.color || "#dcdfe5"
-      : "transparent",
+        ? element.color || "#dcdfe5"
+        : "transparent",
   color:
     element.style === "primary"
       ? "white"
       : element.style === "secondary"
-      ? "black"
-      : element.color || "#42659a",
+        ? "black"
+        : element.color || "#42659a",
   height:
     element.height === "sm"
       ? "40px"
       : element.height === "md"
-      ? "52px"
-      : "52px",
+        ? "52px"
+        : "52px",
   padding: "10px 20px",
   borderRadius: "5px",
   width: "100%",
@@ -183,10 +183,9 @@ const ButtonStyles = (element: any) => ({
 });
 
 const IconStyle = (element: any) => ({
-  backgroundImage: `url(${
-    element.url ||
+  backgroundImage: `url(${element.url ||
     "https://scdn.line-apps.com/n/channel_devcenter/img/fx/review_gold_star_28.png"
-  })`,
+    })`,
   backgroundSize: "contain",
   fontSize: `${parseInt(element.size || "16")}px`,
   display: "inline-block",
@@ -210,46 +209,46 @@ const ImageStyle = (element: any, size: any) => ({
     element.size === "xs"
       ? "60px"
       : element.size === "sm"
-      ? "80px"
-      : element.size === "md"
-      ? "100px"
-      : element.size === "lg"
-      ? "120px"
-      : element.size === "xl"
-      ? "140px"
-      : element.size === "xxl"
-      ? "160px"
-      : element.size === "3xl"
-      ? "180px"
-      : element.size === "4xl"
-      ? "200px"
-      : element.size === "5xl"
-      ? "220px"
-      : element.size === "full"
-      ? getSize(size)
-      : element.size || "100px",
+        ? "80px"
+        : element.size === "md"
+          ? "100px"
+          : element.size === "lg"
+            ? "120px"
+            : element.size === "xl"
+              ? "140px"
+              : element.size === "xxl"
+                ? "160px"
+                : element.size === "3xl"
+                  ? "180px"
+                  : element.size === "4xl"
+                    ? "200px"
+                    : element.size === "5xl"
+                      ? "220px"
+                      : element.size === "full"
+                        ? getSize(size)
+                        : element.size || "100px",
   height:
     element.size === "xs"
       ? "60px"
       : element.size === "sm"
-      ? "80px"
-      : element.size === "md"
-      ? "100px"
-      : element.size === "lg"
-      ? "120px"
-      : element.size === "xl"
-      ? "140px"
-      : element.size === "xxl"
-      ? "160px"
-      : element.size === "3xl"
-      ? "180px"
-      : element.size === "4xl"
-      ? "200px"
-      : element.size === "5xl"
-      ? "220px"
-      : element.size === "full"
-      ? getSize(size)
-      : element.size || "100px",
+        ? "80px"
+        : element.size === "md"
+          ? "100px"
+          : element.size === "lg"
+            ? "120px"
+            : element.size === "xl"
+              ? "140px"
+              : element.size === "xxl"
+                ? "160px"
+                : element.size === "3xl"
+                  ? "180px"
+                  : element.size === "4xl"
+                    ? "200px"
+                    : element.size === "5xl"
+                      ? "220px"
+                      : element.size === "full"
+                        ? getSize(size)
+                        : element.size || "100px",
   backgroundImage: `url(${element.url || ""})`,
   backgroundSize: element.aspectMode === "cover" ? "cover" : "contain",
   backgroundRepeat: "no-repeat",
@@ -273,18 +272,18 @@ const TextStyles = (element: any) => ({
     element.size === "xxs"
       ? "11px"
       : element.size === "xs"
-      ? "13px"
-      : element.size === "sm"
-      ? "14px"
-      : element.size === "md"
-      ? "16px"
-      : element.size === "lg"
-      ? "19px"
-      : element.size === "xl"
-      ? "22px"
-      : element.size === "xxl"
-      ? "29px"
-      : element.size,
+        ? "13px"
+        : element.size === "sm"
+          ? "14px"
+          : element.size === "md"
+            ? "16px"
+            : element.size === "lg"
+              ? "19px"
+              : element.size === "xl"
+                ? "22px"
+                : element.size === "xxl"
+                  ? "29px"
+                  : element.size,
   fontStyle: element.style,
   textDecoration: element.decoration,
   marginTop: convertSizeToPixels(element.margin),
@@ -339,25 +338,18 @@ const renderContents = (contents: any, size?: any) => {
             return `<div style="flex: 1 1 0%;${convertToKebabCase(
               ImageContainerStyles(content)
             )}">
-                    <a href="${
-                      content.action.uri
-                    }" style="color: inherit; text-decoration: none;">
+                    <a href="${content.action.uri
+              }" style="color: inherit; text-decoration: none;">
                       <div style="${convertToKebabCase(
-                        ImageStyle(content, size)
-                      )}"></div>
+                ImageStyle(content, size)
+              )}"></div>
                     </a>
                   </div>`;
           } else {
-            return `<div style="${convertToKebabCase(
-              ImageContainerStyles(content)
-            )}"><div style="${convertToKebabCase(
-              ImageStyle(content, size)
-            )}"></div></div>`;
+            return `<div style="${convertToKebabCase(ImageContainerStyles(content))}"><div style="${convertToKebabCase(ImageStyle(content, size))}"></div></div>`;
           }
         case "text":
-          return `<p style="${convertToKebabCase(TextStyles(content))}">${
-            content.text
-          }</p>`;
+          return `<p style="${convertToKebabCase(TextStyles(content))}">${content.text}</p>`;
         // case 'button':
         //   return `
         //     <div style="${convertToKebabCase(ButtonStyles(content))}">
@@ -365,14 +357,11 @@ const renderContents = (contents: any, size?: any) => {
         //     </div>`;
         case "button":
           const buttonId = `button-${generateCustomID()}`;
-          if (
-            content.action.uri.startsWith(`${process.env.NEXT_PUBLIC_BASE_URL}`)
-          ) {
+          if (content.action.uri.startsWith(`${process.env.NEXT_PUBLIC_BASE_URL}`)) {
             return `
             <div style="${convertToKebabCase(ButtonStyles(content))}">
-              <div id="${buttonId}" style="color: inherit; text-decoration: none; cursor: pointer;">${
-              content.action.label
-            }</div>
+              <div id="${buttonId}" style="color: inherit; text-decoration: none; cursor: pointer;">${content.action.label
+              }</div>
             </div>
             <script>
               document.getElementById('${buttonId}').addEventListener('click', function(event) {
@@ -400,11 +389,9 @@ const renderContents = (contents: any, size?: any) => {
           } else {
             return `
             <div style="${convertToKebabCase(ButtonStyles(content))}">
-              <a href="${
-                content.action.uri
-              }" style="color: inherit; text-decoration: none;">${
-              content.action.label
-            }</a>
+              <a href="${content.action.uri
+              }" style="color: inherit; text-decoration: none;">${content.action.label
+              }</a>
             </div>`;
           }
         case "icon":
@@ -462,9 +449,9 @@ export function createHtmlFromJson(json: any) {
   const headerHtml =
     json.header && json.header.contents && json.header.contents.length > 0
       ? // `<div class="component-container relative mt-2 p-4 border-x border-t rounded-t-lg bg-white overflow-hidden">${renderContents(json.header.contents)}</div>` : '';
-        `<div class="component-container relative p-4 border-x border-t rounded-t-lg bg-white overflow-hidden">${renderContents(
-          json.header.contents
-        )}</div>`
+      `<div class="component-container relative p-4 border-x border-t rounded-t-lg bg-white overflow-hidden">${renderContents(
+        json.header.contents
+      )}</div>`
       : "";
 
   const heroClasses = [
@@ -512,9 +499,9 @@ export function createHtmlFromJson(json: any) {
   const heroHtml =
     json.hero && json.hero.contents && json.hero.contents.length > 0
       ? `<div class="${heroClasses.join(" ")}">${renderContents(
-          json.hero.contents,
-          json.size
-        )}</div>`
+        json.hero.contents,
+        json.size
+      )}</div>`
       : "";
 
   const bodyClasses = [
@@ -539,9 +526,9 @@ export function createHtmlFromJson(json: any) {
   const bodyHtml =
     json.body && json.body.contents && json.body.contents.length > 0
       ? `<div class="${bodyClasses.join(" ")}">${renderContents(
-          json.body.contents,
-          json.size
-        )}</div>`
+        json.body.contents,
+        json.size
+      )}</div>`
       : "";
 
   // const footerClasses = [
@@ -906,6 +893,32 @@ export const loadOpenCV = () => {
 
 export function generateCustomID() {
   return uuidv4();
+}
+
+export function timeSince(date: Date) {
+  const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
+  let interval = seconds / 31536000;
+
+  if (interval > 1) {
+    return Math.floor(interval) + " year" + (Math.floor(interval) > 1 ? "s" : "") + " ago";
+  }
+  interval = seconds / 2592000;
+  if (interval > 1) {
+    return Math.floor(interval) + " month" + (Math.floor(interval) > 1 ? "s" : "") + " ago";
+  }
+  interval = seconds / 86400;
+  if (interval > 1) {
+    return Math.floor(interval) + " day" + (Math.floor(interval) > 1 ? "s" : "") + " ago";
+  }
+  interval = seconds / 3600;
+  if (interval > 1) {
+    return Math.floor(interval) + " hour" + (Math.floor(interval) > 1 ? "s" : "") + " ago";
+  }
+  interval = seconds / 60;
+  if (interval > 1) {
+    return Math.floor(interval) + " minute" + (Math.floor(interval) > 1 ? "s" : "") + " ago";
+  }
+  return Math.floor(seconds) + " second" + (Math.floor(seconds) > 1 ? "s" : "") + " ago";
 }
 
 //line pay

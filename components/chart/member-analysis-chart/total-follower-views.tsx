@@ -6,21 +6,21 @@ import { fetchFollowersByDateRange } from '@/lib/actions/user.actions';
 
 
 type TotalFollowersByDateProps = {
-    userId: string | null;
+    profileId: string | null;
     startDate: Date | null;
     endDate: Date | null;
 }
 
-export function TotalFollowersByDate({ userId, startDate, endDate }: TotalFollowersByDateProps) {
+export function TotalFollowersByDate({ profileId, startDate, endDate }: TotalFollowersByDateProps) {
 
     const [chartData, setChartData] = useState<any[]>([]);
 
     useEffect(() => {
 
-        if(!userId) return;
+        if(!profileId) return;
         
         const fetchData = async () => {
-            const response = await fetchFollowersByDateRange(userId, startDate, endDate);
+            const response = await fetchFollowersByDateRange(profileId, startDate, endDate);
             
             if(response.success){
                 setChartData(response.data || []);
@@ -30,7 +30,7 @@ export function TotalFollowersByDate({ userId, startDate, endDate }: TotalFollow
         }
 
         fetchData();
-    }, [userId]);
+    }, [profileId]);
 
     if(chartData.length === 0) {
         return (

@@ -37,7 +37,7 @@ import {
 
 interface Props {
   accountId: string;
-  authUserId?: string;
+  authActiveProfileId?: string;
   accountName: string;
   imgUrl?: string;
   shortdescription?: string;
@@ -51,7 +51,7 @@ interface Props {
 
 function ProfileHeader({
   accountId,
-  authUserId,
+  authActiveProfileId,
   accountName,
   imgUrl,
   shortdescription,
@@ -81,22 +81,18 @@ function ProfileHeader({
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [showAlertDialog, setShowAlertDialog] = useState(false);
 
-  const isDifferentUser = accountId !== authUserId;
-  const isOrganization = usertype.toUpperCase() == "ORGANIZATION";
+  const isDifferentUser = accountId !== authActiveProfileId;
+  const isOrganization = usertype.toUpperCase() == 'ORGANIZATION';
 
-  const handleButtonClick = async (method: "FOLLOW" | "UNFOLLOW") => {
-    if (!authUserId) {
-      toast.error("You need to login first before action.");
+  const handleButtonClick = async (method: 'FOLLOW' | 'UNFOLLOW') => {
+    if (!authActiveProfileId) {
+      toast.error('You need to login first before action.');
       return;
     }
 
     try {
-      const response = await updateMemberFollow({
-        authUserId,
-        accountId,
-        method,
-      });
-      if (response.success === true) {
+      const response = await updateMemberFollow({ authActiveProfileId, accountId, method });
+      if (response.success === true){
         const { updatedFollowing, updateFollower } = response.data;
         if (
           method === "FOLLOW" &&

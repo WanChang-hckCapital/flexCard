@@ -12,6 +12,10 @@ export const ProductValidation = z.object({
     .string()
     .min(0, { message: "Minimum 0 characters." })
     .max(1000, { message: "Maximum 1000 caracters." }),
+  category: z
+    .string()
+    .min(0, { message: "Minimum 0 characters." })
+    .max(30, { message: "Maximum 30 caracters." }),
   availablePromo: z
     .string()
     .min(0, { message: "Minimum 0 characters." })

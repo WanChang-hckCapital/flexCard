@@ -9,7 +9,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { checkDuplicateCard, upsertCardContent } from '@/lib/actions/workspace.actions'
-import { EditorElementsBtns } from '@/lib/constants'
 import { DeviceTypes, EditorElement, useEditor } from '@/lib/editor/editor-provider'
 import { createHtmlFromJson, generateCustomID } from '@/lib/utils'
 import { Card } from '@/types'
@@ -30,10 +29,10 @@ import { toast } from 'sonner'
 
 type Props = {
   cardDetails: Card
-  authaccountId: string
+  authActiveProfileId: string
 }
 
-function CardEditorNavigation({ cardDetails, authaccountId }: Props) {
+function CardEditorNavigation({ cardDetails, authActiveProfileId }: Props) {
   const router = useRouter()
   const { state, dispatch } = useEditor()
 
@@ -133,40 +132,25 @@ function CardEditorNavigation({ cardDetails, authaccountId }: Props) {
     }
 
     try {
-      const isDuplicateCard = await checkDuplicateCard(authaccountId, cardDetails.cardID);
-      if (isDuplicateCard.success === false) {
-        toast.error(isDuplicateCard.message);
+      const isExistingCard = await checkDuplicateCard(authActiveProfileId, cardDetails.cardID);
+      if (isExistingCard.success === false) {
+        toast.error(isExistingCard.message);
         return;
       } else {
         await upsertCardContent(
-          authaccountId,
+          authActiveProfileId,
           {
-            cardID: cardDetails.cardID,
-            title: cardDetails.title,
-            status: cardDetails.status,
+            ...cardDetails,
             description: state.editor.description || '',
-            likes: cardDetails.likes,
-            followers: cardDetails.followers,
-            components: cardDetails.components,
-            lineFormatComponent: cardDetails.lineFormatComponent,
-            flexFormatHtml: cardDetails.flexFormatHtml,
-            creator: cardDetails.creator,
-            categories: [],
-            updatedAt: new Date(),
-            createdAt: new Date(),
-            totalViews: 0,
-            viewDetails: [],
-            updateHistory: []
           },
           strFlexFormatHtml,
           strLineFlexMessage,
           htmlFormat,
-          cardDetails.cardID
         )
         toast.success('Card saved successfully.');
       }
 
-      router.push(`/profile/${authaccountId}`);
+      router.push(`/profile/${authActiveProfileId}`);
     } catch (error) {
       toast.error('Oppse! Something went wrong, Please try again later.');
     }

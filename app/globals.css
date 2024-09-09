@@ -5,7 +5,7 @@
 @layer components {
   /* main */
   .main-container {
-    @apply flex min-h-screen flex-1 flex-col items-center bg-dark-1 px-2 max-sm:pt-0 max-md:pt-3 md:pt-3 lg:pt-16 pb-10;
+    @apply flex min-h-screen flex-1 flex-col items-center bg-dark-1 px-2 max-sm:pt-0 max-md:pt-3 md:pt-3 lg:pt-16;
   }
 
   /* Head Text */

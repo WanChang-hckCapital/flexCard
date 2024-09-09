@@ -4,34 +4,42 @@ import Stripe from 'stripe';
 import { connectToDB } from '../mongodb';
 import MemberModel from '../models/member';
 import SubscriptionModel from '../models/subscription';
-import TrialModel from '../models/trial';
 import ProductModel from '../models/product';
 import { revalidatePath } from 'next/cache';
 import { getIPCountryInfo } from './user.actions';
 import { v4 as uuidv4 } from 'uuid';
 import { generateTransactionAndUpdateSubscription } from './admin.actions';
+import OfferModel from '../models/offer';
+import ProfileModel from '../models/profile';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
-export async function createStripeCustomerIfNotExists(memberId: string) {
+// done convert to profile model but still need to check
+export async function createStripeCustomerIfNotExists(profileId: string) {
   await connectToDB();
 
-  const member = await MemberModel.findOne({ user: memberId }).select('stripeCustomerId email');
+  const member = await MemberModel.findOne({ profiles: profileId }).select("email");
 
   if (!member) {
-    throw new Error('Member not found');
+    throw new Error("Member not found");
   }
 
-  if (!member.stripeCustomerId) {
+  const profile = await ProfileModel.findOne({ _id: profileId }).select("stripeCustomerId");
+
+  if (!profile) {
+    throw new Error("Profile not found");
+  }
+
+  if (!profile.stripeCustomerId) {
     const customer = await stripe.customers.create({
       email: member.email,
     });
 
-    member.stripeCustomerId = customer.id;
-    await member.save();
+    profile.stripeCustomerId = customer.id;
+    await profile.save();
   }
 
-  return { stripeCustomerId: member.stripeCustomerId, email: member.email };
+  return { stripeCustomerId: profile.stripeCustomerId, email: member.email };
 }
 
 export async function getPriceIdByProductId(stripeProductId: string, interval: 'month' | 'year') {
@@ -48,23 +56,28 @@ export async function getPriceIdByProductId(stripeProductId: string, interval: '
   return prices.data[0].id;
 }
 
-export async function fetchUserSubscription(userId: string) {
+// done convert to profile model but still need to check
+export async function fetchUserSubscription(authActiveProfileId: string) {
   try {
     await connectToDB();
 
-    const member = await MemberModel.findOne({ user: userId }).populate('subscription trial');
+    const profile = await ProfileModel.findOne({ _id: authActiveProfileId }).populate('subscription offers');
 
-    if (!member || !member.subscription) {
+    if (!profile || !profile.subscription) {
       throw new Error('No subscription found for the user.');
     }
 
-    const trialId = member.trial.slice(-1)[0];
-    const trial = await TrialModel.findById(trialId);
+    const trialOffers = await profile.offers.filter((offer: any) => offer.type === 'trial');
+    const trialId = trialOffers[0]._id;
+    const trial = await OfferModel.findById(trialId);
 
-    const planId = trial.trialPlan;
+    const unsubscribeOffers = profile.offers.filter((offer: any) => offer.type === 'unsubscribe');
+    const isUnsubscribeOffer = unsubscribeOffers.length > 0;
+
+    const planId = trial.plan;
     const trialPlanDetails = await ProductModel.findById(planId).select('name price limitedCard');
 
-    const subscriptionId = member.subscription.slice(-1)[0];
+    const subscriptionId = profile.subscription.slice(-1)[0];
     const subscription = await SubscriptionModel.findById(subscriptionId).populate('plan transaction');
 
     console.log('subscription in stripe: ', subscription);
@@ -96,9 +109,10 @@ export async function fetchUserSubscription(userId: string) {
           price: trialPlanDetails.price,
           limitedCard: trialPlanDetails.limitedCard,
         },
-        trialStarted: trial.trialStartDate,
-        trialEnded: trial.trialEndDate,
+        trialStarted: trial.startDate,
+        trialEnded: trial.endDate,
       } : null,
+      unsubscribeOffer: isUnsubscribeOffer,
       status: subscription.status,
     };
 
@@ -145,7 +159,8 @@ export async function cancelUserSubscription(subscriptionId: string) {
   }
 }
 
-export async function pauseUserSubscription(subscriptionId: string) {
+// done convert to profile model but still need to check
+export async function pauseUserSubscription(subscriptionId: string, authActiveProfileId: string) {
   try {
     await connectToDB();
 
@@ -187,6 +202,28 @@ export async function pauseUserSubscription(subscriptionId: string) {
       stripeSubscriptionId: subscription.stripeSubscriptionId,
       status: 'on offering',
     });
+
+    const existingOffer = await ProfileModel.findOne({ _id: authActiveProfileId }).select('offers');
+
+    if (!existingOffer) {
+      return { success: false, message: "No profile found in Offer." };
+    }
+
+    const offering = new OfferModel({
+      plan: subscription.plan,
+      startDate: currentEndDate,
+      endDate: resumeDate,
+      type: 'unsubscribe',
+    });
+
+    await offering.save();
+
+    if (!Array.isArray(existingOffer.offers)) {
+      existingOffer.offers = [];
+    }
+
+    existingOffer.offers.push(offering._id);
+    await existingOffer.save();
 
     if (freeTransaction.success){
       subscription.estimatedEndDate = resumeDate;

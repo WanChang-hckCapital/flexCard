@@ -24,7 +24,7 @@ import { RANGE_OPTIONS, getRangeOption } from "@/lib/rangeOptions";
 import { TotalViewProfileByDate } from "@/components/chart/member-analysis-chart/total-profile-views";
 import { TotalFollowersByDate } from "@/components/chart/member-analysis-chart/total-follower-views";
 import { redirect } from "next/navigation";
-import { fetchDashboardData } from "@/lib/actions/user.actions";
+import { fetchCurrentActiveProfileId, fetchDashboardData } from "@/lib/actions/user.actions";
 
 interface DashboardProps {
   searchParams: {
@@ -49,7 +49,8 @@ async function Dashboard({ searchParams }: DashboardProps) {
     redirect("/sign-in");
   }
 
-  const authenticatedUserId = user.id;
+  const authUserId = user.id.toString();
+  const authActiveProfileId = await fetchCurrentActiveProfileId(authUserId);
 
   const viewDetailsCardRangeOption =
     getRangeOption(
@@ -73,7 +74,7 @@ async function Dashboard({ searchParams }: DashboardProps) {
     ) || RANGE_OPTIONS.last_7_days;
 
   const dashboardData = await fetchDashboardData({
-    userId: authenticatedUserId,
+    profileId: authActiveProfileId,
   });
 
   return (
@@ -177,7 +178,7 @@ async function Dashboard({ searchParams }: DashboardProps) {
               <ChartCard
                 title="Total Views"
                 queryKey="viewDetailsCardRange"
-                userId={authenticatedUserId}
+                profileId={authActiveProfileId}
                 type="card"
                 selectedRangeLabel={viewDetailsCardRangeOption.label}>
                 <TotalViewCardsByCardIdChart
@@ -189,10 +190,10 @@ async function Dashboard({ searchParams }: DashboardProps) {
               <ChartCard
                 title="Profile Views"
                 queryKey="profileViewDetailsRange"
-                userId={authenticatedUserId}
+                profileId={authActiveProfileId}
                 selectedRangeLabel={profileViewDetailsRangeOption.label}>
                 <TotalViewProfileByDate
-                  userId={authenticatedUserId}
+                  profileId={authActiveProfileId}
                   startDate={profileViewDetailsRangeOption.startDate}
                   endDate={profileViewDetailsRangeOption.endDate}
                 />
@@ -200,10 +201,10 @@ async function Dashboard({ searchParams }: DashboardProps) {
               <ChartCard
                 title="Total Followers"
                 queryKey="followersByDateRange"
-                userId={authenticatedUserId}
+                profileId={authActiveProfileId}
                 selectedRangeLabel={followersByDateRangeOption.label}>
                 <TotalFollowersByDate
-                  userId={authenticatedUserId}
+                  profileId={authActiveProfileId}
                   startDate={followersByDateRangeOption.startDate}
                   endDate={followersByDateRangeOption.endDate}
                 />

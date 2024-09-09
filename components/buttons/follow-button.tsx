@@ -7,20 +7,20 @@ import { Button } from '../ui/button';
 import { toast } from 'sonner';
 
 interface Props {
-  authUserId?: string;
+  authActiveProfileId?: string;
   accountId: string;
   method: "FOLLOW" | "UNFOLLOW";
 }
 
-function FollowButton({ authUserId, accountId, method }: Props) {
+function FollowButton({ authActiveProfileId, accountId, method }: Props) {
   const handleButtonClick = async () => {
-    if(!authUserId){
+    if(!authActiveProfileId){
       toast.error('You need to login first before action.');
       return;
     }
 
     try {
-      await updateMemberFollow({ authUserId, accountId, method });
+      await updateMemberFollow({ authActiveProfileId, accountId, method });
     } catch (error) {
       toast.error('Failed to do action, please try again.');
     }

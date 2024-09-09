@@ -11,6 +11,7 @@ import { fetchPromoById } from "@/lib/actions/admin.actions";
 import Link from "next/link";
 import AddNewPromotion from "@/components/forms/new-promotion";
 import { redirect } from "next/navigation";
+import { fetchCurrentActiveProfileId } from "@/lib/actions/user.actions";
 
 async function Page({ params }: { params: { promoId: string } }) {
   const session = await getServerSession(authOptions);
@@ -19,6 +20,9 @@ async function Page({ params }: { params: { promoId: string } }) {
   if (!user) {
     redirect("/sign-in");
   }
+
+  const authUserId = user.id.toString();
+  const authActiveProfileId = await fetchCurrentActiveProfileId(authUserId);
 
   const promoDetails = await fetchPromoById(params.promoId);
   const preparedPromoDetails = {
@@ -64,7 +68,7 @@ async function Page({ params }: { params: { promoId: string } }) {
       <div className="bg-black border border-neutral-600 px-[25%] py-[4%] rounded-xl w-full self-center">
         <AddNewPromotion
           btnTitle="Update"
-          authenticatedUserId={user.id}
+          authActiveProfileId={authActiveProfileId}
           promoDetails={preparedPromoDetails}></AddNewPromotion>
       </div>
     </main>

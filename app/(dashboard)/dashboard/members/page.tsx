@@ -18,84 +18,99 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-} from "@/components/ui/pagination";
 import { Progress } from "@/components/ui/progress";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MemberDataTable from "./data-table";
 import { columns } from "./columns";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/utils/authOptions";
 import {
-  fetchAllMember,
-  fetchMemberStats,
+  fetchAllMemberProfile,
+  fetchMemberProfileStats,
   fetchSubscriptionById,
 } from "@/lib/actions/admin.actions";
-import { fetchMemberImage } from "@/lib/actions/user.actions";
+import { fetchCurrentActiveProfileId, fetchMemberImage } from "@/lib/actions/user.actions";
 import FilterDropdown from "@/components/buttons/filter-dropdown-button";
 import { redirect } from "next/navigation";
 
-async function fetchAllSubscriptions(members: any[]) {
-  const updatedMembers = await Promise.all(
-    members.map(async (member) => {
+function removeSymbols(obj: any): any {
+  if (typeof obj !== 'object' || obj === null) return obj;
+
+  if (Array.isArray(obj)) {
+    return obj.map(removeSymbols); // Recursively clean arrays
+  }
+
+  // Create a new object excluding Symbol keys and values
+  const cleanedObj: { [key: string]: any } = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (typeof key !== 'symbol' && typeof value !== 'symbol') {
+      try {
+        cleanedObj[key] = removeSymbols(value); // Recursively clean nested objects
+      } catch (error) {
+        console.error('Error processing key:', key, 'with value:', value);
+      }
+    }
+  }
+
+  return cleanedObj;
+}
+
+async function fetchAllSubscriptions(profiles: any[]) {
+  const updatedProfiles = await Promise.all(
+    profiles.map(async (profile) => {
       let userImages = [];
 
-      if (Array.isArray(member.image) && member.image.length > 0) {
+      // Process profile images
+      if (Array.isArray(profile.image) && profile.image.length > 0) {
         userImages = await Promise.all(
-          member.image.map(async (imageId: any) => {
+          profile.image.map(async (imageId: any) => {
             const fetchedImage = await fetchMemberImage(imageId);
-            const fetchedImageUrl = fetchedImage.binaryCode.toString();
-            return fetchedImageUrl &&
-              typeof fetchedImageUrl.toObject === "function"
-              ? fetchedImageUrl.toObject()
-              : fetchedImageUrl;
+            const fetchedImageUrl = fetchedImage.binaryCode?.toString();
+
+            // Ensure no symbols in fetchedImageUrl
+            if (fetchedImageUrl) {
+              try {
+                return typeof fetchedImageUrl === 'object' && typeof fetchedImageUrl.toObject === 'function'
+                  ? removeSymbols(fetchedImageUrl.toObject())
+                  : fetchedImageUrl;
+              } catch (error) {
+                console.error('Error processing image:', fetchedImageUrl);
+                return null;
+              }
+            }
+            return null;
           })
         );
 
-        let userImage = userImages.length > 0 ? userImages[0] : null;
-
-        member.image = userImage;
+        profile.image = userImages.length > 0 ? userImages[0] : null;
       }
 
-      if (member.subscription.length > 0) {
-        const lastSubscriptionId =
-          member.subscription[member.subscription.length - 1];
-        const subscriptionDetails = await fetchSubscriptionById(
-          lastSubscriptionId
-        );
-        member.subscription = subscriptionDetails.toJSON
-          ? subscriptionDetails.toJSON()
-          : subscriptionDetails;
-        return { ...member };
+      // Process profile subscriptions
+      if (profile.subscription.length > 0) {
+        const lastSubscriptionId = profile.subscription[profile.subscription.length - 1];
+        const subscriptionDetails = await fetchSubscriptionById(lastSubscriptionId);
+
+        // Ensure no symbols in subscriptionDetails
+        profile.subscription = subscriptionDetails && typeof subscriptionDetails.toJSON === 'function'
+          ? removeSymbols(subscriptionDetails.toJSON())
+          : removeSymbols(subscriptionDetails);
       }
 
-      return member;
+      return removeSymbols(profile); // Ensure no symbols in the profile itself
     })
   );
 
-  return updatedMembers.map((member) => {
-    return typeof member.toObject === "function" ? member.toObject() : member;
+  // Ensure no symbols in updatedProfiles
+  return updatedProfiles.map((profile) => {
+    try {
+      return typeof profile.toObject === 'function' ? removeSymbols(profile.toObject()) : removeSymbols(profile);
+    } catch (error) {
+      console.error('Error converting profile to object:', profile);
+      return profile;
+    }
   });
 }
+
 
 async function Dashboard() {
   const session = await getServerSession(authOptions);
@@ -105,40 +120,74 @@ async function Dashboard() {
     redirect("/sign-in");
   }
 
-  const authenticatedUserId = user.id;
+  const authUserId = user.id.toString();
+  const authActiveProfileId = await fetchCurrentActiveProfileId(authUserId);
 
-  let members = await fetchAllMember(authenticatedUserId);
-  if (!members) return null;
+  let profiles = await fetchAllMemberProfile(authActiveProfileId);
+  if (!profiles) return null;
 
-  const memberStats = await fetchMemberStats();
+  const memberProfileStats = await fetchMemberProfileStats();
 
-  members = members.map((member) => (member.toJSON ? member.toJSON() : member));
+  console.log("memberProfileStats: ", memberProfileStats);
 
-  const membersWithSubscriptions = await fetchAllSubscriptions(members);
-  const membersWithFreeVersion = membersWithSubscriptions.filter(
-    (member) =>
-      (member.usertype === "PERSONAL" || member.usertype === "ORGANIZATION") &&
-      member.subscription.length == 0
-  );
-  const membersWithProfessional = membersWithSubscriptions.filter(
-    (member) =>
-      (member.usertype === "PREMIUM" ||
-        member.usertype === "EXPERT" ||
-        member.usertype === "ELITE") &&
-      member.subscription.length !== 0
-  );
-  const membersOrganization = membersWithSubscriptions.filter(
-    (member) =>
-      member.usertype === "ORGANIZATION" ||
-      member.usertype === "BUSINESS" ||
-      member.usertype === "ENTERPRISE"
-  );
-  const membersAdmin = membersWithSubscriptions.filter(
-    (member) => member.usertype === "FLEXADMIN"
-  );
-  const membersSuperUser = membersWithSubscriptions.filter(
-    (member) => member.usertype === "SUPERUSER"
-  );
+  profiles = profiles.map((profile) => {
+    let plainProfile = profile.toJSON ? profile.toJSON() : profile;
+  
+    plainProfile = Object.fromEntries(
+      Object.entries(plainProfile).filter(([key, value]) => typeof value !== 'symbol')
+    );
+  
+    return plainProfile;
+  });
+
+  console.log("profiles: ", profiles);
+
+  const membersWithSubscriptions = await fetchAllSubscriptions(profiles);
+
+  const cusmember: any = {
+    _id: "shab",
+    accountname: null,
+    image: [],
+    shortdescription: null,
+    usertype: "PERSONAL",
+    accountType: "PUBLIC",
+    role: "PERSONAL",
+    onboarded: false,
+    cards: [],
+    following: [],
+    closeFriends: [],
+    blockedAccounts: [],
+    mutedAccounts: [],
+    organization: null,
+    offers: [],
+    stripeCustomerId: null,
+    subscription: [],
+    totalViews: 0,
+    followers: [],
+    viewDetails: [],
+    updateHistory: [],
+  }
+
+  console.log("membersWithSubscriptions: ", membersWithSubscriptions);
+
+  for (let member of membersWithSubscriptions) {
+    for (let key in member) {
+      if (typeof key === 'symbol' || typeof member[key] === 'symbol') {
+        console.log('Found a symbol:', key, member[key]);
+      }
+    }
+  }  
+
+  const membersWithFreeVersion = membersWithSubscriptions.filter(profile =>
+    (profile.usertype === "PERSONAL" || profile.usertype === "ORGANIZATION") &&
+    (profile.subscription.length == 0));
+  const membersWithProfessional = membersWithSubscriptions.filter(profile =>
+    (profile.usertype === "PREMIUM" || profile.usertype === "EXPERT" || profile.usertype === "ELITE") &&
+    (profile.subscription.length !== 0));
+  const membersOrganization = membersWithSubscriptions.filter(profile =>
+    (profile.usertype === "ORGANIZATION" || profile.usertype === "BUSINESS" || profile.usertype === "ENTERPRISE"));
+  const membersAdmin = membersWithSubscriptions.filter(profile => profile.usertype === "FLEXADMIN");
+  const membersSuperUser = membersWithSubscriptions.filter(profile => profile.usertype === "SUPERUSER");
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-neutral-900 gap-4 p-4 lg:gap-6 lg:p-6">
@@ -163,143 +212,88 @@ async function Dashboard() {
             <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3">
               <Card>
                 <CardHeader className="pb-2">
-                  <CardDescription className="text-slate-300">
-                    General Members
-                  </CardDescription>
-                  <CardTitle className="text-[32px]">
-                    {memberStats.general.count}
-                  </CardTitle>
+                  <CardDescription className="text-slate-300">General Members</CardDescription>
+                  <CardTitle className="text-[32px]">{memberProfileStats.general.count}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-[12px] text-slate-300">
-                    {memberStats.general.isNew
-                      ? "New members this week"
-                      : `+${memberStats.general.increaseRate.toFixed(
-                          2
-                        )}% from last week`}
+                    {memberProfileStats.general.isNew
+                      ? 'New members this week'
+                      : `+${memberProfileStats.general.increaseRate.toFixed(2)}% from last week`}
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Progress
-                    value={memberStats.general.increaseRate}
-                    aria-label={`${memberStats.general.increaseRate.toFixed(
-                      2
-                    )}% increase`}
-                  />
+                  <Progress value={memberProfileStats.general.increaseRate} aria-label={`${memberProfileStats.general.increaseRate.toFixed(2)}% increase`} />
                 </CardFooter>
               </Card>
               <Card>
                 <CardHeader className="pb-2">
-                  <CardDescription className="text-slate-300">
-                    Professional Users
-                  </CardDescription>
-                  <CardTitle className="text-[32px]">
-                    {memberStats.professional.count}
-                  </CardTitle>
+                  <CardDescription className="text-slate-300">Professional Users</CardDescription>
+                  <CardTitle className="text-[32px]">{memberProfileStats.professional.count}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-[12px] text-slate-300">
-                    {memberStats.professional.isNew
-                      ? "New members this week"
-                      : `+${memberStats.professional.increaseRate.toFixed(
-                          2
-                        )}% from last week`}
+                    {memberProfileStats.professional.isNew
+                      ? 'New members this week'
+                      : `+${memberProfileStats.professional.increaseRate.toFixed(2)}% from last week`}
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Progress
-                    value={memberStats.professional.increaseRate}
-                    aria-label={`${memberStats.professional.increaseRate.toFixed(
-                      2
-                    )}% increase`}
-                  />
+                  <Progress value={memberProfileStats.professional.increaseRate} aria-label={`${memberProfileStats.professional.increaseRate.toFixed(2)}% increase`} />
                 </CardFooter>
               </Card>
               <Card>
                 <CardHeader className="pb-2">
-                  <CardDescription className="text-slate-300">
-                    Organizations
-                  </CardDescription>
-                  <CardTitle className="text-[32px]">
-                    {memberStats.organization.count}
-                  </CardTitle>
+                  <CardDescription className="text-slate-300">Organizations</CardDescription>
+                  <CardTitle className="text-[32px]">{memberProfileStats.organization.count}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-[12px] text-slate-300">
-                    {memberStats.organization.isNew
-                      ? "New members this week"
-                      : `+${memberStats.organization.increaseRate.toFixed(
-                          2
-                        )}% from last week`}
+                    {memberProfileStats.organization.isNew
+                      ? 'New members this week'
+                      : `+${memberProfileStats.organization.increaseRate.toFixed(2)}% from last week`}
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Progress
-                    value={memberStats.organization.increaseRate}
-                    aria-label={`${memberStats.organization.increaseRate.toFixed(
-                      2
-                    )}% increase`}
-                  />
+                  <Progress value={memberProfileStats.organization.increaseRate} aria-label={`${memberProfileStats.organization.increaseRate.toFixed(2)}% increase`} />
                 </CardFooter>
               </Card>
               <Card>
                 <CardHeader className="pb-2">
-                  <CardDescription className="text-slate-300">
-                    Admins
-                  </CardDescription>
-                  <CardTitle className="text-[32px]">
-                    {memberStats.admin.count}
-                  </CardTitle>
+                  <CardDescription className="text-slate-300">Admins</CardDescription>
+                  <CardTitle className="text-[32px]">{memberProfileStats.admin.count}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-[12px] text-slate-300">
-                    {memberStats.admin.isNew
-                      ? "New members this week"
-                      : `+${memberStats.admin.increaseRate.toFixed(
-                          2
-                        )}% from last week`}
+                    {memberProfileStats.admin.isNew
+                      ? 'New members this week'
+                      : `+${memberProfileStats.admin.increaseRate.toFixed(2)}% from last week`}
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Progress
-                    value={memberStats.admin.increaseRate}
-                    aria-label={`${memberStats.admin.increaseRate.toFixed(
-                      2
-                    )}% increase`}
-                  />
+                  <Progress value={memberProfileStats.admin.increaseRate} aria-label={`${memberProfileStats.admin.increaseRate.toFixed(2)}% increase`} />
                 </CardFooter>
               </Card>
               <Card>
                 <CardHeader className="pb-2">
-                  <CardDescription className="text-slate-300">
-                    Super Users
-                  </CardDescription>
-                  <CardTitle className="text-[32px]">
-                    {memberStats.superuser.count}
-                  </CardTitle>
+                  <CardDescription className="text-slate-300">Super Users</CardDescription>
+                  <CardTitle className="text-[32px]">{memberProfileStats.superuser.count}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-[12px] text-slate-300">
-                    {memberStats.superuser.isNew
-                      ? "New members this week"
-                      : `+${memberStats.superuser.increaseRate.toFixed(
-                          2
-                        )}% from last week`}
+                    {memberProfileStats.superuser.isNew
+                      ? 'New members this week'
+                      : `+${memberProfileStats.superuser.increaseRate.toFixed(2)}% from last week`}
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Progress
-                    value={memberStats.superuser.increaseRate}
-                    aria-label={`${memberStats.superuser.increaseRate.toFixed(
-                      2
-                    )}% increase`}
-                  />
+                  <Progress value={memberProfileStats.superuser.increaseRate} aria-label={`${memberProfileStats.superuser.increaseRate.toFixed(2)}% increase`} />
                 </CardFooter>
               </Card>
             </div>
             <Tabs defaultValue="all">
               <div className="px-4 pb-2 text-[18px] font-bold">
-                All Members ({members.length})
+                All Members ({profiles.length})
               </div>
               <div className="flex items-center">
                 <TabsList className="text-[14px]">
@@ -315,7 +309,8 @@ async function Dashboard() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="h-7 gap-1 text-[14px]">
+                    className="h-7 gap-1 text-[14px]"
+                  >
                     <File className="h-3.5 w-3.5" />
                     <span className="sr-only sm:not-sr-only">Export</span>
                   </Button>
@@ -325,20 +320,22 @@ async function Dashboard() {
                 <Card>
                   <CardContent>
                     <MemberDataTable
-                      filterValue="email"
+                      filterValue="accountname"
                       columns={columns}
-                      data={membersWithSubscriptions}
+                      data={cusmember}
+                      authActiveProfileId={authActiveProfileId}
                     />
                   </CardContent>
                 </Card>
               </TabsContent>
-              <TabsContent value="general">
+              {/* <TabsContent value="general">
                 <Card>
                   <CardContent>
                     <MemberDataTable
-                      filterValue="email"
+                      filterValue="accountname"
                       columns={columns}
                       data={membersWithFreeVersion}
+                      authActiveProfileId={authActiveProfileId}
                     />
                   </CardContent>
                 </Card>
@@ -347,9 +344,10 @@ async function Dashboard() {
                 <Card>
                   <CardContent>
                     <MemberDataTable
-                      filterValue="email"
+                      filterValue="accountname"
                       columns={columns}
                       data={membersWithProfessional}
+                      authActiveProfileId={authActiveProfileId}
                     />
                   </CardContent>
                 </Card>
@@ -358,9 +356,10 @@ async function Dashboard() {
                 <Card>
                   <CardContent>
                     <MemberDataTable
-                      filterValue="email"
+                      filterValue="accountname"
                       columns={columns}
                       data={membersOrganization}
+                      authActiveProfileId={authActiveProfileId}
                     />
                   </CardContent>
                 </Card>
@@ -369,9 +368,10 @@ async function Dashboard() {
                 <Card>
                   <CardContent>
                     <MemberDataTable
-                      filterValue="email"
+                      filterValue="accountname"
                       columns={columns}
                       data={membersAdmin}
+                      authActiveProfileId={authActiveProfileId}
                     />
                   </CardContent>
                 </Card>
@@ -380,177 +380,20 @@ async function Dashboard() {
                 <Card>
                   <CardContent>
                     <MemberDataTable
-                      filterValue="email"
+                      filterValue="accountname"
                       columns={columns}
                       data={membersSuperUser}
+                      authActiveProfileId={authActiveProfileId}
                     />
                   </CardContent>
                 </Card>
-              </TabsContent>
+              </TabsContent> */}
             </Tabs>
           </div>
-          {/* <div>
-                        <Card
-                            className="overflow-hidden" x-chunk="dashboard-05-chunk-4"
-                        >
-                            <CardHeader className="flex flex-row items-start bg-muted/50">
-                                <div className="grid gap-0.5">
-                                    <CardTitle className="group flex items-center gap-2 text-lg">
-                                        Order Oe31b70H
-                                        <Button
-                                            size="icon"
-                                            variant="outline"
-                                            className="h-6 w-6 opacity-0 transition-opacity group-hover:opacity-100"
-                                        >
-                                            <Copy className="h-3 w-3" />
-                                            <span className="sr-only">Copy Order ID</span>
-                                        </Button>
-                                    </CardTitle>
-                                    <CardDescription>Date: November 23, 2023</CardDescription>
-                                </div>
-                                <div className="ml-auto flex items-center gap-1">
-                                    <Button size="sm" variant="outline" className="h-8 gap-1">
-                                        <Truck className="h-3.5 w-3.5" />
-                                        <span className="lg:sr-only xl:not-sr-only xl:whitespace-nowrap">
-                                            Track Order
-                                        </span>
-                                    </Button>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button size="icon" variant="outline" className="h-8 w-8">
-                                                <MoreVertical className="h-3.5 w-3.5" />
-                                                <span className="sr-only">More</span>
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuItem>Edit</DropdownMenuItem>
-                                            <DropdownMenuItem>Export</DropdownMenuItem>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem>Trash</DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="p-6 text-sm">
-                                <div className="grid gap-3">
-                                    <div className="font-semibold">Order Details</div>
-                                    <ul className="grid gap-3">
-                                        <li className="flex items-center justify-between">
-                                            <span className="text-muted-foreground">
-                                                Glimmer Lamps x <span>2</span>
-                                            </span>
-                                            <span>$250.00</span>
-                                        </li>
-                                        <li className="flex items-center justify-between">
-                                            <span className="text-muted-foreground">
-                                                Aqua Filters x <span>1</span>
-                                            </span>
-                                            <span>$49.00</span>
-                                        </li>
-                                    </ul>
-                                    <Separator className="my-2" />
-                                    <ul className="grid gap-3">
-                                        <li className="flex items-center justify-between">
-                                            <span className="text-muted-foreground">Subtotal</span>
-                                            <span>$299.00</span>
-                                        </li>
-                                        <li className="flex items-center justify-between">
-                                            <span className="text-muted-foreground">Shipping</span>
-                                            <span>$5.00</span>
-                                        </li>
-                                        <li className="flex items-center justify-between">
-                                            <span className="text-muted-foreground">Tax</span>
-                                            <span>$25.00</span>
-                                        </li>
-                                        <li className="flex items-center justify-between font-semibold">
-                                            <span className="text-muted-foreground">Total</span>
-                                            <span>$329.00</span>
-                                        </li>
-                                    </ul>
-                                </div>
-                                <Separator className="my-4" />
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="grid gap-3">
-                                        <div className="font-semibold">Shipping Information</div>
-                                        <address className="grid gap-0.5 not-italic text-muted-foreground">
-                                            <span>Liam Johnson</span>
-                                            <span>1234 Main St.</span>
-                                            <span>Anytown, CA 12345</span>
-                                        </address>
-                                    </div>
-                                    <div className="grid auto-rows-max gap-3">
-                                        <div className="font-semibold">Billing Information</div>
-                                        <div className="text-muted-foreground">
-                                            Same as shipping address
-                                        </div>
-                                    </div>
-                                </div>
-                                <Separator className="my-4" />
-                                <div className="grid gap-3">
-                                    <div className="font-semibold">Customer Information</div>
-                                    <dl className="grid gap-3">
-                                        <div className="flex items-center justify-between">
-                                            <dt className="text-muted-foreground">Customer</dt>
-                                            <dd>Liam Johnson</dd>
-                                        </div>
-                                        <div className="flex items-center justify-between">
-                                            <dt className="text-muted-foreground">Email</dt>
-                                            <dd>
-                                                <a href="mailto:">liam@acme.com</a>
-                                            </dd>
-                                        </div>
-                                        <div className="flex items-center justify-between">
-                                            <dt className="text-muted-foreground">Phone</dt>
-                                            <dd>
-                                                <a href="tel:">+1 234 567 890</a>
-                                            </dd>
-                                        </div>
-                                    </dl>
-                                </div>
-                                <Separator className="my-4" />
-                                <div className="grid gap-3">
-                                    <div className="font-semibold">Payment Information</div>
-                                    <dl className="grid gap-3">
-                                        <div className="flex items-center justify-between">
-                                            <dt className="flex items-center gap-1 text-muted-foreground">
-                                                <CreditCard className="h-4 w-4" />
-                                                Visa
-                                            </dt>
-                                            <dd>**** **** **** 4532</dd>
-                                        </div>
-                                    </dl>
-                                </div>
-                            </CardContent>
-                            <CardFooter className="flex flex-row items-center border-t bg-muted/50 px-6 py-3">
-                                <div className="text-xs text-muted-foreground">
-                                    Updated <time dateTime="2023-11-23">November 23, 2023</time>
-                                </div>
-                                <Pagination className="ml-auto mr-0 w-auto">
-                                    <PaginationContent>
-                                        <PaginationItem>
-                                            <Button size="icon" variant="outline" className="h-6 w-6">
-                                                <ChevronLeft className="h-3.5 w-3.5" />
-                                                <span className="sr-only">Previous Order</span>
-                                            </Button>
-                                        </PaginationItem>
-                                        <PaginationItem>
-                                            <Button size="icon" variant="outline" className="h-6 w-6">
-                                                <ChevronRight className="h-3.5 w-3.5" />
-                                                <span className="sr-only">Next Order</span>
-                                            </Button>
-                                        </PaginationItem>
-                                    </PaginationContent>
-                                </Pagination>
-                            </CardFooter>
-                        </Card>
-                    </div> */}
         </main>
       </div>
     </div>
-    // <div>
-    //     <h1>Dashboard</h1>
-    // </div>
-  );
+  )
 }
 
 export default Dashboard;

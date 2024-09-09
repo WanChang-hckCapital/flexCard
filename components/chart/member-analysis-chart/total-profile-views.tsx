@@ -6,21 +6,21 @@ import { fetchProfileViewDetails } from '@/lib/actions/user.actions';
 
 
 type TotalViewProfileByDateProps = {
-    userId: string | null;
+    profileId: string | null;
     startDate: Date | null;
     endDate: Date | null;
 }
 
-export function TotalViewProfileByDate({ userId, startDate, endDate }: TotalViewProfileByDateProps) {
+export function TotalViewProfileByDate({ profileId, startDate, endDate }: TotalViewProfileByDateProps) {
 
     const [chartData, setChartData] = useState<any[]>([]);
 
     useEffect(() => {
 
-        if(!userId) return;
+        if(!profileId) return;
         
         const fetchData = async () => {
-            const response = await fetchProfileViewDetails(userId, startDate, endDate);
+            const response = await fetchProfileViewDetails(profileId, startDate, endDate);
             
             if(response.success){
                 setChartData(response.data || []);
@@ -30,7 +30,7 @@ export function TotalViewProfileByDate({ userId, startDate, endDate }: TotalView
         }
 
         fetchData();
-    }, [userId]);
+    }, [profileId]);
 
     if(chartData.length === 0) {
         return (

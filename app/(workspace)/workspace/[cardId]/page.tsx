@@ -8,6 +8,7 @@ import { fetchCardDetails } from "@/lib/actions/workspace.actions";
 import { Card } from "@/types";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/utils/authOptions";
+import { fetchCurrentActiveProfileId } from "@/lib/actions/user.actions";
 
 type Props = {
   params: {
@@ -23,7 +24,8 @@ const Page = async ({ params }: Props) => {
     redirect("/sign-in");
   }
 
-  const authaccountId = user.id;
+  const authUserId = user.id.toString();
+  const authActiveProfileId = await fetchCurrentActiveProfileId(authUserId);
 
   let cardDetails;
   try {
@@ -36,7 +38,7 @@ const Page = async ({ params }: Props) => {
 
   if (
     !cardDetails ||
-    cardDetails.creatorID.toString() !== authaccountId.toString()
+    cardDetails.creatorID.toString() !== authActiveProfileId.toString()
   ) {
     console.error("Card not found or not owned by user");
     redirect("/");
@@ -47,12 +49,13 @@ const Page = async ({ params }: Props) => {
   return (
     <div className="fixed top-0 bottom-0 left-0 right-0 z-[20] bg-background overflow-hidden">
       <EditorProvider
-        authaccountId={authaccountId}
+        authActiveProfileId={authActiveProfileId}
         cardId={cardDetails.cardID}
         cardDetails={cardDetails}>
         <CardEditorNavigation
           cardDetails={cardDetails}
-          authaccountId={authaccountId}
+          authActiveProfileId={authActiveProfileId}
+          cardId={params.cardId}
         />
         <div
           style={{ backgroundImage: "url('../paper-dark.svg')" }}

@@ -13,6 +13,7 @@ import UserModel from "../models/user";
 import FriendRequestModel from "../models/friendrequest";
 import FriendModel from "../models/friend";
 import FollowRequestModel from "../models/followrequest";
+import OrganizationModel from "../models/organization";
 import ChatroomModel from "../models/chatroomtable";
 import MessageModel from "../models/message";
 import Organization from "../models/organization";
@@ -25,6 +26,9 @@ import liff from "@line/liff";
 import axios from "axios";
 import ProductModel from "../models/product";
 import FeedbackModel from "../models/feedback";
+import CommentModel from "../models/comment";
+import { generateCustomID } from "../utils";
+import { Comment } from "@/types";
 
 export async function authenticateUser(email: string, password: string) {
   try {
@@ -69,6 +73,12 @@ export async function createUser(
       password: hashedPassword,
     });
 
+    const initalProfile = new ProfileModel();
+    await initalProfile.save();
+
+    newUser.profiles.push(initalProfile._id);
+    await newUser.save();
+
     return newUser;
   } catch (error: any) {
     throw new Error(`Failed to create user: ${error.message}`);
@@ -85,6 +95,11 @@ export async function createMember(userId: string) {
       const newMember = new Member({
         user: userId,
       });
+
+      const initalProfile = new ProfileModel();
+      await initalProfile.save();
+
+      newMember.profiles.push(initalProfile._id);
 
       await newMember.save();
       return true;
@@ -203,13 +218,152 @@ export async function fetchMemberImage(imageId: string) {
   }
 }
 
+export async function fetchCurrentActiveProfile(userId: string) {
+  try {
+    await connectToDB();
+
+    const member = await Member.findOne({ user: userId }).select(
+      "activeProfile profiles"
+    );
+
+    const activeProfileIndex = member.activeProfile;
+
+    const activeProfileId = member.profiles[activeProfileIndex];
+
+    const profile = await ProfileModel.findOne({ _id: activeProfileId });
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    return profile;
+  } catch (error: any) {
+    throw new Error(`Failed to fetch current active profile: ${error.message}`);
+  }
+}
+
+export async function fetchCurrentActiveProfileId(userId: string) {
+  try {
+    await connectToDB();
+
+    const member = await Member.findOne({ user: userId }).select(
+      "activeProfile profiles"
+    );
+
+    const activeProfileIndex = member.activeProfile;
+    const activeProfileId = member.profiles[activeProfileIndex];
+
+    if (!activeProfileId) {
+      throw new Error("Profile not found");
+    }
+
+    return activeProfileId;
+  } catch (error: any) {
+    throw new Error(
+      `Failed to fetch current active profile Id: ${error.message}`
+    );
+  }
+}
+
+export async function addNewProfile(userId: string, profileData: any) {
+  try {
+    await connectToDB();
+
+    const member = await MemberModel.findOne({ user: userId });
+
+    if (!member) {
+      throw new Error("Member not found");
+    }
+
+    const newProfile = new ProfileModel(profileData);
+    await newProfile.save();
+
+    member.profiles.push(newProfile._id);
+    await member.save();
+
+    return { success: true, profile: newProfile };
+  } catch (error: any) {
+    throw new Error(`Failed to add new profile: ${error.message}`);
+  }
+}
+
+export async function deleteProfile(userId: string, profileId: string) {
+  try {
+    await connectToDB();
+
+    const member = await MemberModel.findOne({ user: userId });
+
+    if (!member) {
+      throw new Error("Member not found");
+    }
+
+    member.profiles = member.profiles.filter(
+      (id: any) => id.toString() !== profileId
+    );
+    await member.save();
+
+    await ProfileModel.findByIdAndDelete(profileId);
+
+    return { success: true };
+  } catch (error: any) {
+    throw new Error(`Failed to delete profile: ${error.message}`);
+  }
+}
+
+export async function editProfile(profileId: string, profileData: any) {
+  try {
+    await connectToDB();
+
+    const updatedProfile = await ProfileModel.findByIdAndUpdate(
+      profileId,
+      profileData,
+      { new: true }
+    );
+
+    if (!updatedProfile) {
+      throw new Error("Profile not found");
+    }
+
+    return { success: true, profile: updatedProfile };
+  } catch (error: any) {
+    throw new Error(`Failed to edit profile: ${error.message}`);
+  }
+}
+
+export async function setActiveProfile(
+  userId: string,
+  activeProfileIndex: number
+) {
+  try {
+    await connectToDB();
+
+    const member = await MemberModel.findOneAndUpdate(
+      { user: userId },
+      { activeProfile: activeProfileIndex },
+      { new: true }
+    );
+
+    if (!member) {
+      throw new Error("Member not found");
+    }
+
+    return {
+      success: true,
+      activeProfile: member.profiles[activeProfileIndex],
+    };
+  } catch (error: any) {
+    throw new Error(`Failed to set active profile: ${error.message}`);
+  }
+}
+
 interface ParamsUpdateProfileViewData {
-  userId?: string;
+  profileId: string;
   authUserId: string;
 }
 
+//done convert to ProfileModel, stil need to be confirm
 export async function updateProfileViewData({
-  userId,
+  profileId,
   authUserId,
 }: ParamsUpdateProfileViewData) {
   const now = new Date();
@@ -218,19 +372,23 @@ export async function updateProfileViewData({
   try {
     await connectToDB();
 
-    if (userId === authUserId) {
+    if (!profileId) {
+      throw new Error("Profile Id not found.");
+    }
+
+    if (profileId === authUserId) {
       console.log(
-        `${authUserId} view ${userId} considered same user and not recorded.`
+        `${authUserId} view ${profileId} considered same user and not recorded.`
       );
       return null;
     }
 
-    const member = await Member.findOne({ user: userId });
-    if (!member) {
-      throw new Error("Member not found");
+    const profile = await ProfileModel.findOne({ _id: profileId });
+    if (!profile) {
+      throw new Error("Profile not found");
     }
 
-    const lastView = member.viewDetails.find(
+    const lastView = profile.viewDetails.find(
       (v: { viewerId: { toString: () => string | undefined } }) =>
         v.viewerId.toString() === authUserId
     );
@@ -241,8 +399,8 @@ export async function updateProfileViewData({
       return null;
     }
 
-    const result = await Member.findOneAndUpdate(
-      { user: userId },
+    const result = await ProfileModel.findOneAndUpdate(
+      { _id: profileId },
       {
         $inc: { totalViews: 1 },
         $push: {
@@ -258,6 +416,8 @@ export async function updateProfileViewData({
       }
     );
 
+    console.log("Profile View Data Updated: " + JSON.stringify(result));
+
     return result;
   } catch (error) {
     console.error("Failed to update Profile view data:", error);
@@ -265,8 +425,9 @@ export async function updateProfileViewData({
   }
 }
 
+//done convert to ProfileModel but still need to be confirm
 export async function fetchProfileViewDetails(
-  authenticatedUserId: string,
+  profileId: string,
   startDate: Date | null,
   endDate: Date | null
 ): Promise<{ success: boolean; data?: any[]; message?: string }> {
@@ -278,16 +439,16 @@ export async function fetchProfileViewDetails(
     }
 
     const query = {
-      user: authenticatedUserId,
+      _id: profileId,
       "viewDetails.viewedAt": { $gte: startDate, $lte: endDate },
     };
-    const member = await Member.findOne(query).select("viewDetails");
+    const profile = await ProfileModel.findOne(query).select("viewDetails");
 
-    if (!member) {
-      throw new Error("Member not found");
+    if (!profile) {
+      throw new Error("Profile not found");
     }
 
-    const views = member.viewDetails;
+    const views = profile.viewDetails;
     const dayMap = new Map();
 
     views.forEach((view: { viewedAt: string | number | Date }) => {
@@ -309,8 +470,9 @@ export async function fetchProfileViewDetails(
   }
 }
 
+//done convert to ProfileModel but still need to be confirm
 export async function fetchFollowersByDateRange(
-  authenticatedUserId: string,
+  profileId: string,
   startDate: Date | null,
   endDate: Date | null
 ): Promise<{ success: boolean; data?: any[]; message?: string }> {
@@ -321,19 +483,19 @@ export async function fetchFollowersByDateRange(
       endDate = new Date();
     }
 
-    console.log("authenticatedUserId: " + authenticatedUserId);
+    console.log("profileId: " + profileId);
 
     const query = {
-      user: authenticatedUserId,
+      _id: profileId,
       "followers.followedAt": { $gte: startDate, $lte: endDate },
     };
-    const member = await Member.findOne(query).select("followers");
+    const profile = await ProfileModel.findOne(query).select("followers");
 
-    if (!member) {
-      throw new Error("Member not found");
+    if (!profile) {
+      throw new Error("Profile not found");
     }
 
-    const followers = member.followers;
+    const followers = profile.followers;
 
     console.log("Followers: " + JSON.stringify(followers));
     const dayMap = new Map();
@@ -379,12 +541,13 @@ export async function fetchUser(userId: string) {
 }
 
 type CheckIfFollowingParams = {
-  authUserId: string;
+  authActiveProfileId: string;
   accountId: string;
 };
 
+//done convert to ProfileModel
 export async function checkIfFollowing({
-  authUserId,
+  authActiveProfileId,
   accountId,
 }: CheckIfFollowingParams): Promise<{
   success: boolean;
@@ -394,14 +557,16 @@ export async function checkIfFollowing({
   try {
     await connectToDB();
 
-    const currentMember = await Member.findOne({ user: authUserId });
-    const accountMember = await Member.findOne({ user: accountId });
+    const currentProfile = await ProfileModel.findOne({
+      _id: authActiveProfileId,
+    });
+    const accountProfile = await ProfileModel.findOne({ _id: accountId });
 
-    if (!currentMember || !accountMember) {
-      throw new Error("Current member or account member not found");
+    if (!currentProfile || !accountProfile) {
+      throw new Error("Current profile or account profile not found");
     }
 
-    const isFollowing = currentMember.following.includes(accountId.toString());
+    const isFollowing = currentProfile.following.includes(accountId.toString());
 
     return { success: true, isFollowing };
   } catch (error: any) {
@@ -452,13 +617,14 @@ export async function checkIfFollower({
 }
 
 interface ParamUpdateMemberFollowData {
-  authUserId: string;
+  authActiveProfileId: string;
   accountId: string;
   method: "FOLLOW" | "UNFOLLOW";
 }
 
+//done convert to ProfileModel but still need to be confirm
 export async function updateMemberFollow({
-  authUserId,
+  authActiveProfileId,
   accountId,
   method,
 }: ParamUpdateMemberFollowData): Promise<{
@@ -472,16 +638,18 @@ export async function updateMemberFollow({
     const now = new Date();
     const threeMinutesAgo = subMinutes(now, 3);
 
-    const currentMember = await Member.findOne({ user: authUserId });
-    const accountMember = await Member.findOne({ user: accountId });
+    const currentMemberProfile = await ProfileModel.findOne({
+      _id: authActiveProfileId,
+    });
+    const accountMemberProfile = await ProfileModel.findOne({ _id: accountId });
 
-    if (!currentMember || !accountMember) {
-      throw new Error("Current member not found");
+    if (!currentMemberProfile || !accountMemberProfile) {
+      throw new Error("Current member profile not found");
     }
 
     const userUpdateTimestamps =
-      accountMember.updateHistory?.filter(
-        (update: any) => update.userId.toString() === authUserId
+      accountMemberProfile.updateHistory?.filter(
+        (update: any) => update.profileId.toString() === authActiveProfileId
       ) || [];
     const recentUpdatesCount = userUpdateTimestamps.filter(
       (update: any) => update.timestamp > threeMinutesAgo
@@ -498,10 +666,10 @@ export async function updateMemberFollow({
       };
     }
 
-    let updatedFollowing: string[] = currentMember.following.map(
+    let updatedFollowing: string[] = currentMemberProfile.following.map(
       (f: { toString: () => any }) => f.toString()
     );
-    let updateFollower = [...accountMember.followers];
+    let updateFollower = [...accountMemberProfile.followers];
 
     if (method.toUpperCase() === "FOLLOW") {
       if (!updatedFollowing.includes(accountId.toString())) {
@@ -509,30 +677,32 @@ export async function updateMemberFollow({
       }
       if (
         !updateFollower.some(
-          (follower) => follower.followersId.toString() === authUserId
+          (follower) => follower.followersId.toString() === authActiveProfileId
         )
       ) {
         updateFollower.push({
-          followersId: authUserId,
+          followersId: authActiveProfileId,
           followedAt: new Date(),
         });
       }
     } else if (method.toUpperCase() === "UNFOLLOW") {
       updatedFollowing = updatedFollowing.filter((id) => id !== accountId);
       updateFollower = updateFollower.filter(
-        (follower) => follower.followersId.toString() !== authUserId
+        (follower) => follower.followersId.toString() !== authActiveProfileId
       );
     }
 
     await Promise.all([
-      Member.findByIdAndUpdate(currentMember._id, {
+      ProfileModel.findByIdAndUpdate(currentMemberProfile._id, {
         following: updatedFollowing,
       }),
-      Member.findByIdAndUpdate(accountMember._id, {
+      ProfileModel.findByIdAndUpdate(currentMemberProfile._id, {
         followers: updateFollower,
       }),
-      Member.findByIdAndUpdate(accountMember._id, {
-        $push: { updateHistory: { userId: authUserId, timestamp: now } },
+      ProfileModel.findByIdAndUpdate(currentMemberProfile._id, {
+        $push: {
+          updateHistory: { profileId: authActiveProfileId, timestamp: now },
+        },
       }),
     ]);
 
@@ -565,11 +735,14 @@ export async function getLikeCount(cardId: string) {
 }
 
 interface ParamsCardLikes {
-  authUserId: string;
+  authActiveProfileId: string;
   cardId: string;
 }
 
-export async function updateCardLikes(params: ParamsCardLikes): Promise<{
+//done convert to ProfileModel
+export async function updateCardLikes(
+  params: ParamsCardLikes
+): Promise<{
   success: boolean;
   data?: any[];
   reachedLimit: boolean;
@@ -581,9 +754,9 @@ export async function updateCardLikes(params: ParamsCardLikes): Promise<{
     const now = new Date();
     const threeMinutesAgo = subMinutes(now, 3);
 
-    const { authUserId, cardId } = params;
+    const { authActiveProfileId, cardId } = params;
 
-    const authUserIdSanitized = authUserId.trim();
+    const authProfileIdSanitized = authActiveProfileId.trim();
 
     const card = await Card.findOne({ _id: cardId });
 
@@ -593,7 +766,7 @@ export async function updateCardLikes(params: ParamsCardLikes): Promise<{
 
     const userUpdateTimestamps =
       card.updateHistory?.filter(
-        (update: any) => update.userId.toString() === authUserId
+        (update: any) => update.profileId.toString() === authActiveProfileId
       ) || [];
 
     const recentUpdatesCount = userUpdateTimestamps.filter(
@@ -613,20 +786,20 @@ export async function updateCardLikes(params: ParamsCardLikes): Promise<{
     }
 
     let update;
-    const userHasLiked = card.likes.includes(authUserId);
+    const userHasLiked = card.likes.includes(authActiveProfileId);
 
     if (userHasLiked) {
       update = {
-        $pull: { likes: authUserIdSanitized },
+        $pull: { likes: authProfileIdSanitized },
         $push: {
-          updateHistory: { userId: authUserIdSanitized, timestamp: now },
+          updateHistory: { profileId: authProfileIdSanitized, timestamp: now },
         },
       };
     } else {
       update = {
-        $addToSet: { likes: authUserIdSanitized },
+        $addToSet: { likes: authProfileIdSanitized },
         $push: {
-          updateHistory: { userId: authUserIdSanitized, timestamp: now },
+          updateHistory: { profileId: authProfileIdSanitized, timestamp: now },
         },
       };
     }
@@ -642,20 +815,22 @@ export async function updateCardLikes(params: ParamsCardLikes): Promise<{
     // update and return likes after fetch user image
     const likesDetails = await Promise.all(
       updatedCard.likes.map(async (likeId: any) => {
-        const likeUser = await MemberModel.findOne({ user: likeId }).select(
+        const likeProfile = await ProfileModel.findOne({ _id: likeId }).select(
           "accountname image"
         );
-        if (likeUser && likeUser.image) {
-          const imageDoc = await Image.findById(likeUser.image).select(
+        if (likeProfile && likeProfile.image) {
+          const imageDoc = await Image.findById(likeProfile.image).select(
             "binaryCode"
           );
           return {
-            accountname: likeUser.accountname,
+            profileId: likeProfile._id.toString(),
+            accountname: likeProfile.accountname,
             binarycode: imageDoc ? imageDoc.binaryCode : undefined,
           };
         }
         return {
-          accountname: likeUser ? likeUser.accountname : "Unknown",
+          profileId: likeProfile._id.toString(),
+          accountname: likeProfile ? likeProfile.accountname : "Unknown",
           binarycode: undefined,
         };
       })
@@ -668,6 +843,214 @@ export async function updateCardLikes(params: ParamsCardLikes): Promise<{
       message: `Failed to update card likes: ${error.message}`,
       reachedLimit: false,
     };
+  }
+}
+
+//done convert to ProfileModel
+export async function updateAccountType(
+  authActiveProfileId: string,
+  accountType: string
+) {
+  try {
+    await connectToDB();
+
+    const profile = await ProfileModel.findOne({
+      _id: authActiveProfileId,
+    }).select("accountType");
+
+    if (!profile) {
+      throw new Error("Member not found");
+    }
+
+    profile.accountType = accountType;
+    await profile.save();
+
+    return {
+      success: true,
+      message: "Account type updated successfully",
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Failed to update account type: ${error.message}`,
+    };
+  }
+}
+
+export async function getCloseFriends(authenticatedUserId: string) {
+  try {
+    await connectToDB();
+
+    const member = await MemberModel.findOne({
+      user: authenticatedUserId,
+    }).populate({
+      path: "closeFriends",
+      select: "accountname image email username",
+      populate: {
+        path: "image",
+        select: "binaryCode",
+      },
+    });
+
+    if (!member) {
+      throw new Error("Member not found");
+    }
+
+    const closeFriends = member.closeFriends.map((friend: any) => ({
+      _id: friend._id,
+      accountname: friend.accountname,
+      image: friend.image.length > 0 ? friend.image[0].binaryCode : null,
+      username: friend.username,
+      email: friend.email,
+      isCloseFriend: true,
+    }));
+
+    console.log("Close Friends: " + JSON.stringify(closeFriends));
+
+    return {
+      success: true,
+      closeFriends,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Failed to fetch close friends: ${error.message}`,
+    };
+  }
+}
+
+export async function updateCloseFriends(
+  authActiveProfileId: string,
+  closeFriendsIds: string[]
+) {
+  try {
+    await connectToDB();
+
+    const profile = await ProfileModel.findOne({
+      _id: authActiveProfileId,
+    }).select("closeFriends");
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    profile.closeFriends = closeFriendsIds;
+    await profile.save();
+
+    return {
+      success: true,
+      message: "Close friends updated successfully",
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Failed to update close friends: ${error.message}`,
+    };
+  }
+}
+
+//done convert to ProfileModel
+export async function fetchProfleRole(
+  authActiveProfileId: string
+): Promise<{ success: boolean; data?: string; message?: string }> {
+  try {
+    await connectToDB();
+
+    const profile = await ProfileModel.findOne({
+      _id: authActiveProfileId,
+    }).select("role");
+
+    if (!profile) {
+      return { success: false, message: "Profile not found" };
+    }
+
+    return { success: true, data: profile.role };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+}
+
+interface ParamsOrganizationDetails {
+  businessType: string;
+  businessLocation: string;
+  legalBusinessName: string;
+  businessRegistrationNumber: string;
+  businessName: string;
+  businessAddress: string;
+  businessPhone: string;
+  industry: string;
+  businessWebsite?: string;
+  businessProductDescription: string;
+  bankAccountHolder: string;
+  bankName: string;
+  bankAccountNumber: string;
+  authActiveProfileId: string;
+}
+
+//done convert to ProfileModel but still need to be confirm
+export async function signUpOrganization({
+  businessType,
+  businessLocation,
+  legalBusinessName,
+  businessRegistrationNumber,
+  businessName,
+  businessAddress,
+  businessPhone,
+  industry,
+  businessWebsite,
+  businessProductDescription,
+  bankAccountHolder,
+  bankName,
+  bankAccountNumber,
+  authActiveProfileId,
+}: ParamsOrganizationDetails): Promise<{ success: boolean; message?: string }> {
+  try {
+    await connectToDB();
+
+    const profile = await ProfileModel.findOne({
+      _id: authActiveProfileId,
+    }).select("role usertype");
+    if (!profile) {
+      console.log("User not found when signing up organization.");
+      return { success: false, message: "User not found" };
+    }
+
+    if (profile.role.toUpperCase() === "ORGANIZATION") {
+      console.log("Profile is already join as an organization.");
+      return {
+        success: false,
+        message: "Profile is already join as an organization.",
+      };
+    }
+
+    const newOrganization = new OrganizationModel({
+      businessType,
+      businessLocation,
+      legalBusinessName,
+      businessRegistrationNumber,
+      businessName,
+      businessAddress,
+      businessPhone,
+      industry,
+      businessWebsite,
+      businessProductDescription,
+      bankAccountHolder,
+      bankName,
+      bankAccountNumber,
+    });
+
+    await newOrganization.save();
+
+    profile.organization = newOrganization._id;
+    profile.role = "ORGANIZATION";
+    profile.usertype = "ORGANIZATION";
+    await profile.save();
+
+    //update user subscription to be organization free version subscription or purchasing subscription
+
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, message: error.message };
   }
 }
 
@@ -693,7 +1076,7 @@ export async function updateOrganizationUrl(
       throw new Error("Current member isn't Organization owner.");
     }
 
-    const organization = await Organization.findOne({
+    const organization = await OrganizationModel.findOne({
       organizationID: currentMember._id,
     });
 
@@ -701,7 +1084,7 @@ export async function updateOrganizationUrl(
       throw new Error("Organization not found");
     }
 
-    organization.webUrl = url;
+    organization.businessWebsite = url;
 
     await organization.save();
   } catch (error: any) {
@@ -745,6 +1128,7 @@ export async function uploadImageToGridFS(
 
 interface ParamsMemberDetails {
   userId: string;
+  profileId: string;
   accountname: string;
   email: string;
   password: string;
@@ -761,20 +1145,25 @@ interface ParamsMemberDetails {
 }
 
 type UpdateMemberData = {
-  accountname: string;
   email: string;
   password: string;
   phone: string;
-  shortdescription: string;
   ip_address: string;
-  image?: any;
-  onboarded: boolean;
   country?: string;
   countrycode?: string;
 };
 
+type UpdateProfileData = {
+  accountname: string;
+  shortdescription: string;
+  image?: any;
+  onboarded: boolean;
+};
+
+//done convert to ProfileModel but still need to be confirm
 export async function updateMemberDetails({
   userId,
+  profileId,
   accountname,
   email,
   password,
@@ -789,48 +1178,60 @@ export async function updateMemberDetails({
   try {
     await connectToDB();
 
-    const existingUser = await Member.findOne({ email: email });
-    if (existingUser && path != "/profile/edit") {
+    const existingEmail = await Member.findOne({ email: email });
+    if (existingEmail && path != "/profile/edit") {
       throw new Error("User with this email already exists.");
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    let updateData: UpdateMemberData;
+    let updateMemberData: UpdateMemberData;
+    let updateProfileData: UpdateProfileData;
+
     if (image) {
       const savedImage = await Image.create({
         binaryCode: image.binaryCode,
         name: image.name,
       });
       const imageId = savedImage._id;
-      updateData = {
+      updateProfileData = {
         accountname: accountname,
-        email: email,
-        password: hashedPassword,
-        phone: phone,
         shortdescription: shortdescription,
-        ip_address: ip_address,
         image: imageId,
         onboarded: true,
       };
-    } else {
-      updateData = {
-        accountname: accountname,
+
+      updateMemberData = {
         email: email,
         password: hashedPassword,
         phone: phone,
-        shortdescription: shortdescription,
         ip_address: ip_address,
+      };
+    } else {
+      updateProfileData = {
+        accountname: accountname,
+        shortdescription: shortdescription,
         onboarded: true,
+      };
+
+      updateMemberData = {
+        email: email,
+        password: hashedPassword,
+        phone: phone,
+        ip_address: ip_address,
       };
     }
 
     if (path !== "/profile/edit") {
-      updateData.country = country;
-      updateData.countrycode = countrycode;
+      updateMemberData.country = country;
+      updateMemberData.countrycode = countrycode;
     }
 
-    await Member.findOneAndUpdate({ user: userId }, updateData, {
+    await Member.findOneAndUpdate({ user: userId }, updateMemberData, {
+      upsert: true,
+    });
+
+    await ProfileModel.findOneAndUpdate({ _id: profileId }, updateProfileData, {
       upsert: true,
     });
 
@@ -842,13 +1243,126 @@ export async function updateMemberDetails({
   }
 }
 
+// interface ParamsUpdateCardViewData {
+//     userId?: string;
+//     cardId: string;
+// }
+
+// export async function updateCardViewData({
+//     userId, cardId
+// }: ParamsUpdateCardViewData) {
+//     try {
+//         await connectToDB();
+
+//         const now = new Date();
+//         const threeMinutesAgo = subMinutes(now, 3);
+
+//         const currentMember = await Member.findOne({ user: authUserId });
+//         const accountMember = await Member.findOne({ user: accountId });
+
+//         if (!currentMember || !accountMember) {
+//             throw new Error("Current member not found");
+//         }
+
+//         const userUpdateTimestamps =
+//             accountMember.updateHistory?.filter(
+//                 (update: any) => update.userId.toString() === authUserId
+//             ) || [];
+//         const recentUpdatesCount = userUpdateTimestamps.filter(
+//             (update: any) => update.timestamp > threeMinutesAgo
+//         ).length;
+
+//         if (recentUpdatesCount >= 5) {
+//             const nextAvailableTime = addMinutes(
+//                 userUpdateTimestamps[0].timestamp,
+//                 3
+//             ).toLocaleTimeString();
+//             return {
+//                 success: false,
+//                 message: `Although We know you like this profile so much but unfortunately You have reach the modify limits for follow this profile, Please Try again in ${nextAvailableTime}.`,
+//             };
+//         }
+
+//         let updatedFollowing: string[] = currentMember.following.map(
+//             (f: { toString: () => any }) => f.toString()
+//         );
+//         let updateFollower = [...accountMember.followers];
+
+//         if (method.toUpperCase() === "FOLLOW") {
+//             if (!updatedFollowing.includes(accountId.toString())) {
+//                 updatedFollowing.push(accountId.toString());
+//             }
+//             if (
+//                 !updateFollower.some(
+//                     (follower) => follower.followersId.toString() === authUserId
+//                 )
+//             ) {
+//                 updateFollower.push({
+//                     followersId: authUserId,
+//                     followedAt: new Date(),
+//                 });
+//             }
+//         } else if (method.toUpperCase() === "UNFOLLOW") {
+//             updatedFollowing = updatedFollowing.filter((id) => id !== accountId);
+//             updateFollower = updateFollower.filter(
+//                 (follower) => follower.followersId.toString() !== authUserId
+//             );
+//         }
+
+//         await Promise.all([
+//             Member.findByIdAndUpdate(currentMember._id, {
+//                 following: updatedFollowing,
+//             }),
+//             Member.findByIdAndUpdate(accountMember._id, {
+//                 followers: updateFollower,
+//             }),
+//             Member.findByIdAndUpdate(accountMember._id, {
+//                 $push: { updateHistory: { userId: authUserId, timestamp: now } },
+//             }),
+//         ]);
+
+//         const safeUpdatedFollower = updateFollower.map((follower) => ({
+//             followersId: follower.followersId.toString(),
+//             followedAt: follower.followedAt,
+//         }));
+
+//         return {
+//             success: true,
+//             data: { updatedFollowing, updateFollower: safeUpdatedFollower },
+//         };
+//     } catch (error: any) {
+//         return {
+//             success: false,
+//             message: `Failed to follow/unfollow user: ${error.message}`,
+//         };
+//     }
+// }
+
+interface ParamsMemberDetails {
+  userId: string;
+  accountname: string;
+  email: string;
+  password: string;
+  phone: string;
+  shortdescription: string;
+  ip_address: string;
+  country?: string;
+  countrycode?: string;
+  image?: {
+    binaryCode: string;
+    name: string;
+  };
+  path: string;
+}
+
 interface ParamsUpdateCardViewData {
-  userId?: string;
+  authActiveProfileId?: string;
   cardId: string;
 }
 
+//done convert to ProfileModel but still need to be confirm
 export async function updateCardViewData({
-  userId,
+  authActiveProfileId,
   cardId,
 }: ParamsUpdateCardViewData) {
   const now = new Date();
@@ -862,10 +1376,12 @@ export async function updateCardViewData({
 
     const lastView = card.viewDetails.find(
       (v: { viewerId: { toString: () => string | undefined } }) =>
-        v.viewerId.toString() === userId
+        v.viewerId.toString() === authActiveProfileId
     );
     if (lastView && lastView.viewedAt > threeMinutesAgo) {
-      console.log(`${userId} view ${cardId} considered spam and not recorded.`);
+      console.log(
+        `${authActiveProfileId} view ${cardId} considered spam and not recorded.`
+      );
       return null;
     }
 
@@ -876,7 +1392,7 @@ export async function updateCardViewData({
         $inc: { totalViews: 1 },
         $push: {
           viewDetails: {
-            viewerId: userId,
+            viewerId: authActiveProfileId,
             viewedAt: now,
           },
         },
@@ -938,11 +1454,14 @@ export async function fetchCardViewDetails(
   }
 }
 
-export async function fetchOnlyCardId(userId: string) {
+//done convert to ProfileModel but still need to be confirm
+export async function fetchOnlyCardId(profileId: string) {
   try {
     await connectToDB();
 
-    const cardId = await Member.findOne({ user: userId }).select("cards");
+    const cardId = await ProfileModel.findOne({ _id: profileId }).select(
+      "cards"
+    );
     const cardWithTitle = await Card.find({
       _id: { $in: cardId.cards },
     }).select("title");
@@ -954,28 +1473,29 @@ export async function fetchOnlyCardId(userId: string) {
   }
 }
 
-export async function fetchPersonalCards(userId: string) {
+//done convert but still need to be confirm
+export async function fetchPersonalCards(profileId: string) {
   try {
     await connectToDB();
 
-    const member = await Member.findOne({ user: userId });
+    const profile = await ProfileModel.findOne({ _id: profileId });
 
-    if (!member) {
-      throw new Error(`Member with ID ${userId} not found.`);
+    if (!profile) {
+      throw new Error(`Profile with ID ${profile} not found.`);
     }
 
-    if (!member.cards) {
-      throw new Error(`Member with ID ${userId} has no cards.`);
+    if (!profile.cards) {
+      throw new Error(`Profile with ID ${profile} has no cards.`);
     }
 
     const cards = await Card.find({
-      _id: { $in: member.cards },
+      _id: { $in: profile.cards },
     });
 
     const cardsData = await Promise.all(
       cards.map(async (card) => {
-        const creator = await MemberModel.findOne({
-          user: card.creator,
+        const creator = await ProfileModel.findOne({
+          _id: card.creator,
         }).select("accountname image");
         const creatorImage = await Image.findOne({ _id: creator.image }).select(
           "binaryCode"
@@ -992,23 +1512,23 @@ export async function fetchPersonalCards(userId: string) {
 
         const likesDetails = await Promise.all(
           card.likes.map(async (likeId: any) => {
-            const likeUser = await MemberModel.findOne({ user: likeId }).select(
-              "user accountname image"
-            );
+            const likeProfile = await ProfileModel.findOne({
+              _id: likeId,
+            }).select("accountname image");
 
-            if (likeUser && likeUser.image) {
-              const imageDoc = await Image.findById(likeUser.image).select(
+            if (likeProfile && likeProfile.image) {
+              const imageDoc = await Image.findById(likeProfile.image).select(
                 "binaryCode"
               );
               return {
-                userId: likeUser.user.toString(),
-                accountname: likeUser.accountname,
+                profileId: likeProfile._id.toString(),
+                accountname: likeProfile.accountname,
                 binarycode: imageDoc ? imageDoc.binaryCode : undefined,
               };
             }
             return {
-              userId: likeUser.user.toString(),
-              accountname: likeUser ? likeUser.accountname : "Unknown",
+              profileId: likeProfile ? likeProfile._id.toString() : "Unknown",
+              accountname: likeProfile ? likeProfile.accountname : "Unknown",
               binarycode: undefined,
             };
           })
@@ -1020,7 +1540,7 @@ export async function fetchPersonalCards(userId: string) {
 
         const followers = await Promise.all(
           card.followers.map((id: any) =>
-            MemberModel.find({ user: id }).select("accountname")
+            ProfileModel.find({ _id: id }).select("accountname")
           )
         );
         // const followersImage = await Promise.all(card.followers.map((id: any) => MemberModel.findById(id).select('image')));
@@ -1065,6 +1585,7 @@ export async function fetchPersonalCards(userId: string) {
   }
 }
 
+//done convert strucutre
 export async function fetchAllCards() {
   try {
     await connectToDB();
@@ -1073,8 +1594,8 @@ export async function fetchAllCards() {
 
     const cardsData = await Promise.all(
       cards.map(async (card) => {
-        const creator = await MemberModel.findOne({
-          user: card.creator,
+        const creator = await ProfileModel.findOne({
+          _id: card.creator,
         }).select("accountname image");
         const creatorImage = await Image.findOne({ _id: creator.image }).select(
           "binaryCode"
@@ -1084,29 +1605,27 @@ export async function fetchAllCards() {
           image: creator && creatorImage ? creatorImage.binaryCode : undefined,
         };
 
-        // console.log("card:" + card);
-
         const lineComponents = await Card.findOne({ _id: card }).select(
           "lineFormatComponent"
         );
 
         const likesDetails = await Promise.all(
           card.likes.map(async (likeId: any) => {
-            const likeUser = await MemberModel.findOne({ user: likeId }).select(
-              "user accountname image"
+            const likeUser = await ProfileModel.findOne({ _id: likeId }).select(
+              "accountname image"
             );
             if (likeUser && likeUser.image) {
               const imageDoc = await Image.findById(likeUser.image).select(
                 "binaryCode"
               );
               return {
-                userId: likeUser.user.toString(),
+                // userId: likeUser.user.toString(),
                 accountname: likeUser.accountname,
                 binarycode: imageDoc ? imageDoc.binaryCode : undefined,
               };
             }
             return {
-              userId: likeUser.user.toString(),
+              // userId: likeUser.user.toString(),
               accountname: likeUser ? likeUser.accountname : "Unknown",
               binarycode: undefined,
             };
@@ -1119,7 +1638,7 @@ export async function fetchAllCards() {
 
         const followers = await Promise.all(
           card.followers.map((id: any) =>
-            MemberModel.find({ user: id }).select("accountname")
+            ProfileModel.find({ _id: id }).select("accountname")
           )
         );
 
@@ -1133,7 +1652,6 @@ export async function fetchAllCards() {
         return {
           cardId: card._id.toString(),
           title: card.title,
-          description: card.description,
           creator: creatorData,
           likes: likesDetails,
           followers: followers.map((follower) => ({
@@ -1160,6 +1678,231 @@ export async function fetchAllCards() {
   }
 }
 
+interface ProfileDetails {
+  accountname: string;
+  image: string | null;
+}
+
+interface CommentWithReplies {
+  _id: string;
+  commentID: string;
+  comment: string;
+  commentBy: ProfileDetails | null;
+  commentDate: Date;
+  likes: string[];
+  replies: CommentWithReplies[];
+}
+
+async function getProfileDetails(
+  profileId: string
+): Promise<ProfileDetails | null> {
+  const profile: any = await ProfileModel.findOne({ _id: profileId })
+    .select("user accountname image")
+    .lean();
+  if (profile && Array.isArray(profile.image) && profile.image.length > 0) {
+    const image: any = await Image.findById(profile.image[0])
+      .select("binaryCode")
+      .lean();
+    profile.image = image ? image.binaryCode : null;
+  } else {
+    profile.image = null;
+  }
+  return profile;
+}
+
+//done convert to CommentModel but still need to be confirm
+async function getCommentDetails(
+  commentId: string
+): Promise<CommentWithReplies | null> {
+  const comment: any = await CommentModel.findById(commentId).lean();
+  if (!comment) {
+    return null;
+  }
+
+  const memberDetails = await getProfileDetails(comment.commentBy);
+  const replies = await Promise.all(
+    (comment.replies || []).map(async (replyId: string) => {
+      return await getCommentDetails(replyId);
+    })
+  );
+
+  const likesDetails = await Promise.all(
+    (comment.likes || []).map(async (likeId: string) => {
+      return await getProfileDetails(likeId);
+    })
+  );
+
+  return {
+    ...comment,
+    commentBy: memberDetails,
+    likes: likesDetails.filter((like) => like !== null),
+    replies: replies.filter((reply) => reply !== null),
+  } as CommentWithReplies;
+}
+
+export async function fetchComments(
+  cardId: string
+): Promise<{ success: boolean; data?: any; message?: string }> {
+  try {
+    await connectToDB();
+
+    const card: any = await Card.findById(cardId)
+      .select("comments")
+      .populate({
+        path: "comments",
+        model: "Comment",
+      })
+      .lean();
+
+    if (!card) {
+      return { success: false, message: "Card not found" };
+    }
+
+    if (!Array.isArray(card.comments)) {
+      return { success: false, message: "Comments not found" };
+    }
+
+    const commentsWithDetails = await Promise.all(
+      card.comments.map(async (comment: any) => {
+        return await getCommentDetails(comment._id);
+      })
+    );
+
+    return {
+      success: true,
+      data: commentsWithDetails.filter((comment) => comment !== null),
+    };
+  } catch (error: any) {
+    console.log("error: ", error.message);
+    return { success: false, message: error.message };
+  }
+}
+
+//done convert to CommentModel but still need to be confirm
+export async function addComment(
+  cardId: string,
+  authActiveProfileId: string,
+  commentText: string
+): Promise<{ success: boolean; data?: any[]; message?: string }> {
+  try {
+    await connectToDB();
+
+    const newComment = new CommentModel({
+      commentID: generateCustomID(),
+      comment: commentText,
+      commentBy: authActiveProfileId,
+    });
+
+    await newComment.save();
+
+    const profileInfo = await getProfileDetails(newComment.commentBy);
+
+    const replyWithUserDetails = {
+      ...newComment.toObject(),
+      commentBy: profileInfo,
+    };
+
+    const card = await Card.findById(cardId);
+    if (!card) {
+      throw new Error("Card not found");
+    }
+    card.comments.push(newComment._id);
+
+    await card.save();
+
+    return { success: true, data: replyWithUserDetails };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+}
+
+//done convert to CommentModel but still need to be confirm
+export async function likeComment(
+  commentId: string,
+  authActiveProfileId: string
+): Promise<{ success: boolean; data?: any; message?: string }> {
+  try {
+    await connectToDB();
+
+    const comment = await CommentModel.findById(commentId);
+
+    if (!comment) {
+      throw new Error("Comment not found");
+    }
+
+    const userIdStr = authActiveProfileId.toString();
+
+    if (
+      !comment.likes
+        .map((like: { toString: () => string }) => like.toString())
+        .includes(userIdStr)
+    ) {
+      comment.likes.push(authActiveProfileId);
+    } else {
+      comment.likes = comment.likes.filter(
+        (like: any) => like.toString() !== userIdStr
+      );
+    }
+
+    await comment.save();
+
+    const updatedComment: any = await CommentModel.findById(commentId).lean();
+
+    const likesDetails = await Promise.all(
+      (updatedComment.likes || []).map(async (likeId: string) => {
+        return await getProfileDetails(likeId);
+      })
+    );
+
+    const updatedCommentWithLikes = {
+      ...updatedComment,
+      likes: likesDetails.filter((like) => like !== null),
+    };
+
+    return { success: true, data: updatedCommentWithLikes };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+}
+
+//done convert to CommentModel but still need to be confirm
+export async function addReply(
+  commentId: string,
+  authActiveProfileId: string,
+  replyText: string
+): Promise<{ success: boolean; data?: any; message?: string }> {
+  try {
+    await connectToDB();
+
+    const newReply = new CommentModel({
+      commentID: generateCustomID(),
+      comment: replyText,
+      commentBy: authActiveProfileId,
+    });
+
+    await newReply.save();
+
+    const profileInfo = await getProfileDetails(newReply.commentBy);
+
+    const replyWithUserDetails = {
+      ...newReply.toObject(),
+      commentBy: profileInfo,
+    };
+
+    const comment = await CommentModel.findById(commentId);
+    if (!comment) {
+      return { success: false, message: "Comment not found." };
+    }
+
+    comment.replies.push(newReply._id);
+    await comment.save();
+
+    return { success: true, data: replyWithUserDetails };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+}
+
 export async function fetchProductPlanLimitedCardQuantity(
   productId: string
 ): Promise<number> {
@@ -1179,13 +1922,14 @@ export async function fetchProductPlanLimitedCardQuantity(
   }
 }
 
-export async function fetchMemberCardsLength(
-  memberId: string
+// done convert to ProfileModel but still need to be confirm
+export async function fetchMemberProfileCardsLength(
+  profileId: string
 ): Promise<number> {
   try {
     await connectToDB();
 
-    const member = await MemberModel.findOne({ user: memberId }).populate(
+    const member = await ProfileModel.findOne({ _id: profileId }).populate(
       "cards"
     );
 
@@ -1207,9 +1951,10 @@ interface FeedbackProps {
   similarAppName: string;
   feedbackComment: string;
   isSkip: boolean;
-  userId: string;
+  profileId: string;
 }
 
+// done convert to FeedbackModel but still need to be confirm
 export async function submitFeedback({
   selectedReasons,
   otherReason,
@@ -1217,7 +1962,7 @@ export async function submitFeedback({
   similarAppName,
   feedbackComment,
   isSkip,
-  userId,
+  profileId,
 }: FeedbackProps): Promise<{ success: boolean; message: string }> {
   try {
     await connectToDB();
@@ -1230,7 +1975,7 @@ export async function submitFeedback({
       feedbackComment,
       isSkip,
       feedbackDate: new Date(),
-      feedbackBy: userId,
+      feedbackBy: profileId,
     });
 
     await feedback.save();
@@ -1302,11 +2047,12 @@ export async function sendFlexMessageThruOA({
   }
 }
 
-export async function fetchDashboardData({ userId }: { userId: string }) {
+// done convert to ProfileModel but still need to be confirm
+export async function fetchDashboardData({ profileId }: { profileId: string }) {
   try {
     await connectToDB();
 
-    const cardDashboard = await MemberModel.findOne({ user: userId }).select(
+    const cardDashboard = await ProfileModel.findOne({ _id: profileId }).select(
       "cards totalViews followers"
     );
 
@@ -1322,18 +2068,18 @@ export async function fetchDashboardData({ userId }: { userId: string }) {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
     const cardsLastWeek = await Card.find({
-      creator: userId,
+      creator: profileId,
       createdAt: { $gte: sevenDaysAgo },
     }).countDocuments();
 
-    const profileViewsLastWeek = await MemberModel.aggregate([
+    const profileViewsLastWeek = await ProfileModel.aggregate([
       { $match: { _id: new mongoose.Types.ObjectId(cardDashboard._id) } },
       { $unwind: "$viewDetails" },
       { $match: { "viewDetails.viewedAt": { $gte: sevenDaysAgo } } },
       { $group: { _id: null, totalViews: { $sum: 1 } } },
     ]);
 
-    const totalFollowersLastWeek = await MemberModel.aggregate([
+    const totalFollowersLastWeek = await ProfileModel.aggregate([
       { $match: { _id: new mongoose.Types.ObjectId(cardDashboard._id) } },
       { $unwind: "$followers" },
       { $match: { "followers.followedAt": { $gte: sevenDaysAgo } } },
@@ -1389,6 +2135,7 @@ export async function sendFlexMessageLiff(flexContent: string) {
 
 import { MongoClient } from "mongodb";
 import { Friend, User } from "@/types";
+import ProfileModel from "../models/profile";
 
 // get all possible member // need to remove this
 export async function fetchAllMembers() {
@@ -1841,6 +2588,277 @@ export async function getFollowStatus(
   }
 }
 
+export async function getFollowers(authActiveProfileId: string) {
+  try {
+    await connectToDB();
+
+    const profile = await ProfileModel.findOne({
+      _id: authActiveProfileId,
+    }).select("followers closeFriends");
+
+    const followersDetails = await Promise.all(
+      profile.followers.map(async (follower: any) => {
+        const followerDetails = await ProfileModel.findOne({
+          _id: follower.followersId,
+        }).select("accountname image");
+        const imageDoc = await Image.findById(followerDetails.image[0])
+          .select("binaryCode")
+          .lean();
+
+        return {
+          _id: followerDetails._id,
+          accountname: followerDetails.accountname,
+          image: followerDetails.image.length > 0 ? imageDoc : null,
+          isCloseFriend: profile.closeFriends.some(
+            (closeFriend: any) =>
+              closeFriend.toString() === followerDetails._id.toString()
+          ),
+        };
+      })
+    );
+
+    return {
+      success: true,
+      followers: followersDetails,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Failed to fetch followers: ${error.message}`,
+    };
+  }
+}
+
+export async function getBlockedAccounts(authActiveProfileId: string) {
+  try {
+    await connectToDB();
+
+    const profile = await ProfileModel.findOne({
+      _id: authActiveProfileId,
+    }).select("blockedAccounts");
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    const blockedDetails = await Promise.all(
+      profile.blockedAccounts.map(async (blockedAccountId: any) => {
+        // if (member.followers.some((follower: any) => follower.followersId.toString() === blockedAccountId.toString())) {
+        //     return null;
+        // }
+
+        const blockedDetails = await ProfileModel.findById(
+          blockedAccountId
+        ).select("accountname image");
+
+        const imageDoc =
+          blockedDetails.image.length > 0
+            ? await Image.findById(blockedDetails.image[0])
+                .select("binaryCode")
+                .lean()
+            : null;
+
+        return {
+          _id: blockedDetails._id,
+          accountname: blockedDetails.accountname,
+          image: imageDoc ? imageDoc : null,
+          isBlocked: true,
+        };
+      })
+    );
+
+    const validBlockedDetails = blockedDetails.filter(
+      (detail) => detail !== null
+    );
+
+    return {
+      success: true,
+      blockedAccounts: validBlockedDetails,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Failed to fetch blocked accounts: ${error.message}`,
+    };
+  }
+}
+
+export async function unblockAccount(
+  authActiveProfileId: string,
+  blockedAccountId: string
+) {
+  try {
+    await connectToDB();
+
+    const profile = await ProfileModel.findOne({ _id: authActiveProfileId });
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    profile.blockedAccounts = profile.blockedAccounts.filter(
+      (id: any) => id.toString() !== blockedAccountId
+    );
+
+    await profile.save();
+
+    return {
+      success: true,
+      message: "Account unblocked successfully.",
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Failed to unblock account: ${error.message}`,
+    };
+  }
+}
+
+export async function getMutedAccounts(authActiveProfileId: string) {
+  try {
+    await connectToDB();
+
+    const profile = await ProfileModel.findOne({
+      _id: authActiveProfileId,
+    }).select("mutedAccounts");
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    const mutedDetails = await Promise.all(
+      profile.mutedAccounts.map(async (mutedAccountId: any) => {
+        // if (member.followers.some((follower: any) => follower.followersId.toString() === blockedAccountId.toString())) {
+        //     return null;
+        // }
+
+        const mutedDetails = await ProfileModel.findById(mutedAccountId).select(
+          "accountname image"
+        );
+
+        const imageDoc =
+          mutedDetails.image.length > 0
+            ? await Image.findById(mutedDetails.image[0])
+                .select("binaryCode")
+                .lean()
+            : null;
+
+        return {
+          _id: mutedDetails._id,
+          accountname: mutedDetails.accountname,
+          image: imageDoc ? imageDoc : null,
+          isBlocked: true,
+        };
+      })
+    );
+
+    const validMutedDetails = mutedDetails.filter((detail) => detail !== null);
+
+    return {
+      success: true,
+      mutedAccounts: validMutedDetails,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Failed to fetch muted accounts: ${error.message}`,
+    };
+  }
+}
+
+export async function unmuteAccount(
+  authActiveProfileId: string,
+  mutedAccountId: string
+) {
+  try {
+    await connectToDB();
+
+    const profile = await ProfileModel.findOne({ _id: authActiveProfileId });
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    profile.mutedAccounts = profile.mutedAccounts.filter(
+      (id: any) => id.toString() !== mutedAccountId
+    );
+
+    await profile.save();
+
+    return {
+      success: true,
+      message: "Account unblocked successfully.",
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Failed to unblock account: ${error.message}`,
+    };
+  }
+}
+
+// follow private acc
+export async function followPrivateAcc(
+  authenticatedId: string,
+  followedId: string
+) {
+  try {
+    await connectToDB();
+
+    const privateAcc = await MemberModel.findOne({ user: followedId }).select(
+      "accountType"
+    );
+
+    if (!privateAcc || privateAcc.accountType !== "private") {
+      return {
+        success: false,
+        message: "Cannot follow. The account is not private.",
+      };
+    }
+    // go into follow request table
+
+    // const updateCurrentUserFollowing = await MemberModel.findOneAndUpdate(
+    //   { user: authenticatedId },
+    //   { $addToSet: { following: followedId } }
+    // );
+
+    // if (!updateCurrentUserFollowing) {
+    //   return {
+    //     success: false,
+    //     message: "Failed to update the following list.",
+    //   };
+    // }
+
+    // console.log("updateCurrentUserFollowing" + updateCurrentUserFollowing);
+
+    // const updatePrivateUserFollower = await MemberModel.findOneAndUpdate(
+    //   { user: followedId },
+    //   {
+    //     $addToSet: {
+    //       followers: { followersId: authenticatedId, followedAt: new Date() },
+    //     },
+    //   }
+    // );
+
+    // if (!updatePrivateUserFollower) {
+    //   return {
+    //     success: false,
+    //     message: "Failed to update the private user's followers list.",
+    //   };
+    // }
+
+    // console.log("updatePrivateUserFollower" + updatePrivateUserFollower);
+
+    return {
+      success: true,
+      message: "Successfully followed the private account.",
+    };
+  } catch (error: any) {
+    console.error("Error following private account:", error);
+    return { success: false, message: "Error following private account." };
+  }
+}
+
 // get follower for current acc
 export async function getAllFollowers(userId: string) {
   try {
@@ -1853,29 +2871,14 @@ export async function getAllFollowers(userId: string) {
       return { success: false, message: "User not found", followers: [] };
     }
 
-    const followersWithDetails = await Promise.all(
-      member.followers.map(async (follower: any) => {
-        const followerDetails = await MemberModel.findOne({
-          user: follower.followersId,
-        }).select("accountname user image _id");
-
-        const imgUrl = await Image.findOne({
-          _id: followerDetails?.image,
-        }).select("binaryCode");
-
-        return {
-          id: followerDetails?._id,
-          userId: followerDetails?.user,
-          name: followerDetails?.accountname || "Unknown",
-          image: imgUrl.binaryCode.toString(),
-          followedAt: follower.followedAt,
-        };
-      })
-    );
-
     return {
       success: true,
-      followers: followersWithDetails,
+      followers: member.followers.map((follower: any) => ({
+        _id: follower.followersId._id,
+        name: follower.followersId.name,
+        image: follower.followersId.image,
+        followedAt: follower.followedAt,
+      })),
     };
   } catch (error: any) {
     console.error("Error fetching followers:", error);
@@ -1893,6 +2896,19 @@ export async function getAllFollowing(userId: string) {
     if (!member) {
       return { success: false, message: "User not found", following: [] };
     }
+
+    //     return {
+    //         success: true,
+    //         following: member.following.map((followingUser: any) => ({
+    //             _id: followingUser._id,
+    //             name: followingUser.name,
+    //             image: followingUser.image,
+    //         })),
+    //     };
+    // } catch (error: any) {
+    //     console.error("Error fetching following users:", error);
+    //     return { success: false, message: error.message, following: [] };
+    // }
 
     const followingWithDetails = await Promise.all(
       member.following.map(async (following: any) => {
@@ -2328,146 +3344,18 @@ export async function getFollowersAndFollowing(userId: string) {
 
     const followersWithDetails = await Promise.all(
       member.followers.map(async (follower: any) => {
-        const followerId = follower.followersId;
-
-        const chatroomExistsForFollower = await chatroomExists(
-          userId,
-          followerId
-        );
-
-        if (chatroomExistsForFollower) {
-          return null;
-        }
-
         const followerDetails = await MemberModel.findOne({
-          user: followerId,
+          user: follower.followersId,
         }).select("accountname user image _id");
 
-        if (!followerDetails) {
-          return null;
-        }
-
         const imgUrl = await Image.findOne({
-          _id: followerDetails.image,
+          _id: followerDetails?.image,
         }).select("binaryCode");
 
         return {
-          id: followerDetails._id,
-          userId: followerDetails.user,
-          name: followerDetails.accountname || "Unknown",
-          image: imgUrl?.binaryCode.toString(),
-          followedAt: follower.followedAt,
-        };
-      })
-    );
-
-    //   member.following.map(async (following: any) => {
-    //     const followeingDetails = await MemberModel.findOne({
-    //       user: following,
-    //     }).select("accountname user image _id");
-
-    //     const imgUrl = await Image.findOne({
-    //       _id: followeingDetails?.image,
-    //     }).select("binaryCode");
-
-    //     return {
-    //       id: followeingDetails?._id,
-    //       userId: followeingDetails?.user,
-    //       name: followeingDetails?.accountname || "Unknown",
-    //       image: imgUrl?.binaryCode.toString(),
-    //     };
-    //   })
-    // );
-    const followingWithDetails = await Promise.all(
-      member.following.map(async (followingId: string) => {
-        const chatroomExistsForFollowing = await chatroomExists(
-          userId,
-          followingId
-        );
-
-        if (chatroomExistsForFollowing) {
-          return null;
-        }
-
-        const followingDetails = await MemberModel.findOne({
-          user: followingId,
-        }).select("accountname user image _id");
-
-        if (!followingDetails) {
-          return null;
-        }
-
-        const imgUrl = await Image.findOne({
-          _id: followingDetails.image,
-        }).select("binaryCode");
-
-        return {
-          id: followingDetails._id,
-          userId: followingDetails.user,
-          name: followingDetails.accountname || "Unknown",
-          image: imgUrl?.binaryCode.toString(),
-        };
-      })
-    );
-
-    const filteredFollowers = followersWithDetails.filter(Boolean);
-    const filteredFollowing = followingWithDetails.filter(Boolean);
-
-    // console.log(filteredFollowing);
-
-    return {
-      success: true,
-      message: "",
-      followers: filteredFollowers,
-      following: filteredFollowing,
-    };
-  } catch (error: any) {
-    console.error("Error fetching followers and following:", error);
-    return {
-      success: false,
-      message: error.message || "An error occurred",
-      followers: [],
-      following: [],
-    };
-  }
-}
-
-// used to create group chat, fetch all follower and following
-export async function getAllFollowersAndFollowing(userId: string) {
-  try {
-    await connectToDB();
-
-    const member = await MemberModel.findOne({ user: userId });
-
-    if (!member) {
-      return {
-        success: false,
-        message: "User not found",
-        followers: [],
-        following: [],
-      };
-    }
-
-    const followersWithDetails = await Promise.all(
-      member.followers.map(async (follower: any) => {
-        const followerId = follower.followersId;
-
-        const followerDetails = await MemberModel.findOne({
-          user: followerId,
-        }).select("accountname user image _id");
-
-        if (!followerDetails) {
-          return null;
-        }
-
-        const imgUrl = await Image.findOne({
-          _id: followerDetails.image,
-        }).select("binaryCode");
-
-        return {
-          id: followerDetails._id,
-          userId: followerDetails.user,
-          name: followerDetails.accountname || "Unknown",
+          id: followerDetails?._id,
+          userId: followerDetails?.user,
+          name: followerDetails?.accountname || "Unknown",
           image: imgUrl?.binaryCode.toString(),
           followedAt: follower.followedAt,
         };
@@ -2475,23 +3363,19 @@ export async function getAllFollowersAndFollowing(userId: string) {
     );
 
     const followingWithDetails = await Promise.all(
-      member.following.map(async (followingId: string) => {
-        const followingDetails = await MemberModel.findOne({
-          user: followingId,
+      member.following.map(async (following: any) => {
+        const followeingDetails = await MemberModel.findOne({
+          user: following,
         }).select("accountname user image _id");
 
-        if (!followingDetails) {
-          return null;
-        }
-
         const imgUrl = await Image.findOne({
-          _id: followingDetails.image,
+          _id: followeingDetails?.image,
         }).select("binaryCode");
 
         return {
-          id: followingDetails._id,
-          userId: followingDetails.user,
-          name: followingDetails.accountname || "Unknown",
+          id: followeingDetails?._id,
+          userId: followeingDetails?.user,
+          name: followeingDetails?.accountname || "Unknown",
           image: imgUrl?.binaryCode.toString(),
         };
       })
@@ -2514,29 +3398,81 @@ export async function getAllFollowersAndFollowing(userId: string) {
   }
 }
 
+export async function fetchMessages(
+  chatroomId: string,
+  authenticatedUserId: string
+) {
+  try {
+    const chatroom = await ChatroomModel.findById(chatroomId);
+    console.log("cahtrrom:" + chatroom);
+
+    if (!chatroom) {
+      throw new Error("Chatroom not found");
+    }
+
+    const participantsInfo = await Promise.all(
+      chatroom.participants.map(async (participant: any) => {
+        const participantInfo = await MemberModel.findOne({
+          user: participant,
+        }).lean();
+
+        let imgUrl = null;
+
+        if (participantInfo && participantInfo.image) {
+          const imageRecord = await Image.findOne({
+            _id: participantInfo.image,
+          }).select("binaryCode");
+          imgUrl = imageRecord?.binaryCode || null;
+        }
+        return {
+          ...participantInfo,
+          image: imgUrl,
+        };
+      })
+    );
+
+    const participantMap = new Map(
+      participantsInfo.map((participant: any) => [
+        participant.user.toString(),
+        participant,
+      ])
+    );
+
+    const messages = await MessageModel.find({ chatroomId })
+      .sort({ createdAt: 1 })
+      .lean();
+
+    const messagesWithMemberData = messages.map((message: any) => {
+      const sender = participantMap.get(message.senderId.toString());
+      return {
+        ...message,
+        senderId: message.senderId,
+        image: sender?.image || null,
+        senderName: sender?.accountname || "Unknown",
+      };
+    });
+
+    return { success: true, message: messagesWithMemberData };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+}
+
 // create a new personal chatroom
 export async function createOrGetChatroom(
   authenticatedId: string,
   targetUserId: string
 ) {
   try {
-    console.log(
-      "Looking for existing chatroom between:",
-      authenticatedId,
-      "and",
-      targetUserId
-    );
-
     let chatroom = await ChatroomModel.findOne({
       type: "PERSONAL",
       participants: { $all: [authenticatedId, targetUserId] },
     });
 
     if (chatroom) {
-      console.log("Existing chatroom found:", chatroom._id);
+      console.log("Existing chatroom found: " + chatroom._id);
     } else {
-      console.log("No existing chatroom found, creating new one");
-
+      // Create new chatroom if not found
       chatroom = await ChatroomModel.create({
         type: "PERSONAL",
         name: "Personal Chat",
@@ -2544,68 +3480,12 @@ export async function createOrGetChatroom(
       });
       await chatroom.save();
 
-      console.log("Newly created chatroom:", chatroom);
+      console.log("Newly created chatroom: " + chatroom._id);
     }
 
-    const chatroomPlain = chatroom.toObject();
-
-    // Check all fields of the chatroom object
-    console.log("Chatroom ID:", chatroomPlain._id);
-    console.log("Chatroom participants:", chatroomPlain.participants);
-    console.log("Chatroom name:", chatroomPlain.name);
-
-    return { success: true, chatroom: chatroomPlain };
+    return { success: true, chatroom };
   } catch (error: any) {
-    console.error("Error in createOrGetChatroom:", error);
-    return { success: false, message: error.message };
-  }
-}
-
-// create group chatroom
-export async function createGroupChatroom(
-  authenticatedId: string,
-  participantIdArray: string[],
-  groupName: string
-) {
-  try {
-    console.log("array");
-    console.log(participantIdArray);
-
-    if (!groupName) {
-      throw new Error("Group name is required.");
-    }
-    if (!Array.isArray(participantIdArray) || participantIdArray.length === 0) {
-      throw new Error("At least one participant is required.");
-    }
-
-    // remove duplicate user id
-    const participants = [authenticatedId, ...participantIdArray].filter(
-      (id, index, self) => self.indexOf(id) === index
-    );
-
-    console.log("Participants array:", participants);
-
-    // Create the group chatroom
-    const groupChatroom = await ChatroomModel.create({
-      type: "GROUP",
-      name: groupName,
-      participants: participants,
-    });
-
-    await groupChatroom.save();
-
-    console.log("Newly created group chatroom:", groupChatroom);
-
-    const chatroomPlain = groupChatroom.toObject();
-
-    // Check all fields of the chatroom object
-    console.log("Chatroom ID:", chatroomPlain._id);
-    console.log("Chatroom participants:", chatroomPlain.participants);
-    console.log("Chatroom name:", chatroomPlain.name);
-
-    return { success: true, chatroom: chatroomPlain };
-  } catch (error: any) {
-    console.error("Error in createOrGetChatroom:", error);
+    console.error("Error in createOrGetChatroom: ", error);
     return { success: false, message: error.message };
   }
 }

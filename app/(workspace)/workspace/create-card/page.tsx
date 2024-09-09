@@ -15,6 +15,7 @@ import {
   autoCropEdgeImage,
   callChatGpt,
 } from "@/lib/utils";
+import { fetchCurrentActiveProfileId } from "@/lib/actions/user.actions";
 
 type Props = {
   params: {
@@ -74,11 +75,14 @@ const Page = async ({ params }: Props) => {
     redirect("/sign-in");
   }
 
-  const authaccountId = user.id;
+  const authUserId = user.id.toString();
+  const authActiveProfileId = await fetchCurrentActiveProfileId(authUserId);
+
+  console.log("authActiveProfileId: " + authActiveProfileId);
 
   const newCardData: Card = {
     cardID: generateCustomID(),
-    creator: authaccountId,
+    creator: authActiveProfileId,
     title: "Temp Card",
     status: "Developing",
     description: "",
@@ -93,6 +97,7 @@ const Page = async ({ params }: Props) => {
     totalViews: 0,
     viewDetails: [],
     updateHistory: [],
+    comments: []
   };
 
   // const cardEditorHtml = renderComponentToString(
@@ -106,13 +111,13 @@ const Page = async ({ params }: Props) => {
   return (
     <div className="fixed top-0 bottom-0 left-0 right-0 z-[20] bg-background overflow-hidden">
       <EditorProvider
-        authaccountId={authaccountId}
+        authActiveProfileId={authActiveProfileId}
         cardId={newCardData.cardID}
         cardDetails={newCardData}
       >
         <CardEditorNavigation
           cardDetails={newCardData}
-          authaccountId={authaccountId}
+          authActiveProfileId={authActiveProfileId}
         />
         <div
           style={{ backgroundImage: "url('../paper-dark.svg')" }}

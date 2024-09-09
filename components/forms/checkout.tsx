@@ -8,16 +8,18 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import CheckoutForm from './checkout-form';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '../ui/card';
 import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from '@/components/ui/select';
+import CheckoutECPayForm from './checkout-ecpay-form';
+import CheckoutLinePayForm from './checkout-linepay-form';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY!);
 
 interface CheckoutComponentProps {
     product: Product;
     productId: string;
-    authenticatedUserId: string;
+    authActiveProfileId: string;
 }
 
-const CheckoutComponent: React.FC<CheckoutComponentProps> = ({ product, productId, authenticatedUserId }) => {
+const CheckoutComponent: React.FC<CheckoutComponentProps> = ({ product, productId, authActiveProfileId }) => {
     const [paidTerms, setPaidTerms] = useState("1");
 
     const calculateDiscount = (price: number, terms: number, discountRate: number) => {
@@ -68,17 +70,28 @@ const CheckoutComponent: React.FC<CheckoutComponentProps> = ({ product, productI
                                         <CheckoutForm
                                             product={product}
                                             productId={productId}
-                                            authenticatedUserId={authenticatedUserId}
+                                            authActiveProfileId={authActiveProfileId}
                                             totalAmount={total}
-                                            paidTerms={paidTerms} 
+                                            paidTerms={paidTerms}
                                             isSubscription={true}
                                         />
                                     </TabsContent>
                                     <TabsContent value="ecpay">
-                                        <div className="text-white">EC Pay option will be available soon.</div>
+                                        <CheckoutECPayForm
+                                            productId={productId}
+                                            authActiveProfileId={authActiveProfileId}
+                                            totalAmount={total}
+                                        // paidTerms={paidTerms}
+                                        />
+                                        {/* <TestForm /> */}
                                     </TabsContent>
                                     <TabsContent value="linepay">
-                                        <div className="text-white">Line Pay option will be available soon.</div>
+                                        <CheckoutLinePayForm
+                                            productId={productId}
+                                            authActiveProfileId={authActiveProfileId}
+                                            totalAmount={total}
+                                        // paidTerms={paidTerms}
+                                        />
                                     </TabsContent>
                                 </Tabs>
                             </CardContent>
@@ -124,7 +137,3 @@ const CheckoutComponent: React.FC<CheckoutComponentProps> = ({ product, productI
 };
 
 export default CheckoutComponent;
-
-
-
-

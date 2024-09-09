@@ -11,13 +11,13 @@ import LoadingModal from '../modal/loading-modal';
 interface CheckoutFormProps {
     product: Product;
     productId: string;
-    authenticatedUserId: string;
+    authActiveProfileId: string;
     totalAmount: number;
     paidTerms: string;
     isSubscription: boolean;
 }
 
-const CheckoutForm: React.FC<CheckoutFormProps> = ({ product, productId, authenticatedUserId, totalAmount, paidTerms, isSubscription }) => {
+const CheckoutForm: React.FC<CheckoutFormProps> = ({ product, productId, authActiveProfileId, totalAmount, paidTerms, isSubscription }) => {
     const stripe = useStripe();
     const elements = useElements();
     const [error, setError] = useState<string | null>(null);
@@ -36,20 +36,20 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ product, productId, authent
 
         try {
             const subscription = await storeSubscription({
-                authenticatedUserId,
+                authActiveProfileId,
                 productId,
                 paidTerms: Number(paidTerms),
                 totalAmount,
             });
 
             console.log("subscription: " + JSON.stringify(subscription));
-            console.log("authenticatedUserId: " + authenticatedUserId);
+            console.log("authActiveProfileId: " + authActiveProfileId);
             console.log("stripeProductId: " + product.stripeProductId);
 
             if (subscription.success) {
                 const { data } = isSubscription
                     ? await axios.post('/api/stripe/createSubscription', {
-                        memberId: authenticatedUserId,
+                        profileId: authActiveProfileId,
                         stripeProductId: product.stripeProductId,
                         interval: paidTerms === "1" ? 'month' : 'year', 
                     })
@@ -60,8 +60,6 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ product, productId, authent
                     });
 
                 const { client_secret } = data;
-
-                console.log("data: " + JSON.stringify(data));
 
                 if (!stripe || !elements) return;
 

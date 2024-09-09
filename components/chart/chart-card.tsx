@@ -24,7 +24,7 @@ type ChartCardProps = {
   title: string
   queryKey?: string
   selectedRangeLabel?: string
-  userId?: string
+  profileId?: string
   type?: string
   children: ReactNode
 }
@@ -33,7 +33,7 @@ export function ChartCard({
   title,
   children,
   queryKey,
-  userId,
+  profileId,
   type,
   selectedRangeLabel,
 }: ChartCardProps) {
@@ -48,15 +48,15 @@ export function ChartCard({
   const [selectedCard, setSelectedCard] = useState<{ _id: string; title: string } | null>(null);
 
   useEffect(() => {
-    if (userId) {
+    if (profileId) {
       const fetchData = async () => {
-        const response = await fetchOnlyCardId(userId);
+        const response = await fetchOnlyCardId(profileId);
         setCardDetails(response);
       }
 
       fetchData();
     }
-  }, [userId]);
+  }, [profileId]);
 
 
   function setRange(range: keyof typeof RANGE_OPTIONS | DateRange) {
@@ -89,7 +89,7 @@ export function ChartCard({
         <div className="flex gap-4 justify-between items-center">
           <CardTitle>{title}</CardTitle>
           <div className="flex gap-2">
-            {(userId !== undefined && cardDetails && type === "card") && (
+            {(profileId !== undefined && cardDetails && type === "card") && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline">

@@ -5,21 +5,21 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'rec
 import { fetchTransactionStats } from '@/lib/actions/admin.actions';
 
 type TransactionAnalysisByDateProps = {
-    userId: string | null;
+    profileId: string | null;
     startDate: Date | null;
     endDate: Date | null;
 }
 
-export function TransactionAnalysisByDate({ userId, startDate, endDate }: TransactionAnalysisByDateProps) {
+export function TransactionAnalysisByDate({ profileId, startDate, endDate }: TransactionAnalysisByDateProps) {
 
     const [chartData, setChartData] = useState<any[]>([]);
 
     useEffect(() => {
 
-        if (!userId) return;
+        if (!profileId) return;
 
         const fetchData = async () => {
-            const transactionStats = await fetchTransactionStats(userId, startDate, endDate);
+            const transactionStats = await fetchTransactionStats(profileId, startDate, endDate);
 
             if (transactionStats.success == true) {
                 setChartData(transactionStats.chartData || []);
@@ -29,7 +29,7 @@ export function TransactionAnalysisByDate({ userId, startDate, endDate }: Transa
         }
 
         fetchData();
-    }, [userId]);
+    }, [profileId]);
 
     if (chartData.length === 0) {
         return (

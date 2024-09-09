@@ -62,7 +62,7 @@ function LeftSidebar({ session, userInfoImage }: LeftSidebarProps) {
         {session ? (
           <div className="text-center">
             {userImage ? (
-              <Link className="leftsidebar_link" href={""}>
+              <Link className="leftsidebar_link" href={"/settings"}>
                 <Image
                   width={28}
                   height={28}

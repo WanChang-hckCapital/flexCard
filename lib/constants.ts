@@ -37,3 +37,19 @@ export type EditorComponentsBtns =
   | 'bubble'
   | 'carousel'
   | null
+
+  export const businessLocations = [
+    "USA", "Canada", "UK", "Australia"
+];
+
+export const businessTypes = [
+    "Retail", "Wholesale", "Services"
+];
+
+export const industries = [
+    "Technology", "Healthcare", "Finance"
+];
+
+export const banks = [
+    "Bank of America", "Chase", "Wells Fargo"
+];

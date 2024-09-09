@@ -8,10 +8,11 @@ import { Toaster as SonnarToaster } from "@/components/ui/sonner";
 import Header from "@/components/admin/header";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../api/utils/authOptions";
-import { fetchMemberImage } from "@/lib/actions/user.actions";
+import { fetchCurrentActiveProfileId, fetchMemberImage } from "@/lib/actions/user.actions";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import SideBar from "@/components/admin/sidebar";
-import { fetchMember } from "@/lib/actions/admin.actions";
+import { fetchMember, fetchProfile } from "@/lib/actions/admin.actions";
+import { redirect } from "next/navigation";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -32,18 +33,23 @@ export default async function RootLayout({
   const session = await getServerSession(authOptions);
   const user = session?.user;
 
-  let userInfo = null;
-  let userImage = null;
+  if (!user) return redirect("/sign-in");
+
+  const authUserId = user.id.toString();
+  const authActiveProfileId = await fetchCurrentActiveProfileId(authUserId);
+
+  let profileInfo = null;
+  let userProfileImage = null;
   if (user) {
-    userInfo = await fetchMember(user.id);
-    if (userInfo && typeof userInfo.toObject === "function") {
-      userInfo = userInfo.toObject();
+    profileInfo = await fetchProfile(authActiveProfileId);
+    if (profileInfo && typeof profileInfo.toObject === "function") {
+      profileInfo = profileInfo.toObject();
     }
 
-    if (userInfo.image) {
-      userImage = await fetchMemberImage(userInfo.image);
-      if (userImage && typeof userImage.toObject === "function") {
-        userImage = userImage.toObject();
+    if (profileInfo.image) {
+      userProfileImage = await fetchMemberImage(profileInfo.image);
+      if (userProfileImage && typeof userProfileImage.toObject === "function") {
+        userProfileImage = userProfileImage.toObject();
       }
     }
   }
@@ -57,12 +63,12 @@ export default async function RootLayout({
             fontSans.variable
           )}>
           <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
-            <SideBar usertype={userInfo.usertype} />
+            <SideBar usertype={profileInfo.usertype} />
             <div className="flex flex-col">
               <Header
                 session={session}
-                userInfoImage={userImage}
-                usertype={userInfo.usertype}
+                userInfoImage={userProfileImage}
+                usertype={profileInfo.usertype}
               />
               <main className="flex flex-row">
                 <TooltipProvider>

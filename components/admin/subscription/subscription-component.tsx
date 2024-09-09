@@ -17,10 +17,10 @@ interface SubscriptionComponentProps {
     subscription: any;
     limitedCard: number;
     cardsCount: number;
-    authenticatedUserId: string;
+    authActiveProfileId: string;
 }
 
-const SubscriptionComponent: React.FC<SubscriptionComponentProps> = ({ subscription, limitedCard, cardsCount, authenticatedUserId }) => {
+const SubscriptionComponent: React.FC<SubscriptionComponentProps> = ({ subscription, limitedCard, cardsCount, authActiveProfileId }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [currentSubscription, setCurrentSubscription] = useState(subscription);
@@ -28,7 +28,7 @@ const SubscriptionComponent: React.FC<SubscriptionComponentProps> = ({ subscript
     const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
 
     const fetchUpdatedSubscription = async () => {
-        const updatedSubscription = await fetchUserSubscription(authenticatedUserId);
+        const updatedSubscription = await fetchUserSubscription(authActiveProfileId);
         if (updatedSubscription.success) {
             setCurrentSubscription(updatedSubscription.subscription);
         } else {
@@ -40,8 +40,10 @@ const SubscriptionComponent: React.FC<SubscriptionComponentProps> = ({ subscript
         setLoading(true);
         console.log('currentSubscription', currentSubscription);
 
-        if (subscription) {
+        if (subscription && subscription.unsubscribeOffer !== false) {
             setIsOfferModalOpen(true);
+        }else{
+            setIsFeedbackModalOpen(true);
         }
         setLoading(false);
     };
@@ -51,7 +53,7 @@ const SubscriptionComponent: React.FC<SubscriptionComponentProps> = ({ subscript
         setLoading(true);
 
         try {
-            const result = await pauseUserSubscription(currentSubscription.id);
+            const result = await pauseUserSubscription(currentSubscription.id, authActiveProfileId);
             if (result.success) {
                 await fetchUpdatedSubscription();
                 toast.success('You have accepted the offer. Your subscription has been paused for one month.');
@@ -75,7 +77,7 @@ const SubscriptionComponent: React.FC<SubscriptionComponentProps> = ({ subscript
         setLoading(true);
         const resultFeedback = await submitFeedback({
             ...feedbackData,
-            userId: authenticatedUserId,
+            profileId: authActiveProfileId,
         });
 
         if (resultFeedback.success) {
@@ -133,7 +135,7 @@ const SubscriptionComponent: React.FC<SubscriptionComponentProps> = ({ subscript
 
     return (
         <div>
-            {currentSubscription.status !== "canceled" || currentSubscription.status !== "pending" ? (
+            {currentSubscription.status !== "canceled" && currentSubscription.status !== "pending" ? (
                 <div>
                     <div className="pb-6 text-right">
                         {currentSubscription.status === "cancel_at_period_end" ? (
@@ -242,6 +244,7 @@ const SubscriptionComponent: React.FC<SubscriptionComponentProps> = ({ subscript
                     />
                 </div>
             ) : (
+                // modify here
                 <div>You do not have an active subscription.</div>
             )}
         </div>

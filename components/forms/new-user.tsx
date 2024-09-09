@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { ProductValidation } from "@/lib/validations/product";
 import { toast } from "sonner";
 import { usePathname, useRouter } from "next/navigation";
-import { createMemberWithRole, fetchAllPromotion, insertNewProduct, updateProduct } from "@/lib/actions/admin.actions";
+import { createMemberWithProfileRole, fetchAllPromotion, insertNewProduct, updateProduct } from "@/lib/actions/admin.actions";
 import { useEffect, useState } from "react";
 import { AdminSideUserValidation } from "@/lib/validations/user-adminside";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
@@ -27,12 +27,12 @@ type userRole = 'FLEXACCOUNTANT' | 'FLEXHR' | 'SUPERUSER';
 
 interface Props {
   btnTitle: string;
-  authenticatedUserId: string;
+  authActiveProfileId: string;
 }
 
 const userRoles: userRole[] = ['FLEXACCOUNTANT', 'FLEXHR', 'SUPERUSER'];
 
-const AddNewUser = ({ btnTitle, authenticatedUserId }: Props) => {
+const AddNewUser = ({ btnTitle, authActiveProfileId }: Props) => {
   const router = useRouter();
 
   const form = useForm<z.infer<typeof AdminSideUserValidation>>({
@@ -51,10 +51,10 @@ const AddNewUser = ({ btnTitle, authenticatedUserId }: Props) => {
   }
 
   const onSubmit = async (values: z.infer<typeof AdminSideUserValidation>) => {
-    const result = await createMemberWithRole({
+    const result = await createMemberWithProfileRole({
       email: values.email,
       userRole: values.userRole,
-      authenticatedUserId,
+      authActiveProfileId,
     });
 
     clearField(result);

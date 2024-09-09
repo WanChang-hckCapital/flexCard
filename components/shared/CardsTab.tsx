@@ -13,7 +13,7 @@ type Result = {
     image: string;
   };
   likes: {
-    userId: string;
+    profileId: string;
     accountname: string;
     binarycode: string;
   }[];
@@ -29,12 +29,12 @@ type Result = {
 }[];
 
 interface Props {
-  authenticatedUserId?: string;
-  accountId: string;
+  authenticatedProfileId?: string;
+  profileId: string;
   userType: string;
 }
 
-async function CardsTab({ authenticatedUserId, accountId, userType }: Props) {
+async function CardsTab({ authenticatedProfileId, profileId, userType }: Props) {
   let result: Result | undefined;
 
   // if (userType === "ORGANIZATION") {
@@ -53,12 +53,7 @@ async function CardsTab({ authenticatedUserId, accountId, userType }: Props) {
   //       .flatMap(data => data.cards)
   //   };
   // } else {
-  result = await fetchPersonalCards(accountId);
-  const session = await getServerSession(authOptions);
-
-  if (session) {
-    const user = session?.user;
-  }
+  result = await fetchPersonalCards(profileId);
   // }
 
   if (!result) {
@@ -72,7 +67,7 @@ async function CardsTab({ authenticatedUserId, accountId, userType }: Props) {
   return (
     <div style={styles}>
       <section className="lg:mt-7 space-y-2 mx-auto">
-        <ResponsiveGrid result={result} session={session} />
+        <ResponsiveGrid result={result} authActiveProfileId={authenticatedProfileId} />
       </section>
     </div>
   );

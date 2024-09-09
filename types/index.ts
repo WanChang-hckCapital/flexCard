@@ -13,39 +13,64 @@ export type Price = {
 };
 
 export type Member = {
-  user: {};
-  generatedId: string;
-  accountname: string;
-  image: string;
-  email: string;
-  password: string;
-  phone: string;
-  shortdescription: string;
-  usertype: string;
-  onboarded: boolean;
-  ip_address: string;
-  country: string;
-  countrycode: string;
-  stripeCustomerId: string;
-  subscription: {};
-  cards: Card[];
-  followers: Member[];
-  following: Member[];
-  organization: {};
-  trial: Trial[];
-  totalViews: number;
+    user: {},
+    generatedId: string,
+    email: string,
+    password: string,
+    phone: string,
+    ip_address: string,
+    country: string,
+    countrycode: string,
+    profiles: Profile[],
+    activeProfile: number,
+    lastlogin: Date,
+}
+
+export type Profile = {
+  accountname: string,
+  image: string,
+  shortdescription: string,
+  usertype: string,
+  accountType: string,
+  role: string,
+  onboarded: boolean,
+  cards: Card[],
+  followers: Profile[],
+  following: Profile[],
+  closeFriends: Profile[],
+  blockedAccounts: Profile[],
+  mutedAccounts: Profile[],
+  organization: Organization,
+  offers: Offer[],
+  stripeCustomerId: string,
+  subscription: {},
+  totalViews: number,
   viewDetails: ViewDetail[];
-  updateHistory: [];
-  lastlogin: Date;
-  accountType: string;
-};
+  updateHistory: [],
+}
 
 export type Organization = {
-  organizationID: {};
-  document: [];
-  employees: Member[];
-  webUrl: string;
-};
+    document: [],
+    employees: Member[],
+    businessType: string,
+    businessLocation: string,
+    legalBusinessName: string,
+    businessRegistrationNumber: string,
+    businessName: string,
+    businessAddress: string,
+    businessPhone: string,
+    industry: string,
+    businessWebsite: string,
+    businessProductDescription: string,
+    bankAccountHolder: string,
+    bankName: string,
+    bankAccountNumber: string,
+    verify: {
+        verified: boolean,
+        verifiedAt: Date,
+        verifiedBy: {},
+    },
+}
 
 export enum Usertype {
   PERSONAL = "PERSONAL",
@@ -61,24 +86,41 @@ export enum Usertype {
   FLEXADMIN = "FLEXADMIN",
 }
 
+export enum Role {
+    FLEXADMIN = 'FLEXADMIN',
+    PERSONAL = 'PERSONAL',
+    SUPERUSER = 'SUPERUSER',
+    ORGANIZATION = 'ORGANIZATION',
+}
+
 export type Card = {
-  cardID: string;
-  creator: {};
-  title: string;
-  status: string;
-  description: string;
-  likes: [];
-  followers: [];
-  categories: [];
-  components: {};
-  lineFormatComponent: {};
-  flexFormatHtml: {};
-  totalViews: number;
-  viewDetails: ViewDetail[];
-  updateHistory: [];
-  updatedAt: Date;
-  createdAt: Date;
-};
+    cardID: string,
+    creator: {},
+    title: string,
+    status: string,
+    description: string,
+    likes: [],
+    followers: [],
+    categories: [],
+    components: {},
+    lineFormatComponent: {},
+    flexFormatHtml: {},
+    comments: [],
+    totalViews: number,
+    viewDetails: ViewDetail[];
+    updateHistory: [],
+    updatedAt: Date,
+    createdAt: Date,
+}
+
+export type Comment = {
+    commentID: string,
+    comment: string,
+    commentBy: {},
+    commentDate: Date,
+    likes: {},
+    replies: Comment[];
+}
 
 export type ViewDetail = {
   viewerId: string;
@@ -108,11 +150,12 @@ export type Subscription = {
   status: string;
 };
 
-export type Trial = {
-  trialPlan: Product;
-  trialStartDate: Date;
-  trialEndDate: Date;
-};
+export type Offer = {
+    plan: Product,
+    startDate: Date,
+    endDate: Date,
+    type: string,
+}
 
 export type Transaction = {
   id: string;
@@ -125,17 +168,18 @@ export type Transaction = {
 };
 
 export type Product = {
-  name: string;
-  description: string;
-  price: number;
-  availablePromo: string;
-  stripeProductId: string;
-  monthlyDiscount: number;
-  annualDiscount: number;
-  features: string[];
-  limitedIP: number;
-  limitedCard: number;
-};
+    name: string,
+    description: string,
+    category: string,
+    price: number,
+    availablePromo: string,
+    stripeProductId: string,
+    monthlyDiscount: number,
+    annualDiscount: number,
+    features: string[],
+    limitedIP: number,
+    limitedCard: number,
+}
 
 export type Promotion = {
   id: string;

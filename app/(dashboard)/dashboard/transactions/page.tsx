@@ -23,6 +23,7 @@ import { ChartCard } from "@/components/chart/chart-card";
 import { TransactionAnalysisByDate } from "@/components/chart/transaction-analysis/transaction-chart";
 import { RANGE_OPTIONS, getRangeOption } from "@/lib/rangeOptions";
 import CheckoutForm from "@/components/forms/checkout";
+import { fetchCurrentActiveProfileId } from "@/lib/actions/user.actions";
 
 interface TransactionsDashboardProps {
   searchParams: {
@@ -40,7 +41,8 @@ async function Transactions({ searchParams }: TransactionsDashboardProps) {
     redirect("/sign-in");
   }
 
-  const authenticatedUserId = user.id;
+  const authUserId = user.id.toString();
+  const authActiveProfileId = await fetchCurrentActiveProfileId(authUserId);
 
   const transactionDetailsRangeOption =
     getRangeOption(
@@ -50,7 +52,7 @@ async function Transactions({ searchParams }: TransactionsDashboardProps) {
     ) || RANGE_OPTIONS.last_7_days;
 
   const transactionStats = await fetchTransactionStats(
-    authenticatedUserId,
+    authActiveProfileId,
     transactionDetailsRangeOption.startDate,
     transactionDetailsRangeOption.endDate
   );
@@ -141,10 +143,10 @@ async function Transactions({ searchParams }: TransactionsDashboardProps) {
               <ChartCard
                 title="Transactions Over Time"
                 queryKey="transactionDetailsByDateRange"
-                userId={authenticatedUserId}
+                profileId={authActiveProfileId}
                 selectedRangeLabel={transactionDetailsRangeOption.label}>
                 <TransactionAnalysisByDate
-                  userId={authenticatedUserId}
+                  profileId={authActiveProfileId}
                   startDate={transactionDetailsRangeOption.startDate}
                   endDate={transactionDetailsRangeOption.endDate}
                 />
