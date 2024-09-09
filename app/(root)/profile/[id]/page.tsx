@@ -19,24 +19,24 @@ async function Page({ params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
 
   let authActiveProfileId = "";
-  let authProfileIdFromParams = "";
+  let profileIdFromParams = "";
   if (session) {
     const user = session?.user;
     const authUserId = user.id.toString();
 
     authActiveProfileId = await fetchCurrentActiveProfileId(authUserId);
 
-    authProfileIdFromParams = params.id;
+    profileIdFromParams = params.id;
 
-    await updateProfileViewData({ profileId: authProfileIdFromParams, authUserId: authActiveProfileId });
+    await updateProfileViewData({ profileId: profileIdFromParams, authUserId: authActiveProfileId });
   } else {
     const geoInfo = await getIPCountryInfo();
-    await updateProfileViewData({ profileId: authProfileIdFromParams, authUserId: geoInfo.ip });
+    await updateProfileViewData({ profileId: profileIdFromParams, authUserId: geoInfo.ip });
   }
 
   const tempUrl = "https://hckcapital.net";
 
-  let profileInfo = await fetchProfile(authProfileIdFromParams);
+  let profileInfo = await fetchProfile(profileIdFromParams);
   if (profileInfo && typeof profileInfo.toObject === "function") {
     profileInfo = profileInfo.toObject();
   }
@@ -53,16 +53,16 @@ async function Page({ params }: { params: { id: string } }) {
   }
 
   console.log("authActiveProfileId", authActiveProfileId);
-  console.log("authProfileIdFromParams", authProfileIdFromParams);
+  console.log("authProfileIdFromParams", profileIdFromParams);
   console.log("profileInfo onboarded", profileInfo);
 
-  if (authActiveProfileId.toString() === authProfileIdFromParams.toString() && !profileInfo?.onboarded)
+  if (authActiveProfileId.toString() === profileIdFromParams.toString() && !profileInfo?.onboarded)
     redirect("/onboarding");
 
   return (
     <section>
       <ProfileHeader
-        accountId={authProfileIdFromParams}
+        accountId={profileIdFromParams}
         authActiveProfileId={authActiveProfileId}
         accountName={profileInfo.accountname}
         imgUrl={profileImage.binaryCode}
@@ -105,7 +105,7 @@ async function Page({ params }: { params: { id: string } }) {
               className="w-full text-light-1">
               <CardsTab
                 authenticatedProfileId={authActiveProfileId}
-                profileId={authProfileIdFromParams}
+                profileId={profileIdFromParams}
                 userType="PERSONAL"
               />
             </TabsContent>

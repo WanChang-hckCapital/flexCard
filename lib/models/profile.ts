@@ -3,6 +3,11 @@ import { Profile, Role, Usertype } from "../../types";
 
 const profileSchema = new Schema<Profile>(
     {
+        email: {
+            type: String,
+            required: true,
+            unique: true,
+        },
         accountname: { type: String, default: null },
         image: [
             {

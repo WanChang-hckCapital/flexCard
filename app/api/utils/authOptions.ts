@@ -41,7 +41,8 @@ export const authOptions: AuthOptions = {
     async session({ session, user }) {
       if (user && user.id) {
         const userId = user.id;
-        await createMember(userId);
+        const userEmail = user.email;
+        await createMember(userId, userEmail);
         session.user.id = user.id;
       }
       return session;

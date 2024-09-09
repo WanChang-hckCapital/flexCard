@@ -19,16 +19,15 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
-import { UserValidation } from "@/lib/validations/user";
-import { getIPCountryInfo, updateMemberDetails } from "@/lib/actions/user.actions";
+import { addNewProfile, getIPCountryInfo } from "@/lib/actions/user.actions";
 import { toast } from "sonner";
 import imageCompression from "browser-image-compression";
 import { CircleUser, Pencil } from "lucide-react";
+import { ProfileValidation } from "@/lib/validations/new-profile";
 
 interface Props {
   profile: {
     userId: string;
-    profileId: string;
     accountname: string;
     image: string;
     email: string;
@@ -36,78 +35,52 @@ interface Props {
     shortdescription: string;
   };
   btnTitle: string;
-  onSubmit?: () => void;
 }
 
-const MemberProfile = ({ profile, btnTitle }: Props) => {
+const NewMemberProfile = ({ profile, btnTitle }: Props) => {
   const router = useRouter();
   const pathname = usePathname();
 
   const [file, setFiles] = useState<File | null>(null);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [isFormDirty, setIsFormDirty] = useState(false);
-  const [defaultValues, setDefaultValues] = useState({
-    accountname: profile?.accountname ? profile.accountname : "",
-    profile_image: profile?.image ? profile.image : "",
-    email: profile?.email ? profile.email : "",
-    phone: profile?.phone ? profile.phone : "",
-    shortdescription: profile?.shortdescription ? profile.shortdescription : "",
+
+  const form = useForm<z.infer<typeof ProfileValidation>>({
+    resolver: zodResolver(ProfileValidation),
+    defaultValues: {
+      accountname: profile.accountname || "",
+      profile_image: profile.image || "",
+      email: profile.email || "",
+      phone: profile.phone || "",
+      shortdescription: profile.shortdescription || "",
+    },
   });
 
-  const form = useForm<z.infer<typeof UserValidation>>({
-    resolver: zodResolver(UserValidation),
-    defaultValues: defaultValues,
-  });
-
-  const onSubmit = async (values: z.infer<typeof UserValidation>) => {
-
-    const geoInfo = await getIPCountryInfo();
-
-    if (!file && pathname !== "/profile/edit") {
+  const onSubmit = async (values: z.infer<typeof ProfileValidation>) => {
+    if (!file) {
       toast.error("Please upload a profile image.");
       return;
     }
 
     if (file && fileUrl) {
-      await updateMemberDetails({
+      const result = await addNewProfile({
         userId: profile.userId,
-        profileId: profile.profileId,
         accountname: values.accountname,
         email: values.email,
-        password: values.password,
         phone: values.phone,
         shortdescription: values.shortdescription,
-        ip_address: geoInfo.ip,
-        country: geoInfo.country,
-        countrycode: geoInfo.countryCode,
         image: {
           binaryCode: fileUrl,
           name: file.name,
         },
-        path: pathname,
       });
-    } else {
-      await updateMemberDetails({
-        userId: profile.userId,
-        profileId: profile.profileId,
-        accountname: values.accountname,
-        email: values.email,
-        password: values.password,
-        phone: values.phone,
-        shortdescription: values.shortdescription,
-        ip_address: geoInfo.ip,
-        country: geoInfo.country,
-        countrycode: geoInfo.countryCode,
-        path: pathname,
-      });
-    }
 
-    if (pathname === "/profile/edit") {
-      router.back();
-    } else {
-      router.push("/");
+      if (result.success) {
+        toast.success("Profile added successfully!");
+      } else {
+        toast.error(result.message);
+      }
     }
-
   };
 
   const handleImage = async (
@@ -173,15 +146,6 @@ const MemberProfile = ({ profile, btnTitle }: Props) => {
     }
 
   }, [isFormDirty]);
-
-
-  useEffect(() => {
-    const isDirty = Object.keys(defaultValues).some(
-      (key) =>
-        form.getValues(key as keyof typeof defaultValues) !== defaultValues[key as keyof typeof defaultValues]
-    );
-    setIsFormDirty(isDirty);
-  }, [form.watch()]);
 
   return (
     <Form {...form}>
@@ -272,46 +236,6 @@ const MemberProfile = ({ profile, btnTitle }: Props) => {
 
         <FormField
           control={form.control}
-          name='password'
-          render={({ field }) => (
-            <FormItem className='flex w-full flex-col gap-3'>
-              <FormLabel className='text-base-semibold text-light-2'>
-                Password
-              </FormLabel>
-              <FormControl>
-                <Input
-                  type='password'
-                  className='account-form_input'
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name='confirmPassword'
-          render={({ field }) => (
-            <FormItem className='flex w-full flex-col gap-3'>
-              <FormLabel className='text-base-semibold text-light-2'>
-                Confirm Password
-              </FormLabel>
-              <FormControl>
-                <Input
-                  type='password'
-                  className='account-form_input'
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
           name='phone'
           render={({ field }) => (
             <FormItem className='flex w-full flex-col gap-3'>
@@ -358,4 +282,4 @@ const MemberProfile = ({ profile, btnTitle }: Props) => {
   );
 };
 
-export default MemberProfile;
+export default NewMemberProfile;

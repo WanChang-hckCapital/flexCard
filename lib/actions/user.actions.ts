@@ -28,7 +28,7 @@ import ProductModel from "../models/product";
 import FeedbackModel from "../models/feedback";
 import CommentModel from "../models/comment";
 import { generateCustomID } from "../utils";
-import { Comment } from "@/types";
+import { Comment, MemberType } from "@/types";
 
 export async function authenticateUser(email: string, password: string) {
     try {
@@ -85,7 +85,7 @@ export async function createUser(
     }
 }
 
-export async function createMember(userId: string) {
+export async function createMember(userId: string, email: string) {
     try {
         await connectToDB();
 
@@ -96,7 +96,7 @@ export async function createMember(userId: string) {
                 user: userId,
             });
 
-            const initalProfile = new ProfileModel();
+            const initalProfile = new ProfileModel({ email: email });
             await initalProfile.save();
 
             newMember.profiles.push(initalProfile._id);
@@ -261,46 +261,127 @@ export async function fetchCurrentActiveProfileId(userId: string) {
     }
 }
 
-export async function addNewProfile(userId: string, profileData: any) {
+export async function setCurrentActiveProfileById(userId: string, targetProfileId: string) {
     try {
         await connectToDB();
 
-        const member = await MemberModel.findOne({ user: userId });
+        const member = await Member.findOne({ user: userId }).select("activeProfile profiles");
 
-        if (!member) {
-            throw new Error("Member not found");
-        }
+        const targetProfileIndex = member.profiles.findIndex((id: any) => id.toString() === targetProfileId);
+        const newActiveProfileIndex = targetProfileIndex;
 
-        const newProfile = new ProfileModel(profileData);
-        await newProfile.save();
-
-        member.profiles.push(newProfile._id);
+        member.activeProfile = newActiveProfileIndex;
         await member.save();
-
-        return { success: true, profile: newProfile };
-    } catch (error: any) {
-        throw new Error(`Failed to add new profile: ${error.message}`);
+    }
+    catch (error: any) {
+        throw new Error(`Failed to set new active profile Id: ${error.message}`);
     }
 }
 
-export async function deleteProfile(userId: string, profileId: string) {
+export async function fetchMemberWithProfiles(userId: string) {
     try {
         await connectToDB();
 
-        const member = await MemberModel.findOne({ user: userId });
+        const member = await MemberModel.findOne({ user: userId })
+            .populate({
+                path: "profiles",
+                populate: [
+                    {
+                        path: "image",
+                        model: "Image",
+                    },
+                    {
+                        path: "organization",
+                        model: "Organization",
+                    }
+                ]
+            })
+            .lean<MemberType>();
 
         if (!member) {
             throw new Error("Member not found");
         }
 
-        member.profiles = member.profiles.filter((id: any) => id.toString() !== profileId);
-        await member.save();
-
-        await ProfileModel.findByIdAndDelete(profileId);
-
-        return { success: true };
+        return member;
     } catch (error: any) {
-        throw new Error(`Failed to delete profile: ${error.message}`);
+        throw new Error(`Failed to fetch member with profiles: ${error.message}`);
+    }
+}
+
+interface ParamsNewProfileDetails {
+    userId: string;
+    accountname: string;
+    email: string;
+    phone: string;
+    shortdescription: string;
+    image?: {
+        binaryCode: string;
+        name: string;
+    };
+}
+
+export async function addNewProfile({
+    userId,
+    accountname,
+    email,
+    phone,
+    shortdescription,
+    image,
+}: ParamsNewProfileDetails) {
+    try {
+        await connectToDB();
+
+        const existingEmail = await ProfileModel.findOne({ email: email }).lean();
+
+        if (existingEmail) {
+            throw new Error('Email already exists');
+        }
+
+        let newProfileData: any = {
+            accountname,
+            email,
+            phone,
+            shortdescription,
+        };
+
+        if (image) {
+            console.log('Saving image...');
+            const savedImage = await Image.create({
+                binaryCode: image.binaryCode,
+                name: image.name,
+            });
+
+            newProfileData.image = savedImage._id;
+        }
+
+        const newProfile = new ProfileModel(newProfileData);
+        await newProfile.save();
+
+        const member = await MemberModel.findOne({ user: userId }).lean<MemberType>();
+
+        if (!member) {
+            throw new Error('Member not found');
+        }
+
+        member.profiles.push(newProfile._id);
+
+        await MemberModel.updateOne(
+            { user: userId },
+            { profiles: member.profiles }
+        );
+
+        const responseProfile = {
+            _id: newProfile._id,
+            accountname: newProfile.accountname,
+            email: newProfile.email,
+            phone: newProfile.phone,
+            shortdescription: newProfile.shortdescription,
+            image: newProfile.image,
+        };
+
+        return { success: true, profile: responseProfile };
+    } catch (error: any) {
+        return { success: false, message: `Failed to create profile: ${error.message}` };
     }
 }
 
@@ -888,12 +969,21 @@ interface ParamsOrganizationDetails {
     businessAddress: string;
     businessPhone: string;
     industry: string;
-    businessWebsite?: string;
+    businessWebsite: string;
     businessProductDescription: string;
     bankAccountHolder: string;
     bankName: string;
     bankAccountNumber: string;
     authActiveProfileId: string;
+    createNewProfile: boolean;
+    accountname?: string;
+    email?: string;
+    phone?: string;
+    shortdescription?: string;
+    profile_image?: {
+        binaryCode: string;
+        name: string;
+    };
 }
 
 //done convert to ProfileModel but still need to be confirm
@@ -912,51 +1002,172 @@ export async function signUpOrganization({
     bankName,
     bankAccountNumber,
     authActiveProfileId,
+    createNewProfile,
+    accountname,
+    email,
+    phone,
+    shortdescription,
+    profile_image,
 }: ParamsOrganizationDetails): Promise<{ success: boolean; message?: string }> {
     try {
         await connectToDB();
 
-        const profile = await ProfileModel.findOne({ _id: authActiveProfileId }).select("role usertype");
+        let profile;
+        let organization;
+
+        if (createNewProfile) {
+            profile = new ProfileModel({
+                accountname: accountname,
+                email: email,
+                phone: phone,
+                shortdescription: shortdescription,
+                usertype: 'ORGANIZATION',
+                role: 'ORGANIZATION',
+                onboarded: true,
+            });
+
+            if (profile_image) {
+                const savedImage = await Image.create({
+                    binaryCode: profile_image.binaryCode,
+                    name: profile_image.name,
+                });
+                profile.image = savedImage._id;
+            }
+
+            await profile.save();
+
+            const member = await MemberModel.findOne({ profiles: authActiveProfileId });
+            if (!member) {
+                return { success: false, message: "Member not found." };
+            }
+
+            member.profiles.push(profile._id);
+            await member.save();
+
+        } else {
+            profile = await ProfileModel.findOne({ _id: authActiveProfileId }).populate('organization');
+            if (!profile) {
+                return { success: false, message: "Profile not found." };
+            }
+
+            if (profile.role.toUpperCase() === "ORGANIZATION") {
+                if (profile.organization) {
+                    organization = await OrganizationModel.findById(profile.organization);
+                    if (!organization) {
+                        return { success: false, message: "Organization linked to the profile not found." };
+                    }
+
+                    organization.businessType = businessType;
+                    organization.businessLocation = businessLocation;
+                    organization.businessName = businessName;
+                    organization.businessAddress = businessAddress;
+                    organization.businessPhone = businessPhone;
+                    organization.industry = industry;
+                    organization.businessWebsite = businessWebsite;
+                    organization.businessProductDescription = businessProductDescription;
+                    organization.bankAccountHolder = bankAccountHolder;
+                    organization.bankName = bankName;
+                    organization.bankAccountNumber = bankAccountNumber;
+
+                    await organization.save();
+
+                } else {
+                    organization = new OrganizationModel({
+                        businessType,
+                        businessLocation,
+                        legalBusinessName,
+                        businessRegistrationNumber,
+                        businessName,
+                        businessAddress,
+                        businessPhone,
+                        industry,
+                        businessWebsite,
+                        businessProductDescription,
+                        bankAccountHolder,
+                        bankName,
+                        bankAccountNumber,
+                    });
+
+                    await organization.save();
+
+                    profile.organization = organization._id;
+                    profile.accountname = businessName;
+                    profile.shortdescription = businessProductDescription;
+                    await profile.save();
+                }
+            } else {
+                profile.usertype = 'ORGANIZATION';
+                profile.role = 'ORGANIZATION';
+                profile.accountname = businessName;
+                profile.shortdescription = businessProductDescription;
+
+                // If no organization exists, create a new one
+                if (!profile.organization) {
+                    organization = new OrganizationModel({
+                        businessType,
+                        businessLocation,
+                        legalBusinessName,
+                        businessRegistrationNumber,
+                        businessName,
+                        businessAddress,
+                        businessPhone,
+                        industry,
+                        businessWebsite,
+                        businessProductDescription,
+                        bankAccountHolder,
+                        bankName,
+                        bankAccountNumber,
+                    });
+
+                    await organization.save();
+                    profile.organization = organization._id;
+                }
+
+                await profile.save();
+            }
+        }
+
+        return { success: true };
+
+    } catch (error: any) {
+        return { success: false, message: error.message };
+    }
+}
+
+
+export async function deleteProfileById(profileId: string, userId: string): Promise<{ success: boolean; message?: string }> {
+    try {
+        await connectToDB();
+
+        const profile = await ProfileModel.findById(profileId).populate('organization');
         if (!profile) {
-            console.log("User not found when signing up organization.");
-            return { success: false, message: "User not found" };
+            return { success: false, message: "Profile not found." };
         }
 
-        if (profile.role.toUpperCase() === "ORGANIZATION") {
-            console.log("Profile is already join as an organization.");
-            return { success: false, message: "Profile is already join as an organization." };
+        const member = await MemberModel.findOne({ user: userId });
+        if (!member) {
+            return { success: false, message: "Member not found." };
         }
 
-        const newOrganization = new OrganizationModel({
-            businessType,
-            businessLocation,
-            legalBusinessName,
-            businessRegistrationNumber,
-            businessName,
-            businessAddress,
-            businessPhone,
-            industry,
-            businessWebsite,
-            businessProductDescription,
-            bankAccountHolder,
-            bankName,
-            bankAccountNumber,
-        });
+        member.profiles = member.profiles.filter((p: { toString: () => string; }) => p.toString() !== profileId);
+        await member.save();
 
-        await newOrganization.save();
+        if (profile.organization) {
+            await OrganizationModel.findByIdAndDelete(profile.organization._id);
+        }
 
-        profile.organization = newOrganization._id;
-        profile.role = 'ORGANIZATION';
-        profile.usertype = 'ORGANIZATION';
-        await profile.save();
+        if (profile.image) {
+            await Image.findByIdAndDelete(profile.image);
+        }
 
-        //update user subscription to be organization free version subscription or purchasing subscription
+        await ProfileModel.findByIdAndDelete(profileId);
 
         return { success: true };
     } catch (error: any) {
         return { success: false, message: error.message };
     }
 }
+
 
 interface ParamsUpdWebURL {
     authUserId: string,
@@ -3221,67 +3432,6 @@ export async function getFollowersAndFollowing(userId: string) {
             followers: [],
             following: [],
         };
-    }
-}
-
-// wan chang part error here
-export async function fetchMessages(
-    chatroomId: string,
-    authenticatedUserId: string
-) {
-    try {
-        const chatroom = await ChatroomModel.findById(chatroomId);
-        console.log("cahtrrom:" + chatroom);
-
-        if (!chatroom) {
-            throw new Error("Chatroom not found");
-        }
-
-        const participantsInfo = await Promise.all(
-            chatroom.participants.map(async (participant: any) => {
-                const participantInfo = await MemberModel.findOne({
-                    user: participant,
-                }).lean();
-
-                let imgUrl = null;
-
-                if (participantInfo && participantInfo.image) {
-                    const imageRecord = await Image.findOne({
-                        _id: participantInfo.image,
-                    }).select("binaryCode");
-                    imgUrl = imageRecord?.binaryCode || null;
-                }
-                return {
-                    ...participantInfo,
-                    image: imgUrl,
-                };
-            })
-        );
-
-        const participantMap = new Map(
-            participantsInfo.map((participant: any) => [
-                participant.user.toString(),
-                participant,
-            ])
-        );
-
-        const messages = await MessageModel.find({ chatroomId })
-            .sort({ createdAt: 1 })
-            .lean();
-
-        const messagesWithMemberData = messages.map((message: any) => {
-            const sender = participantMap.get(message.senderId.toString());
-            return {
-                ...message,
-                senderId: message.senderId,
-                image: sender?.image || null,
-                senderName: sender?.accountname || "Unknown",
-            };
-        });
-
-        return { success: true, message: messagesWithMemberData };
-    } catch (error: any) {
-        return { success: false, message: error.message };
     }
 }
 

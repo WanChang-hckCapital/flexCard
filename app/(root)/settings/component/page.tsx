@@ -6,23 +6,27 @@ import MemberProfile from "@/components/forms/member-profile";
 import { getFollowers } from "@/lib/actions/admin.actions";
 import { Ban, Bell, BellOff, Lock, Star, User2, UsersRound } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { addNewProfile, deleteProfile, editProfile, setActiveProfile, updateAccountType } from "@/lib/actions/user.actions";
+import { setActiveProfile, updateAccountType } from "@/lib/actions/user.actions";
 import { toast } from "sonner";
 import CloseFriends from "@/components/root-settings/close-friends";
 import Blocked from "@/components/root-settings/blocked";
 import MutedAccount from "@/components/root-settings/muted-accounts";
+import ProfileList from "@/components/root-settings/profile-list";
+import AddProfileForm from "@/components/root-settings/add-profile-form";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface Props {
+    authUserId: string;
     authActiveProfileId: string;
     profileData: any;
+    profiles: any[];
 }
 
-function RootSetting({ authActiveProfileId, profileData }: Props) {
+function RootSetting({ authUserId, authActiveProfileId, profileData, profiles }: Props) {
     const [activeSection, setActiveSection] = useState("edit-profile");
     const [lineOAFollowers, setLineOAFollowers] = useState<string[]>([]);
     const [isPrivate, setIsPrivate] = useState(profileData.accountType === "PRIVATE");
-    const [profiles, setProfiles] = useState(profileData.profiles || []);
-    const [newProfileData, setNewProfileData] = useState(profiles);
 
     const handleNavClick = (section: string) => {
         setActiveSection(section);
@@ -42,43 +46,12 @@ function RootSetting({ authActiveProfileId, profileData }: Props) {
         }
     };
 
-    const handleAddProfile = async () => {
-        const response = await addNewProfile(authActiveProfileId, newProfileData);
-        if (response.success) {
-            setProfiles([...profiles, response.profile]);
-            setNewProfileData({});
-            toast.success("Profile added successfully!");
-        } else {
-            toast.error("Failed to add profile");
-        }
-    };
-
-    const handleDeleteProfile = async (profileId: string) => {
-        const response = await deleteProfile(authActiveProfileId, profileId);
-        if (response.success) {
-            setProfiles(profiles.filter((profile: any) => profile._id !== profileId));
-            toast.success("Profile deleted successfully!");
-        } else {
-            toast.error("Failed to delete profile");
-        }
-    };
-
     const handleSetActiveProfile = async (index: number) => {
         const response = await setActiveProfile(authActiveProfileId, index);
         if (response.success) {
             toast.success("Active profile set successfully!");
         } else {
             toast.error("Failed to set active profile");
-        }
-    };
-
-    const handleEditProfile = async (profileId: string, updatedData: any) => {
-        const response = await editProfile(profileId, updatedData);
-        if (response.success) {
-            setProfiles(profiles.map((profile: any) => (profile._id === profileId ? response.profile : profile)));
-            toast.success("Profile updated successfully!");
-        } else {
-            toast.error("Failed to update profile");
         }
     };
 
@@ -174,54 +147,17 @@ function RootSetting({ authActiveProfileId, profileData }: Props) {
                             </CardContent>
                         </Card>
                     )}
-                    {/* {activeSection === "manage-account" && (
+                    {activeSection === "manage-account" && (
                         <Card>
-                            <CardHeader>
+                            <CardHeader className="flex flex-row justify-between items-center">
                                 <CardTitle>Manage Account</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div>
-                                    <h3 className="text-lg font-semibold mb-4">Profiles</h3>
-                                    <ul className="space-y-4">
-                                        {profiles.map((profile: any, index: number) => (
-                                            <li key={profile._id} className="flex justify-between items-center">
-                                                <span>{profile.accountname || `Profile ${index + 1}`}</span>
-                                                <div className="space-x-2">
-                                                    <button
-                                                        className="text-sm bg-blue-500 text-white py-1 px-2 rounded"
-                                                        onClick={() => handleSetActiveProfile(index)}
-                                                    >
-                                                        Set Active
-                                                    </button>
-                                                    <button
-                                                        className="text-sm bg-green-500 text-white py-1 px-2 rounded"
-                                                        onClick={() => handleEditProfile(profile._id, profile)}
-                                                    >
-                                                        Edit
-                                                    </button>
-                                                    <button
-                                                        className="text-sm bg-red-500 text-white py-1 px-2 rounded"
-                                                        onClick={() => handleDeleteProfile(profile._id)}
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                </div>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                    <div className="mt-6">
-                                        <h3 className="text-lg font-semibold mb-2">Add New Profile</h3>
-                                        <MemberProfile
-                                            profile={newProfileData}
-                                            btnTitle="Add Profile"
-                                            onChange={(data: any) => setNewProfileData(data)}
-                                            onSubmit={handleAddProfile}
-                                        />
-                                    </div>
-                                </div>
+                                <ProfileList profiles={profiles} authActiveProfileId={authActiveProfileId} authUserId={authUserId} />
                             </CardContent>
+
                         </Card>
-                    )} */}
+                    )}
                     {activeSection === "notifications" && (
                         <Card>
                             <CardHeader>

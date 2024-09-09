@@ -10,7 +10,7 @@ export const BusinessValidation = z.object({
     legalBusinessName: 
         z.string()
         .nonempty({ message: "Legal business name is required" }),
-    companyRegistrationNumber: 
+    businessRegistrationNumber: 
         z.string()
         .nonempty({ message: "Company registration number is required" }),
     businessName: 
@@ -22,7 +22,7 @@ export const BusinessValidation = z.object({
     address2: 
         z.string()
         .optional(),
-    businessPhoneNumber: 
+    businessPhone: 
         z.string()
         .nonempty({ message: "Business phone number is required" }),
     industry: 
