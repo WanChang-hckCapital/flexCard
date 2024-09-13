@@ -7,6 +7,7 @@ import Spinner from "./Spinner";
 
 interface Participant {
   _id: string;
+  participantId: string;
   accountname: string;
   image: string;
   user: string;
@@ -48,6 +49,10 @@ interface Chatroom {
   name: string;
   type: string;
   participants: Participant[];
+  superAdmin: string[];
+  admin: string[];
+  silentUser: any[];
+  groupImage: {};
   chatroomId: string;
   createdAt: string;
 }
@@ -56,8 +61,16 @@ interface ChatRoomClientProps {
   chatrooms: Chatroom[];
   authenticatedUserId: string;
   allUsers: any[];
-  allFollowerAndFollowingForPersonal: { followers: any[]; following: any[] };
-  allFollowerAndFollowingForGroup: { followers: any[]; following: any[] };
+  allFollowerAndFollowingForPersonal: {
+    followers: any[];
+    following: any[];
+    merged: any[];
+  };
+  allFollowerAndFollowingForGroup: {
+    followers: any[];
+    following: any[];
+    merged: any[];
+  };
 }
 
 export default function ChatRoomComponent({
@@ -90,13 +103,11 @@ export default function ChatRoomComponent({
       console.log(receivedMessage.message);
 
       if (receivedMessage.type === "messages") {
-        // trigger when the user initially load the message
-        console.log("Received messages:", receivedMessage.messages);
+        // console.log("Received messages:", receivedMessage.messages);
         setMessageLoading(false);
         setMessages(receivedMessage.messages);
         setReceiverInfo(receivedMessage.receiverInfo);
       } else if (receivedMessage.type === "newMessage") {
-        // trigger when send message send
         setMessages((prevMessages) => [
           ...prevMessages,
           receivedMessage.message,
@@ -199,7 +210,6 @@ export default function ChatRoomComponent({
     setMessages([]);
     setSkip(0);
     setMessageLoading(true);
-    // console.log("clear");
 
     if (chatroomId && ws) {
       try {
@@ -213,7 +223,7 @@ export default function ChatRoomComponent({
           return;
         }
 
-        // console.log("Chatroom info:", selectedChatroomData);
+        console.log("Chatroom info:", selectedChatroomData);
         setSelectedChatroomData(selectedChatroomData);
 
         const fetchMessagesResponse = await fetchMessagesWs(

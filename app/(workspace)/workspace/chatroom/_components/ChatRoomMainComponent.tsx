@@ -1,8 +1,21 @@
 "use client";
 
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  Suspense,
+} from "react";
 import { Button } from "@/components/ui/button";
-import { SendIcon, PlusIcon, FileUp, FileDown } from "lucide-react";
+import {
+  SendIcon,
+  PlusIcon,
+  FileUp,
+  FileDown,
+  MessageCircleX,
+  UserRoundX,
+} from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -46,29 +59,64 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@radix-ui/react-dropdown-menu";
+import {
+  Sheet,
+  SheetTrigger,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
+import { Pencil } from "lucide-react";
 import { X } from "lucide-react";
 import MessageImageModel from "./MessageImageModal";
 import { toast } from "sonner";
 import { fetchAllCards } from "@/lib/actions/user.actions";
-import FlexCardModal from "./FlexCardModal";
+// import FlexCardModal from "./FlexCardModal";
 import Link from "next/link";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Loader } from "@googlemaps/js-api-loader";
 import LoadingSpinner from "./LoadingSpinner";
-import { fetchPreviousMessage } from "@/lib/actions/user.actions";
+import {
+  fetchPreviousMessage,
+  leaveGroup,
+  getInvitorList,
+  inviteGroup,
+  newAdminAppoint,
+  dischargeAdmin,
+  silentUser,
+} from "@/lib/actions/user.actions";
+import GroupInfoSheet from "./GroupInfoSheet";
+import PersonalInfoSheet from "./PersonalInfoSheet";
 
 interface Chatroom {
   _id: string;
   name: string;
   type: string;
   participants: Participant[];
+  superAdmin: string[];
+  admin: string[];
+  silentUser: any[];
+  groupImage: {};
   chatroomId: string;
   createdAt: string;
 }
 
 interface Participant {
   _id: string;
+  participantId: string;
   accountname: string;
   image: string;
   user: string;
@@ -133,6 +181,20 @@ declare global {
     google: typeof google;
   }
 }
+
+interface InvitableUser {
+  _id: string;
+  accountname: string;
+  image?: string;
+}
+
+interface InvitableUserResponse {
+  success: boolean;
+  message: string;
+  users: InvitableUser[];
+}
+
+const FlexCardModal = React.lazy(() => import("./FlexCardModal"));
 
 export default function ChatRoomMainBar({
   chatrooms,
@@ -205,6 +267,37 @@ export default function ChatRoomMainBar({
     url: string;
   } | null>(null);
 
+  const [isDropdownOpen, setDropdownOpen] = useState(false);
+  const [isGroupInfoSheetOpen, setGroupInfoSheetOpen] = useState(false);
+  const [isPersonalInfoSheetOpen, setPersonalInfoSheetOpen] = useState(false);
+  // const [isLeaveGrpAlertOpen, setLeaveGrpAlertOpen] = useState(false);
+  const [invitableUsers, setInvitableUsers] = useState<InvitableUser[]>([]);
+  const [invitableUsersLoading, setInvitableUsersLoading] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [groupImage, setGroupImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchGroupImage = async () => {
+      if (selectedChatroomData?.groupImage) {
+        try {
+          const response = await fetch(
+            `/api/group-image-load/${selectedChatroomData.groupImage}`
+          );
+          if (response.ok) {
+            const data = await response.json();
+            setGroupImage(data.fileDataUrl);
+          } else {
+            console.error("Failed to load group image:", response.statusText);
+          }
+        } catch (error) {
+          console.error("Error fetching group image:", error);
+        }
+      }
+    };
+
+    fetchGroupImage();
+  }, [selectedChatroomData?.groupImage]);
+
   useEffect(() => {
     setCurrentMessages(messages);
 
@@ -220,46 +313,46 @@ export default function ChatRoomMainBar({
     });
   }, [messages]);
 
-  useEffect(() => {
-    const fetchReceiverImage = async () => {
-      if (receiverInfo && receiverInfo.user) {
-        console.log("receiverInfo._id" + receiverInfo.user);
-        const response = await getImage(receiverInfo.user);
-        if (response.success && response.image) {
-          setReceiverImage(response.image);
-        } else {
-          console.error(
-            "Failed to retrieve receiver's image:",
-            response.message
-          );
-        }
-      }
-    };
+  // useEffect(() => {
+  //   const fetchReceiverImage = async () => {
+  //     if (receiverInfo && receiverInfo.user) {
+  //       console.log("receiverInfo._id" + receiverInfo.user);
+  //       const response = await getImage(receiverInfo.user);
+  //       if (response.success && response.image) {
+  //         setReceiverImage(response.image);
+  //       } else {
+  //         console.error(
+  //           "Failed to retrieve receiver's image:",
+  //           response.message
+  //         );
+  //       }
+  //     }
+  //   };
 
-    fetchReceiverImage();
-  }, [receiverInfo]);
+  //   fetchReceiverImage();
+  // }, [receiverInfo]);
 
-  useEffect(() => {
-    if (coordinates && locationPreview && mapRef.current) {
-      const { latitude, longitude } = coordinates;
+  // useEffect(() => {
+  //   if (coordinates && locationPreview && mapRef.current) {
+  //     const { latitude, longitude } = coordinates;
 
-      if (map) {
-        map.remove();
-        setMap(null);
-        // console.log("map exist");
-      }
+  //     if (map) {
+  //       map.remove();
+  //       setMap(null);
+  //       // console.log("map exist");
+  //     }
 
-      // Initialize the new map
-      const newMap = L.map(mapRef.current).setView([latitude, longitude], 13);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "© OpenStreetMap contributors",
-      }).addTo(newMap);
-      setMap(newMap);
+  //     // Initialize the new map
+  //     const newMap = L.map(mapRef.current).setView([latitude, longitude], 13);
+  //     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  //       attribution: "© OpenStreetMap contributors",
+  //     }).addTo(newMap);
+  //     setMap(newMap);
 
-      const newMarker = L.marker([latitude, longitude]).addTo(newMap);
-      setLMarker(newMarker);
-    }
-  }, [coordinates, locationPreview, mapRef.current]);
+  //     const newMarker = L.marker([latitude, longitude]).addTo(newMap);
+  //     setLMarker(newMarker);
+  //   }
+  // }, [coordinates, locationPreview, mapRef.current]);
 
   useEffect(() => {
     currentMessages.forEach((message) => {
@@ -267,7 +360,8 @@ export default function ChatRoomMainBar({
         const mapContainer = mapRefs.current[message._id];
 
         if (mapContainer) {
-          if (mapContainer._leaflet_id) {
+          const mapDiv = mapContainer as any;
+          if (mapDiv._leaflet_id) {
             return;
           }
 
@@ -278,10 +372,7 @@ export default function ChatRoomMainBar({
             const latitude = parseFloat(match[1]);
             const longitude = parseFloat(match[2]);
 
-            const newMap = L.map(mapContainer).setView(
-              [latitude, longitude],
-              13
-            );
+            const newMap = L.map(mapDiv).setView([latitude, longitude], 13);
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
               attribution: "© OpenStreetMap contributors",
             }).addTo(newMap);
@@ -512,30 +603,6 @@ export default function ChatRoomMainBar({
     }
   };
 
-  // const selectedChatroomData = chatrooms.find(
-  //   (chatroom) => chatroom._id === selectedChatroom
-  // );
-
-  // first time chatting
-  const createChatBox = async (
-    authenticatedId: string,
-    targetUserId: string
-  ) => {
-    console.log("authenticatedId:" + authenticatedId);
-    console.log("targetUserId" + targetUserId);
-    try {
-      const response = await createOrGetChatroom(authenticatedId, targetUserId);
-      if (response.success) {
-        console.log("_id:" + response.chatroom._id);
-        // setCurrentChatroomId(response.chatroom.id);
-      } else {
-        console.error("Failed to create or get chatroom:", response.message);
-      }
-    } catch (error) {
-      console.error("Error creating or getting chatroom:", error);
-    }
-  };
-
   const getMutualStatus = async (
     authenticatedUserId: string,
     targetUserId: string
@@ -626,7 +693,7 @@ export default function ChatRoomMainBar({
             imageAttach: imageObjectId,
             fileAttach: fileObjectId,
             readStatus: receiverInfo
-              ? [{ userId: receiverInfo.user, readAt: null }]
+              ? [{ userId: receiverInfo._id, readAt: null }]
               : [],
             fileName,
             locationLink,
@@ -655,7 +722,7 @@ export default function ChatRoomMainBar({
               image: null,
             },
             readStatus: receiverInfo
-              ? [{ userId: receiverInfo.user, readAt: null }]
+              ? [{ userId: receiverInfo._id, readAt: null }]
               : [],
             imageSrc,
             fileAttach: fileObjectId,
@@ -1164,12 +1231,200 @@ export default function ChatRoomMainBar({
     event.preventDefault(); // Prevent default pasting behavior
   };
 
+  const getChatroomInfo = () => {
+    setGroupInfoSheetOpen(true);
+  };
+
+  const getContactInfo = () => {
+    setPersonalInfoSheetOpen(true);
+  };
+
+  const blockUserHandler = () => {
+    console.log("block user");
+  };
+
+  // leave the group
+  const leaveGroupHandler = async () => {
+    try {
+      const chatroomId = selectedChatroomData?.chatroomId || "";
+
+      const response = await leaveGroup(chatroomId, authenticatedUserId);
+
+      if (response.success) {
+        toast.success(response.message);
+      } else {
+        toast.error(response.message);
+      }
+    } catch (error: any) {}
+  };
+
+  const loadInvitorList = async () => {
+    try {
+      setInvitableUsersLoading(true);
+      const chatroomId = selectedChatroomData?.chatroomId || "";
+
+      const response: InvitableUserResponse = await getInvitorList(
+        chatroomId,
+        authenticatedUserId
+      );
+
+      // console.log()
+
+      if (response.success) {
+        setInvitableUsers(response.users);
+        console.log("Users to invite:", response.users);
+      } else {
+        toast.error(response.message);
+        console.error(response.message);
+      }
+    } catch (error: any) {
+      console.error("Error loading invitable users:", error);
+    } finally {
+      setInvitableUsersLoading(false);
+    }
+  };
+
+  const handleInvitorChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    userId: string
+  ) => {
+    if (e.target.checked) {
+      setSelectedUsers((prevSelected) => [...prevSelected, userId]);
+    } else {
+      setSelectedUsers((prevSelected) =>
+        prevSelected.filter((id) => id !== userId)
+      );
+    }
+  };
+
+  const inviteUserHandler = async () => {
+    const chatroomId = selectedChatroomData?.chatroomId || "";
+
+    if (!selectedUsers || selectedUsers.length === 0) {
+      toast("No users selected to invite.");
+      return;
+    }
+
+    try {
+      const response = await inviteGroup(chatroomId, selectedUsers);
+      if (response.success) {
+        toast.success(response.message);
+        // setSelectedChatroomData((prevState) => ({
+        //   ...prevState,
+        //   admin: [...prevState.admin, participantId],
+        // }));
+      } else {
+        toast.error(response.message);
+      }
+    } catch (error: any) {
+      toast("An error occured.");
+    }
+  };
+
+  const handleAppointAdmin = async (participantId: string) => {
+    const chatroomId = selectedChatroomData?.chatroomId || "";
+
+    try {
+      const response = await newAdminAppoint(
+        chatroomId,
+        authenticatedUserId,
+        participantId
+      );
+      if (response.success) {
+        toast.success(response.message);
+      } else {
+        toast.error(response.message);
+      }
+    } catch (error) {
+      toast.error("An error occurred while appointing the user as admin.");
+      console.error(error);
+    }
+  };
+
+  const dischargeAppointAdmin = async (dischargeId: string) => {
+    const chatroomId = selectedChatroomData?.chatroomId || "";
+
+    try {
+      const response = await dischargeAdmin(
+        chatroomId,
+        authenticatedUserId,
+        dischargeId
+      );
+      if (response.success) {
+        toast.success(response.message);
+      } else {
+        toast.error(response.message);
+      }
+    } catch (error) {
+      toast.error("An error occurred while discharging the user.");
+      console.error(error);
+    }
+  };
+
+  const silentHandler = async (silentTargetId: string) => {
+    const chatroomId = selectedChatroomData?.chatroomId || "";
+    try {
+      const response = await silentUser(
+        chatroomId,
+        authenticatedUserId,
+        silentTargetId,
+        30
+      );
+      if (response.success) {
+        toast.success(response.message);
+      } else {
+        toast.error(response.message);
+      }
+    } catch (error) {
+      toast.error("An error occurred while silenting the user.");
+      console.error(error);
+    }
+  };
+
+  const isUserSilenced = selectedChatroomData?.silentUser.find(
+    (silentUser) =>
+      silentUser.userId === authenticatedUserId &&
+      new Date(silentUser.silentUntil) > new Date()
+  );
+
   return (
     <>
       <div className="flex flex-col w-full">
         <div className="sticky top-0 z-10 w-full shadow-sm p-2">
           <div className="flex justify-end">
-            <CircleEllipsis />
+            <div className="flex h-14 items-center px-4">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="ml-auto rounded-full"
+                  >
+                    <CircleEllipsis />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="bg-white shadow-lg rounded-md w-48 py-1"
+                >
+                  <DropdownMenuItem
+                    className="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 px-4 py-3 h-12 cursor-pointer text-black"
+                    onClick={
+                      selectedChatroomData?.type === "GROUP"
+                        ? getChatroomInfo
+                        : getContactInfo
+                    }
+                  >
+                    {selectedChatroomData?.type === "GROUP"
+                      ? "Group Info"
+                      : "Contact Info"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 px-4 py-3 h-12 cursor-pointer text-black">
+                    Mute Motification
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
         <div
@@ -1441,11 +1696,13 @@ export default function ChatRoomMainBar({
             })
           ) : (
             <div className="flex flex-col items-center">
-              {/* <div>{JSON.stringify(selectedChatroomData)}</div> */}
               {selectedChatroomData && selectedChatroomData.type == "GROUP" && (
                 <>
                   <Avatar className="h-[200px] w-[200px]  mb-4 border">
-                    <AvatarImage src="/assets/users.svg" />
+                    <AvatarImage
+                      src={groupImage ? groupImage : "/assets/users.svg"}
+                      alt={selectedChatroomData?.name || "Group Image"}
+                    />
                     <AvatarFallback>?</AvatarFallback>
                   </Avatar>
                   <p>{selectedChatroomData.name}</p>
@@ -1460,103 +1717,357 @@ export default function ChatRoomMainBar({
               {selectedChatroomData &&
                 selectedChatroomData.type == "PERSONAL" && (
                   <>
-                    {/* <div>{JSON.stringify(selectedChatroomData)}</div> */}
-                    <Avatar className="h-[200px] w-[200px]  mb-4 border">
-                      <AvatarImage
-                        src={selectedChatroomData.participants[0].image || ""}
-                      />
-                      <AvatarFallback>?</AvatarFallback>
-                    </Avatar>
-                    <p>{selectedChatroomData.participants[0].accountname}</p>
-                    <Button className="mt-2">View Profile</Button>
+                    {selectedChatroomData.participants
+                      .filter(
+                        (participant) =>
+                          participant.participantId !== authenticatedUserId
+                      )
+                      .map((participant) => (
+                        <div
+                          key={participant.participantId}
+                          className="flex flex-col items-center"
+                        >
+                          <Avatar className="h-[200px] w-[200px] mb-4 border">
+                            <AvatarImage src={participant.image || ""} />
+                            <AvatarFallback>
+                              {participant.accountname.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <p>{participant.accountname}</p>
+                          <Button className="mt-2">View Profile</Button>
+                        </div>
+                      ))}
                   </>
                 )}
-              {/* {receiverInfo && (
-              todo - remove?
-                <>
-                  <Avatar className="h-[200px] w-[200px]  mb-4 border">
-                    <AvatarImage src={receiverImage || ""} />
-                    <AvatarFallback>
-                      {receiverInfo.accountname
-                        ? receiverInfo.accountname.charAt(0)
-                        : "?"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <p>{receiverInfo.accountname}</p>
-                  <Button className="mt-2">View Profile</Button>
-                </>
-              )} */}
             </div>
           )}
         </div>
-        {/* {chatrooms.length > 0 ? (
-          chatrooms.map((chatroom, index) => (
-            <div key={index}>
-              <p>{chatroom.name}</p>
-              <p>{chatroom.chatroomId}</p>
-            </div>
-          ))
-        ) : (
-          <>
-            <p className="text-center text-xl font-semibold text-gray-100 mt-6 p-4 rounded-lg shadow-sm">
-              No previous chat!
-            </p>
-            {allUsers.success && allUsers.users.length > 0 && (
-              <div className="mt-4 w-full flex justify-center">
-                <Card className="w-full max-w-lg">
-                  <CardHeader>
-                    <CardTitle className="text-center">All Users</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ScrollArea className="h-full">
-                      <ul>
-                        {allUsers.users.map((user, index) => (
-                          <li key={index} className="mb-2">
-                            <div className="flex items-center gap-3">
-                              <Avatar className="h-8 w-8 mb-4">
-                                <AvatarImage
-                                  src={user.image || "/placeholder-user.jpg"}
-                                />
-                                <AvatarFallback>
-                                  {user.name ? user.name.charAt(0) : "?"}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="flex justify-between item-center w-full">
-                                <p className="font-medium">{user.name}</p>
-                                <Button
-                                  className="ml-2"
-                                  onClick={() =>
-                                    createChatBox(
-                                      authenticatedUserId,
-                                      user.userId
-                                    )
-                                  }
-                                >
-                                  Chat
-                                </Button>
-                                <Button
-                                  className="ml-2"
-                                  onClick={() =>
-                                    getMutualStatus(
-                                      authenticatedUserId,
-                                      user.userId
-                                    )
-                                  }
-                                >
-                                  Mutual Status
-                                </Button>
-                              </div>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    </ScrollArea>
-                  </CardContent>
-                </Card>
+        {/* for personal */}
+        {/* <Sheet
+          open={isPersonalInfoSheetOpen}
+          onOpenChange={setPersonalInfoSheetOpen}
+        >
+          <SheetContent
+            side="right"
+            className="flex flex-col justify-between h-full"
+          >
+            <SheetHeader>
+              <div className="w-full flex flex-col items-center relative">
+                <div className="relative group w-24 h-24">
+                  <Avatar className="w-full h-full">
+                    <AvatarImage
+                      src={
+                        selectedChatroomData?.participants.find(
+                          (participant) =>
+                            participant.participantId !== authenticatedUserId
+                        )?.image || "/assets/users.svg"
+                      }
+                      alt={selectedChatroomData?.name}
+                      className="object-cover"
+                    />
+                    <AvatarFallback className="text-5xl">
+                      {selectedChatroomData?.name.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+                <div className="text-center mt-4">
+                  <SheetTitle className="text-xl font-bold">
+                    {selectedChatroomData?.participants.find(
+                      (participant) =>
+                        participant.participantId !== authenticatedUserId
+                    )?.accountname || "/assets/users.svg"}
+                  </SheetTitle>
+                </div>
               </div>
-            )}
-          </>
-        )} */}
+            </SheetHeader>
+            <div className="p-4">
+              <Button
+                className="w-full"
+                variant="destructive"
+                onClick={blockUserHandler}
+              >
+                Block User
+              </Button>
+            </div>
+          </SheetContent>
+        </Sheet> */}
+
+        <PersonalInfoSheet
+          isOpen={isPersonalInfoSheetOpen}
+          onClose={() => setPersonalInfoSheetOpen(false)}
+          selectedChatroomData={selectedChatroomData}
+          authenticatedUserId={authenticatedUserId}
+          blockUserHandler={blockUserHandler}
+        />
+
+        {/* for group */}
+        {/* <Sheet open={isGroupInfoSheetOpen} onOpenChange={setGroupInfoSheetOpen}>
+          <SheetContent
+            side="right"
+            className="flex flex-col justify-between h-full"
+          >
+            <SheetHeader>
+              <div className="w-full flex flex-col items-center relative">
+                <div className="relative group w-24 h-24">
+                  <Avatar className="w-full h-full">
+                    <AvatarImage
+                      src={"/assets/users.svg"}
+                      alt={selectedChatroomData?.name}
+                      className="object-cover"
+                    />
+                    <AvatarFallback className="text-5xl">
+                      {selectedChatroomData?.name.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  <div className="absolute inset-0 flex justify-center items-center bg-black bg-opacity-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <button className="text-white">
+                      <Pencil className="h-6 w-6" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="text-center mt-4">
+                  <SheetTitle className="text-base font-bold">
+                    {selectedChatroomData?.name || "Group Info"}
+                  </SheetTitle>
+                  <p className="text-sm text-gray-500">
+                    Created At:{" "}
+                    {selectedChatroomData?.createdAt
+                      ? new Date(
+                          selectedChatroomData.createdAt
+                        ).toLocaleDateString()
+                      : "N/A"}
+                  </p>
+                </div>
+              </div>
+            </SheetHeader>
+
+            <div className="p-4 flex-grow">
+              <div className="flex justify-between items-center mb-4 ml-1">
+                <p className="font-bold text-base mb-4 ml-1">
+                  {selectedChatroomData?.participants.length} Members
+                </p>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <button>
+                      <Plus
+                        onClick={loadInvitorList}
+                        className="h-6 w-6 cursor-pointer text-gray-400 hover:text-white"
+                      />
+                    </button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Invite a User</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Select a user to invite to the group.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="p-4">
+                      {invitableUsersLoading ? (
+                        <p>Loading users...</p>
+                      ) : (
+                        <ul className="space-y-2">
+                          {invitableUsers.length > 0 ? (
+                            invitableUsers.map((user) => (
+                              <li
+                                key={user._id}
+                                className="flex items-center gap-2"
+                              >
+                                <input
+                                  type="checkbox"
+                                  value={user._id}
+                                  onChange={(e) =>
+                                    handleInvitorChange(e, user._id)
+                                  }
+                                />
+                                <Avatar className="h-8 w-8">
+                                  <AvatarImage
+                                    src={user.image || "/default-avatar.png"}
+                                  />
+                                  <AvatarFallback>
+                                    {user.accountname.charAt(0)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <p>{user.accountname}</p>
+                              </li>
+                            ))
+                          ) : (
+                            <p>No users available to invite.</p>
+                          )}
+                        </ul>
+                      )}
+                    </div>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={inviteUserHandler}>
+                        Invite
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+
+              <ul className="space-y-4">
+                {selectedChatroomData?.participants.map((participant) => (
+                  <li
+                    key={participant.participantId}
+                    className="flex items-center gap-2"
+                  >
+                    <Avatar className="h-10 w-10 mr-2">
+                      <AvatarImage
+                        src={participant.image || "/assets/user.svg"}
+                      />
+                      <AvatarFallback>
+                        {participant.accountname?.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-1 justify-between items-center">
+                      <div className="flex flex-col">
+                        <div className="flex items-center">
+                          <p className="text-base">
+                            {participant.participantId === authenticatedUserId
+                              ? "You"
+                              : participant.accountname}
+                          </p>
+                        </div>
+                        {selectedChatroomData?.superAdmin.includes(
+                          participant.participantId
+                        ) && (
+                          <span className="text-xs text-blue-600">
+                            Super Admin
+                          </span>
+                        )}
+                        {selectedChatroomData?.admin.includes(
+                          participant.participantId
+                        ) && (
+                          <span className="text-xs text-blue-600">Admin</span>
+                        )}
+                        {selectedChatroomData?.silentUser.find(
+                          (silentUser) =>
+                            silentUser.userId === participant.participantId &&
+                            new Date(silentUser.silentUntil) > new Date()
+                        ) && (
+                          <span className="text-xs text-blue-600">
+                            Silent Until{" "}
+                            {new Date(
+                              selectedChatroomData.silentUser.find(
+                                (silentUser) =>
+                                  silentUser.userId ===
+                                  participant.participantId
+                              )?.silentUntil
+                            ).toLocaleString()}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center">
+                        {!selectedChatroomData?.admin.includes(
+                          participant.participantId
+                        ) &&
+                          !selectedChatroomData?.superAdmin.includes(
+                            participant.participantId
+                          ) &&
+                          selectedChatroomData?.superAdmin.includes(
+                            authenticatedUserId
+                          ) && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                handleAppointAdmin(participant.participantId)
+                              }
+                              className="text-black px-2 py-1 text-xs"
+                            >
+                              Admin
+                            </Button>
+                          )}
+
+                        {selectedChatroomData?.admin.includes(
+                          participant.participantId
+                        ) &&
+                          !selectedChatroomData?.superAdmin.includes(
+                            participant.participantId
+                          ) &&
+                          selectedChatroomData?.superAdmin.includes(
+                            authenticatedUserId
+                          ) && (
+                            <UserRoundX
+                              onClick={() => {
+                                dischargeAppointAdmin(
+                                  participant.participantId
+                                );
+                              }}
+                            />
+                          )}
+
+                        {!selectedChatroomData?.superAdmin.includes(
+                          participant.participantId
+                        ) &&
+                          !selectedChatroomData?.admin.includes(
+                            participant.participantId
+                          ) &&
+                          !selectedChatroomData?.silentUser?.some(
+                            (silentEntry) =>
+                              silentEntry.userId === participant.participantId
+                          ) && (
+                            <MessageCircleX
+                              className="ml-2 cursor-pointer"
+                              onClick={() => {
+                                silentHandler(participant.participantId);
+                              }}
+                            />
+                          )}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="p-4">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button className="w-full" variant="destructive">
+                    Leave Group
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. You will leave the group.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={leaveGroupHandler}>
+                      Leave Group
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </SheetContent>
+        </Sheet> */}
+
+        <GroupInfoSheet
+          isGroupInfoSheetOpen={isGroupInfoSheetOpen}
+          setGroupInfoSheetOpen={setGroupInfoSheetOpen}
+          selectedChatroomData={selectedChatroomData}
+          authenticatedUserId={authenticatedUserId}
+          invitableUsers={invitableUsers}
+          invitableUsersLoading={invitableUsersLoading}
+          handleInvitorChange={handleInvitorChange}
+          inviteUserHandler={inviteUserHandler}
+          handleAppointAdmin={handleAppointAdmin}
+          dischargeAppointAdmin={dischargeAppointAdmin}
+          silentHandler={silentHandler}
+          leaveGroupHandler={leaveGroupHandler}
+          loadInvitorList={loadInvitorList}
+        />
+
         <div className="border-t px-4 py-3 md:px-6 flex items-center">
           <div className="mr-4">
             <DropdownMenu>
@@ -1819,36 +2330,48 @@ export default function ChatRoomMainBar({
               </Card>
             )}
 
-            <div className="relative flex item-center">
-              <Textarea
-                placeholder="Type your message..."
-                className="min-h-[36px] h-[36px] line-height w-full rounded-2xl text-black resize-none pr-16 overflow-hidden leading-[15px]"
-                value={messageContent}
-                onChange={(e) => setMessageContent(e.target.value)}
-                onPaste={handlePaste}
-              />
-              <Button
-                type="submit"
-                size="icon"
-                className="absolute right-3 top-1/2 transform -translate-y-1/2"
-                onClick={() => {
-                  if (ws) {
-                    sendMessageHandler(
-                      authenticatedUserId,
-                      selectedChatroom,
-                      messageContent,
-                      ws,
-                      youtubeMetadata,
-                      facebookMetadata
-                    );
-                  } else {
-                    console.error("WebSocket connection is not available.");
-                  }
-                }}
-              >
-                <SendIcon className="w-4 h-4" />
-              </Button>
-            </div>
+            {!isUserSilenced ? (
+              <div className="relative flex item-center">
+                <Textarea
+                  placeholder="Type your message..."
+                  className="min-h-[36px] h-[36px] line-height w-full rounded-2xl text-black resize-none pr-16 overflow-hidden leading-[15px]"
+                  value={messageContent}
+                  onChange={(e) => setMessageContent(e.target.value)}
+                  onPaste={handlePaste}
+                />
+                <Button
+                  type="submit"
+                  size="icon"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                  onClick={() => {
+                    if (ws) {
+                      sendMessageHandler(
+                        authenticatedUserId,
+                        selectedChatroom,
+                        messageContent,
+                        ws,
+                        youtubeMetadata,
+                        facebookMetadata
+                      );
+                    } else {
+                      console.error("WebSocket connection is not available.");
+                    }
+                  }}
+                >
+                  <SendIcon className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <p className="text-red-500 text-sm">
+                You are silenced until{" "}
+                {new Date(
+                  selectedChatroomData?.silentUser.find(
+                    (silentUser) => silentUser.userId === authenticatedUserId
+                  )?.silentUntil
+                ).toLocaleString()}
+                .
+              </p>
+            )}
           </div>
         </div>
         <input
@@ -1865,16 +2388,18 @@ export default function ChatRoomMainBar({
           onChange={handleFileChange}
         />
       </div>
-      <FlexCardModal
-        isOpen={isFlexCardModalOpen}
-        onClose={() => setFlexCardModalOpen(false)}
-        cards={flexCards}
-        onCardClick={(card) => {
-          console.log("Card clicked:", card);
-          setSelectedCard(card);
-          setFlexCardModalOpen(false);
-        }}
-      />
+      <Suspense fallback={null}>
+        <FlexCardModal
+          isOpen={isFlexCardModalOpen}
+          onClose={() => setFlexCardModalOpen(false)}
+          cards={flexCards}
+          onCardClick={(card) => {
+            console.log("Card clicked:", card);
+            setSelectedCard(card);
+            setFlexCardModalOpen(false);
+          }}
+        />
+      </Suspense>
     </>
   );
 }
