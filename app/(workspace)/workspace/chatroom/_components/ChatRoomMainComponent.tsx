@@ -1,12 +1,6 @@
 "use client";
 
-import React, {
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-  Suspense,
-} from "react";
+import React, { useEffect, useState, useRef, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import {
   SendIcon,
@@ -84,6 +78,7 @@ import GroupInfoSheet from "./GroupInfoSheet";
 import PersonalInfoSheet from "./PersonalInfoSheet";
 import { useRouter } from "next/navigation";
 import ChatRoomSearchBar from "./ChatRoomSearchBar";
+import FlexCardModal from "./FlexCardModal";
 
 interface Chatroom {
   _id: string;
@@ -185,7 +180,7 @@ interface SearchResult {
   createdAt: string;
 }
 
-const FlexCardModal = React.lazy(() => import("./FlexCardModal"));
+// const FlexCardModal = React.lazy(() => import("./FlexCardModal"));
 
 export default function ChatRoomMainBar({
   chatrooms,
@@ -280,7 +275,6 @@ export default function ChatRoomMainBar({
     const fetchGroupImage = async () => {
       if (selectedChatroomData?.groupImage) {
         try {
-          console.log("group image laoded");
           const response = await fetch(
             `/api/group-image-load/${selectedChatroomData.groupImage}`
           );
@@ -390,8 +384,6 @@ export default function ChatRoomMainBar({
           authenticatedUserId
         );
         if (response.success && response.images) {
-          console.log("participants image load");
-
           setParticipantImages(response.images);
         } else {
           console.error(
@@ -1336,7 +1328,7 @@ export default function ChatRoomMainBar({
     try {
       const response = await blockUser(authenticatedUserId, blockUserId);
       if (response.success) {
-        console.log("User blocked successfully");
+        // console.log("User blocked successfully");
         toast.success(response.message);
       } else {
         console.error(response.message);
@@ -1351,7 +1343,7 @@ export default function ChatRoomMainBar({
     try {
       const response = await unblockUser(authenticatedUserId, blockUserId);
       if (response.success) {
-        console.log("User unblocked successfully");
+        // console.log("User unblocked successfully");
         toast.success(response.message);
       } else {
         console.error(response.message);
@@ -2175,18 +2167,18 @@ export default function ChatRoomMainBar({
           onChange={handleFileChange}
         />
       </div>
-      <Suspense fallback={null}>
-        <FlexCardModal
-          isOpen={isFlexCardModalOpen}
-          onClose={() => setFlexCardModalOpen(false)}
-          cards={flexCards}
-          onCardClick={(card) => {
-            console.log("Card clicked:", card);
-            setSelectedCard(card);
-            setFlexCardModalOpen(false);
-          }}
-        />
-      </Suspense>
+      {/* <Suspense fallback={null}> */}
+      <FlexCardModal
+        isOpen={isFlexCardModalOpen}
+        onClose={() => setFlexCardModalOpen(false)}
+        cards={flexCards}
+        onCardClick={(card) => {
+          console.log("Card clicked:", card);
+          setSelectedCard(card);
+          setFlexCardModalOpen(false);
+        }}
+      />
+      {/* </Suspense> */}
     </>
   );
 }

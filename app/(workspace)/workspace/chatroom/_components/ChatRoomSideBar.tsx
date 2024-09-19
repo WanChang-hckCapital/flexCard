@@ -89,12 +89,10 @@ export default function ChatRoomSideBar({
 
       if (response.ok) {
         const data = await response.json();
-        console.log("before");
         setGroupImages((prev) => ({
           ...prev,
           [groupId]: data.fileDataUrl,
         }));
-        console.log("after");
       } else {
         console.error("Failed to load group image:", response.statusText);
       }
@@ -103,19 +101,9 @@ export default function ChatRoomSideBar({
     }
   };
 
-  // useEffect(() => {
-  //   chatrooms.forEach((chatroom) => {
-  //     if (chatroom.type === "GROUP" && chatroom.groupImage) {
-  //       fetchGroupImage(chatroom.groupImage.toString());
-  //     }
-  //   });
-  // }, [chatrooms]);
   useEffect(() => {
-    console.log("Chatrooms updated: ", chatrooms);
-
     if (chatrooms.length > 0) {
       chatrooms.forEach((chatroom) => {
-        console.log("Checking chatroom: ", chatroom);
         if (chatroom.type === "GROUP" && chatroom.groupImage) {
           fetchGroupImage(chatroom.groupImage.toString());
         }

@@ -140,7 +140,7 @@ export default function PersonalInfoSheet({
                   Block User
                 </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <AlertDialogContent className="z-[1100]">
                 <AlertDialogHeader>
                   <AlertDialogTitle>Confirm Block</AlertDialogTitle>
                   <AlertDialogDescription>
