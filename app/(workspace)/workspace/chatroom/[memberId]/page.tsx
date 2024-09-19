@@ -99,7 +99,7 @@ export default async function ChatComponent({ params }: ChatRoomProps) {
     );
 
     // all following/follower user but havent create personal chatroom before
-    allFollowerAndFollowingForPersonal = await getFollowersAndFollowing(
+    allFollowerAndFollowingForGroup = await getAllFollowersAndFollowing(
       memberId
     );
 
@@ -132,7 +132,7 @@ export default async function ChatComponent({ params }: ChatRoomProps) {
     <div>
       <div className="flex h-screen w-full bg-background">
         <ChatRoomComponent
-          chatrooms={serializedChatrooms}
+          chatrooms={serializedChatrooms || []}
           authenticatedUserId={serializedProfileId}
           allUsers={serializedAllUsers}
           allFollowerAndFollowingForPersonal={

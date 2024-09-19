@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { SendIcon, PlusIcon, UserIcon, UsersIcon } from "lucide-react";
-import Link from "next/link";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -11,12 +10,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from "@/components/ui/accordion";
 import ChatRoomSearchBar from "./ChatRoomSearchBar";
 import { Dialog, DialogContent, DialogOverlay } from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
@@ -58,8 +51,6 @@ interface Chatroom {
 interface ChatroomSideBarProps {
   chatrooms: Chatroom[];
   authenticatedUserId: string;
-  //   allUsers: any[];
-  //   allFollowerAndFollowing: AllFollowerAndFollowing;
   onSelectChatroom: (chatroomId: string) => void;
   allUsers: any[];
   allFollowerAndFollowingForPersonal: {
@@ -89,17 +80,21 @@ export default function ChatRoomSideBar({
     authenticatedUserId,
   ]);
   const [groupChatName, setGroupChatName] = useState("");
+
   const [groupImages, setGroupImages] = useState<{ [key: string]: string }>({});
 
   const fetchGroupImage = async (groupId: string) => {
     try {
       const response = await fetch(`/api/group-image-load/${groupId}`);
+
       if (response.ok) {
         const data = await response.json();
+        console.log("before");
         setGroupImages((prev) => ({
           ...prev,
           [groupId]: data.fileDataUrl,
         }));
+        console.log("after");
       } else {
         console.error("Failed to load group image:", response.statusText);
       }
@@ -108,16 +103,27 @@ export default function ChatRoomSideBar({
     }
   };
 
+  // useEffect(() => {
+  //   chatrooms.forEach((chatroom) => {
+  //     if (chatroom.type === "GROUP" && chatroom.groupImage) {
+  //       fetchGroupImage(chatroom.groupImage.toString());
+  //     }
+  //   });
+  // }, [chatrooms]);
   useEffect(() => {
-    chatrooms.forEach((chatroom) => {
-      if (chatroom.type === "GROUP" && chatroom.groupImage) {
-        fetchGroupImage(chatroom.groupImage.toString());
-      }
-    });
+    console.log("Chatrooms updated: ", chatrooms);
+
+    if (chatrooms.length > 0) {
+      chatrooms.forEach((chatroom) => {
+        console.log("Checking chatroom: ", chatroom);
+        if (chatroom.type === "GROUP" && chatroom.groupImage) {
+          fetchGroupImage(chatroom.groupImage.toString());
+        }
+      });
+    }
   }, [chatrooms]);
 
   const showNewPersonalChat = () => {
-    console.log("new chat");
     setIsPersonalModalOpen(true);
   };
 
@@ -126,7 +132,6 @@ export default function ChatRoomSideBar({
   };
 
   const createNewGroupChat = () => {
-    console.log("Creating a new group chat");
     setIsGroupModalOpen(true);
   };
 
@@ -206,16 +211,13 @@ export default function ChatRoomSideBar({
     }
   };
 
-  // console.log("siderbar");
-  // console.log(chatrooms);
-
   return (
     <>
-      <div className="flex justify-center p-4">
+      {/* <div className="flex justify-center p-4">
         <ChatRoomSearchBar />
-      </div>
+      </div> */}
       <hr></hr>
-      <div className="flex h-14 items-center border-b px-4">
+      <div className="flex h-16 items-center border-b px-4">
         <h3 className="text-lg font-semibold">Messages</h3>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -349,14 +351,14 @@ export default function ChatRoomSideBar({
 
       <div className="flex-1 overflow-auto">
         <nav className="space-y-2">
-          {chatrooms.map((chatroom) => {
+          {chatrooms.map((chatroom, index) => {
             const filteredParticipants = chatroom.participants.filter(
               (participant) => participant.participantId !== authenticatedUserId
             );
 
             return (
               <div
-                key={chatroom._id}
+                key={index}
                 onClick={() => onSelectChatroom(chatroom.chatroomId)}
                 className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer hover:bg-gray-200 hover:text-black"
               >

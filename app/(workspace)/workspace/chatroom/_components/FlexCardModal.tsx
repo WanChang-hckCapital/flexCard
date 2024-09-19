@@ -62,7 +62,7 @@ const FlexCardModal: React.FC<FlexCardModalProps> = ({
               </Card>
             ))
           ) : (
-            <p>No cards available.</p>
+            <p className="text-black">No cards available.</p>
           )}
         </div>
         <div className="p-4 border-t">

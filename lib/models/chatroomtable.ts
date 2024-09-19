@@ -21,6 +21,7 @@ const chatroomSchema = new Schema<Chatroom>(
       {
         userId: { type: mongoose.Schema.Types.ObjectId, ref: "Profile" },
         silentUntil: { type: Date, default: Date.now },
+        isSilenceIndefinite: { type: Boolean, default: false },
       },
     ],
     groupImage: {

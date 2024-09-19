@@ -59,35 +59,12 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@radix-ui/react-dropdown-menu";
-import {
-  Sheet,
-  SheetTrigger,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
-import {
-  AlertDialog,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogAction,
-  AlertDialogCancel,
-} from "@/components/ui/alert-dialog";
-import { Pencil } from "lucide-react";
 import { X } from "lucide-react";
 import MessageImageModel from "./MessageImageModal";
 import { toast } from "sonner";
 import { fetchAllCards } from "@/lib/actions/user.actions";
-// import FlexCardModal from "./FlexCardModal";
 import Link from "next/link";
-import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { Loader } from "@googlemaps/js-api-loader";
 import LoadingSpinner from "./LoadingSpinner";
 import {
   fetchPreviousMessage,
@@ -97,9 +74,16 @@ import {
   newAdminAppoint,
   dischargeAdmin,
   silentUser,
+  unsilentUser,
+  blockUser,
+  unblockUser,
+  searchMessage,
+  checkBlockedStatus,
 } from "@/lib/actions/user.actions";
 import GroupInfoSheet from "./GroupInfoSheet";
 import PersonalInfoSheet from "./PersonalInfoSheet";
+import { useRouter } from "next/navigation";
+import ChatRoomSearchBar from "./ChatRoomSearchBar";
 
 interface Chatroom {
   _id: string;
@@ -177,8 +161,8 @@ interface ChatroomMainBarProps {
 }
 
 declare global {
-  interface Window {
-    google: typeof google;
+  interface HTMLDivElement {
+    _leaflet_id?: string;
   }
 }
 
@@ -194,6 +178,13 @@ interface InvitableUserResponse {
   users: InvitableUser[];
 }
 
+interface SearchResult {
+  _id: string;
+  content: string;
+  senderId: string;
+  createdAt: string;
+}
+
 const FlexCardModal = React.lazy(() => import("./FlexCardModal"));
 
 export default function ChatRoomMainBar({
@@ -207,13 +198,16 @@ export default function ChatRoomMainBar({
   receiverInfo,
 }: ChatroomMainBarProps) {
   if (!selectedChatroom) {
-    return <div>Select a chatroom to start chatting.</div>;
+    return (
+      <div className="flex justify-center items-center h-screen text-xl w-full rounded-lg shadow-md p-6 text-center">
+        Select a chatroom to start chatting.
+      </div>
+    );
   }
 
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);
-  // const mapRefFromLink = useRef<HTMLDivElement>(null);
   const mapRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
@@ -224,7 +218,6 @@ export default function ChatRoomMainBar({
   const [participantImages, setParticipantImages] = useState<
     { participantId: string; image: string | null }[]
   >([]);
-  const [receiverImage, setReceiverImage] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [locationPreview, setLocationPreview] = useState<string | null>(null);
@@ -242,9 +235,7 @@ export default function ChatRoomMainBar({
     longitude: number;
   } | null>(null);
   const [isMapVisible, setMapVisible] = useState(false);
-  const [googleMap, setGoogleMap] = useState<google.maps.Map | null>(null);
   const [marker, setMarker] = useState<google.maps.Marker | null>(null);
-  const [locationLink, setLocationLink] = useState<string>("");
   const [shopName, setShopName] = useState<string | null>(null);
   const [shopImage, setShopImage] = useState<string | null>(null);
   const [shopDescription, setShopDescription] = useState<string | null>(null);
@@ -267,19 +258,29 @@ export default function ChatRoomMainBar({
     url: string;
   } | null>(null);
 
-  const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [isGroupInfoSheetOpen, setGroupInfoSheetOpen] = useState(false);
   const [isPersonalInfoSheetOpen, setPersonalInfoSheetOpen] = useState(false);
-  // const [isLeaveGrpAlertOpen, setLeaveGrpAlertOpen] = useState(false);
   const [invitableUsers, setInvitableUsers] = useState<InvitableUser[]>([]);
   const [invitableUsersLoading, setInvitableUsersLoading] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [groupImage, setGroupImage] = useState<string | null>(null);
 
+  const [isSearchBarVisible, setIsSearchBarVisible] = useState(false);
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+
+  // trigger when the user click on the search result
+  const [highlightedMessageId, setHighlightedMessageId] = useState<
+    string | null
+  >(null);
+
+  const router = useRouter();
+
   useEffect(() => {
     const fetchGroupImage = async () => {
       if (selectedChatroomData?.groupImage) {
         try {
+          console.log("group image laoded");
           const response = await fetch(
             `/api/group-image-load/${selectedChatroomData.groupImage}`
           );
@@ -304,55 +305,36 @@ export default function ChatRoomMainBar({
     messages.forEach((message) => {
       message.readStatus.forEach((status) => {
         if (status.userId === authenticatedUserId && !status.readAt) {
-          console.log("yes, i seen the message");
+          // console.log("yes, i seen the message");
           updateReadStatus(message._id, authenticatedUserId);
         } else {
-          console.log("i should not update the status");
+          // console.log("i should not update the status");
         }
       });
     });
   }, [messages]);
 
-  // useEffect(() => {
-  //   const fetchReceiverImage = async () => {
-  //     if (receiverInfo && receiverInfo.user) {
-  //       console.log("receiverInfo._id" + receiverInfo.user);
-  //       const response = await getImage(receiverInfo.user);
-  //       if (response.success && response.image) {
-  //         setReceiverImage(response.image);
-  //       } else {
-  //         console.error(
-  //           "Failed to retrieve receiver's image:",
-  //           response.message
-  //         );
-  //       }
-  //     }
-  //   };
+  useEffect(() => {
+    if (coordinates && locationPreview && mapRef.current) {
+      const { latitude, longitude } = coordinates;
 
-  //   fetchReceiverImage();
-  // }, [receiverInfo]);
+      if (mapRef.current && !mapRef.current._leaflet_id) {
+        import("leaflet").then((L) => {
+          const newMap = L.map(mapRef.current!).setView(
+            [latitude, longitude],
+            13
+          );
+          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: "© OpenStreetMap contributors",
+          }).addTo(newMap);
 
-  // useEffect(() => {
-  //   if (coordinates && locationPreview && mapRef.current) {
-  //     const { latitude, longitude } = coordinates;
-
-  //     if (map) {
-  //       map.remove();
-  //       setMap(null);
-  //       // console.log("map exist");
-  //     }
-
-  //     // Initialize the new map
-  //     const newMap = L.map(mapRef.current).setView([latitude, longitude], 13);
-  //     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  //       attribution: "© OpenStreetMap contributors",
-  //     }).addTo(newMap);
-  //     setMap(newMap);
-
-  //     const newMarker = L.marker([latitude, longitude]).addTo(newMap);
-  //     setLMarker(newMarker);
-  //   }
-  // }, [coordinates, locationPreview, mapRef.current]);
+          const newMarker = L.marker([latitude, longitude]).addTo(newMap);
+          setLMarker(newMarker);
+          setMap(newMap);
+        });
+      }
+    }
+  }, [coordinates, locationPreview, mapRef.current]);
 
   useEffect(() => {
     currentMessages.forEach((message) => {
@@ -372,110 +354,33 @@ export default function ChatRoomMainBar({
             const latitude = parseFloat(match[1]);
             const longitude = parseFloat(match[2]);
 
-            const newMap = L.map(mapDiv).setView([latitude, longitude], 13);
-            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-              attribution: "© OpenStreetMap contributors",
-            }).addTo(newMap);
+            import("leaflet").then((L) => {
+              const newMap = L.map(mapDiv).setView([latitude, longitude], 13);
+              L.tileLayer(
+                "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+                  attribution: "© OpenStreetMap contributors",
+                }
+              ).addTo(newMap);
 
-            const svgIcon = `data:image/svg+xml;charset=UTF-8,
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="red" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin">
-                  <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
-                  <circle cx="12" cy="10" r="3"/>
-              </svg>`;
-            const customIcon = L.icon({
-              iconUrl: svgIcon,
+              const svgIcon = `data:image/svg+xml;charset=UTF-8,
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="red" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin">
+                    <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
+                    <circle cx="12" cy="10" r="3"/>
+                </svg>`;
+              const customIcon = L.icon({
+                iconUrl: svgIcon,
+              });
+
+              L.marker([latitude, longitude], { icon: customIcon }).addTo(
+                newMap
+              );
             });
-
-            L.marker([latitude, longitude], { icon: customIcon }).addTo(newMap);
           }
         }
       }
     });
   }, [currentMessages]);
-
-  // // set the current location by default
-  // // click again to reset the location
-  const initializeMap = useCallback(() => {
-    if (mapRef.current && !googleMap) {
-      const loader = new Loader({
-        apiKey: process.env.NEXT_PUBLIC_GOOGLEMAPS_API_KEY || "",
-        version: "weekly",
-        libraries: ["places"],
-      });
-
-      loader
-        .load()
-        .then(() => {
-          console.log("Google Maps API loaded");
-
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              const { latitude, longitude } = position.coords;
-
-              const newMap = new window.google.maps.Map(mapRef.current!, {
-                center: { lat: latitude, lng: longitude }, // current location
-                zoom: 8, // Default zoom level
-              });
-              setGoogleMap(newMap);
-
-              let initialMarker = new window.google.maps.Marker({
-                // set a initial marker
-                position: { lat: latitude, lng: longitude },
-                map: newMap,
-              });
-              setMarker(initialMarker);
-              console.log(
-                `Map centered at user's location: ${latitude}, ${longitude}`
-              );
-
-              newMap.addListener(
-                "click",
-                (event: google.maps.MapMouseEvent) => {
-                  const latLng = event.latLng;
-                  if (latLng) {
-                    const latitude = latLng.lat();
-                    const longitude = latLng.lng();
-                    console.log(`Selected location: ${latitude}, ${longitude}`);
-
-                    // remove existing marker
-                    if (initialMarker) {
-                      initialMarker.setMap(null);
-                    }
-
-                    initialMarker = new window.google.maps.Marker({
-                      position: latLng,
-                      map: newMap,
-                    });
-                    setMarker(initialMarker);
-
-                    const locationLink = `https://maps.google.com/?q=${latitude},${longitude}`;
-                    console.log("Generated Location Link:", locationLink);
-                    setLocationLink(locationLink);
-                  }
-                }
-              );
-            },
-            (error) => {
-              console.error("Error getting user's location:", error);
-              const newMap = new window.google.maps.Map(mapRef.current!, {
-                center: { lat: 25.105, lng: 121.597 }, // Default location // taipei
-                zoom: 8,
-              });
-              setGoogleMap(newMap);
-            }
-          );
-        })
-        .catch((e) => {
-          console.error("Error loading Google Maps API", e);
-        });
-    }
-  }, [googleMap, marker]);
-
-  useEffect(() => {
-    if (isMapVisible) {
-      initializeMap();
-    }
-  }, [isMapVisible, initializeMap]);
 
   useEffect(() => {
     const fetchParticipantImages = async () => {
@@ -485,6 +390,8 @@ export default function ChatRoomMainBar({
           authenticatedUserId
         );
         if (response.success && response.images) {
+          console.log("participants image load");
+
           setParticipantImages(response.images);
         } else {
           console.error(
@@ -648,6 +555,26 @@ export default function ChatRoomMainBar({
     } | null
   ) => {
     if (!ws) return;
+
+    const blockedStatus = await checkBlockedStatus(receiverInfo?._id || "");
+
+    if (
+      Array.isArray(blockedStatus?.blockedAccounts) &&
+      blockedStatus.blockedAccounts.length > 0
+    ) {
+      const isBlocked = blockedStatus.blockedAccounts.some(
+        (account) => account._id === authenticatedUserId
+      );
+
+      if (isBlocked) {
+        toast.error("You are blocked by this user. Cannot send messages.");
+        return;
+      }
+    } else {
+      console.warn(
+        "Blocked accounts not found or the user has no blocked accounts."
+      );
+    }
 
     let fileObjectId: string | null = null;
     let imageSrc: string = "";
@@ -950,24 +877,29 @@ export default function ChatRoomMainBar({
           setCoordinates({ latitude, longitude });
 
           if (mapRef.current) {
-            // Check if a map already exists and remove it
             if (map) {
               map.remove();
               setMap(null);
             }
 
-            // Initialize the new map
-            const newMap = L.map(mapRef.current).setView(
-              [latitude, longitude],
-              13
-            );
-            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-              attribution: "© OpenStreetMap contributors",
-            }).addTo(newMap);
-            setMap(newMap);
+            import("leaflet").then((L) => {
+              if (mapRef.current) {
+                const newMap = L.map(mapRef.current).setView(
+                  [latitude, longitude],
+                  13
+                );
+                L.tileLayer(
+                  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                  {
+                    attribution: "© OpenStreetMap contributors",
+                  }
+                ).addTo(newMap);
 
-            const newMarker = L.marker([latitude, longitude]).addTo(newMap);
-            setLMarker(newMarker);
+                const newMarker = L.marker([latitude, longitude]).addTo(newMap);
+                setLMarker(newMarker);
+                setMap(newMap);
+              }
+            });
           }
         },
         (error) => {
@@ -1036,10 +968,6 @@ export default function ChatRoomMainBar({
 
   const handleRemoveMap = () => {
     setMapVisible(false);
-    if (googleMap) {
-      googleMap.getDiv().innerHTML = "";
-      setGoogleMap(null);
-    }
     setMarker(null);
   };
 
@@ -1121,8 +1049,6 @@ export default function ChatRoomMainBar({
     const youtubeLinkPattern =
       /https:\/\/www\.youtube\.com\/watch\?v=[A-Za-z0-9_-]+/;
     const googleMapsLinkPattern = /https:\/\/maps\.app\.goo\.gl\/[A-Za-z0-9]+/;
-    // const facebookPostPattern =
-    //   /https:\/\/www\.facebook\.com\/[A-Za-z0-9\.]+\/posts\/[A-Za-z0-9]+/;
 
     const facebookPostPattern =
       /https:\/\/www\.facebook\.com\/share\/p\/[A-Za-z0-9]+/;
@@ -1239,10 +1165,6 @@ export default function ChatRoomMainBar({
     setPersonalInfoSheetOpen(true);
   };
 
-  const blockUserHandler = () => {
-    console.log("block user");
-  };
-
   // leave the group
   const leaveGroupHandler = async () => {
     try {
@@ -1256,6 +1178,10 @@ export default function ChatRoomMainBar({
         toast.error(response.message);
       }
     } catch (error: any) {}
+  };
+
+  const viewProfileHandler = (participantId: string) => {
+    router.push(`/profile/${participantId}`);
   };
 
   const loadInvitorList = async () => {
@@ -1361,14 +1287,20 @@ export default function ChatRoomMainBar({
     }
   };
 
-  const silentHandler = async (silentTargetId: string) => {
+  const silentHandler = async (
+    silentTargetId: string,
+    silentDuration: number | null
+  ) => {
     const chatroomId = selectedChatroomData?.chatroomId || "";
     try {
+      const isIndefinite = silentDuration === null;
+
       const response = await silentUser(
         chatroomId,
         authenticatedUserId,
         silentTargetId,
-        30
+        isIndefinite ? 0 : silentDuration,
+        isIndefinite
       );
       if (response.success) {
         toast.success(response.message);
@@ -1381,18 +1313,146 @@ export default function ChatRoomMainBar({
     }
   };
 
+  const unsilentHandler = async (silentTargetId: string) => {
+    const chatroomId = selectedChatroomData?.chatroomId || "";
+    try {
+      const response = await unsilentUser(
+        chatroomId,
+        authenticatedUserId,
+        silentTargetId
+      );
+      if (response.success) {
+        toast.success(response.message);
+      } else {
+        toast.error(response.message);
+      }
+    } catch (error) {
+      toast.error("An error occurred while unsilencing the user.");
+      console.error(error);
+    }
+  };
+
+  const blockUserHandler = async (blockUserId: string) => {
+    try {
+      const response = await blockUser(authenticatedUserId, blockUserId);
+      if (response.success) {
+        console.log("User blocked successfully");
+        toast.success(response.message);
+      } else {
+        console.error(response.message);
+        toast.error(response.message);
+      }
+    } catch (error) {
+      console.error("Error blocking user:", error);
+    }
+  };
+
+  const unblockUserHandler = async (blockUserId: string) => {
+    try {
+      const response = await unblockUser(authenticatedUserId, blockUserId);
+      if (response.success) {
+        console.log("User unblocked successfully");
+        toast.success(response.message);
+      } else {
+        console.error(response.message);
+        toast.error(response.message);
+      }
+    } catch (error) {
+      console.error("Error unblocking user:", error);
+    }
+  };
+
   const isUserSilenced = selectedChatroomData?.silentUser.find(
     (silentUser) =>
       silentUser.userId === authenticatedUserId &&
-      new Date(silentUser.silentUntil) > new Date()
+      (silentUser.silentUntil === null ||
+        new Date(silentUser.silentUntil) > new Date())
   );
+
+  // show the search bar
+  const toggleSearchBar = () => {
+    setIsSearchBarVisible((prevState) => !prevState);
+  };
+
+  // onchange event to search message in chatroom
+  const handleSearchClick = async (keyword: string) => {
+    setSearchKeyword(keyword);
+
+    if (keyword.trim() !== "") {
+      const result = await searchMessage(
+        selectedChatroomData?.chatroomId || "",
+        keyword
+      );
+      if (result.success) {
+        setSearchResults(result?.data || []);
+      } else {
+        setSearchResults([]);
+        setHighlightedMessageId(null);
+      }
+    } else {
+      setSearchResults([]);
+      setHighlightedMessageId(null);
+    }
+  };
+
+  const handleSearchResultClick = (messageId: string) => {
+    setHighlightedMessageId(messageId);
+  };
 
   return (
     <>
       <div className="flex flex-col w-full">
         <div className="sticky top-0 z-10 w-full shadow-sm p-2">
-          <div className="flex justify-end">
-            <div className="flex h-14 items-center px-4">
+          <div className="flex justify-between h-14 items-center px-4">
+            {isSearchBarVisible && (
+              <div className="flex items-center flex-1 mr-4 relative">
+                <div className="flex-grow">
+                  <ChatRoomSearchBar
+                    value={searchKeyword}
+                    onSearchClick={handleSearchClick}
+                  />
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="ml-2"
+                  onClick={() => {
+                    toggleSearchBar();
+                    setSearchKeyword(""); // Clear search keyword
+                    setSearchResults([]); // Clear search results
+                    setHighlightedMessageId(null); // Clear highlighted message
+                  }}
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </Button>
+
+                {searchKeyword.trim() !== "" && (
+                  <div className="absolute top-full mt-2 w-full bg-white border border-gray-300 shadow-lg rounded-lg z-10">
+                    {searchResults.length > 0 ? (
+                      searchResults.map((message) => (
+                        <div
+                          className="flex justify-between"
+                          onClick={() => handleSearchResultClick(message._id)}
+                        >
+                          <div
+                            key={message._id}
+                            className="p-2 text-black hover:bg-gray-100"
+                          >
+                            {message.content}
+                          </div>
+                          <div className="p-2 text-black hover:bg-gray-100">
+                            {formatMessageTime(message.createdAt)}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="p-2 text-gray-500">No messages found</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+            <div className="ml-auto">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -1419,8 +1479,14 @@ export default function ChatRoomMainBar({
                       ? "Group Info"
                       : "Contact Info"}
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 px-4 py-3 h-12 cursor-pointer text-black">
+                  {/* <DropdownMenuItem className="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 px-4 py-3 h-12 cursor-pointer text-black">
                     Mute Motification
+                  </DropdownMenuItem> */}
+                  <DropdownMenuItem
+                    className="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 px-4 py-3 h-12 cursor-pointer text-black"
+                    onClick={toggleSearchBar}
+                  >
+                    Search In Chat
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -1434,6 +1500,8 @@ export default function ChatRoomMainBar({
           {isFetchingOlderMessages && <LoadingSpinner />}
           {currentMessages.length > 0 ? (
             currentMessages.map((message: Message) => {
+              const isHighlighted = message._id === highlightedMessageId;
+
               const senderImage = participantImages.find(
                 (img) => img.participantId === message.senderId
               )?.image;
@@ -1445,6 +1513,10 @@ export default function ChatRoomMainBar({
                     message.senderId === authenticatedUserId
                       ? "justify-end"
                       : "justify-start"
+                  } ${
+                    isHighlighted
+                      ? "bg-yellow-100 border-2 border-yellow-400 text-black transition-all duration-300"
+                      : ""
                   }`}
                 >
                   {message.senderId !== authenticatedUserId && (
@@ -1658,9 +1730,13 @@ export default function ChatRoomMainBar({
                   <div
                     className={`max-w-[75%] rounded-lg p-3 text-sm ${
                       message.senderId === authenticatedUserId
-                        ? "bg-primary text-white rounded-xl"
-                        : "bg-primary text-white rounded-xl"
-                    }`}
+                        ? isHighlighted
+                          ? "bg-yellow-100 text-black"
+                          : ""
+                        : isHighlighted
+                        ? "bg-yellow-100 text-black"
+                        : ""
+                    } transition-all duration-300`}
                   >
                     <div className="flex justify-between items-center">
                       {!message.youtubeMetadata &&
@@ -1734,7 +1810,14 @@ export default function ChatRoomMainBar({
                             </AvatarFallback>
                           </Avatar>
                           <p>{participant.accountname}</p>
-                          <Button className="mt-2">View Profile</Button>
+                          <Button
+                            onClick={() =>
+                              viewProfileHandler(participant.participantId)
+                            }
+                            className="mt-2"
+                          >
+                            View Profile
+                          </Button>
                         </div>
                       ))}
                   </>
@@ -1742,55 +1825,6 @@ export default function ChatRoomMainBar({
             </div>
           )}
         </div>
-        {/* for personal */}
-        {/* <Sheet
-          open={isPersonalInfoSheetOpen}
-          onOpenChange={setPersonalInfoSheetOpen}
-        >
-          <SheetContent
-            side="right"
-            className="flex flex-col justify-between h-full"
-          >
-            <SheetHeader>
-              <div className="w-full flex flex-col items-center relative">
-                <div className="relative group w-24 h-24">
-                  <Avatar className="w-full h-full">
-                    <AvatarImage
-                      src={
-                        selectedChatroomData?.participants.find(
-                          (participant) =>
-                            participant.participantId !== authenticatedUserId
-                        )?.image || "/assets/users.svg"
-                      }
-                      alt={selectedChatroomData?.name}
-                      className="object-cover"
-                    />
-                    <AvatarFallback className="text-5xl">
-                      {selectedChatroomData?.name.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                </div>
-                <div className="text-center mt-4">
-                  <SheetTitle className="text-xl font-bold">
-                    {selectedChatroomData?.participants.find(
-                      (participant) =>
-                        participant.participantId !== authenticatedUserId
-                    )?.accountname || "/assets/users.svg"}
-                  </SheetTitle>
-                </div>
-              </div>
-            </SheetHeader>
-            <div className="p-4">
-              <Button
-                className="w-full"
-                variant="destructive"
-                onClick={blockUserHandler}
-              >
-                Block User
-              </Button>
-            </div>
-          </SheetContent>
-        </Sheet> */}
 
         <PersonalInfoSheet
           isOpen={isPersonalInfoSheetOpen}
@@ -1798,259 +1832,8 @@ export default function ChatRoomMainBar({
           selectedChatroomData={selectedChatroomData}
           authenticatedUserId={authenticatedUserId}
           blockUserHandler={blockUserHandler}
+          unblockUserHandler={unblockUserHandler}
         />
-
-        {/* for group */}
-        {/* <Sheet open={isGroupInfoSheetOpen} onOpenChange={setGroupInfoSheetOpen}>
-          <SheetContent
-            side="right"
-            className="flex flex-col justify-between h-full"
-          >
-            <SheetHeader>
-              <div className="w-full flex flex-col items-center relative">
-                <div className="relative group w-24 h-24">
-                  <Avatar className="w-full h-full">
-                    <AvatarImage
-                      src={"/assets/users.svg"}
-                      alt={selectedChatroomData?.name}
-                      className="object-cover"
-                    />
-                    <AvatarFallback className="text-5xl">
-                      {selectedChatroomData?.name.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-
-                  <div className="absolute inset-0 flex justify-center items-center bg-black bg-opacity-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <button className="text-white">
-                      <Pencil className="h-6 w-6" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="text-center mt-4">
-                  <SheetTitle className="text-base font-bold">
-                    {selectedChatroomData?.name || "Group Info"}
-                  </SheetTitle>
-                  <p className="text-sm text-gray-500">
-                    Created At:{" "}
-                    {selectedChatroomData?.createdAt
-                      ? new Date(
-                          selectedChatroomData.createdAt
-                        ).toLocaleDateString()
-                      : "N/A"}
-                  </p>
-                </div>
-              </div>
-            </SheetHeader>
-
-            <div className="p-4 flex-grow">
-              <div className="flex justify-between items-center mb-4 ml-1">
-                <p className="font-bold text-base mb-4 ml-1">
-                  {selectedChatroomData?.participants.length} Members
-                </p>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <button>
-                      <Plus
-                        onClick={loadInvitorList}
-                        className="h-6 w-6 cursor-pointer text-gray-400 hover:text-white"
-                      />
-                    </button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Invite a User</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Select a user to invite to the group.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <div className="p-4">
-                      {invitableUsersLoading ? (
-                        <p>Loading users...</p>
-                      ) : (
-                        <ul className="space-y-2">
-                          {invitableUsers.length > 0 ? (
-                            invitableUsers.map((user) => (
-                              <li
-                                key={user._id}
-                                className="flex items-center gap-2"
-                              >
-                                <input
-                                  type="checkbox"
-                                  value={user._id}
-                                  onChange={(e) =>
-                                    handleInvitorChange(e, user._id)
-                                  }
-                                />
-                                <Avatar className="h-8 w-8">
-                                  <AvatarImage
-                                    src={user.image || "/default-avatar.png"}
-                                  />
-                                  <AvatarFallback>
-                                    {user.accountname.charAt(0)}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <p>{user.accountname}</p>
-                              </li>
-                            ))
-                          ) : (
-                            <p>No users available to invite.</p>
-                          )}
-                        </ul>
-                      )}
-                    </div>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={inviteUserHandler}>
-                        Invite
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-
-              <ul className="space-y-4">
-                {selectedChatroomData?.participants.map((participant) => (
-                  <li
-                    key={participant.participantId}
-                    className="flex items-center gap-2"
-                  >
-                    <Avatar className="h-10 w-10 mr-2">
-                      <AvatarImage
-                        src={participant.image || "/assets/user.svg"}
-                      />
-                      <AvatarFallback>
-                        {participant.accountname?.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-1 justify-between items-center">
-                      <div className="flex flex-col">
-                        <div className="flex items-center">
-                          <p className="text-base">
-                            {participant.participantId === authenticatedUserId
-                              ? "You"
-                              : participant.accountname}
-                          </p>
-                        </div>
-                        {selectedChatroomData?.superAdmin.includes(
-                          participant.participantId
-                        ) && (
-                          <span className="text-xs text-blue-600">
-                            Super Admin
-                          </span>
-                        )}
-                        {selectedChatroomData?.admin.includes(
-                          participant.participantId
-                        ) && (
-                          <span className="text-xs text-blue-600">Admin</span>
-                        )}
-                        {selectedChatroomData?.silentUser.find(
-                          (silentUser) =>
-                            silentUser.userId === participant.participantId &&
-                            new Date(silentUser.silentUntil) > new Date()
-                        ) && (
-                          <span className="text-xs text-blue-600">
-                            Silent Until{" "}
-                            {new Date(
-                              selectedChatroomData.silentUser.find(
-                                (silentUser) =>
-                                  silentUser.userId ===
-                                  participant.participantId
-                              )?.silentUntil
-                            ).toLocaleString()}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center">
-                        {!selectedChatroomData?.admin.includes(
-                          participant.participantId
-                        ) &&
-                          !selectedChatroomData?.superAdmin.includes(
-                            participant.participantId
-                          ) &&
-                          selectedChatroomData?.superAdmin.includes(
-                            authenticatedUserId
-                          ) && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() =>
-                                handleAppointAdmin(participant.participantId)
-                              }
-                              className="text-black px-2 py-1 text-xs"
-                            >
-                              Admin
-                            </Button>
-                          )}
-
-                        {selectedChatroomData?.admin.includes(
-                          participant.participantId
-                        ) &&
-                          !selectedChatroomData?.superAdmin.includes(
-                            participant.participantId
-                          ) &&
-                          selectedChatroomData?.superAdmin.includes(
-                            authenticatedUserId
-                          ) && (
-                            <UserRoundX
-                              onClick={() => {
-                                dischargeAppointAdmin(
-                                  participant.participantId
-                                );
-                              }}
-                            />
-                          )}
-
-                        {!selectedChatroomData?.superAdmin.includes(
-                          participant.participantId
-                        ) &&
-                          !selectedChatroomData?.admin.includes(
-                            participant.participantId
-                          ) &&
-                          !selectedChatroomData?.silentUser?.some(
-                            (silentEntry) =>
-                              silentEntry.userId === participant.participantId
-                          ) && (
-                            <MessageCircleX
-                              className="ml-2 cursor-pointer"
-                              onClick={() => {
-                                silentHandler(participant.participantId);
-                              }}
-                            />
-                          )}
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="p-4">
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button className="w-full" variant="destructive">
-                    Leave Group
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. You will leave the group.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={leaveGroupHandler}>
-                      Leave Group
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          </SheetContent>
-        </Sheet> */}
 
         <GroupInfoSheet
           isGroupInfoSheetOpen={isGroupInfoSheetOpen}
@@ -2064,6 +1847,7 @@ export default function ChatRoomMainBar({
           handleAppointAdmin={handleAppointAdmin}
           dischargeAppointAdmin={dischargeAppointAdmin}
           silentHandler={silentHandler}
+          unsilentHandler={unsilentHandler}
           leaveGroupHandler={leaveGroupHandler}
           loadInvitorList={loadInvitorList}
         />
@@ -2072,13 +1856,15 @@ export default function ChatRoomMainBar({
           <div className="mr-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="ml-auto rounded-full"
-                >
-                  <PlusIcon className="h-5 w-5" />
-                </Button>
+                {!isUserSilenced && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="ml-auto rounded-full"
+                  >
+                    <PlusIcon className="h-5 w-5" />
+                  </Button>
+                )}
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
@@ -2331,7 +2117,7 @@ export default function ChatRoomMainBar({
             )}
 
             {!isUserSilenced ? (
-              <div className="relative flex item-center">
+              <div className="relative flex items-center">
                 <Textarea
                   placeholder="Type your message..."
                   className="min-h-[36px] h-[36px] line-height w-full rounded-2xl text-black resize-none pr-16 overflow-hidden leading-[15px]"
@@ -2361,16 +2147,17 @@ export default function ChatRoomMainBar({
                   <SendIcon className="w-4 h-4" />
                 </Button>
               </div>
-            ) : (
+            ) : isUserSilenced.silentUntil === null ? (
               <p className="text-red-500 text-sm">
-                You are silenced until{" "}
-                {new Date(
-                  selectedChatroomData?.silentUser.find(
-                    (silentUser) => silentUser.userId === authenticatedUserId
-                  )?.silentUntil
-                ).toLocaleString()}
-                .
+                You are silenced indefinitely.
               </p>
+            ) : (
+              <div>
+                <p className="text-red-500 text-sm">
+                  You are silenced until{" "}
+                  {new Date(isUserSilenced.silentUntil).toLocaleString()}.
+                </p>
+              </div>
             )}
           </div>
         </div>

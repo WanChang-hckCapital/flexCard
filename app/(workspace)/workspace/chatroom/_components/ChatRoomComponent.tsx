@@ -100,10 +100,9 @@ export default function ChatRoomComponent({
     newWs.onmessage = (event) => {
       const receivedMessage = JSON.parse(event.data);
 
-      console.log(receivedMessage.message);
+      // console.log(receivedMessage.message);
 
       if (receivedMessage.type === "messages") {
-        // console.log("Received messages:", receivedMessage.messages);
         setMessageLoading(false);
         setMessages(receivedMessage.messages);
         setReceiverInfo(receivedMessage.receiverInfo);
@@ -205,7 +204,7 @@ export default function ChatRoomComponent({
   }
 
   const handleSelectChatroom = async (chatroomId: string) => {
-    console.log("Selected Chatroom ID:", chatroomId);
+    // console.log("Selected Chatroom ID:", chatroomId);
     setSelectedChatroom(chatroomId);
     setMessages([]);
     setSkip(0);
@@ -223,7 +222,7 @@ export default function ChatRoomComponent({
           return;
         }
 
-        console.log("Chatroom info:", selectedChatroomData);
+        // console.log("Chatroom info:", selectedChatroomData);
         setSelectedChatroomData(selectedChatroomData);
 
         const fetchMessagesResponse = await fetchMessagesWs(

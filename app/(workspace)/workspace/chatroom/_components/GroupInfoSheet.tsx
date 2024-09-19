@@ -24,6 +24,12 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Plus, UserRoundX, MessageCircleX, Pencil } from "lucide-react";
 import { groupImageUpdate } from "@/lib/actions/user.actions";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface GroupInfoProps {
   isGroupInfoSheetOpen: boolean;
@@ -39,7 +45,8 @@ interface GroupInfoProps {
   inviteUserHandler: () => void;
   handleAppointAdmin: (participantId: string) => void;
   dischargeAppointAdmin: (participantId: string) => void;
-  silentHandler: (participantId: string) => void;
+  silentHandler: (participantId: string, silentDuration: number | null) => void;
+  unsilentHandler: (silentTargetId: string) => void;
   leaveGroupHandler: () => void;
   loadInvitorList: () => void;
 }
@@ -56,6 +63,7 @@ export default function GroupInfoSheet({
   handleAppointAdmin,
   dischargeAppointAdmin,
   silentHandler,
+  unsilentHandler,
   leaveGroupHandler,
   loadInvitorList,
 }: GroupInfoProps) {
@@ -66,6 +74,24 @@ export default function GroupInfoSheet({
   );
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const [silentParticipantId, setSilentParticipantId] = useState<string | null>(
+    null
+  );
+  const [silentDuration, setSilentDuration] = useState<number | null>(null);
+  const [isSilentDialogOpen, setSilentDialogOpen] = useState<boolean>(false);
+
+  const handleSilentClick = (participantId: string) => {
+    setSilentParticipantId(participantId);
+    setSilentDialogOpen(true);
+  };
+
+  const handleConfirmSilence = () => {
+    if (silentParticipantId !== null) {
+      silentHandler(silentParticipantId, silentDuration);
+    }
+    setSilentDialogOpen(false);
+  };
 
   useEffect(() => {
     const fetchGroupImage = async () => {
@@ -150,7 +176,7 @@ export default function GroupInfoSheet({
     <Sheet open={isGroupInfoSheetOpen} onOpenChange={setGroupInfoSheetOpen}>
       <SheetContent
         side="right"
-        className="flex flex-col justify-between h-full"
+        className="flex flex-col justify-between h-full z-[1000]"
       >
         <SheetHeader>
           <div className="w-full flex flex-col items-center relative">
@@ -289,112 +315,196 @@ export default function GroupInfoSheet({
           </div>
 
           <ul className="space-y-4">
-            {selectedChatroomData?.participants.map((participant: any) => (
-              <li
-                key={participant.participantId}
-                className="flex items-center gap-2"
-              >
-                <Avatar className="h-10 w-10 mr-2">
-                  <AvatarImage src={participant.image || "/assets/user.svg"} />
-                  <AvatarFallback>
-                    {participant.accountname?.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex flex-1 justify-between items-center">
-                  <div className="flex flex-col">
-                    <div className="flex items-center">
-                      <p className="text-base">
-                        {participant.participantId === authenticatedUserId
-                          ? "You"
-                          : participant.accountname}
-                      </p>
+            {selectedChatroomData?.participants.map((participant: any) => {
+              const isSilenced = selectedChatroomData?.silentUser.find(
+                (silentUser: any) =>
+                  silentUser.userId === participant.participantId &&
+                  (silentUser.silentUntil === null ||
+                    new Date(silentUser.silentUntil) > new Date())
+              );
+
+              return (
+                <li
+                  key={participant.participantId}
+                  className="flex items-center gap-2"
+                >
+                  <Avatar className="h-10 w-10 mr-2">
+                    <AvatarImage
+                      src={participant.image || "/assets/user.svg"}
+                    />
+                    <AvatarFallback>
+                      {participant.accountname?.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-1 justify-between items-center">
+                    <div className="flex flex-col">
+                      <div className="flex items-center">
+                        <p className="text-base">
+                          {participant.participantId === authenticatedUserId
+                            ? "You"
+                            : participant.accountname}
+                        </p>
+                      </div>
+                      {selectedChatroomData?.superAdmin.includes(
+                        participant.participantId
+                      ) && (
+                        <span className="text-xs text-blue-600">
+                          Super Admin
+                        </span>
+                      )}
+                      {selectedChatroomData?.admin.includes(
+                        participant.participantId
+                      ) && <span className="text-xs text-blue-600">Admin</span>}
+                      {isSilenced && (
+                        <span className="text-xs text-blue-600">
+                          Silent Until{" "}
+                          {new Date(isSilenced.silentUntil).toLocaleString()}
+                        </span>
+                      )}
                     </div>
-                    {selectedChatroomData?.superAdmin.includes(
-                      participant.participantId
-                    ) && (
-                      <span className="text-xs text-blue-600">Super Admin</span>
-                    )}
-                    {selectedChatroomData?.admin.includes(
-                      participant.participantId
-                    ) && <span className="text-xs text-blue-600">Admin</span>}
-                    {selectedChatroomData?.silentUser.find(
-                      (silentUser: any) =>
-                        silentUser.userId === participant.participantId &&
-                        new Date(silentUser.silentUntil) > new Date()
-                    ) && (
-                      <span className="text-xs text-blue-600">
-                        Silent Until{" "}
-                        {new Date(
-                          selectedChatroomData.silentUser.find(
-                            (silentUser: any) =>
-                              silentUser.userId === participant.participantId
-                          )?.silentUntil
-                        ).toLocaleString()}
-                      </span>
-                    )}
-                  </div>
 
-                  <div className="flex items-center">
-                    {!selectedChatroomData?.admin.includes(
-                      participant.participantId
-                    ) &&
-                      !selectedChatroomData?.superAdmin.includes(
+                    <div className="flex items-center">
+                      {!selectedChatroomData?.admin.includes(
                         participant.participantId
                       ) &&
-                      selectedChatroomData?.superAdmin.includes(
+                        !selectedChatroomData?.superAdmin.includes(
+                          participant.participantId
+                        ) &&
+                        selectedChatroomData?.superAdmin.includes(
+                          authenticatedUserId
+                        ) && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              handleAppointAdmin(participant.participantId)
+                            }
+                            className="text-black px-2 py-1 text-xs"
+                          >
+                            Admin
+                          </Button>
+                        )}
+
+                      {selectedChatroomData?.admin.includes(
+                        participant.participantId
+                      ) &&
+                        !selectedChatroomData?.superAdmin.includes(
+                          participant.participantId
+                        ) &&
+                        selectedChatroomData?.superAdmin.includes(
+                          authenticatedUserId
+                        ) && (
+                          <UserRoundX
+                            onClick={() => {
+                              dischargeAppointAdmin(participant.participantId);
+                            }}
+                          />
+                        )}
+
+                      {(selectedChatroomData?.superAdmin.includes(
                         authenticatedUserId
-                      ) && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            handleAppointAdmin(participant.participantId)
-                          }
-                          className="text-black px-2 py-1 text-xs"
-                        >
-                          Admin
-                        </Button>
+                      ) ||
+                        !selectedChatroomData?.admin.includes(
+                          authenticatedUserId
+                        )) && (
+                        <>
+                          {!isSilenced ? (
+                            <MessageCircleX
+                              className="ml-2 cursor-pointer"
+                              onClick={() =>
+                                handleSilentClick(participant.participantId)
+                              }
+                            />
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="ml-2"
+                              onClick={() =>
+                                unsilentHandler(participant.participantId)
+                              }
+                            >
+                              Unsilence
+                            </Button>
+                          )}
+                        </>
                       )}
-
-                    {selectedChatroomData?.admin.includes(
-                      participant.participantId
-                    ) &&
-                      !selectedChatroomData?.superAdmin.includes(
-                        participant.participantId
-                      ) &&
-                      selectedChatroomData?.superAdmin.includes(
-                        authenticatedUserId
-                      ) && (
-                        <UserRoundX
-                          onClick={() => {
-                            dischargeAppointAdmin(participant.participantId);
-                          }}
-                        />
-                      )}
-
-                    {!selectedChatroomData?.superAdmin.includes(
-                      participant.participantId
-                    ) &&
-                      !selectedChatroomData?.admin.includes(
-                        participant.participantId
-                      ) &&
-                      !selectedChatroomData?.silentUser?.some(
-                        (silentEntry: any) =>
-                          silentEntry.userId === participant.participantId
-                      ) && (
-                        <MessageCircleX
-                          className="ml-2 cursor-pointer"
-                          onClick={() => {
-                            silentHandler(participant.participantId);
-                          }}
-                        />
-                      )}
+                    </div>
                   </div>
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         </div>
+
+        <Dialog open={isSilentDialogOpen} onOpenChange={setSilentDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Choose Silence Duration</DialogTitle>
+            </DialogHeader>
+            <div className="p-4">
+              <ul className="space-y-2">
+                <li>
+                  <label>
+                    <input
+                      type="radio"
+                      className="mr-3"
+                      name="silence-duration"
+                      value={3}
+                      onChange={() => setSilentDuration(3)}
+                    />
+                    3 Days
+                  </label>
+                </li>
+                <li>
+                  <label>
+                    <input
+                      type="radio"
+                      className="mr-3"
+                      name="silence-duration"
+                      value={7}
+                      onChange={() => setSilentDuration(7)}
+                    />
+                    1 Week
+                  </label>
+                </li>
+                <li>
+                  <label>
+                    <input
+                      type="radio"
+                      className="mr-3"
+                      name="silence-duration"
+                      value={30}
+                      onChange={() => setSilentDuration(30)}
+                    />
+                    1 Month
+                  </label>
+                </li>
+                <li>
+                  <label>
+                    <input
+                      type="radio"
+                      className="mr-3"
+                      name="silence-duration"
+                      value=""
+                      onChange={() => setSilentDuration(null)} // Infinite until unsilenced
+                    />
+                    Until Unsilenced
+                  </label>
+                </li>
+              </ul>
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="secondary"
+                onClick={() => setSilentDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleConfirmSilence}>Confirm</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <div className="p-4">
           <AlertDialog>

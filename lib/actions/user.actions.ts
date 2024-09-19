@@ -42,7 +42,7 @@ export async function authenticateUser(email: string, password: string) {
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (passwordMatch) {
       const strUser = user.toString();
-      console.log(strUser);
+      // console.log(strUser);
       return strUser;
     } else {
       return null;
@@ -3574,126 +3574,6 @@ export async function getMutualFollowStatus(
 }
 
 // get all follower and following of userID that havent chat before
-// export async function getFollowersAndFollowing(userId: string) {
-//   try {
-//     await connectToDB();
-
-//     const member = await MemberModel.findOne({ user: userId });
-
-//     if (!member) {
-//       return {
-//         success: false,
-//         message: "User not found",
-//         followers: [],
-//         following: [],
-//         merged: [],
-//       };
-//     }
-
-//     const activeProfile = await ProfileModel.findOne({
-//       _id: member.profiles[member.activeProfile],
-//     });
-
-//     const chatroomExists = async (user1Id: string, user2Id: string) => {
-//       const chatroom = await ChatroomModel.findOne({
-//         participants: { $all: [user1Id, user2Id] },
-//         type: "PERSONAL",
-//       });
-//       return !!chatroom;
-//     };
-
-//     const followersWithDetails = await Promise.all(
-//       activeProfile.followers.map(async (follower: any) => {
-//         const followerId = follower.followersId;
-
-//         const chatroomExistsForFollower = await chatroomExists(
-//           activeProfile._id,
-//           followerId
-//         );
-
-//         if (chatroomExistsForFollower) {
-//           return null;
-//         }
-
-//         const followerDetails = await ProfileModel.findOne({
-//           _id: follower.followersId,
-//         });
-
-//         const imgUrl = await Image.findOne({
-//           _id: followerDetails?.image,
-//         }).select("binaryCode");
-
-//         return {
-//           id: followerDetails?._id,
-//           userId: followerDetails?._id,
-//           name: followerDetails?.accountname || "Unknown",
-//           image: imgUrl?.binaryCode.toString(),
-//           followedAt: follower.followedAt,
-//         };
-//       })
-//     );
-
-//     const validFollowers = followersWithDetails.filter(Boolean);
-
-//     const followingWithDetails = await Promise.all(
-//       activeProfile.following.map(async (following: any) => {
-//         const chatroomExistsForFollowing = await chatroomExists(
-//           activeProfile._id,
-//           following
-//         );
-
-//         if (chatroomExistsForFollowing) {
-//           return null;
-//         }
-
-//         const followeingDetails = await ProfileModel.findOne({
-//           _id: following,
-//         }).select("accountname user image _id");
-
-//         const imgUrl = await Image.findOne({
-//           _id: followeingDetails?.image,
-//         }).select("binaryCode");
-
-//         return {
-//           id: followeingDetails?._id,
-//           userId: followeingDetails?._id,
-//           name: followeingDetails?.accountname || "Unknown",
-//           image: imgUrl?.binaryCode.toString(),
-//         };
-//       })
-//     );
-
-//     const validFollowing = followingWithDetails.filter(Boolean);
-
-//     const merged = [...validFollowers];
-
-//     validFollowing.forEach((following) => {
-//       const isDuplicate = merged.some(
-//         (follower) => follower.id.toString() === following?.id.toString()
-//       );
-//       if (!isDuplicate && following) {
-//         merged.push(following);
-//       }
-//     });
-
-//     return {
-//       success: true,
-//       message: "",
-//       followers: validFollowers,
-//       following: validFollowing,
-//       merged,
-//     };
-//   } catch (error: any) {
-//     console.error("Error fetching followers and following:", error);
-//     return {
-//       success: false,
-//       message: error.message || "An error occurred",
-//       followers: [],
-//       following: [],
-//       merged: [],
-//     };
-//   }
-// }
 export async function getFollowersAndFollowing(userId: string) {
   try {
     await connectToDB();
@@ -3712,27 +3592,7 @@ export async function getFollowersAndFollowing(userId: string) {
 
     const activeProfile = await ProfileModel.findOne({
       _id: member.profiles[member.activeProfile],
-    })
-      .populate({
-        path: "followers.followersId",
-        select: "accountname image",
-        populate: { path: "image", select: "binaryCode" },
-      })
-      .populate({
-        path: "following",
-        select: "accountname image",
-        populate: { path: "image", select: "binaryCode" },
-      });
-
-    if (!activeProfile) {
-      return {
-        success: false,
-        message: "Active profile not found",
-        followers: [],
-        following: [],
-        merged: [],
-      };
-    }
+    });
 
     const chatroomExists = async (user1Id: string, user2Id: string) => {
       const chatroom = await ChatroomModel.findOne({
@@ -3744,23 +3604,40 @@ export async function getFollowersAndFollowing(userId: string) {
 
     const followersWithDetails = await Promise.all(
       activeProfile.followers.map(async (follower: any) => {
-        const followerProfile = follower.followersId;
-        if (!followerProfile) return null;
+        const followerId = follower.followersId;
 
         const chatroomExistsForFollower = await chatroomExists(
-          activeProfile._id.toString(),
-          followerProfile._id.toString()
+          userId,
+          followerId
         );
 
         if (chatroomExistsForFollower) {
           return null;
         }
 
+        const followerDetails = await ProfileModel.findOne({
+          _id: follower.followersId,
+        });
+
+        console.log();
+
+        const imgUrl = await Image.findOne({
+          _id: followerDetails?.image,
+        }).select("binaryCode");
+
+        console.log({
+          id: followerDetails?._id,
+          userId: followerDetails?._id,
+          name: followerDetails?.accountname || "Unknown",
+          image: imgUrl?.binaryCode.toString(),
+          followedAt: follower.followedAt,
+        });
+
         return {
-          id: followerProfile._id.toString(),
-          userId: followerProfile._id.toString(),
-          name: followerProfile.accountname || "Unknown",
-          image: followerProfile.image?.binaryCode || null,
+          id: followerDetails?._id,
+          userId: followerDetails?._id,
+          name: followerDetails?.accountname || "Unknown",
+          image: imgUrl?.binaryCode.toString(),
           followedAt: follower.followedAt,
         };
       })
@@ -3769,23 +3646,29 @@ export async function getFollowersAndFollowing(userId: string) {
     const validFollowers = followersWithDetails.filter(Boolean);
 
     const followingWithDetails = await Promise.all(
-      activeProfile.following.map(async (followingProfile: any) => {
-        if (!followingProfile) return null;
-
+      activeProfile.following.map(async (following: any) => {
         const chatroomExistsForFollowing = await chatroomExists(
-          activeProfile._id.toString(),
-          followingProfile._id.toString()
+          userId,
+          following
         );
 
         if (chatroomExistsForFollowing) {
           return null;
         }
 
+        const followeingDetails = await ProfileModel.findOne({
+          _id: following,
+        }).select("accountname user image _id");
+
+        const imgUrl = await Image.findOne({
+          _id: followeingDetails?.image,
+        }).select("binaryCode");
+
         return {
-          id: followingProfile._id.toString(),
-          userId: followingProfile._id.toString(),
-          name: followingProfile.accountname || "Unknown",
-          image: followingProfile.image?.binaryCode || null,
+          id: followeingDetails?._id,
+          userId: followeingDetails?._id,
+          name: followeingDetails?.accountname || "Unknown",
+          image: imgUrl?.binaryCode.toString(),
         };
       })
     );
@@ -3793,9 +3676,10 @@ export async function getFollowersAndFollowing(userId: string) {
     const validFollowing = followingWithDetails.filter(Boolean);
 
     const merged = [...validFollowers];
+
     validFollowing.forEach((following) => {
       const isDuplicate = merged.some(
-        (follower) => follower.id === following?.id
+        (follower) => follower.id.toString() === following?.id.toString()
       );
       if (!isDuplicate && following) {
         merged.push(following);
@@ -3822,112 +3706,6 @@ export async function getFollowersAndFollowing(userId: string) {
 }
 
 // used to create group chat, fetch all follower and following
-// export async function getAllFollowersAndFollowing(userId: string) {
-//   try {
-//     await connectToDB();
-
-//     const member = await MemberModel.findOne({ user: userId });
-
-//     if (!member) {
-//       return {
-//         success: false,
-//         message: "User not found",
-//         followers: [],
-//         following: [],
-//         merged: [],
-//       };
-//     }
-
-//     const activeProfile = await ProfileModel.findOne({
-//       _id: member.profiles[member.activeProfile],
-//     });
-
-//     const uniqueUserIds = new Set<string>();
-
-//     const followersWithDetails = await Promise.all(
-//       activeProfile.followers.map(async (follower: any) => {
-//         const followerDetails = await ProfileModel.findOne({
-//           _id: follower.followersId,
-//         }).select("accountname user image _id");
-
-//         if (followerDetails) {
-//           const imgUrl = await Image.findOne({
-//             _id: followerDetails?.image,
-//           }).select("binaryCode");
-
-//           // Use _id instead of userId to track unique users
-//           uniqueUserIds.add(followerDetails._id.toString()); // Add follower _id to the set
-
-//           return {
-//             id: followerDetails._id,
-//             userId: followerDetails.user,
-//             name: followerDetails.accountname || "Unknown",
-//             image: imgUrl?.binaryCode.toString(),
-//             followedAt: follower.followedAt,
-//           };
-//         }
-//       })
-//     );
-
-//     const validFollowers = followersWithDetails.filter(Boolean);
-
-//     const followingWithDetails = await Promise.all(
-//       activeProfile.following
-//         .filter((followingId: string) => {
-//           // Exclude if already a follower based on _id
-//           return !uniqueUserIds.has(followingId);
-//         })
-//         .map(async (followingId: string) => {
-//           const followingDetails = await ProfileModel.findOne({
-//             _id: followingId,
-//           }).select("accountname user image _id");
-
-//           if (followingDetails) {
-//             const imgUrl = await Image.findOne({
-//               _id: followingDetails?.image,
-//             }).select("binaryCode");
-
-//             return {
-//               id: followingDetails._id,
-//               userId: followingDetails.user,
-//               name: followingDetails.accountname || "Unknown",
-//               image: imgUrl?.binaryCode.toString(),
-//             };
-//           }
-//         })
-//     );
-
-//     const validFollowing = followingWithDetails.filter(Boolean);
-
-//     const merged = [...validFollowers];
-
-//     validFollowing.forEach((following) => {
-//       const isDuplicate = merged.some(
-//         (follower) => follower.id.toString() === following.id.toString()
-//       );
-//       if (!isDuplicate) {
-//         merged.push(following);
-//       }
-//     });
-
-//     return {
-//       success: true,
-//       message: "",
-//       followers: validFollowers,
-//       following: validFollowing,
-//       merged,
-//     };
-//   } catch (error: any) {
-//     console.error("Error fetching followers and following:", error);
-//     return {
-//       success: false,
-//       message: error.message || "An error occurred",
-//       followers: [],
-//       following: [],
-//       merged: [],
-//     };
-//   }
-// }
 export async function getAllFollowersAndFollowing(userId: string) {
   try {
     await connectToDB();
@@ -3946,69 +3724,75 @@ export async function getAllFollowersAndFollowing(userId: string) {
 
     const activeProfile = await ProfileModel.findOne({
       _id: member.profiles[member.activeProfile],
-    })
-      .populate({
-        path: "followers.followersId",
-        select: "accountname user image _id",
-        populate: { path: "image", select: "binaryCode" },
-      })
-      .populate({
-        path: "following",
-        select: "accountname user image _id",
-        populate: { path: "image", select: "binaryCode" },
-      });
-
-    if (!activeProfile) {
-      return {
-        success: false,
-        message: "Active profile not found",
-        followers: [],
-        following: [],
-        merged: [],
-      };
-    }
+    });
 
     const uniqueUserIds = new Set<string>();
 
-    // Fetch followers with details, using the populated data
-    const followersWithDetails = activeProfile.followers
-      .map((follower: any) => {
-        const followerProfile = follower.followersId;
-        if (followerProfile) {
-          uniqueUserIds.add(followerProfile._id.toString());
+    const followersWithDetails = await Promise.all(
+      activeProfile.followers.map(async (follower: any) => {
+        const followerDetails = await ProfileModel.findOne({
+          _id: follower.followersId,
+        }).select("accountname user image _id");
+
+        if (followerDetails) {
+          const imgUrl = await Image.findOne({
+            _id: followerDetails?.image,
+          }).select("binaryCode");
+
+          // Use _id instead of userId to track unique users
+          uniqueUserIds.add(followerDetails._id.toString());
 
           return {
-            id: followerProfile._id.toString(),
-            userId: followerProfile.user,
-            name: followerProfile.accountname || "Unknown",
-            image: followerProfile.image?.binaryCode || null,
+            id: followerDetails._id,
+            userId: followerDetails.user,
+            name: followerDetails.accountname || "Unknown",
+            image: imgUrl?.binaryCode.toString(),
             followedAt: follower.followedAt,
           };
         }
-        return null;
       })
-      .filter(Boolean);
+    );
 
-    const validFollowers = followersWithDetails;
+    const validFollowers = followersWithDetails.filter(Boolean);
 
-    // Fetch following with details, using the populated data
-    const followingWithDetails = activeProfile.following
-      .filter((following: any) => !uniqueUserIds.has(following._id.toString()))
-      .map((following: any) => {
-        const followingProfile = following;
+    const followingWithDetails = await Promise.all(
+      activeProfile.following
+        .filter((followingId: string) => {
+          // Exclude if already a follower based on _id
+          return !uniqueUserIds.has(followingId);
+        })
+        .map(async (followingId: string) => {
+          const followingDetails = await ProfileModel.findOne({
+            _id: followingId,
+          }).select("accountname user image _id");
 
-        return {
-          id: followingProfile._id.toString(),
-          userId: followingProfile.user,
-          name: followingProfile.accountname || "Unknown",
-          image: followingProfile.image?.binaryCode || null,
-        };
-      });
+          if (followingDetails) {
+            const imgUrl = await Image.findOne({
+              _id: followingDetails?.image,
+            }).select("binaryCode");
 
-    const validFollowing = followingWithDetails;
+            return {
+              id: followingDetails._id,
+              userId: followingDetails.user,
+              name: followingDetails.accountname || "Unknown",
+              image: imgUrl?.binaryCode.toString(),
+            };
+          }
+        })
+    );
 
-    // Merging followers and following into one array
-    const merged = [...validFollowers, ...validFollowing];
+    const validFollowing = followingWithDetails.filter(Boolean);
+
+    const merged = [...validFollowers];
+
+    validFollowing.forEach((following) => {
+      const isDuplicate = merged.some(
+        (follower) => follower.id.toString() === following.id.toString()
+      );
+      if (!isDuplicate) {
+        merged.push(following);
+      }
+    });
 
     return {
       success: true,
@@ -4028,6 +3812,106 @@ export async function getAllFollowersAndFollowing(userId: string) {
     };
   }
 }
+// export async function getAllFollowersAndFollowing(userId: string) {
+//   try {
+//     await connectToDB();
+
+//     const member = await MemberModel.findOne({ user: userId });
+
+//     if (!member) {
+//       return {
+//         success: false,
+//         message: "User not found",
+//         followers: [],
+//         following: [],
+//         merged: [],
+//       };
+//     }
+
+//     const activeProfile = await ProfileModel.findOne({
+//       _id: member.profiles[member.activeProfile],
+//     })
+//       .populate({
+//         path: "followers.followersId",
+//         select: "accountname user image _id",
+//         populate: { path: "image", select: "binaryCode" },
+//       })
+//       .populate({
+//         path: "following",
+//         select: "accountname user image _id",
+//         populate: { path: "image", select: "binaryCode" },
+//       });
+
+//     if (!activeProfile) {
+//       return {
+//         success: false,
+//         message: "Active profile not found",
+//         followers: [],
+//         following: [],
+//         merged: [],
+//       };
+//     }
+
+//     const uniqueUserIds = new Set<string>();
+
+//     // Fetch followers with details, using the populated data
+//     const followersWithDetails = activeProfile.followers
+//       .map((follower: any) => {
+//         const followerProfile = follower.followersId;
+//         if (followerProfile) {
+//           uniqueUserIds.add(followerProfile._id.toString());
+
+//           return {
+//             id: followerProfile._id.toString(),
+//             userId: followerProfile.user,
+//             name: followerProfile.accountname || "Unknown",
+//             image: followerProfile.image?.binaryCode || null,
+//             followedAt: follower.followedAt,
+//           };
+//         }
+//         return null;
+//       })
+//       .filter(Boolean);
+
+//     const validFollowers = followersWithDetails;
+
+//     // Fetch following with details, using the populated data
+//     const followingWithDetails = activeProfile.following
+//       .filter((following: any) => !uniqueUserIds.has(following._id.toString()))
+//       .map((following: any) => {
+//         const followingProfile = following;
+
+//         return {
+//           id: followingProfile._id.toString(),
+//           userId: followingProfile.user,
+//           name: followingProfile.accountname || "Unknown",
+//           image: followingProfile.image?.binaryCode || null,
+//         };
+//       });
+
+//     const validFollowing = followingWithDetails;
+
+//     // Merging followers and following into one array
+//     const merged = [...validFollowers, ...validFollowing];
+
+//     return {
+//       success: true,
+//       message: "",
+//       followers: validFollowers,
+//       following: validFollowing,
+//       merged,
+//     };
+//   } catch (error: any) {
+//     console.error("Error fetching followers and following:", error);
+//     return {
+//       success: false,
+//       message: error.message || "An error occurred",
+//       followers: [],
+//       following: [],
+//       merged: [],
+//     };
+//   }
+// }
 
 // create a new personal chatroom
 export async function createOrGetChatroom(
@@ -4104,136 +3988,6 @@ export async function createGroupChatroom(
   }
 }
 
-// export async function getCurrentUserChatroom(authenticatedId: string) {
-//   try {
-//     await connectToDB();
-
-//     const member = await MemberModel.findOne({ user: authenticatedId });
-//     if (!member) {
-//       throw new Error("Member not found.");
-//     }
-
-//     const activeProfile = await ProfileModel.findOne({
-//       _id: member.profiles[member.activeProfile],
-//     });
-//     if (!activeProfile) {
-//       throw new Error("Active profile not found.");
-//     }
-
-//     const profile = await ProfileModel.findOne({ _id: activeProfile._id });
-//     if (!profile) {
-//       throw new Error("Profile not found.");
-//     }
-
-//     const chatrooms = await ChatroomModel.find({
-//       participants: profile._id,
-//     })
-//       .populate({
-//         path: "participants",
-//         select: "accountname email image",
-//         populate: {
-//           path: "image",
-//           model: "Image",
-//           select: "binaryCode",
-//         },
-//       })
-//       .lean();
-
-//     const chatroomDetails = chatrooms.map((chatroom) => ({
-//       chatroomId: chatroom._id,
-//       name: chatroom.name,
-//       type: chatroom.type,
-//       superAdmin: chatroom.superAdmin || [],
-//       admin: chatroom.admin || [],
-//       silentUser: chatroom.silentUser || [],
-//       groupImage: chatroom.groupImage || "",
-//       participants: chatroom.participants.map((participant: any) => ({
-//         participantId: participant._id.toString(),
-//         user: participant.user,
-//         email: participant.email,
-//         accountname: participant.accountname,
-//         image: participant.image.length
-//           ? participant.image[0]?.binaryCode || ""
-//           : "",
-//       })),
-//       createdAt: chatroom.createdAt,
-//       updatedAt: chatroom.updatedAt,
-//     }));
-
-//     return {
-//       success: true,
-//       message: "Chatrooms found!",
-//       chatrooms: chatroomDetails,
-//     };
-//   } catch (error) {
-//     console.error("Error finding chatroom: ", error);
-//     return {
-//       success: false,
-//       message: "Failed to find chatrooms.",
-//       chatrooms: [],
-//     };
-//   }
-// }
-
-// export async function getCurrentUserChatroom(authenticatedId: string) {
-//   try {
-//     await connectToDB();
-
-//     // Fetch a single member
-//     const member = await MemberModel.findOne({ user: authenticatedId }).lean();
-
-//     if (!member || Array.isArray(member)) {
-//       throw new Error("Member not found or invalid response.");
-//     }
-
-//     const activeProfileId = member.profiles?.[member.activeProfile];
-
-//     if (!activeProfileId) {
-//       throw new Error("Active profile not found.");
-//     }
-
-//     const activeProfile = await ProfileModel.findOne({
-//       _id: activeProfileId,
-//     }).lean();
-
-//     if (!activeProfile || Array.isArray(activeProfile)) {
-//       throw new Error("Active profile not found or invalid response.");
-//     }
-
-//     const chatrooms = await ChatroomModel.find({
-//       participants: activeProfile._id,
-//     }).lean();
-
-//     const chatroomDetails = chatrooms.map((chatroom) => ({
-//       chatroomId: chatroom._id?.toString(),
-//       name: chatroom.name,
-//       type: chatroom.type,
-//       superAdmin: chatroom.superAdmin || [],
-//       admin: chatroom.admin || [],
-//       silentUser: chatroom.silentUser || [],
-//       groupImage: chatroom.groupImage || "",
-//       participants: chatroom.participants.map((participant: any) =>
-//         participant.toString()
-//       ),
-//       createdAt: chatroom.createdAt,
-//       updatedAt: chatroom.updatedAt,
-//     }));
-
-//     return {
-//       success: true,
-//       message: "Chatrooms found!",
-//       chatrooms: chatroomDetails,
-//     };
-//   } catch (error) {
-//     console.error("Error finding chatroom: ", error);
-//     return {
-//       success: false,
-//       message: "Failed to find chatrooms.",
-//       chatrooms: [],
-//     };
-//   }
-// }
-
 export async function getCurrentUserChatroom(authenticatedId: string) {
   try {
     await connectToDB();
@@ -4286,6 +4040,7 @@ export async function getCurrentUserChatroom(authenticatedId: string) {
         participantId: participant._id.toString(),
         accountname: participant.accountname || "Unknown",
         email: participant.email || "",
+        blockedAccounts: participant.blockedAccounts || [],
         image:
           participant.image && participant.image.length
             ? participant.image[0]?.binaryCode || ""
@@ -4348,6 +4103,19 @@ export async function getImage(userId: string) {
   }
 }
 
+interface Participant {
+  _id: mongoose.Types.ObjectId;
+}
+
+interface Profile {
+  _id: mongoose.Types.ObjectId;
+  image?: mongoose.Types.ObjectId;
+}
+
+interface ImageRecord {
+  binaryCode: string | null;
+}
+
 export async function getChatroomParticipantsImage(
   chatroomId: string,
   authenticatedUserId: string
@@ -4355,10 +4123,9 @@ export async function getChatroomParticipantsImage(
   try {
     await connectToDB();
 
-    const chatroom = await ChatroomModel.findById(chatroomId).select(
-      "participants"
-    );
-
+    const chatroom = await ChatroomModel.findById(chatroomId)
+      .select("participants")
+      .lean<{ participants: Participant[] }>();
     if (!chatroom) {
       return {
         success: false,
@@ -4367,25 +4134,28 @@ export async function getChatroomParticipantsImage(
     }
 
     const filteredParticipants = chatroom.participants.filter(
-      (participant: any) => participant._id.toString() !== authenticatedUserId
+      (participant: Participant) =>
+        participant._id.toString() !== authenticatedUserId
     );
 
     const participantImages = await Promise.all(
-      filteredParticipants.map(async (participant: any) => {
-        const profile = await ProfileModel.findOne({ _id: participant._id });
+      filteredParticipants.map(async (participant: Participant) => {
+        const profile = await ProfileModel.findOne({
+          _id: participant._id,
+        }).lean<Profile>();
 
-        let imgUrl = null;
+        let imgUrl: string | null = null;
 
         if (profile && profile.image) {
-          const imageRecord = await Image.findById(profile.image).select(
-            "binaryCode"
-          );
+          const imageRecord = await Image.findById(profile.image)
+            .select("binaryCode")
+            .lean<ImageRecord>();
 
           imgUrl = imageRecord?.binaryCode || null;
         }
 
         return {
-          participantId: participant._id,
+          participantId: participant._id.toString(),
           image: imgUrl,
         };
       })
@@ -4414,9 +4184,6 @@ export async function fetchPreviousMessage(
 ) {
   try {
     await connectToDB();
-
-    console.log("skip");
-    console.log(skip);
 
     const sender = await MemberModel.findOne({ user: authenticatedUserId });
 
@@ -4523,103 +4290,6 @@ export async function leaveGroup(chatroomId: string, leaveUserId: string) {
 }
 
 // load the invitor list that havent in the group
-// export async function getInvitorList(chatroomId: string, authUserId: string) {
-//   try {
-//     await connectToDB();
-
-//     const chatroomFound = await ChatroomModel.findOne({ _id: chatroomId });
-
-//     if (!chatroomFound) {
-//       return {
-//         success: false,
-//         message: "Chatroom not found",
-//         users: [],
-//       };
-//     }
-
-//     const chatroomParticipants = chatroomFound.participants.map(
-//       (participant: any) => participant.toString()
-//     );
-
-//     const currentUserFollower = (
-//       await ProfileModel.find({
-//         _id: authUserId,
-//       })
-//         .select("followers")
-//         .lean()
-//     )[0];
-
-//     const currentUserFollowing = (
-//       await ProfileModel.find({
-//         _id: authUserId,
-//       })
-//         .select("following")
-//         .lean()
-//     )[0];
-
-//     const followerIds = currentUserFollower?.followers?.map((follower: any) =>
-//       follower.followersId.toString()
-//     );
-
-//     const followingIds = currentUserFollowing?.following?.map(
-//       (following: any) => following.toString()
-//     );
-
-//     const uniqueFollowerFollowingIds = Array.from(
-//       new Set([...followerIds, ...followingIds])
-//     );
-
-//     const invitableUserIds = uniqueFollowerFollowingIds.filter(
-//       (id) => !chatroomParticipants.includes(id)
-//     );
-
-//     const invitableUsers = await ProfileModel.find({
-//       _id: { $in: invitableUserIds },
-//     }).select("accountname image");
-
-//     const invitableUsersWithImages = await Promise.all(
-//       invitableUsers.map(async (user) => {
-//         if (user.image) {
-//           const imageDoc = await Image.findById(user.image).select(
-//             "binaryCode"
-//           );
-
-//           return {
-//             _id: user._id,
-//             accountname: user.accountname,
-//             image: imageDoc ? imageDoc.binaryCode : null,
-//           };
-//         } else {
-//           return {
-//             _id: user._id,
-//             accountname: user.accountname,
-//             image: null,
-//           };
-//         }
-//       })
-//     );
-//     if (!invitableUsersWithImages || invitableUsersWithImages.length === 0) {
-//       return {
-//         success: true,
-//         message: "No users available to invite",
-//         users: [],
-//       };
-//     }
-
-//     return {
-//       success: true,
-//       message: "Invitor list fetched successfully.",
-//       users: invitableUsersWithImages,
-//     };
-//   } catch (error: any) {
-//     console.error("Error fetching invitor list:", error);
-//     return {
-//       success: false,
-//       message: error.message || "An error occurred",
-//       users: [],
-//     };
-//   }
-// }
 export async function getInvitorList(chatroomId: string, authUserId: string) {
   try {
     await connectToDB();
@@ -4833,7 +4503,8 @@ export async function silentUser(
   chatroomId: string,
   authUserId: string,
   silentUserId: string,
-  duration: number
+  duration: number, // Duration in days
+  isIndefinite: boolean
 ) {
   try {
     await connectToDB();
@@ -4865,8 +4536,12 @@ export async function silentUser(
       return { success: false, message: "User is already silenced" };
     }
 
-    const silentUntil = new Date();
-    silentUntil.setMinutes(silentUntil.getMinutes() + duration);
+    let silentUntil: Date | null = null;
+
+    if (!isIndefinite) {
+      silentUntil = new Date();
+      silentUntil.setDate(silentUntil.getDate() + duration);
+    }
 
     chatroomFound.silentUser.push({
       userId: silentUserId,
@@ -4875,12 +4550,70 @@ export async function silentUser(
 
     await chatroomFound.save();
 
-    return { success: true, message: `User silenced for ${duration} minutes` };
+    if (isIndefinite) {
+      return { success: true, message: "User silenced indefinitely" };
+    } else {
+      return { success: true, message: `User silenced for ${duration} days` };
+    }
   } catch (error: any) {
     console.error("Error silencing user:", error);
     return {
       success: false,
       message: "An error occurred while silencing the user",
+    };
+  }
+}
+
+export async function unsilentUser(
+  chatroomId: string,
+  authUserId: string,
+  silentUserId: string
+) {
+  try {
+    await connectToDB();
+
+    // console.log(chatroomId);
+    // console.log(authUserId);
+    // console.log(silentUserId);
+
+    const chatroomFound = await ChatroomModel.findOne({ _id: chatroomId });
+
+    if (!chatroomFound) {
+      return {
+        success: false,
+        message: "Chatroom not found",
+      };
+    }
+
+    console.log(chatroomFound);
+
+    const isSuperAdmin = chatroomFound.superAdmin.includes(authUserId);
+    const isAdmin = chatroomFound.admin.includes(authUserId);
+
+    if (!isSuperAdmin && !isAdmin) {
+      return {
+        success: false,
+        message: "Only superadmins and admins can unsilence users",
+      };
+    }
+
+    const silentUserIndex = chatroomFound.silentUser.findIndex(
+      (silentEntry: any) => silentEntry.userId.toString() === silentUserId
+    );
+
+    if (silentUserIndex === -1) {
+      return { success: false, message: "User is not currently silenced" };
+    }
+
+    chatroomFound.silentUser.splice(silentUserIndex, 1);
+    await chatroomFound.save();
+
+    return { success: true, message: "User has been unsilenced" };
+  } catch (error: any) {
+    console.error("Error unsilencing user:", error);
+    return {
+      success: false,
+      message: "An error occurred while unsilencing the user",
     };
   }
 }
@@ -4914,6 +4647,180 @@ export async function groupImageUpdate(
     return {
       success: false,
       message: error.message,
+    };
+  }
+}
+
+export async function blockUser(
+  authenticatedUserId: string,
+  blockUserId: string
+) {
+  try {
+    await connectToDB();
+    const authUser = await ProfileModel.findOne({ _id: authenticatedUserId });
+
+    if (!authUser) {
+      throw new Error("Auth user profile not found");
+    }
+
+    const targetUser = await ProfileModel.findOne({ _id: blockUserId });
+
+    if (!targetUser) {
+      throw new Error("TargetUser profile not found");
+    }
+
+    if (authUser.blockedAccounts.includes(blockUserId)) {
+      return {
+        success: false,
+        message: "User is already blocked",
+      };
+    }
+
+    await ProfileModel.findOneAndUpdate(
+      { _id: authenticatedUserId },
+      { $addToSet: { blockedAccounts: blockUserId } },
+      { new: true }
+    );
+
+    return {
+      success: true,
+      message: "User has been blocked successfully",
+    };
+  } catch (error: any) {
+    console.error("Error blocking user:", error);
+    return {
+      success: false,
+      message: "An error occurred while blocking the user",
+    };
+  }
+}
+
+export async function unblockUser(
+  authenticatedUserId: string,
+  blockUserId: string
+) {
+  try {
+    await connectToDB();
+
+    const result = await ProfileModel.findOneAndUpdate(
+      { _id: authenticatedUserId },
+      { $pull: { blockedAccounts: blockUserId } },
+      { new: true }
+    );
+
+    if (!result) {
+      return {
+        success: false,
+        message: "Authenticated user profile not found",
+      };
+    }
+
+    return {
+      success: true,
+      message: "User has been unblocked successfully",
+    };
+  } catch (error: any) {
+    console.error("Error unblocking user:", error);
+    return {
+      success: false,
+      message: "An error occurred while unblocking the user",
+    };
+  }
+}
+
+export async function checkBlockedStatus(authActiveProfileId: string) {
+  try {
+    await connectToDB();
+
+    const profile = await ProfileModel.findOne({
+      _id: authActiveProfileId,
+    }).select("blockedAccounts");
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    const blockedDetails = await Promise.all(
+      profile.blockedAccounts.map(async (blockedAccountId: any) => {
+        const blockedProfile = await ProfileModel.findById(
+          blockedAccountId
+        ).select("accountname image");
+
+        if (blockedProfile) {
+          return {
+            _id: blockedProfile._id.toString(),
+            accountname: blockedProfile.accountname,
+            image: blockedProfile.image,
+          };
+        }
+        return null;
+      })
+    );
+
+    const validBlockedDetails = blockedDetails.filter(
+      (detail) => detail !== null
+    );
+
+    return {
+      success: true,
+      blockedAccounts: validBlockedDetails,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Failed to fetch blocked accounts: ${error.message}`,
+    };
+  }
+}
+
+export async function searchMessage(chatroomId: string, keyword: string) {
+  try {
+    await connectToDB();
+
+    const chatroomFound = await ChatroomModel.findOne({ _id: chatroomId });
+
+    if (!chatroomFound) {
+      return {
+        success: false,
+        message: "Chatroom not found",
+        data: [],
+      };
+    }
+
+    const messages = await MessageModel.find(
+      {
+        chatroomId: chatroomId,
+        content: { $regex: keyword, $options: "i" },
+      },
+      { content: 1, _id: 1, senderId: 1, createdAt: 1 }
+    )
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    if (messages.length === 0) {
+      return {
+        success: true,
+        message: "No messages found matching the keyword",
+        data: [],
+      };
+    }
+
+    return {
+      success: true,
+      message: "Messages found",
+      data: messages.map((msg) => ({
+        _id: msg._id,
+        content: msg.content,
+        senderId: msg.senderId,
+        createdAt: msg.createdAt,
+      })),
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "An error occurred while searching for messages",
+      data: [],
+      error: error.message,
     };
   }
 }
