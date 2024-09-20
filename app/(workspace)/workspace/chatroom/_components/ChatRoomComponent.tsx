@@ -4,6 +4,8 @@ import React, { useState, useEffect, useRef } from "react";
 import ChatRoomSideBar from "./ChatRoomSideBar";
 import ChatRoomMainBar from "./ChatRoomMainComponent";
 import Spinner from "./Spinner";
+import { Menu, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface Participant {
   _id: string;
@@ -89,6 +91,18 @@ export default function ChatRoomComponent({
   const chatWindowRef = useRef<HTMLDivElement>(null);
   const [selectedChatroomData, setSelectedChatroomData] =
     useState<Chatroom | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  const sidebarRef = useRef<HTMLDivElement | null>(null);
+
+  const [allChatrooms, setAllChatrooms] = useState<Chatroom[]>(chatrooms);
+
+  const addNewChatroom = (newChatroom: Chatroom) => {
+    console.log("chatrrom added");
+    console.log(newChatroom);
+    setAllChatrooms((prevChatrooms) => [...prevChatrooms, newChatroom]);
+    setSelectedChatroom(newChatroom.chatroomId);
+    setSelectedChatroomData(newChatroom);
+  };
 
   useEffect(() => {
     const newWs = new WebSocket("ws://localhost:8080");
@@ -144,10 +158,12 @@ export default function ChatRoomComponent({
       console.log("WebSocket connection closed");
     };
 
-    newWs.onerror = (error) => {
-      console.error("WebSocket error:", error);
-      setMessageLoading(false);
-    };
+    // newWs.onerror = (error) => {
+    //   console.error("WebSocket error:", error);
+    //   console.error("WebSocket readyState:", newWs.readyState);
+    //   console.error("WebSocket connection:", newWs.url);
+    //   setMessageLoading(false);
+    // };
 
     setWs(newWs);
 
@@ -157,6 +173,23 @@ export default function ChatRoomComponent({
       }
     };
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        sidebarRef.current &&
+        !sidebarRef.current.contains(event.target as Node) &&
+        isSidebarOpen
+      ) {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isSidebarOpen]);
 
   function fetchMessagesWs(
     chatroomId: string,
@@ -204,7 +237,9 @@ export default function ChatRoomComponent({
   }
 
   const handleSelectChatroom = async (chatroomId: string) => {
-    // console.log("Selected Chatroom ID:", chatroomId);
+    console.log("Selected Chatroom ID:", chatroomId);
+    setIsSidebarOpen(false);
+
     setSelectedChatroom(chatroomId);
     setMessages([]);
     setSkip(0);
@@ -256,9 +291,9 @@ export default function ChatRoomComponent({
 
   return (
     <div className="flex h-full w-full">
-      <div className="hidden w-64 border-r bg-background md:block">
+      <div className="hidden md:block w-64 border-r bg-background">
         <ChatRoomSideBar
-          chatrooms={chatrooms}
+          chatrooms={allChatrooms}
           authenticatedUserId={authenticatedUserId}
           onSelectChatroom={handleSelectChatroom}
           allUsers={allUsers}
@@ -266,14 +301,45 @@ export default function ChatRoomComponent({
             allFollowerAndFollowingForPersonal
           }
           allFollowerAndFollowingForGroup={allFollowerAndFollowingForGroup}
+          addNewChatroom={addNewChatroom}
         />
+      </div>
+      {/* mobile */}
+      <div
+        ref={sidebarRef}
+        className={`fixed z-[1200] inset-y-0 left-0 bg-black shadow-lg transform ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } transition-transform duration-300 md:hidden`}
+      >
+        <div className="p-4 flex justify-between items-center">
+          <span className="font-bold">Chatrooms</span>
+          <Button variant="ghost" onClick={() => setIsSidebarOpen(false)}>
+            <X className="w-3 h-3" />
+          </Button>
+        </div>
+        <ChatRoomSideBar
+          chatrooms={allChatrooms}
+          authenticatedUserId={authenticatedUserId}
+          onSelectChatroom={handleSelectChatroom}
+          allUsers={allUsers}
+          allFollowerAndFollowingForPersonal={
+            allFollowerAndFollowingForPersonal
+          }
+          allFollowerAndFollowingForGroup={allFollowerAndFollowingForGroup}
+          addNewChatroom={addNewChatroom}
+        />
+      </div>
+      <div className="md:hidden p-4 fixed top-0 left-0 z-40">
+        <Button onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
+          <Menu className="w-6 h-6" />
+        </Button>
       </div>
       <div className="flex h-full w-full">
         {messageLoading ? (
           <Spinner />
         ) : (
           <ChatRoomMainBar
-            chatrooms={chatrooms}
+            chatrooms={allChatrooms}
             authenticatedUserId={authenticatedUserId}
             selectedChatroom={selectedChatroom}
             selectedChatroomData={selectedChatroomData}

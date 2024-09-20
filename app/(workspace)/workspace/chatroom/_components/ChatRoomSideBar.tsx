@@ -63,6 +63,7 @@ interface ChatroomSideBarProps {
     following: any[];
     merged: any[];
   };
+  addNewChatroom: (newChatroom: Chatroom) => void;
 }
 
 export default function ChatRoomSideBar({
@@ -72,6 +73,7 @@ export default function ChatRoomSideBar({
   allUsers,
   allFollowerAndFollowingForPersonal,
   allFollowerAndFollowingForGroup,
+  addNewChatroom,
 }: ChatroomSideBarProps) {
   const [isPersonalModalOpen, setIsPersonalModalOpen] = useState(false);
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
@@ -151,6 +153,8 @@ export default function ChatRoomSideBar({
       );
       if (newGroupChatroom.success) {
         toast.success(newGroupChatroom.message);
+        console.log(newGroupChatroom.chatroom._id);
+        addNewChatroom(newGroupChatroom.chatroom);
       } else {
         toast.error(newGroupChatroom.message);
         console.error(
@@ -179,11 +183,10 @@ export default function ChatRoomSideBar({
         participantId
       );
 
-      console.log(newChatroom);
-
       if (newChatroom && newChatroom.success) {
         console.log("Chatroom created successfully:", newChatroom?.chatroom);
         toast.success("Chatroom created successfully!");
+        addNewChatroom(newChatroom.chatroom);
       } else {
         console.error(
           "Failed to create or retrieve chatroom:",
@@ -364,7 +367,7 @@ export default function ChatRoomSideBar({
                   <Avatar className="h-10 w-10 border">
                     <AvatarImage
                       src={
-                        groupImages[chatroom.groupImage.toString()] ||
+                        groupImages[chatroom?.groupImage?.toString()] ||
                         "/assets/users.svg"
                       }
                     />

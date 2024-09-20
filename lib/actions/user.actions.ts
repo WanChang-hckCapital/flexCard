@@ -2628,8 +2628,8 @@ export async function acceptFriendRequest(
   try {
     await connectToDB();
 
-    console.log(authenticatedId);
-    console.log(friendRequestId);
+    // console.log(authenticatedId);
+    // console.log(friendRequestId);
 
     const updatedFriendRequest = await FriendRequestModel.findByIdAndUpdate(
       friendRequestId,
@@ -3183,9 +3183,9 @@ export async function sendFollowRequest(
   try {
     await connectToDB();
 
-    console.log("called");
-    console.log(authenticatedId);
-    console.log(targetUserId);
+    // console.log("called");
+    // console.log(authenticatedId);
+    // console.log(targetUserId);
 
     const currentUser = await MemberModel.findOne({
       user: authenticatedId,
@@ -3578,7 +3578,8 @@ export async function getFollowersAndFollowing(userId: string) {
   try {
     await connectToDB();
 
-    const member = await MemberModel.findOne({ user: userId });
+    // const member = await MemberModel.findOne({ user: userId });
+    const member = await ProfileModel.findOne({ _id: userId });
 
     if (!member) {
       return {
@@ -3812,106 +3813,6 @@ export async function getAllFollowersAndFollowing(userId: string) {
     };
   }
 }
-// export async function getAllFollowersAndFollowing(userId: string) {
-//   try {
-//     await connectToDB();
-
-//     const member = await MemberModel.findOne({ user: userId });
-
-//     if (!member) {
-//       return {
-//         success: false,
-//         message: "User not found",
-//         followers: [],
-//         following: [],
-//         merged: [],
-//       };
-//     }
-
-//     const activeProfile = await ProfileModel.findOne({
-//       _id: member.profiles[member.activeProfile],
-//     })
-//       .populate({
-//         path: "followers.followersId",
-//         select: "accountname user image _id",
-//         populate: { path: "image", select: "binaryCode" },
-//       })
-//       .populate({
-//         path: "following",
-//         select: "accountname user image _id",
-//         populate: { path: "image", select: "binaryCode" },
-//       });
-
-//     if (!activeProfile) {
-//       return {
-//         success: false,
-//         message: "Active profile not found",
-//         followers: [],
-//         following: [],
-//         merged: [],
-//       };
-//     }
-
-//     const uniqueUserIds = new Set<string>();
-
-//     // Fetch followers with details, using the populated data
-//     const followersWithDetails = activeProfile.followers
-//       .map((follower: any) => {
-//         const followerProfile = follower.followersId;
-//         if (followerProfile) {
-//           uniqueUserIds.add(followerProfile._id.toString());
-
-//           return {
-//             id: followerProfile._id.toString(),
-//             userId: followerProfile.user,
-//             name: followerProfile.accountname || "Unknown",
-//             image: followerProfile.image?.binaryCode || null,
-//             followedAt: follower.followedAt,
-//           };
-//         }
-//         return null;
-//       })
-//       .filter(Boolean);
-
-//     const validFollowers = followersWithDetails;
-
-//     // Fetch following with details, using the populated data
-//     const followingWithDetails = activeProfile.following
-//       .filter((following: any) => !uniqueUserIds.has(following._id.toString()))
-//       .map((following: any) => {
-//         const followingProfile = following;
-
-//         return {
-//           id: followingProfile._id.toString(),
-//           userId: followingProfile.user,
-//           name: followingProfile.accountname || "Unknown",
-//           image: followingProfile.image?.binaryCode || null,
-//         };
-//       });
-
-//     const validFollowing = followingWithDetails;
-
-//     // Merging followers and following into one array
-//     const merged = [...validFollowers, ...validFollowing];
-
-//     return {
-//       success: true,
-//       message: "",
-//       followers: validFollowers,
-//       following: validFollowing,
-//       merged,
-//     };
-//   } catch (error: any) {
-//     console.error("Error fetching followers and following:", error);
-//     return {
-//       success: false,
-//       message: error.message || "An error occurred",
-//       followers: [],
-//       following: [],
-//       merged: [],
-//     };
-//   }
-// }
 
 // create a new personal chatroom
 export async function createOrGetChatroom(
@@ -3979,9 +3880,13 @@ export async function createGroupChatroom(
 
     console.log("Newly created group chatroom:", groupChatroom);
 
-    // const chatroomPlain = groupChatroom.toObject();
+    const chatroomPlain = groupChatroom.toObject();
 
-    return { success: true, message: "Successfully create group." };
+    return {
+      success: true,
+      message: "Successfully create group.",
+      chatroom: chatroomPlain,
+    };
   } catch (error: any) {
     console.error("Error in createOrGetChatroom:", error);
     return { success: false, message: error.message };
@@ -4185,7 +4090,8 @@ export async function fetchPreviousMessage(
   try {
     await connectToDB();
 
-    const sender = await MemberModel.findOne({ user: authenticatedUserId });
+    // const sender = await MemberModel.findOne({ user: authenticatedUserId });
+    const sender = await ProfileModel.findOne({ _id: authenticatedUserId });
 
     if (!sender) {
       return {
@@ -4345,7 +4251,7 @@ export async function getInvitorList(chatroomId: string, authUserId: string) {
       .populate("image", "binaryCode");
 
     const invitableUsersWithImages = invitableUsers.map((user) => ({
-      _id: user._id,
+      _id: user._id.toString(),
       accountname: user.accountname,
       image: user.image ? user.image[0].binaryCode : null,
     }));
@@ -4387,17 +4293,42 @@ export async function inviteGroup(chatroomId: string, inviteUserIds: string[]) {
       };
     }
 
-    inviteUserIds.forEach((userId) => {
+    const newParticipants: any[] = [];
+
+    const newUserInfo: any[] = [];
+
+    for (const userId of inviteUserIds) {
       if (!chatroomFound.participants.includes(userId)) {
         chatroomFound.participants.push(userId);
+
+        const newUser = await ProfileModel.findOne({ _id: userId });
+
+        const imageId = Array.isArray(newUser.image)
+          ? newUser.image[0]
+          : newUser.image;
+
+        const userImage = await Image.findOne({ _id: imageId }).select(
+          "binaryCode"
+        );
+
+        newUserInfo.push({
+          accountname: newUser.accountname,
+          blockedAccounts: newUser.blockedAccounts,
+          email: newUser.email,
+          image: userImage?.binaryCode ? userImage.binaryCode.toString() : null,
+          participantId: newUser._id.toString(),
+        });
+
+        newParticipants.push(userId);
       }
-    });
+    }
 
     await chatroomFound.save();
 
     return {
       success: true,
       message: "Invited successfully",
+      newParticipants: newUserInfo,
     };
   } catch (error: any) {
     console.error("Error inviting users:", error);
@@ -4572,10 +4503,6 @@ export async function unsilentUser(
   try {
     await connectToDB();
 
-    // console.log(chatroomId);
-    // console.log(authUserId);
-    // console.log(silentUserId);
-
     const chatroomFound = await ChatroomModel.findOne({ _id: chatroomId });
 
     if (!chatroomFound) {
@@ -4584,8 +4511,6 @@ export async function unsilentUser(
         message: "Chatroom not found",
       };
     }
-
-    console.log(chatroomFound);
 
     const isSuperAdmin = chatroomFound.superAdmin.includes(authUserId);
     const isAdmin = chatroomFound.admin.includes(authUserId);
@@ -4821,6 +4746,86 @@ export async function searchMessage(chatroomId: string, keyword: string) {
       message: "An error occurred while searching for messages",
       data: [],
       error: error.message,
+    };
+  }
+}
+
+export async function removeUser(
+  chatroomId: string,
+  authenticatedUserId: string,
+  removeUserId: string
+) {
+  try {
+    await connectToDB();
+
+    const resultOne = await ProfileModel.findOne({ _id: authenticatedUserId });
+
+    if (!resultOne) {
+      return {
+        success: false,
+        message: "Authenticated user profile not found",
+      };
+    }
+
+    const resultTwo = await ProfileModel.findOne({ _id: removeUserId });
+
+    if (!resultTwo) {
+      return {
+        success: false,
+        message: "User to remove not found",
+      };
+    }
+
+    const chatroomFound = await ChatroomModel.findOne({ _id: chatroomId });
+
+    if (!chatroomFound) {
+      return {
+        success: false,
+        message: "Chatroom not found",
+      };
+    }
+
+    const isAuthenticatedUserSuperAdmin =
+      chatroomFound.superAdmin.includes(authenticatedUserId);
+    const isAuthenticatedUserAdmin =
+      chatroomFound.admin.includes(authenticatedUserId);
+
+    if (!isAuthenticatedUserSuperAdmin && !isAuthenticatedUserAdmin) {
+      return {
+        success: false,
+        message:
+          "You do not have permission to remove users from this chatroom",
+      };
+    }
+
+    const removeUserObjectId = new mongoose.Types.ObjectId(removeUserId);
+
+    const isUserInChatroom = chatroomFound.participants.some(
+      (participant: any) => participant.equals(removeUserObjectId)
+    );
+
+    if (!isUserInChatroom) {
+      return {
+        success: false,
+        message: "User is not a participant of this chatroom",
+      };
+    }
+
+    chatroomFound.participants = chatroomFound.participants.filter(
+      (participant: any) => !participant.equals(removeUserObjectId)
+    );
+
+    await chatroomFound.save();
+
+    return {
+      success: true,
+      message: "User has been removed successfully",
+    };
+  } catch (error: any) {
+    console.error("Error removing user:", error);
+    return {
+      success: false,
+      message: "An error occurred while removing the user",
     };
   }
 }

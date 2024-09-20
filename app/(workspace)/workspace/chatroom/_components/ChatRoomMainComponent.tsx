@@ -73,6 +73,7 @@ import {
   unblockUser,
   searchMessage,
   checkBlockedStatus,
+  removeUser,
 } from "@/lib/actions/user.actions";
 import GroupInfoSheet from "./GroupInfoSheet";
 import PersonalInfoSheet from "./PersonalInfoSheet";
@@ -180,8 +181,6 @@ interface SearchResult {
   createdAt: string;
 }
 
-// const FlexCardModal = React.lazy(() => import("./FlexCardModal"));
-
 export default function ChatRoomMainBar({
   chatrooms,
   authenticatedUserId,
@@ -268,6 +267,20 @@ export default function ChatRoomMainBar({
   const [highlightedMessageId, setHighlightedMessageId] = useState<
     string | null
   >(null);
+
+  const [admins, setAdmins] = useState<string[]>(
+    selectedChatroomData?.admin || []
+  );
+
+  const [allSilentUser, setAllSilentUser] = useState<
+    { userId: string; silentUntil: string | null }[]
+  >(selectedChatroomData?.silentUser || []);
+
+  const [participants, setParticipants] = useState<any[]>(
+    selectedChatroomData?.participants || []
+  );
+
+  const [isUserInGroup, setIsUserInGroup] = useState<boolean>(true);
 
   const router = useRouter();
 
@@ -1165,6 +1178,7 @@ export default function ChatRoomMainBar({
       const response = await leaveGroup(chatroomId, authenticatedUserId);
 
       if (response.success) {
+        setIsUserInGroup(false);
         toast.success(response.message);
       } else {
         toast.error(response.message);
@@ -1227,10 +1241,11 @@ export default function ChatRoomMainBar({
       const response = await inviteGroup(chatroomId, selectedUsers);
       if (response.success) {
         toast.success(response.message);
-        // setSelectedChatroomData((prevState) => ({
-        //   ...prevState,
-        //   admin: [...prevState.admin, participantId],
-        // }));
+
+        const newParticipants = response.newParticipants || [];
+
+        setParticipants((prev) => [...prev, ...newParticipants]);
+        setSelectedUsers([]);
       } else {
         toast.error(response.message);
       }
@@ -1250,6 +1265,7 @@ export default function ChatRoomMainBar({
       );
       if (response.success) {
         toast.success(response.message);
+        setAdmins((prev) => [...prev, participantId]);
       } else {
         toast.error(response.message);
       }
@@ -1270,6 +1286,7 @@ export default function ChatRoomMainBar({
       );
       if (response.success) {
         toast.success(response.message);
+        setAdmins((prev) => prev.filter((id) => id !== dischargeId));
       } else {
         toast.error(response.message);
       }
@@ -1296,6 +1313,15 @@ export default function ChatRoomMainBar({
       );
       if (response.success) {
         toast.success(response.message);
+        const silentUntil = isIndefinite
+          ? null
+          : new Date(Date.now() + silentDuration * 86400000).toISOString();
+
+        const newSilentUser = {
+          userId: silentTargetId,
+          silentUntil: silentUntil,
+        };
+        setAllSilentUser((prev) => [...prev, newSilentUser]);
       } else {
         toast.error(response.message);
       }
@@ -1315,6 +1341,9 @@ export default function ChatRoomMainBar({
       );
       if (response.success) {
         toast.success(response.message);
+        setAllSilentUser((prev) =>
+          prev.filter((user) => user.userId !== silentTargetId)
+        );
       } else {
         toast.error(response.message);
       }
@@ -1389,6 +1418,30 @@ export default function ChatRoomMainBar({
 
   const handleSearchResultClick = (messageId: string) => {
     setHighlightedMessageId(messageId);
+  };
+
+  const handleRemoveMember = async (removeUserId: string) => {
+    const chatroomId = selectedChatroomData?.chatroomId || "";
+    console.log("removeUserId");
+    console.log(removeUserId);
+    try {
+      const response = await removeUser(
+        chatroomId,
+        authenticatedUserId,
+        removeUserId
+      );
+
+      if (response.success) {
+        toast.success(response.message);
+        setParticipants((prevParticipants) =>
+          prevParticipants.filter((p) => p.participantId !== removeUserId)
+        );
+      } else {
+        toast.error(response.message);
+      }
+    } catch (error: any) {
+      toast.error("An error occurred while removing the user:", error);
+    }
   };
 
   return (
@@ -1585,7 +1638,7 @@ export default function ChatRoomMainBar({
                   )}
                   {message.shopName && (
                     <div className="flex justify-center mb-4">
-                      <Card className="shadow-lg relative max-w-md w-full min-h-[350px]">
+                      <Card className="shadow-lg relative w-full max-w-md md:max-w-lg sm:max-w-sm min-h-[250px] md:min-h-[350px]">
                         <a
                           href={message.content || "#"}
                           target="_blank"
@@ -1595,7 +1648,6 @@ export default function ChatRoomMainBar({
                           <div className="block cursor-pointer">
                             <CardHeader className="p-4">
                               <div className="flex items-center">
-                                {/* <MapPin className="mr-2 h-5 w-5 text-red-500" /> */}
                                 <CardTitle className="text-base font-semibold text-blue-600 hover:text-gray-600">
                                   {message.shopName}
                                 </CardTitle>
@@ -1606,7 +1658,7 @@ export default function ChatRoomMainBar({
                                 <img
                                   src={message.shopImage}
                                   alt={message.shopName || ""}
-                                  className="rounded-t-md w-full h-[200px] object-cover"
+                                  className="rounded-t-md w-full h-[200px] sm:h-[150px] object-cover"
                                 />
                               </CardContent>
                             )}
@@ -1629,7 +1681,7 @@ export default function ChatRoomMainBar({
                   )}
                   {message.youtubeMetadata && (
                     <div className="flex justify-center mb-4">
-                      <Card className="shadow-lg relative max-w-md w-full min-h-[350px]">
+                      <Card className="shadow-lg relative w-full max-w-md md:max-w-lg sm:max-w-sm min-h-[250px] md:min-h-[350px]">
                         <a
                           href={message.youtubeMetadata.url || "#"}
                           target="_blank"
@@ -1649,7 +1701,7 @@ export default function ChatRoomMainBar({
                                 <img
                                   src={message.youtubeMetadata.thumbnail}
                                   alt={message.youtubeMetadata.thumbnail || ""}
-                                  className="rounded-t-md w-full h-[200px] object-cover"
+                                  className="rounded-t-md w-full h-[200px] sm:h-[150px] object-cover"
                                 />
                               </CardContent>
                             )}
@@ -1667,7 +1719,7 @@ export default function ChatRoomMainBar({
                   )}
                   {message.facebookMetadata && (
                     <div className="flex justify-center mb-4">
-                      <Card className="shadow-lg relative max-w-md w-full min-h-[350px]">
+                      <Card className="shadow-lg relative w-full max-w-md md:max-w-lg sm:max-w-sm min-h-[250px] md:min-h-[350px]">
                         <a
                           href={message.facebookMetadata.url || "#"}
                           target="_blank"
@@ -1687,7 +1739,7 @@ export default function ChatRoomMainBar({
                                 <img
                                   src={message.facebookMetadata.thumbnail}
                                   alt={message.facebookMetadata.thumbnail || ""}
-                                  className="rounded-t-md w-full object-cover"
+                                  className="rounded-t-md w-full h-[200px] sm:h-[150px] object-cover"
                                 />
                               </CardContent>
                             )}
@@ -1828,6 +1880,7 @@ export default function ChatRoomMainBar({
         />
 
         <GroupInfoSheet
+          participants={participants}
           isGroupInfoSheetOpen={isGroupInfoSheetOpen}
           setGroupInfoSheetOpen={setGroupInfoSheetOpen}
           selectedChatroomData={selectedChatroomData}
@@ -1842,316 +1895,334 @@ export default function ChatRoomMainBar({
           unsilentHandler={unsilentHandler}
           leaveGroupHandler={leaveGroupHandler}
           loadInvitorList={loadInvitorList}
+          admins={admins}
+          allSilentUser={allSilentUser}
+          handleRemoveMember={handleRemoveMember}
         />
 
         <div className="border-t px-4 py-3 md:px-6 flex items-center">
-          <div className="mr-4">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                {!isUserSilenced && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="ml-auto rounded-full"
-                  >
-                    <PlusIcon className="h-5 w-5" />
-                  </Button>
-                )}
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="bg-black text-white border border-gray-100 rounded-lg shadow-md p-2 w-[200px] "
-              >
-                <DropdownMenuItem
-                  className="flex items-center text-2xl p-3"
-                  onClick={handlePhotoUploadClick}
-                >
-                  <Image className="mr-2 h-5 w-5" />
-                  Photo
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="flex items-center text-2xl p-3"
-                  onClick={handleFileUploadClick}
-                >
-                  <File className="mr-2 h-5 w-5" />
-                  File
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="flex items-center text-2xl p-3"
-                  onClick={handleLocationPreview}
-                >
-                  <MapPin className="mr-2 h-5 w-5" />
-                  Current Location
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="flex items-center text-2xl p-3"
-                  onClick={handleFetchAllCards}
-                >
-                  <Menu className="mr-2 h-5 w-5" />
-                  FlexCard
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-          <div className="relative flex-grow">
-            {imagePreview && (
-              <div className="relative max-h-[150px] max-w-[150px] mb-4 self-center">
-                <img
-                  src={imagePreview}
-                  alt="Selected"
-                  className="max-h-[150px] max-w-[150px] border border-gray-300 mr-4 mb-4"
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-0 right-0 rounded-full p-1"
-                >
-                  <X
-                    className="w-4 h-4 text-gray-500"
-                    onClick={removeFileUpload}
-                  ></X>
-                </Button>
-              </div>
-            )}
-            {filePreview && (
-              <div className="relative max-w-full mb-4 self-center">
-                <div className="border border-gray-300 p-2 rounded-md">
-                  <span>{filePreview}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-0 right-0 rounded-full p-1"
-                    onClick={removeFileUpload}
-                  >
-                    <X className="w-4 h-4 text-gray-500" />
-                  </Button>
-                </div>
-              </div>
-            )}
-            {locationPreview && (
-              <div className="relative max-w-full mb-4 self-center">
-                <div className="border border-gray-300 p-2 rounded-md">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="flex items-center"
-                    onClick={() => window.open(locationPreview, "_blank")}
-                  >
-                    {locationPreview}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-0 right-0 rounded-full p-1"
-                    onClick={removeFileUpload}
-                  >
-                    <X className="w-4 h-4 text-gray-500" />
-                  </Button>
-                </div>
-                <div ref={mapRef} className="h-[200px] w-full rounded-md"></div>
-              </div>
-            )}
-            {selectedCard && (
-              <div className="mb-4 border border-gray-300 p-4 rounded-md">
-                <div className="flex justify-between items-center mb-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={removeFileUpload}
-                  >
-                    <X className="w-5 h-5 text-gray-500" />
-                  </Button>
-                </div>
-                <div className="flex justify-between max-h-[400px] overflow-y-auto">
-                  <div className="flex flex-col justify-center items-center my-2 w-1/2">
-                    <h3 className="text-lg font-bold mb-2">
-                      {selectedCard.title}
-                    </h3>
-                    <h3 className="text-lg font-bold mb-2">
-                      {selectedCard.cardId}
-                    </h3>
-                    <div
-                      dangerouslySetInnerHTML={{
-                        __html: selectedCard.flexHtml.content,
-                      }}
-                      className="text-center"
-                    ></div>
-                  </div>
-                  <div className="w-1/2 ml-4">
-                    <div
-                      dangerouslySetInnerHTML={{
-                        __html: selectedCard.description,
-                      }}
-                      className="text-sm text-gray-600"
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            )}
-            {isMapVisible && (
-              <div>
-                <div
-                  ref={mapRef}
-                  style={{ width: "100%", height: "400px" }}
-                ></div>
-                <button onClick={handleRemoveMap}>Close Map</button>
-              </div>
-            )}
-
-            {shopName && (
-              <div className="flex justify-end mb-4">
-                <Card className="shadow-lg relative inline-block max-w-md">
-                  <button
-                    onClick={() => {
-                      setShopName(null);
-                      setShopImage(null);
-                      setSiteName(null);
-                      setShopDescription(null);
-                    }}
-                    className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
-                  >
-                    &times;
-                  </button>
-                  <div className="block cursor-pointer">
-                    <CardHeader className="p-4">
-                      <div className="flex items-center">
-                        <MapPin className="mr-2 h-5 w-5 text-red-500" />
-                        <CardTitle className="text-lg font-semibold text-blue-600">
-                          {shopName}
-                        </CardTitle>
-                      </div>
-                    </CardHeader>
-                    {shopImage && (
-                      <CardContent className="p-0">
-                        <img
-                          src={shopImage}
-                          alt={shopName || ""}
-                          className="rounded-t-md w-full h-auto"
-                        />
-                      </CardContent>
+          {!isUserInGroup ? (
+            <p className="text-gray-500 text-sm">
+              You have left the group. You cannot send messages.
+            </p>
+          ) : (
+            <>
+              <div className="mr-4">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    {!isUserSilenced && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="ml-auto rounded-full"
+                      >
+                        <PlusIcon className="h-5 w-5" />
+                      </Button>
                     )}
-                    <CardContent className="p-4">
-                      {siteName && (
-                        <p className="text-gray-500 text-sm mb-2">{siteName}</p>
-                      )}
-                      {shopDescription && (
-                        <p className="text-gray-700">{shopDescription}</p>
-                      )}
-                    </CardContent>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="bg-black text-white border border-gray-100 rounded-lg shadow-md p-2 w-[200px] "
+                  >
+                    <DropdownMenuItem
+                      className="flex items-center text-2xl p-3"
+                      onClick={handlePhotoUploadClick}
+                    >
+                      <Image className="mr-2 h-5 w-5" />
+                      Photo
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="flex items-center text-2xl p-3"
+                      onClick={handleFileUploadClick}
+                    >
+                      <File className="mr-2 h-5 w-5" />
+                      File
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="flex items-center text-2xl p-3"
+                      onClick={handleLocationPreview}
+                    >
+                      <MapPin className="mr-2 h-5 w-5" />
+                      Current Location
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="flex items-center text-2xl p-3"
+                      onClick={handleFetchAllCards}
+                    >
+                      <Menu className="mr-2 h-5 w-5" />
+                      FlexCard
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              <div className="relative flex-grow">
+                {imagePreview && (
+                  <div className="relative max-h-[150px] max-w-[150px] mb-4 self-center">
+                    <img
+                      src={imagePreview}
+                      alt="Selected"
+                      className="max-h-[150px] max-w-[150px] border border-gray-300 mr-4 mb-4"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-0 right-0 rounded-full p-1"
+                    >
+                      <X
+                        className="w-4 h-4 text-gray-500"
+                        onClick={removeFileUpload}
+                      ></X>
+                    </Button>
                   </div>
-                </Card>
-              </div>
-            )}
-
-            {youtubeMetadata && (
-              <Card className="mb-4 shadow-lg relative">
-                <button
-                  onClick={() => setYoutubeMetadata(null)}
-                  className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
-                >
-                  &times;
-                </button>
-                <a
-                  href={youtubeMetadata.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full cursor-pointer"
-                >
-                  <CardHeader className="p-4">
-                    <div className="flex items-center">
-                      <img
-                        src={youtubeMetadata.thumbnail}
-                        alt="Thumbnail"
-                        className="h-10 w-10 mr-2"
-                      />
-                      <CardTitle className="text-lg font-semibold text-blue-600 hover:text-gray-600">
-                        {youtubeMetadata.title}
-                      </CardTitle>
+                )}
+                {filePreview && (
+                  <div className="relative max-w-full mb-4 self-center">
+                    <div className="border border-gray-300 p-2 rounded-md">
+                      <span>{filePreview}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-0 right-0 rounded-full p-1"
+                        onClick={removeFileUpload}
+                      >
+                        <X className="w-4 h-4 text-gray-500" />
+                      </Button>
                     </div>
-                    <CardDescription>
-                      {youtubeMetadata.description}
-                    </CardDescription>
-                  </CardHeader>
-                </a>
-              </Card>
-            )}
-            {facebookMetadata && (
-              <Card className="mb-4 shadow-lg relative">
-                <button
-                  onClick={() => setFacebookMetadata(null)}
-                  className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
-                >
-                  &times;
-                </button>
-                <a
-                  href={facebookMetadata.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full cursor-pointer"
-                >
-                  <CardHeader className="p-4">
-                    <div className="flex items-center">
-                      <img
-                        src={facebookMetadata.thumbnail}
-                        alt="Thumbnail"
-                        className="h-10 w-10 mr-2"
-                      />
-                      <CardTitle className="text-lg font-semibold text-blue-600 hover:text-gray-600">
-                        {facebookMetadata.title}
-                      </CardTitle>
+                  </div>
+                )}
+                {locationPreview && (
+                  <div className="relative max-w-full mb-4 self-center">
+                    <div className="border border-gray-300 p-2 rounded-md">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex items-center"
+                        onClick={() => window.open(locationPreview, "_blank")}
+                      >
+                        {locationPreview}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-0 right-0 rounded-full p-1"
+                        onClick={removeFileUpload}
+                      >
+                        <X className="w-4 h-4 text-gray-500" />
+                      </Button>
                     </div>
-                    <CardDescription>
-                      {facebookMetadata.description}
-                    </CardDescription>
-                  </CardHeader>
-                </a>
-              </Card>
-            )}
+                    <div
+                      ref={mapRef}
+                      className="h-[200px] w-full rounded-md"
+                    ></div>
+                  </div>
+                )}
+                {selectedCard && (
+                  <div className="mb-4 border border-gray-300 p-4 rounded-md">
+                    <div className="flex justify-between items-center mb-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={removeFileUpload}
+                      >
+                        <X className="w-5 h-5 text-gray-500" />
+                      </Button>
+                    </div>
+                    <div className="flex justify-between max-h-[400px] overflow-y-auto">
+                      <div className="flex flex-col justify-center items-center my-2 w-1/2">
+                        <h3 className="text-lg font-bold mb-2">
+                          {selectedCard.title}
+                        </h3>
+                        <h3 className="text-lg font-bold mb-2">
+                          {selectedCard.cardId}
+                        </h3>
+                        <div
+                          dangerouslySetInnerHTML={{
+                            __html: selectedCard.flexHtml.content,
+                          }}
+                          className="text-center"
+                        ></div>
+                      </div>
+                      <div className="w-1/2 ml-4">
+                        <div
+                          dangerouslySetInnerHTML={{
+                            __html: selectedCard.description,
+                          }}
+                          className="text-sm text-gray-600"
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {isMapVisible && (
+                  <div>
+                    <div
+                      ref={mapRef}
+                      style={{ width: "100%", height: "400px" }}
+                    ></div>
+                    <button onClick={handleRemoveMap}>Close Map</button>
+                  </div>
+                )}
 
-            {!isUserSilenced ? (
-              <div className="relative flex items-center">
-                <Textarea
-                  placeholder="Type your message..."
-                  className="min-h-[36px] h-[36px] line-height w-full rounded-2xl text-black resize-none pr-16 overflow-hidden leading-[15px]"
-                  value={messageContent}
-                  onChange={(e) => setMessageContent(e.target.value)}
-                  onPaste={handlePaste}
-                />
-                <Button
-                  type="submit"
-                  size="icon"
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2"
-                  onClick={() => {
-                    if (ws) {
-                      sendMessageHandler(
-                        authenticatedUserId,
-                        selectedChatroom,
-                        messageContent,
-                        ws,
-                        youtubeMetadata,
-                        facebookMetadata
-                      );
-                    } else {
-                      console.error("WebSocket connection is not available.");
-                    }
-                  }}
-                >
-                  <SendIcon className="w-4 h-4" />
-                </Button>
+                {shopName && (
+                  <div className="flex justify-end mb-4">
+                    <Card className="shadow-lg relative inline-block max-w-md">
+                      <button
+                        onClick={() => {
+                          setShopName(null);
+                          setShopImage(null);
+                          setSiteName(null);
+                          setShopDescription(null);
+                        }}
+                        className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+                      >
+                        &times;
+                      </button>
+                      <div className="block cursor-pointer">
+                        <CardHeader className="p-4">
+                          <div className="flex items-center">
+                            <MapPin className="mr-2 h-5 w-5 text-red-500" />
+                            <CardTitle className="text-lg font-semibold text-blue-600">
+                              {shopName}
+                            </CardTitle>
+                          </div>
+                        </CardHeader>
+                        {shopImage && (
+                          <CardContent className="p-0">
+                            <img
+                              src={shopImage}
+                              alt={shopName || ""}
+                              className="rounded-t-md w-full h-auto"
+                            />
+                          </CardContent>
+                        )}
+                        <CardContent className="p-4">
+                          {siteName && (
+                            <p className="text-gray-500 text-sm mb-2">
+                              {siteName}
+                            </p>
+                          )}
+                          {shopDescription && (
+                            <p className="text-gray-700">{shopDescription}</p>
+                          )}
+                        </CardContent>
+                      </div>
+                    </Card>
+                  </div>
+                )}
+
+                {youtubeMetadata && (
+                  <Card className="mb-4 shadow-lg relative">
+                    <button
+                      onClick={() => setYoutubeMetadata(null)}
+                      className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+                    >
+                      &times;
+                    </button>
+                    <a
+                      href={youtubeMetadata.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block w-full cursor-pointer"
+                    >
+                      <CardHeader className="p-4">
+                        <div className="flex items-center">
+                          <img
+                            src={youtubeMetadata.thumbnail}
+                            alt="Thumbnail"
+                            className="h-10 w-10 mr-2"
+                          />
+                          <CardTitle className="text-lg font-semibold text-blue-600 hover:text-gray-600">
+                            {youtubeMetadata.title}
+                          </CardTitle>
+                        </div>
+                        <CardDescription>
+                          {youtubeMetadata.description}
+                        </CardDescription>
+                      </CardHeader>
+                    </a>
+                  </Card>
+                )}
+                {facebookMetadata && (
+                  <Card className="mb-4 shadow-lg relative">
+                    <button
+                      onClick={() => setFacebookMetadata(null)}
+                      className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+                    >
+                      &times;
+                    </button>
+                    <a
+                      href={facebookMetadata.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block w-full cursor-pointer"
+                    >
+                      <CardHeader className="p-4">
+                        <div className="flex items-center">
+                          <img
+                            src={facebookMetadata.thumbnail}
+                            alt="Thumbnail"
+                            className="h-10 w-10 mr-2"
+                          />
+                          <CardTitle className="text-lg font-semibold text-blue-600 hover:text-gray-600">
+                            {facebookMetadata.title}
+                          </CardTitle>
+                        </div>
+                        <CardDescription>
+                          {facebookMetadata.description}
+                        </CardDescription>
+                      </CardHeader>
+                    </a>
+                  </Card>
+                )}
+
+                {!isUserSilenced ? (
+                  <div className="relative flex items-center">
+                    <Textarea
+                      placeholder="Type your message..."
+                      className="min-h-[36px] h-[36px] line-height w-full rounded-2xl text-black resize-none pr-16 overflow-hidden leading-[15px]"
+                      value={messageContent}
+                      onChange={(e) => setMessageContent(e.target.value)}
+                      onPaste={handlePaste}
+                    />
+                    <Button
+                      type="submit"
+                      size="icon"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                      onClick={() => {
+                        if (ws) {
+                          sendMessageHandler(
+                            authenticatedUserId,
+                            selectedChatroom,
+                            messageContent,
+                            ws,
+                            youtubeMetadata,
+                            facebookMetadata
+                          );
+                        } else {
+                          console.error(
+                            "WebSocket connection is not available."
+                          );
+                        }
+                      }}
+                    >
+                      <SendIcon className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ) : isUserSilenced.silentUntil === null ? (
+                  <p className="text-red-500 text-sm">
+                    You are silenced indefinitely.
+                  </p>
+                ) : (
+                  <div>
+                    <p className="text-red-500 text-sm">
+                      You are silenced until{" "}
+                      {new Date(isUserSilenced.silentUntil).toLocaleString()}.
+                    </p>
+                  </div>
+                )}
               </div>
-            ) : isUserSilenced.silentUntil === null ? (
-              <p className="text-red-500 text-sm">
-                You are silenced indefinitely.
-              </p>
-            ) : (
-              <div>
-                <p className="text-red-500 text-sm">
-                  You are silenced until{" "}
-                  {new Date(isUserSilenced.silentUntil).toLocaleString()}.
-                </p>
-              </div>
-            )}
-          </div>
+            </>
+          )}
         </div>
         <input
           type="file"
@@ -2167,7 +2238,6 @@ export default function ChatRoomMainBar({
           onChange={handleFileChange}
         />
       </div>
-      {/* <Suspense fallback={null}> */}
       <FlexCardModal
         isOpen={isFlexCardModalOpen}
         onClose={() => setFlexCardModalOpen(false)}
@@ -2178,7 +2248,6 @@ export default function ChatRoomMainBar({
           setFlexCardModalOpen(false);
         }}
       />
-      {/* </Suspense> */}
     </>
   );
 }

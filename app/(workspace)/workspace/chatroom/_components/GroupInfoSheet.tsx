@@ -22,7 +22,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Plus, UserRoundX, MessageCircleX, Pencil } from "lucide-react";
+import {
+  Plus,
+  UserRoundX,
+  MessageCircleX,
+  Pencil,
+  UserPlus,
+} from "lucide-react";
 import { groupImageUpdate } from "@/lib/actions/user.actions";
 import {
   Dialog,
@@ -30,8 +36,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import ParticipantList from "./ParticipantList";
 
 interface GroupInfoProps {
+  participants: any[];
   isGroupInfoSheetOpen: boolean;
   setGroupInfoSheetOpen: (open: boolean) => void;
   selectedChatroomData: any;
@@ -45,13 +53,20 @@ interface GroupInfoProps {
   inviteUserHandler: () => void;
   handleAppointAdmin: (participantId: string) => void;
   dischargeAppointAdmin: (participantId: string) => void;
-  silentHandler: (participantId: string, silentDuration: number | null) => void;
+  silentHandler: (
+    silentTargetId: string,
+    silentDuration: number | null
+  ) => void;
   unsilentHandler: (silentTargetId: string) => void;
   leaveGroupHandler: () => void;
   loadInvitorList: () => void;
+  admins: string[];
+  allSilentUser: { userId: string; silentUntil: string | null }[];
+  handleRemoveMember: (participantId: string) => void;
 }
 
 export default function GroupInfoSheet({
+  participants,
   isGroupInfoSheetOpen,
   setGroupInfoSheetOpen,
   selectedChatroomData,
@@ -66,6 +81,9 @@ export default function GroupInfoSheet({
   unsilentHandler,
   leaveGroupHandler,
   loadInvitorList,
+  admins,
+  allSilentUser,
+  handleRemoveMember,
 }: GroupInfoProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [groupImageUrl, setGroupImageUrl] = useState<string | null>(null);
@@ -258,13 +276,13 @@ export default function GroupInfoSheet({
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <button>
-                  <Plus
+                  <UserPlus
                     onClick={loadInvitorList}
                     className="h-6 w-6 cursor-pointer text-gray-400 hover:text-white"
                   />
                 </button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <AlertDialogContent className="z-[1100] bg-black">
                 <AlertDialogHeader>
                   <AlertDialogTitle>Invite a User</AlertDialogTitle>
                   <AlertDialogDescription>
@@ -314,131 +332,24 @@ export default function GroupInfoSheet({
             </AlertDialog>
           </div>
 
-          <ul className="space-y-4">
-            {selectedChatroomData?.participants.map((participant: any) => {
-              const isSilenced = selectedChatroomData?.silentUser.find(
-                (silentUser: any) =>
-                  silentUser.userId === participant.participantId &&
-                  (silentUser.silentUntil === null ||
-                    new Date(silentUser.silentUntil) > new Date())
-              );
-
-              return (
-                <li
-                  key={participant.participantId}
-                  className="flex items-center gap-2"
-                >
-                  <Avatar className="h-10 w-10 mr-2">
-                    <AvatarImage
-                      src={participant.image || "/assets/user.svg"}
-                    />
-                    <AvatarFallback>
-                      {participant.accountname?.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-1 justify-between items-center">
-                    <div className="flex flex-col">
-                      <div className="flex items-center">
-                        <p className="text-base">
-                          {participant.participantId === authenticatedUserId
-                            ? "You"
-                            : participant.accountname}
-                        </p>
-                      </div>
-                      {selectedChatroomData?.superAdmin.includes(
-                        participant.participantId
-                      ) && (
-                        <span className="text-xs text-blue-600">
-                          Super Admin
-                        </span>
-                      )}
-                      {selectedChatroomData?.admin.includes(
-                        participant.participantId
-                      ) && <span className="text-xs text-blue-600">Admin</span>}
-                      {isSilenced && (
-                        <span className="text-xs text-blue-600">
-                          Silent Until{" "}
-                          {new Date(isSilenced.silentUntil).toLocaleString()}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center">
-                      {!selectedChatroomData?.admin.includes(
-                        participant.participantId
-                      ) &&
-                        !selectedChatroomData?.superAdmin.includes(
-                          participant.participantId
-                        ) &&
-                        selectedChatroomData?.superAdmin.includes(
-                          authenticatedUserId
-                        ) && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              handleAppointAdmin(participant.participantId)
-                            }
-                            className="text-black px-2 py-1 text-xs"
-                          >
-                            Admin
-                          </Button>
-                        )}
-
-                      {selectedChatroomData?.admin.includes(
-                        participant.participantId
-                      ) &&
-                        !selectedChatroomData?.superAdmin.includes(
-                          participant.participantId
-                        ) &&
-                        selectedChatroomData?.superAdmin.includes(
-                          authenticatedUserId
-                        ) && (
-                          <UserRoundX
-                            onClick={() => {
-                              dischargeAppointAdmin(participant.participantId);
-                            }}
-                          />
-                        )}
-
-                      {(selectedChatroomData?.superAdmin.includes(
-                        authenticatedUserId
-                      ) ||
-                        !selectedChatroomData?.admin.includes(
-                          authenticatedUserId
-                        )) && (
-                        <>
-                          {!isSilenced ? (
-                            <MessageCircleX
-                              className="ml-2 cursor-pointer"
-                              onClick={() =>
-                                handleSilentClick(participant.participantId)
-                              }
-                            />
-                          ) : (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="ml-2"
-                              onClick={() =>
-                                unsilentHandler(participant.participantId)
-                              }
-                            >
-                              Unsilence
-                            </Button>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+          <div className="space-y-4 flex-grow">
+            <ParticipantList
+              participants={participants}
+              authenticatedUserId={authenticatedUserId}
+              superAdmins={selectedChatroomData?.superAdmin || []}
+              admins={admins}
+              silentUsers={allSilentUser}
+              handleAppointAdmin={handleAppointAdmin}
+              dischargeAppointAdmin={dischargeAppointAdmin}
+              handleSilentClick={handleSilentClick}
+              unsilentHandler={unsilentHandler}
+              handleRemoveMember={handleRemoveMember}
+            />
+          </div>
         </div>
 
         <Dialog open={isSilentDialogOpen} onOpenChange={setSilentDialogOpen}>
-          <DialogContent>
+          <DialogContent className="z-[1100]">
             <DialogHeader>
               <DialogTitle>Choose Silence Duration</DialogTitle>
             </DialogHeader>
@@ -513,7 +424,7 @@ export default function GroupInfoSheet({
                 Leave Group
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent>
+            <AlertDialogContent className="z-[1200]">
               <AlertDialogHeader>
                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                 <AlertDialogDescription>
