@@ -363,7 +363,7 @@ export async function fetchTransactionStats(
 //     }
 // }
 
-export async function fetchProfile(profileId: string){
+export async function fetchProfile(profileId: string) {
     try {
         await connectToDB();
 
@@ -414,7 +414,7 @@ export async function fetchMemberProfileDetails(
                 path: "organization",
                 options: { lean: true }
             })
-            // .lean<ProfileModel>();
+        // .lean<ProfileModel>();
 
         console.log("Profile: ", profile);
 
@@ -424,7 +424,7 @@ export async function fetchMemberProfileDetails(
 
         let verifiedAdminName = null;
         if (profile.organization && profile.organization.verify.verifiedBy) {
-            const verifiedAdmin = await ProfileModel.findOne({ _id: profile.organization.verify.verifiedBy}).select("accountname");
+            const verifiedAdmin = await ProfileModel.findOne({ _id: profile.organization.verify.verifiedBy }).select("accountname");
             if (verifiedAdmin) {
                 verifiedAdminName = verifiedAdmin.accountname;
             }
@@ -463,7 +463,7 @@ export async function verifyOrganizationStatus(
         }
 
         const organization = await OrganizationModel.findOne({ _id: organizationId }).select("verify");
-        
+
         if (!organization) {
             return { success: false, message: "Organization not found." };
         }
@@ -675,7 +675,8 @@ export async function fetchTransactionStatusFromSubsciptionId(
     try {
         await connectToDB();
 
-        const subscription = await SubscriptionModel.findOne({ _id: subscriptionId }).select('transaction estimatedEndDate plan');
+        const subscription = await SubscriptionModel.findOne({ id: subscriptionId }).select('transaction estimatedEndDate plan');
+
         if (!subscription) {
             throw new Error("No subscription found");
         }
@@ -689,11 +690,16 @@ export async function fetchTransactionStatusFromSubsciptionId(
         }
 
         const product = await ProductModel.findOne({ _id: subscription.plan });
-        console.log("Product: ", product);
 
         const planCategory = product.category;
 
-        const profile = await ProfileModel.findOne({ subscription: { $in: [subscriptionId] } }).select("_id"); //not sure working or not
+        const profile = await ProfileModel.findOne({ subscription: { $in: [subscription._id] } })
+            .select("_id subscription")
+            .populate({
+                path: 'subscription',
+                model: 'Subscription',
+                select: 'id estimatedEndDate transaction plan',
+            });
 
         const newUserType = checkAndReturnUserType(product.name, planCategory);
 
@@ -957,8 +963,13 @@ async function createSubscription(
     estimatedEndDate: Date
 ) {
     try {
+        const now = new Date();
+        const formattedDate = now.toISOString().slice(0, 10).replace(/-/g, '');
+        const formattedTime = now.toTimeString().slice(0, 8).replace(/:/g, '');
+        const subscriptionId = `OTX${formattedDate}${formattedTime}`;
+
         const subscription = new SubscriptionModel({
-            id: uuidv4(),
+            id: subscriptionId, // changed to custom id
             planStarted,
             estimatedEndDate,
             paidTerms,
@@ -972,7 +983,7 @@ async function createSubscription(
         profile.subscription.push(subscription._id);
         await profile.save();
 
-        return { success: true, data: subscription._id.toString() };
+        return { success: true, data: subscription.id.toString() };
     } catch (error: any) {
         console.error('Error creating subscription:', error);
         return { success: false, message: error.message };
@@ -983,7 +994,7 @@ export async function fetchSubsriptionById(orderId: string): Promise<any> {
     try {
         await connectToDB();
 
-        const subscription = await SubscriptionModel.findOne({ _id: orderId }).lean();
+        const subscription = await SubscriptionModel.findOne({ id: orderId }).lean();
 
         if (!subscription) {
             throw new Error("No subscription found");
@@ -995,11 +1006,11 @@ export async function fetchSubsriptionById(orderId: string): Promise<any> {
     }
 }
 
-export async function   fetchSubsriptionTotalAmountById(orderId: string): Promise<any> {
+export async function fetchSubsriptionTotalAmountById(orderId: string): Promise<any> {
     try {
         await connectToDB();
 
-        const subscription = await SubscriptionModel.findOne({ _id: orderId });
+        const subscription = await SubscriptionModel.findOne({ id: orderId });
 
         if (!subscription) {
             throw new Error("No subscription found");
@@ -1037,7 +1048,7 @@ export async function generateTransactionAndUpdateSubscription({
     try {
         await connectToDB();
 
-        const subscription = await SubscriptionModel.findOne({ _id: orderId });
+        const subscription = await SubscriptionModel.findOne({ id: orderId });
 
         if (!subscription) {
             throw new Error("No subscription found");

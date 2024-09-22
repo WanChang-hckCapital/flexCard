@@ -81,7 +81,7 @@ const CheckoutComponent: React.FC<CheckoutComponentProps> = ({ product, productI
                                             productId={productId}
                                             authActiveProfileId={authActiveProfileId}
                                             totalAmount={total}
-                                        // paidTerms={paidTerms}
+                                            paidTerms={paidTerms}
                                         />
                                         {/* <TestForm /> */}
                                     </TabsContent>
