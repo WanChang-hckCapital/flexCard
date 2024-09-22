@@ -12,9 +12,22 @@ const chatroomSchema = new Schema<Chatroom>(
     participants: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Member",
+        ref: "Profile",
       },
     ],
+    superAdmin: [{ type: mongoose.Schema.Types.ObjectId, ref: "Profile" }],
+    admin: [{ type: mongoose.Schema.Types.ObjectId, ref: "Profile" }],
+    silentUser: [
+      {
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: "Profile" },
+        silentUntil: { type: Date, default: Date.now },
+        isSilenceIndefinite: { type: Boolean, default: false },
+      },
+    ],
+    groupImage: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "groupchat.files",
+    },
   },
   {
     timestamps: true,

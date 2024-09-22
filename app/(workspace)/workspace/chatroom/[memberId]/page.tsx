@@ -6,6 +6,7 @@ import {
   fetchAllUser,
   getFollowersAndFollowing,
   getAllFollowersAndFollowing,
+  getProfileId,
 } from "@/lib/actions/user.actions";
 import ChatRoomSideBar from "../_components/ChatRoomSideBar";
 import ChatRoomMainBar from "../_components/ChatRoomMainComponent";
@@ -33,6 +34,7 @@ interface AllFollowerAndFollowing {
   message: string;
   followers: any[];
   following: any[];
+  merged: any[];
 }
 
 export default async function ChatComponent({ params }: ChatRoomProps) {
@@ -60,22 +62,12 @@ export default async function ChatComponent({ params }: ChatRoomProps) {
     users: [],
   };
 
-  try {
-    allChatrooms = await getCurrentUserChatroom(memberId);
-
-    allUsers = await fetchAllUser(memberId);
-
-    isLoading = false;
-  } catch (error: any) {
-    console.error("Failed to fetch chatrooms:", error.message || error);
-    isLoading = false;
-  }
-
   let allFollowerAndFollowingForPersonal: AllFollowerAndFollowing = {
     success: false,
     message: "",
     followers: [],
     following: [],
+    merged: [],
   };
 
   let allFollowerAndFollowingForGroup: AllFollowerAndFollowing = {
@@ -83,38 +75,73 @@ export default async function ChatComponent({ params }: ChatRoomProps) {
     message: "",
     followers: [],
     following: [],
+    merged: [],
   };
 
+  let profileId: any;
+  let serializedChatrooms: any;
+  let serializedAllUsers: any;
+  let serializedFollowerAndFollowingForPersonal: any;
+  let serializedFollowerAndFollowingForGroup: any;
+  let serializedProfileId: any;
+
   try {
+    allChatrooms = await getCurrentUserChatroom(memberId);
+
+    allUsers = await fetchAllUser(memberId);
+
+    serializedChatrooms = JSON.parse(JSON.stringify(allChatrooms.chatrooms));
+    serializedAllUsers = JSON.parse(JSON.stringify(allUsers.users));
+
     // all following/follower user but havent create personal chatroom before
     allFollowerAndFollowingForPersonal = await getFollowersAndFollowing(
       memberId
     );
-  } catch (error: any) {}
 
-  try {
-    // for group
+    // all following/follower user but havent create personal chatroom before
     allFollowerAndFollowingForGroup = await getAllFollowersAndFollowing(
       memberId
     );
-  } catch (error: any) {}
+
+    serializedFollowerAndFollowingForPersonal = JSON.parse(
+      JSON.stringify(allFollowerAndFollowingForPersonal)
+    );
+    serializedFollowerAndFollowingForGroup = JSON.parse(
+      JSON.stringify(allFollowerAndFollowingForGroup)
+    );
+
+    profileId = await getProfileId(memberId);
+    serializedProfileId = JSON.parse(JSON.stringify(profileId.profile));
+
+    isLoading = false;
+  } catch (error: any) {
+    console.error("Failed to fetch chatrooms:", error.message || error);
+    isLoading = false;
+  }
+
+  if (isLoading) {
+    return <SkeletonComponent />;
+  }
+
+  // In case profileId or other data fetching failed
+  if (!profileId || !allChatrooms.success) {
+    return <div>Error loading chatrooms or profile data</div>;
+  }
 
   return (
     <div>
       <div className="flex h-screen w-full bg-background">
-        {/* {allChatrooms.success ? ( */}
         <ChatRoomComponent
-          chatrooms={allChatrooms.chatrooms}
-          authenticatedUserId={memberId}
-          allUsers={allUsers.users}
+          chatrooms={serializedChatrooms || []}
+          authenticatedUserId={serializedProfileId}
+          allUsers={serializedAllUsers}
           allFollowerAndFollowingForPersonal={
-            allFollowerAndFollowingForPersonal
+            serializedFollowerAndFollowingForPersonal
           }
-          allFollowerAndFollowingForGroup={allFollowerAndFollowingForGroup}
+          allFollowerAndFollowingForGroup={
+            serializedFollowerAndFollowingForGroup
+          }
         />
-        {/* ) : (
-          <SkeletonComponent />
-        )} */}
       </div>
     </div>
   );

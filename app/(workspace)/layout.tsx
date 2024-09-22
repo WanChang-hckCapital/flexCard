@@ -1,4 +1,3 @@
-
 import type { Metadata } from "next";
 import { Inter as FontSans } from "next/font/google";
 import "../globals.css";
@@ -51,12 +50,13 @@ export default async function WorkspaceLayout({
   return (
     <AuthSessionProvider>
       <html lang="en">
-        <Script src="/opencv.js" strategy="beforeInteractive" />{" "}
+        {/* <Script src="/opencv.js" strategy="beforeInteractive" />{" "} */}
         <body
           className={cn(
             "min-h-screen flex flex-col bg-dark-1 justify-center text-white font-sans antialiased",
             fontSans.variable
-          )}>
+          )}
+        >
           <main className="h-screen overflow-hidden">
             <section className="flex h-full flex-row">
               {/* <Header session={session} userInfoImage={userImage} /> */}

@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { SendIcon, PlusIcon, UserIcon, UsersIcon } from "lucide-react";
-import Link from "next/link";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -11,12 +10,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from "@/components/ui/accordion";
 import ChatRoomSearchBar from "./ChatRoomSearchBar";
 import { Dialog, DialogContent, DialogOverlay } from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
@@ -31,10 +24,12 @@ interface AllFollowerAndFollowing {
   message: string;
   followers: any[];
   following: any[];
+  merged: any[];
 }
 
 interface Participant {
   _id: string;
+  participantId: string;
   accountname: string;
   image: string;
   user: string;
@@ -45,6 +40,10 @@ interface Chatroom {
   name: string;
   type: string;
   participants: Participant[];
+  superAdmin: string[];
+  admin: string[];
+  silentUser: any[];
+  groupImage: {};
   chatroomId: string;
   createdAt: string;
 }
@@ -52,12 +51,19 @@ interface Chatroom {
 interface ChatroomSideBarProps {
   chatrooms: Chatroom[];
   authenticatedUserId: string;
-  //   allUsers: any[];
-  //   allFollowerAndFollowing: AllFollowerAndFollowing;
   onSelectChatroom: (chatroomId: string) => void;
   allUsers: any[];
-  allFollowerAndFollowingForPersonal: { followers: any[]; following: any[] };
-  allFollowerAndFollowingForGroup: { followers: any[]; following: any[] };
+  allFollowerAndFollowingForPersonal: {
+    followers: any[];
+    following: any[];
+    merged: any[];
+  };
+  allFollowerAndFollowingForGroup: {
+    followers: any[];
+    following: any[];
+    merged: any[];
+  };
+  addNewChatroom: (newChatroom: Chatroom) => void;
 }
 
 export default function ChatRoomSideBar({
@@ -67,6 +73,7 @@ export default function ChatRoomSideBar({
   allUsers,
   allFollowerAndFollowingForPersonal,
   allFollowerAndFollowingForGroup,
+  addNewChatroom,
 }: ChatroomSideBarProps) {
   const [isPersonalModalOpen, setIsPersonalModalOpen] = useState(false);
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
@@ -76,8 +83,37 @@ export default function ChatRoomSideBar({
   ]);
   const [groupChatName, setGroupChatName] = useState("");
 
+  const [groupImages, setGroupImages] = useState<{ [key: string]: string }>({});
+
+  const fetchGroupImage = async (groupId: string) => {
+    try {
+      const response = await fetch(`/api/group-image-load/${groupId}`);
+
+      if (response.ok) {
+        const data = await response.json();
+        setGroupImages((prev) => ({
+          ...prev,
+          [groupId]: data.fileDataUrl,
+        }));
+      } else {
+        console.error("Failed to load group image:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error fetching group image:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (chatrooms.length > 0) {
+      chatrooms.forEach((chatroom) => {
+        if (chatroom.type === "GROUP" && chatroom.groupImage) {
+          fetchGroupImage(chatroom.groupImage.toString());
+        }
+      });
+    }
+  }, [chatrooms]);
+
   const showNewPersonalChat = () => {
-    console.log("new chat");
     setIsPersonalModalOpen(true);
   };
 
@@ -86,7 +122,6 @@ export default function ChatRoomSideBar({
   };
 
   const createNewGroupChat = () => {
-    console.log("Creating a new group chat");
     setIsGroupModalOpen(true);
   };
 
@@ -116,21 +151,16 @@ export default function ChatRoomSideBar({
         selectedParticipants,
         groupChatName
       );
-
-      console.log(newGroupChatroom);
-
       if (newGroupChatroom.success) {
-        // console.log(
-        //   "Group Chatroom created successfully:",
-        //   newGroupChatroom.chatroom
-        // );
-        toast.success(`Group Chatroom created ${groupChatName} successfully!`);
+        toast.success(newGroupChatroom.message);
+        console.log(newGroupChatroom.chatroom._id);
+        addNewChatroom(newGroupChatroom.chatroom);
       } else {
+        toast.error(newGroupChatroom.message);
         console.error(
           "Failed to create or retrieve group chatroom:",
           newGroupChatroom.message
         );
-        toast.error("Error: " + newGroupChatroom.message);
       }
     } catch (error: any) {
       console.error("Error in creating new group chatroom:", error);
@@ -153,17 +183,16 @@ export default function ChatRoomSideBar({
         participantId
       );
 
-      console.log(newChatroom);
-
-      if (newChatroom.success) {
-        console.log("Chatroom created successfully:", newChatroom.chatroom);
+      if (newChatroom && newChatroom.success) {
+        console.log("Chatroom created successfully:", newChatroom?.chatroom);
         toast.success("Chatroom created successfully!");
+        addNewChatroom(newChatroom.chatroom);
       } else {
         console.error(
           "Failed to create or retrieve chatroom:",
-          newChatroom.message
+          newChatroom?.message
         );
-        toast.error("Error: " + newChatroom.message);
+        toast.error("Error: " + newChatroom?.message);
       }
     } catch (error: any) {
       console.error("Error in createNewPersonalChatroom:", error);
@@ -175,11 +204,11 @@ export default function ChatRoomSideBar({
 
   return (
     <>
-      <div className="flex justify-center p-4">
+      {/* <div className="flex justify-center p-4">
         <ChatRoomSearchBar />
-      </div>
+      </div> */}
       <hr></hr>
-      <div className="flex h-14 items-center border-b px-4">
+      <div className="flex h-16 items-center border-b px-4">
         <h3 className="text-lg font-semibold">Messages</h3>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -208,8 +237,8 @@ export default function ChatRoomSideBar({
           open={isPersonalModalOpen}
           onOpenChange={setIsPersonalModalOpen}
         >
-          <DialogOverlay className="fixed inset-0 bg-black opacity-30" />
-          <DialogContent className="fixed inset-0 flex items-center justify-center">
+          <DialogOverlay className="fixed inset-0 bg-black opacity-30 z-40" />
+          <DialogContent className="fixed inset-0 flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded shadow-lg max-w-md w-full relative">
               <button
                 className="absolute top-2 right-2"
@@ -219,49 +248,31 @@ export default function ChatRoomSideBar({
               </button>
               <h3 className="text-lg font-semibold text-black">New Chat</h3>
               <div className="mt-4 max-h-64 overflow-y-auto">
-                {allFollowerAndFollowingForPersonal.followers.map(
-                  (follower) => (
+                {allFollowerAndFollowingForPersonal?.merged &&
+                allFollowerAndFollowingForPersonal.merged.length > 0 ? (
+                  allFollowerAndFollowingForPersonal.merged.map((merged) => (
                     <div
-                      key={follower.id}
+                      key={merged?.id}
                       className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer hover:bg-gray-200"
-                      onClick={() => createNewPersonalChatroom(follower.userId)}
+                      onClick={() => createNewPersonalChatroom(merged.userId)}
                     >
                       <Avatar className="h-8 w-8 border">
-                        <AvatarImage src={follower.image} />
+                        <AvatarImage src={merged?.image} />
                         <AvatarFallback>
-                          {follower.name.charAt(0)}
+                          {merged?.name.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 overflow-hidden">
                         <div className="font-medium truncate text-black">
-                          {follower.name}
+                          {merged?.name}
                         </div>
                       </div>
                     </div>
-                  )
-                )}
-                {allFollowerAndFollowingForPersonal.following.map(
-                  (following) => (
-                    <div
-                      key={following.id}
-                      className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer hover:bg-gray-200"
-                      onClick={() =>
-                        createNewPersonalChatroom(following.userId)
-                      }
-                    >
-                      <Avatar className="h-8 w-8 border">
-                        <AvatarImage src={following.image} />
-                        <AvatarFallback>
-                          {following.name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 overflow-hidden">
-                        <div className="font-medium truncate text-black">
-                          {following.name}
-                        </div>
-                      </div>
-                    </div>
-                  )
+                  ))
+                ) : (
+                  <div className="text-center text-gray-500">
+                    Follow more people to chat with them.
+                  </div>
                 )}
               </div>
             </div>
@@ -271,8 +282,8 @@ export default function ChatRoomSideBar({
 
       {isGroupModalOpen && (
         <Dialog open={isGroupModalOpen}>
-          <DialogOverlay className="fixed inset-0 bg-black opacity-30" />
-          <DialogContent className="fixed inset-0 flex items-center justify-center">
+          <DialogOverlay className="fixed inset-0 bg-black opacity-30 z-40" />
+          <DialogContent className="fixed inset-0 flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded shadow-lg relative">
               <button
                 className="absolute top-2 right-2"
@@ -296,50 +307,26 @@ export default function ChatRoomSideBar({
                 />
               </div>
               <div className="mt-4 max-h-64 overflow-y-auto">
-                {allFollowerAndFollowingForGroup.followers.map((follower) => (
+                {allFollowerAndFollowingForGroup.merged.map((merge) => (
                   <div
-                    key={follower.id}
+                    key={merge.id}
                     className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer hover:bg-gray-200"
                   >
+                    {/* <div className="text-black">{merge.id}</div> */}
                     <input
                       type="checkbox"
-                      onChange={() => handleCheckboxChange(follower.userId)}
+                      onChange={() => handleCheckboxChange(merge.id)}
                       className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
                     />
                     <Avatar className="h-8 w-8 border">
                       <AvatarImage
-                        src={follower.image || "/placeholder-user.jpg"}
+                        src={merge.image || "/placeholder-user.jpg"}
                       />
-                      <AvatarFallback>{follower.name.charAt(0)}</AvatarFallback>
+                      <AvatarFallback>{merge.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1 overflow-hidden">
                       <div className="font-medium truncate text-black">
-                        {follower.name}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {allFollowerAndFollowingForGroup.following.map((following) => (
-                  <div
-                    key={following.id}
-                    className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer hover:bg-gray-200"
-                  >
-                    <input
-                      type="checkbox"
-                      onChange={() => handleCheckboxChange(following.userId)}
-                      className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
-                    />
-                    <Avatar className="h-8 w-8 border">
-                      <AvatarImage
-                        src={following.image || "/placeholder-user.jpg"}
-                      />
-                      <AvatarFallback>
-                        {following.name.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 overflow-hidden">
-                      <div className="font-medium truncate text-black">
-                        {following.name}
+                        {merge.name}
                       </div>
                     </div>
                   </div>
@@ -352,144 +339,56 @@ export default function ChatRoomSideBar({
           </DialogContent>
         </Dialog>
       )}
-      {/* <div className="border-t p-2">
-        <div className="flex-1 overflow-auto">
-          <nav className="space-y-1">
-            {allUsers.map((user) => (
-              <div
-                key={user.id}
-                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer hover:bg-muted"
-              >
-                <Avatar className="h-8 w-8 border">
-                  <AvatarImage src={user.image || "/placeholder-user.jpg"} />
-                  <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1 overflow-hidden">
-                  <div className="font-medium truncate">{user.name}</div>
-                </div>
-              </div>
-            ))}
-          </nav>
-        </div>
-      </div> */}
-      {/* <div className="border-t p-2">
-        <div className="flex-1 overflow-auto">
-          <Accordion type="single" collapsible>
-            <AccordionItem value="followers">
-              <AccordionTrigger>Followers</AccordionTrigger>
-              <AccordionContent>
-                <nav className="space-y-1">
-                  {followers.map((follower) => (
-                    <div
-                      key={follower.id}
-                      className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer hover:bg-muted"
-                    >
-                      <Avatar className="h-8 w-8 border">
-                        <AvatarImage
-                          src={follower.image || "/placeholder-user.jpg"}
-                        />
-                        <AvatarFallback>
-                          {follower.name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 overflow-hidden">
-                        <div className="font-medium truncate">
-                          {follower.name}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </nav>
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="following">
-              <AccordionTrigger>Following</AccordionTrigger>
-              <AccordionContent>
-                <nav className="space-y-1">
-                  {following.map((follow) => (
-                    <div
-                      key={follow.id}
-                      className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer hover:bg-muted"
-                    >
-                      <Avatar className="h-8 w-8 border">
-                        <AvatarImage
-                          src={follow.image || "/placeholder-user.jpg"}
-                        />
-                        <AvatarFallback>{follow.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 overflow-hidden">
-                        <div className="font-medium truncate">
-                          {follow.name}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </nav>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </div>
-      </div> */}
-      {/* <div className="flex-1 overflow-auto">
-        <nav className="space-y-1 p-2">
-          {chatrooms.map((chatroom) => (
-            <Link
-              key={chatroom.id}
-              href={`/chat/${chatroom.id}`}
-              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
-            >
-              <Avatar className="h-10 w-10 border">
-                <AvatarImage src={chatroom.image || "/placeholder-user.jpg"} />
-                <AvatarFallback>{chatroom.name.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 overflow-hidden">
-                <div className="font-medium truncate">{chatroom.name}</div>
-                <p className="text-muted-foreground truncate">
-                  {chatroom.lastMessage || "No messages yet"}
-                </p>
-              </div>
-              {chatroom.lastMessageTime && (
-                <div className="text-xs text-muted-foreground">
-                  {chatroom.lastMessageTime}
-                </div>
-              )}
-            </Link>
-          ))}
-        </nav>
-      </div> */}
+
       <div className="flex-1 overflow-auto">
         <nav className="space-y-2">
-          {chatrooms.map((chatroom) => (
-            <div
-              key={chatroom._id}
-              onClick={() => onSelectChatroom(chatroom.chatroomId)}
-              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer hover:bg-gray-200 hover:text-black"
-            >
-              {chatroom.type == "PERSONAL" && (
-                <Avatar className="h-10 w-10 border">
-                  <AvatarImage src={chatroom.participants[0].image} />
-                  <AvatarFallback>?</AvatarFallback>
-                </Avatar>
-              )}
-              {chatroom.type == "GROUP" && (
-                <Avatar className="h-10 w-10 border">
-                  <AvatarImage src="/assets/users.svg" />
-                  <AvatarFallback>?</AvatarFallback>
-                </Avatar>
-              )}
+          {chatrooms.map((chatroom, index) => {
+            const filteredParticipants = chatroom.participants.filter(
+              (participant) => participant.participantId !== authenticatedUserId
+            );
 
-              <div className="flex-1 overflow-hidden">
-                {chatroom.type == "PERSONAL" && (
-                  <div className="font-medium truncate">
-                    {chatroom.participants[0].accountname}
-                  </div>
-                )}
+            return (
+              <div
+                key={index}
+                onClick={() => onSelectChatroom(chatroom.chatroomId)}
+                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer hover:bg-gray-200 hover:text-black"
+              >
+                {chatroom.type == "PERSONAL" &&
+                  filteredParticipants.length > 0 && (
+                    <Avatar className="h-10 w-10 border">
+                      <AvatarImage src={filteredParticipants[0]?.image || ""} />
+                      <AvatarFallback>
+                        {filteredParticipants[0]?.accountname?.charAt(0) || "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
+
                 {chatroom.type == "GROUP" && (
-                  <div className="font-medium truncate">{chatroom.name}</div>
+                  <Avatar className="h-10 w-10 border">
+                    <AvatarImage
+                      src={
+                        groupImages[chatroom?.groupImage?.toString()] ||
+                        "/assets/users.svg"
+                      }
+                    />
+                    <AvatarFallback>?</AvatarFallback>
+                  </Avatar>
                 )}
+
+                <div className="flex-1 overflow-hidden">
+                  {chatroom.type == "PERSONAL" &&
+                    filteredParticipants.length > 0 && (
+                      <div className="font-medium truncate">
+                        {filteredParticipants[0]?.accountname || "Unknown User"}
+                      </div>
+                    )}
+                  {chatroom.type == "GROUP" && (
+                    <div className="font-medium truncate">{chatroom.name}</div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </nav>
       </div>
     </>

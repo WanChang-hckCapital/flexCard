@@ -35,6 +35,8 @@ export default async function Page() {
     // filter all the unadded user
     if (allUsers.success) {
       unAddedUser = allUsers.users;
+      // console.log("unAddedUser");
+      // console.log(unAddedUser);
     } else {
       console.error("Failed to fetch users:", allUsers.message);
     }
@@ -100,7 +102,7 @@ export default async function Page() {
               <div className="grid gap-2">
                 {unAddedUser.map((user) => (
                   <FriendItem
-                    key={user._id}
+                    key={user.userId}
                     user={user}
                     senderId={authenticatedUserId}
                   />
