@@ -37,6 +37,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import ParticipantList from "./ParticipantList";
+import Image from "next/image";
 
 interface GroupInfoProps {
   participants: any[];
@@ -252,9 +253,11 @@ export default function GroupInfoSheet({
 
         {groupImagePreview && (
           <div className="flex flex-col items-center mt-4">
-            <img
+            <Image
               src={groupImagePreview}
               alt="Group Preview"
+              width={300}
+              height={300}
               className="w-32 h-32 object-cover rounded-full"
             />
             <div className="flex gap-2 mt-4">

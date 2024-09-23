@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef, Suspense } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   SendIcon,
@@ -31,7 +31,7 @@ import {
 import {
   CheckCheck,
   Check,
-  Image,
+  // Image,
   Plus,
   MapPin,
   CircleUserRound,
@@ -39,6 +39,7 @@ import {
   Menu,
   LocateFixed,
   CircleEllipsis,
+  LucideImage,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -80,6 +81,7 @@ import PersonalInfoSheet from "./PersonalInfoSheet";
 import { useRouter } from "next/navigation";
 import ChatRoomSearchBar from "./ChatRoomSearchBar";
 import FlexCardModal from "./FlexCardModal";
+import Image from "next/image";
 
 interface Chatroom {
   _id: string;
@@ -191,14 +193,6 @@ export default function ChatRoomMainBar({
   ws,
   receiverInfo,
 }: ChatroomMainBarProps) {
-  if (!selectedChatroom) {
-    return (
-      <div className="flex justify-center items-center h-screen text-xl w-full rounded-lg shadow-md p-6 text-center">
-        Select a chatroom to start chatting.
-      </div>
-    );
-  }
-
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);
@@ -306,6 +300,25 @@ export default function ChatRoomMainBar({
     fetchGroupImage();
   }, [selectedChatroomData?.groupImage]);
 
+  const updateReadStatus = useCallback(
+    (messageId: string, userId: string) => {
+      console.log("Updating read status...");
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        const readStatusUpdate = {
+          type: "updateReadStatus",
+          messageId,
+          userId,
+          readAt: new Date().toISOString(),
+        };
+        ws.send(JSON.stringify(readStatusUpdate));
+        console.log("Read status updated:", readStatusUpdate);
+      } else {
+        console.error("WebSocket is not open, cannot update read status.");
+      }
+    },
+    [ws]
+  );
+
   useEffect(() => {
     setCurrentMessages(messages);
 
@@ -319,7 +332,7 @@ export default function ChatRoomMainBar({
         }
       });
     });
-  }, [messages]);
+  }, [messages, authenticatedUserId, updateReadStatus]);
 
   useEffect(() => {
     if (coordinates && locationPreview && mapRef.current) {
@@ -341,7 +354,7 @@ export default function ChatRoomMainBar({
         });
       }
     }
-  }, [coordinates, locationPreview, mapRef.current]);
+  }, [coordinates, locationPreview]);
 
   useEffect(() => {
     currentMessages.forEach((message) => {
@@ -408,7 +421,7 @@ export default function ChatRoomMainBar({
     };
 
     fetchParticipantImages();
-  }, [selectedChatroom]);
+  }, [selectedChatroom, authenticatedUserId]);
 
   useEffect(() => {
     setCurrentMessages(messages);
@@ -429,7 +442,7 @@ export default function ChatRoomMainBar({
     }
   }, [currentMessages]);
 
-  const fetchOlderMessages = async () => {
+  const fetchOlderMessages = useCallback(async () => {
     if (isFetchingOlderMessages || !hasMoreMessages) return;
 
     setIsFetchingOlderMessages(true);
@@ -480,39 +493,37 @@ export default function ChatRoomMainBar({
     } finally {
       setIsFetchingOlderMessages(false);
     }
-  };
+  }, [
+    isFetchingOlderMessages,
+    hasMoreMessages,
+    currentMessages.length,
+    selectedChatroom,
+    authenticatedUserId,
+  ]);
 
-  const handleScroll = () => {
+  const handleScroll = useCallback(() => {
     if (chatContainerRef.current && chatContainerRef.current.scrollTop === 0) {
       fetchOlderMessages();
     }
-  };
+  }, [fetchOlderMessages]);
 
   // Attach and detach the scroll event listener
   useEffect(() => {
-    chatContainerRef.current?.addEventListener("scroll", handleScroll);
-    return () =>
-      chatContainerRef.current?.removeEventListener("scroll", handleScroll);
-  }, [hasMoreMessages, isFetchingOlderMessages]);
+    const containerElement = chatContainerRef.current;
+
+    if (containerElement) {
+      containerElement.addEventListener("scroll", handleScroll);
+    }
+
+    return () => {
+      if (containerElement) {
+        containerElement.removeEventListener("scroll", handleScroll);
+      }
+    };
+  }, [handleScroll]);
 
   const handleDestinationSelect = () => {
     setMapVisible(true);
-  };
-
-  const updateReadStatus = (messageId: string, userId: string) => {
-    console.log("Updating read status...");
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      const readStatusUpdate = {
-        type: "updateReadStatus",
-        messageId,
-        userId,
-        readAt: new Date().toISOString(),
-      };
-      ws.send(JSON.stringify(readStatusUpdate));
-      console.log("Read status updated:", readStatusUpdate);
-    } else {
-      console.error("WebSocket is not open, cannot update read status.");
-    }
   };
 
   const getMutualStatus = async (
@@ -1442,6 +1453,14 @@ export default function ChatRoomMainBar({
     }
   };
 
+  if (!selectedChatroom) {
+    return (
+      <div className="flex justify-center items-center h-screen text-xl w-full rounded-lg shadow-md p-6 text-center">
+        Select a chatroom to start chatting.
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="flex flex-col w-full">
@@ -1475,6 +1494,7 @@ export default function ChatRoomMainBar({
                       searchResults.map((message) => (
                         <div
                           className="flex justify-between"
+                          key={message._id}
                           onClick={() => handleSearchResultClick(message._id)}
                         >
                           <div
@@ -1571,9 +1591,11 @@ export default function ChatRoomMainBar({
                   {message.imageAttach && message.imageSrc && (
                     <>
                       <div className="mb-2">
-                        <img
+                        <Image
                           src={message.imageSrc}
                           alt="Attached"
+                          width={300}
+                          height={300}
                           className="max-h-[300px] max-w-[300px] rounded-md border border-white cursor-pointer"
                           onClick={() => handleImageClick(message.imageSrc)}
                         />
@@ -1604,9 +1626,11 @@ export default function ChatRoomMainBar({
                         </a>
                       </div>
 
-                      <img
+                      <Image
                         src={message.fileSrc}
                         alt={message.fileName}
+                        width={300}
+                        height={300}
                         className="max-h-[150px] max-w-[150px] rounded-md border border-gray-300"
                       />
                     </div>
@@ -1653,9 +1677,11 @@ export default function ChatRoomMainBar({
                             </CardHeader>
                             {message.shopImage && (
                               <CardContent className="p-0">
-                                <img
+                                <Image
                                   src={message.shopImage}
                                   alt={message.shopName || ""}
+                                  width={300}
+                                  height={300}
                                   className="rounded-t-md w-full h-[200px] sm:h-[150px] object-cover"
                                 />
                               </CardContent>
@@ -1696,9 +1722,11 @@ export default function ChatRoomMainBar({
                             </CardHeader>
                             {message.youtubeMetadata.thumbnail && (
                               <CardContent className="p-0">
-                                <img
+                                <Image
                                   src={message.youtubeMetadata.thumbnail}
                                   alt={message.youtubeMetadata.thumbnail || ""}
+                                  width={300}
+                                  height={300}
                                   className="rounded-t-md w-full h-[200px] sm:h-[150px] object-cover"
                                 />
                               </CardContent>
@@ -1734,9 +1762,11 @@ export default function ChatRoomMainBar({
                             </CardHeader>
                             {message.facebookMetadata.thumbnail && (
                               <CardContent className="p-0">
-                                <img
+                                <Image
                                   src={message.facebookMetadata.thumbnail}
                                   alt={message.facebookMetadata.thumbnail || ""}
+                                  width={300}
+                                  height={300}
                                   className="rounded-t-md w-full h-[200px] sm:h-[150px] object-cover"
                                 />
                               </CardContent>
@@ -1926,7 +1956,7 @@ export default function ChatRoomMainBar({
                       className="flex items-center text-2xl p-3"
                       onClick={handlePhotoUploadClick}
                     >
-                      <Image className="mr-2 h-5 w-5" />
+                      <LucideImage className="mr-2 h-5 w-5" />
                       Photo
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -1956,9 +1986,11 @@ export default function ChatRoomMainBar({
               <div className="relative flex-grow">
                 {imagePreview && (
                   <div className="relative max-h-[150px] max-w-[150px] mb-4 self-center">
-                    <img
+                    <Image
                       src={imagePreview}
                       alt="Selected"
+                      width={300}
+                      height={300}
                       className="max-h-[150px] max-w-[150px] border border-gray-300 mr-4 mb-4"
                     />
                     <Button
@@ -2086,9 +2118,11 @@ export default function ChatRoomMainBar({
                         </CardHeader>
                         {shopImage && (
                           <CardContent className="p-0">
-                            <img
+                            <Image
                               src={shopImage}
                               alt={shopName || ""}
+                              width={300}
+                              height={300}
                               className="rounded-t-md w-full h-auto"
                             />
                           </CardContent>
@@ -2124,9 +2158,11 @@ export default function ChatRoomMainBar({
                     >
                       <CardHeader className="p-4">
                         <div className="flex items-center">
-                          <img
+                          <Image
                             src={youtubeMetadata.thumbnail}
                             alt="Thumbnail"
+                            width={300}
+                            height={300}
                             className="h-10 w-10 mr-2"
                           />
                           <CardTitle className="text-lg font-semibold text-blue-600 hover:text-gray-600">
@@ -2156,9 +2192,11 @@ export default function ChatRoomMainBar({
                     >
                       <CardHeader className="p-4">
                         <div className="flex items-center">
-                          <img
+                          <Image
                             src={facebookMetadata.thumbnail}
                             alt="Thumbnail"
+                            width={300}
+                            height={300}
                             className="h-10 w-10 mr-2"
                           />
                           <CardTitle className="text-lg font-semibold text-blue-600 hover:text-gray-600">

@@ -1,6 +1,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import Image from "next/image";
 
 interface GoogleLogoListProps {
   croppedLogos: string[];
@@ -19,10 +20,12 @@ const GoogleLogoList: React.FC<GoogleLogoListProps> = ({
     <div>
       {croppedLogos.map((croppedImage, index) => (
         <div key={index} className="flex flex-col items-center mb-4 relative">
-          <img
+          <Image
             src={croppedImage}
             alt={`Cropped logo ${index}`}
             className="w-auto h-auto mt-2"
+            width={300}
+            height={300}
             style={{
               transform: `rotate(${logoRotations[index]}deg)`,
             }}
