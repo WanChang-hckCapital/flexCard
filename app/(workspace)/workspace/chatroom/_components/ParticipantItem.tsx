@@ -9,6 +9,16 @@ import {
   User,
   UserRoundMinus,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface ParticipantItemProps {
   participant: any;
@@ -42,10 +52,23 @@ const ParticipantItem: React.FC<ParticipantItemProps> = ({
   handleRemoveMember,
 }) => {
   const [isSilenced, setIsSilenced] = useState<boolean>(initialSilencedState);
+  const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState<boolean>(false);
+  const [isDischargeDialogOpen, setIsDischargeDialogOpen] =
+    useState<boolean>(false);
 
   useEffect(() => {
     setIsSilenced(initialSilencedState);
   }, [initialSilencedState]);
+
+  const handleConfirmRemove = () => {
+    handleRemoveMember(participant.participantId);
+    setIsRemoveDialogOpen(false);
+  };
+
+  const handleConfirmDischarge = () => {
+    dischargeAppointAdmin(participant.participantId);
+    setIsDischargeDialogOpen(false);
+  };
 
   return (
     <ul>
@@ -81,12 +104,44 @@ const ParticipantItem: React.FC<ParticipantItemProps> = ({
             {!isSuperAdmin &&
               participant.participantId !== authenticatedUserId &&
               (isCurrentUserSuperAdmin || isCurrentUserAdmin) && (
-                <button
-                  onClick={() => handleRemoveMember(participant.participantId)}
-                  title="Remove Member"
-                >
-                  <UserRoundMinus className="text-red-600 cursor-pointer" />
-                </button>
+                <>
+                  <Dialog
+                    open={isRemoveDialogOpen}
+                    onOpenChange={setIsRemoveDialogOpen}
+                  >
+                    <DialogTrigger asChild>
+                      <button
+                        onClick={() => setIsRemoveDialogOpen(true)}
+                        title="Remove Member"
+                      >
+                        <UserRoundMinus className="text-red-600 cursor-pointer" />
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Remove Participant</DialogTitle>
+                        <DialogDescription>
+                          Are you sure you want to remove{" "}
+                          {participant.accountname} from the chatroom?
+                        </DialogDescription>
+                      </DialogHeader>
+                      <DialogFooter>
+                        <Button
+                          variant="outline"
+                          onClick={() => setIsRemoveDialogOpen(false)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          onClick={handleConfirmRemove}
+                        >
+                          Remove
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </>
               )}
 
             {!isAdmin && !isSuperAdmin && isCurrentUserSuperAdmin && (
@@ -99,14 +154,44 @@ const ParticipantItem: React.FC<ParticipantItemProps> = ({
             )}
 
             {isAdmin && !isSuperAdmin && isCurrentUserSuperAdmin && (
-              <button title="Discharge Admin">
-                <UserRoundX
-                  className="cursor-pointer"
-                  onClick={() =>
-                    dischargeAppointAdmin(participant.participantId)
-                  }
-                />
-              </button>
+              <>
+                <Dialog
+                  open={isDischargeDialogOpen}
+                  onOpenChange={setIsDischargeDialogOpen}
+                >
+                  <DialogTrigger asChild>
+                    <button title="Discharge Admin">
+                      <UserRoundX
+                        className="cursor-pointer"
+                        onClick={() => setIsDischargeDialogOpen(true)}
+                      />
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Discharge Admin</DialogTitle>
+                      <DialogDescription>
+                        Are you sure you want to discharge{" "}
+                        {participant.accountname} from being an admin?
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsDischargeDialogOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={handleConfirmDischarge}
+                      >
+                        Discharge
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </>
             )}
 
             {(isCurrentUserSuperAdmin || isCurrentUserAdmin) &&

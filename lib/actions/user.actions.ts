@@ -3882,6 +3882,8 @@ export async function createGroupChatroom(
 
     const chatroomPlain = groupChatroom.toObject();
 
+    chatroomPlain.chatroomId = groupChatroom._id.toString();
+
     return {
       success: true,
       message: "Successfully create group.",
@@ -4460,7 +4462,18 @@ export async function silentUser(
     }
 
     const isAlreadySilent = chatroomFound.silentUser.some(
-      (silentEntry: any) => silentEntry.userId.toString() === silentUserId
+      (silentEntry: any) => {
+        if (silentEntry.userId.toString() === silentUserId) {
+          if (
+            silentEntry.silentUntil &&
+            new Date(silentEntry.silentUntil).getTime() > Date.now()
+          ) {
+            return true;
+          }
+          return false;
+        }
+        return false;
+      }
     );
 
     if (isAlreadySilent) {
@@ -4522,15 +4535,26 @@ export async function unsilentUser(
       };
     }
 
-    const silentUserIndex = chatroomFound.silentUser.findIndex(
-      (silentEntry: any) => silentEntry.userId.toString() === silentUserId
-    );
+    const silentUserEntries = chatroomFound.silentUser
+      .filter(
+        (silentEntry: any) => silentEntry.userId.toString() === silentUserId
+      )
+      .sort((a: any, b: any) => {
+        const silentUntilA = new Date(a.silentUntil).getTime();
+        const silentUntilB = new Date(b.silentUntil).getTime();
+        return silentUntilB - silentUntilA; // Sort by most recent
+      });
 
-    if (silentUserIndex === -1) {
+    if (silentUserEntries.length === 0) {
       return { success: false, message: "User is not currently silenced" };
     }
 
-    chatroomFound.silentUser.splice(silentUserIndex, 1);
+    const mostRecentSilentEntry = silentUserEntries[0];
+
+    chatroomFound.silentUser = chatroomFound.silentUser.filter(
+      (entry: any) => entry !== mostRecentSilentEntry
+    );
+
     await chatroomFound.save();
 
     return { success: true, message: "User has been unsilenced" };

@@ -1422,8 +1422,6 @@ export default function ChatRoomMainBar({
 
   const handleRemoveMember = async (removeUserId: string) => {
     const chatroomId = selectedChatroomData?.chatroomId || "";
-    console.log("removeUserId");
-    console.log(removeUserId);
     try {
       const response = await removeUser(
         chatroomId,

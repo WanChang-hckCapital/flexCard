@@ -31,12 +31,25 @@ const ParticipantList: React.FC<ParticipantListProps> = ({
   return (
     <ul className="space-y-4">
       {participants.map((participant: any) => {
-        const isSilenced = silentUsers.some(
-          (silentUser) => silentUser.userId === participant.participantId
-        );
-        const silentUntil =
-          silentUsers.find((user) => user.userId === participant.participantId)
-            ?.silentUntil ?? null;
+        const silentEntries = silentUsers
+          .filter(
+            (silentUser) => silentUser.userId === participant.participantId
+          )
+          .filter(
+            (silentUser) =>
+              silentUser.silentUntil === null ||
+              new Date(silentUser.silentUntil) > new Date()
+          );
+
+        const latestSilentUntil = silentEntries.length
+          ? new Date(
+              silentEntries
+                .map((entry) => new Date(entry.silentUntil as string))
+                .sort((a, b) => b.getTime() - a.getTime())[0]
+            )
+          : null;
+
+        const isSilenced = latestSilentUntil !== null;
 
         const isSuperAdmin = superAdmins.includes(participant.participantId);
         const isAdmin = admins.includes(participant.participantId);
@@ -54,7 +67,9 @@ const ParticipantList: React.FC<ParticipantListProps> = ({
             isCurrentUserSuperAdmin={isCurrentUserSuperAdmin}
             isCurrentUserAdmin={isCurrentUserAdmin}
             isSilenced={isSilenced}
-            silentUntil={silentUntil}
+            silentUntil={
+              latestSilentUntil ? latestSilentUntil.toISOString() : null
+            }
             handleAppointAdmin={handleAppointAdmin}
             dischargeAppointAdmin={dischargeAppointAdmin}
             handleSilentClick={handleSilentClick}
