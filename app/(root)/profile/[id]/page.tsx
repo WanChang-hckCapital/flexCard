@@ -28,10 +28,16 @@ async function Page({ params }: { params: { id: string } }) {
 
     profileIdFromParams = params.id;
 
-    await updateProfileViewData({ profileId: profileIdFromParams, authUserId: authActiveProfileId });
+    await updateProfileViewData({
+      profileId: profileIdFromParams,
+      authUserId: authActiveProfileId,
+    });
   } else {
     const geoInfo = await getIPCountryInfo();
-    await updateProfileViewData({ profileId: profileIdFromParams, authUserId: geoInfo.ip });
+    await updateProfileViewData({
+      profileId: profileIdFromParams,
+      authUserId: geoInfo.ip,
+    });
   }
 
   const tempUrl = "https://hckcapital.net";
@@ -52,11 +58,14 @@ async function Page({ params }: { params: { id: string } }) {
     profileImage = profileImage.toObject();
   }
 
-  console.log("authActiveProfileId", authActiveProfileId);
-  console.log("authProfileIdFromParams", profileIdFromParams);
-  console.log("profileInfo onboarded", profileInfo);
+  // console.log("authActiveProfileId", authActiveProfileId);
+  // console.log("authProfileIdFromParams", profileIdFromParams);
+  // console.log("profileInfo onboarded", profileInfo);
 
-  if (authActiveProfileId.toString() === profileIdFromParams.toString() && !profileInfo?.onboarded)
+  if (
+    authActiveProfileId.toString() === profileIdFromParams.toString() &&
+    !profileInfo?.onboarded
+  )
     redirect("/onboarding");
 
   return (
@@ -102,7 +111,8 @@ async function Page({ params }: { params: { id: string } }) {
             <TabsContent
               key={`content-${tab.label}`}
               value={tab.value}
-              className="w-full text-light-1">
+              className="w-full text-light-1"
+            >
               <CardsTab
                 authenticatedProfileId={authActiveProfileId}
                 profileId={profileIdFromParams}

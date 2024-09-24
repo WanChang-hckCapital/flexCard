@@ -117,7 +117,7 @@ const ParticipantItem: React.FC<ParticipantItemProps> = ({
                         <UserRoundMinus className="text-red-600 cursor-pointer" />
                       </button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent className="z-[1100]">
                       <DialogHeader>
                         <DialogTitle>Remove Participant</DialogTitle>
                         <DialogDescription>
@@ -167,7 +167,7 @@ const ParticipantItem: React.FC<ParticipantItemProps> = ({
                       />
                     </button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="z-[1100]">
                     <DialogHeader>
                       <DialogTitle>Discharge Admin</DialogTitle>
                       <DialogDescription>

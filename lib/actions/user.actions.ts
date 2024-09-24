@@ -506,7 +506,7 @@ export async function updateProfileViewData({
       }
     );
 
-    console.log("Profile View Data Updated: " + JSON.stringify(result));
+    // console.log("Profile View Data Updated: " + JSON.stringify(result));
 
     return result;
   } catch (error) {
@@ -647,6 +647,10 @@ export async function checkIfFollowing({
   try {
     await connectToDB();
 
+    // console.log("if following");
+    // console.log(authActiveProfileId);
+    // console.log(accountId);
+
     const authMember = await MemberModel.findOne({
       user: authActiveProfileId,
     });
@@ -654,6 +658,9 @@ export async function checkIfFollowing({
     const targetMember = await MemberModel.findOne({
       user: accountId,
     });
+
+    // console.log("authMember", authMember);
+    // console.log("targetMember", targetMember);
 
     const activeAuthProfile = authMember.profiles[authMember.activeProfile];
 
@@ -2429,6 +2436,9 @@ export async function fetchAllUser(authenticatedUserId: string) {
           member.profiles[member.activeProfile]
         );
 
+        // console.log("active profil;e");
+        // console.log(activeProfile);
+
         let imgUrl = null;
         if (
           activeProfile &&
@@ -2445,6 +2455,7 @@ export async function fetchAllUser(authenticatedUserId: string) {
         return {
           userId: user._id.toString(),
           name: user.name,
+          profileId: activeProfile._id.toString(),
           accountType: activeProfile?.accountType || "PUBLIC",
           image: imgUrl,
         };
@@ -3113,21 +3124,51 @@ export async function getAllFollowers(userId: string) {
   try {
     await connectToDB();
 
-    // console.log("userId :" + userId);
-    const member = await MemberModel.findOne({ user: userId });
+    // console.log("userId :" + userId); // profile id
 
-    if (!member) {
+    const profile = await ProfileModel.findOne({ _id: userId });
+
+    if (!profile) {
       return { success: false, message: "User not found", followers: [] };
     }
 
+    const followerDetails = await Promise.all(
+      profile.followers.map(async (follower: any) => {
+        const followerProfile = await ProfileModel.findOne(
+          { _id: follower.followersId },
+          { accountname: 1, image: 1 }
+        );
+
+        if (!followerProfile) {
+          return {
+            _id: follower.followersId.toString(),
+            name: null,
+            image: null,
+            followedAt: follower.followedAt,
+          };
+        }
+
+        let imgUrl = null;
+        if (followerProfile.image) {
+          const imageDoc = await Image.findOne({
+            _id: followerProfile.image,
+          }).select("binaryCode");
+
+          imgUrl = imageDoc?.binaryCode || null;
+        }
+
+        return {
+          _id: follower.followersId.toString(),
+          name: followerProfile.accountname,
+          image: imgUrl,
+          followedAt: follower.followedAt,
+        };
+      })
+    );
+
     return {
       success: true,
-      followers: member.followers.map((follower: any) => ({
-        _id: follower.followersId._id,
-        name: follower.followersId.name,
-        image: follower.followersId.image,
-        followedAt: follower.followedAt,
-      })),
+      followers: followerDetails,
     };
   } catch (error: any) {
     console.error("Error fetching followers:", error);
@@ -3140,16 +3181,17 @@ export async function getAllFollowing(userId: string) {
   try {
     await connectToDB();
 
-    const member = await MemberModel.findOne({ user: userId });
+    const profile = await ProfileModel.findOne({ _id: userId });
+    // const member = await MemberModel.findOne({ user: userId });
 
-    if (!member) {
+    if (!profile) {
       return { success: false, message: "User not found", following: [] };
     }
 
     const followingWithDetails = await Promise.all(
-      member.following.map(async (following: any) => {
-        const followeingDetails = await MemberModel.findOne({
-          user: following,
+      profile.following.map(async (following: any) => {
+        const followeingDetails = await ProfileModel.findOne({
+          _id: following,
         }).select("accountname user image _id");
 
         const imgUrl = await Image.findOne({
@@ -3302,6 +3344,71 @@ export async function sendFollowRequest(
 }
 
 // check in followRequest Table
+// export async function checkFollowRequestStatus({
+//   senderId,
+//   receiverId,
+// }: {
+//   senderId: string;
+//   receiverId: string;
+// }): Promise<{
+//   success: boolean;
+//   requestSent: boolean;
+//   message?: string;
+// }> {
+//   try {
+//     await connectToDB();
+
+//     console.log("private api ");
+
+//     const memberFound = await MemberModel.findOne({ user: senderId });
+
+//     if (!memberFound)
+//       return {
+//         success: true,
+//         requestSent: false,
+//       };
+
+//     const activeProfileId = memberFound.profiles[memberFound.activeProfile];
+
+//     const profileInfo = await ProfileModel.findOne({ _id: activeProfileId });
+
+//     console.log("profileInfo");
+//     console.log(profileInfo);
+
+//     const followingStatus = profileInfo?.following
+//       ?.map((id: any) => id.toString())
+//       .includes(receiverId.toString());
+
+//     console.log("following status");
+//     console.log(followingStatus);
+//     if (followingStatus) {
+//       return {
+//         success: true,
+//         requestSent: true,
+//       };
+//     }
+
+//     const existingRequest = await FollowRequestModel.findOne({
+//       sender: activeProfileId,
+//       receiver: receiverId,
+//       status: 0, // Pending status
+//     });
+
+//     console.log(existingRequest);
+
+//     return {
+//       success: true,
+//       requestSent: !!existingRequest,
+//     };
+//   } catch (error) {
+//     console.error("Error checking follow request status:", error);
+//     return {
+//       success: false,
+//       requestSent: false,
+//       message: "Error checking follow request status",
+//     };
+//   }
+// }
 export async function checkFollowRequestStatus({
   senderId,
   receiverId,
@@ -3316,8 +3423,40 @@ export async function checkFollowRequestStatus({
   try {
     await connectToDB();
 
+    const memberFound = await MemberModel.findOne({ user: senderId });
+
+    if (!memberFound)
+      return {
+        success: false,
+        requestSent: false,
+        message: "Sender not found",
+      };
+
+    const activeProfileId = memberFound.profiles[memberFound.activeProfile];
+
+    const profileInfo = await ProfileModel.findOne({ _id: activeProfileId });
+
+    if (!profileInfo) {
+      return {
+        success: false,
+        requestSent: false,
+        message: "Profile not found",
+      };
+    }
+
+    // const followingStatus = profileInfo?.following
+    //   ?.map((id: any) => id.toString())
+    //   .includes(receiverId.toString());
+
+    // if (followingStatus) {
+    //   return {
+    //     success: true,
+    //     requestSent: true,
+    //   };
+    // }
+
     const existingRequest = await FollowRequestModel.findOne({
-      sender: senderId,
+      sender: activeProfileId,
       receiver: receiverId,
       status: 0, // Pending status
     });
@@ -3327,6 +3466,59 @@ export async function checkFollowRequestStatus({
       requestSent: !!existingRequest,
     };
   } catch (error) {
+    console.error("Error checking follow request status:", error);
+    return {
+      success: false,
+      requestSent: false,
+      message: "Error checking follow request status",
+    };
+  }
+}
+
+export async function checkFollowStatus({
+  senderId,
+  receiverId,
+}: {
+  senderId: string;
+  receiverId: string;
+}) {
+  try {
+    const memberFound = await MemberModel.findOne({ user: senderId });
+
+    if (!memberFound)
+      return {
+        success: false,
+        requestSent: false,
+        message: "Sender not found",
+      };
+
+    const activeProfileId = memberFound.profiles[memberFound.activeProfile];
+
+    const profileInfo = await ProfileModel.findOne({ _id: activeProfileId });
+
+    if (!profileInfo) {
+      return {
+        success: false,
+        requestSent: false,
+        message: "Profile not found",
+      };
+    }
+
+    const followingStatus = profileInfo?.following
+      ?.map((id: any) => id.toString())
+      .includes(receiverId.toString());
+
+    if (followingStatus) {
+      return {
+        success: true,
+        followStatus: true,
+      };
+    }
+    return {
+      success: true,
+      followStatus: false,
+    };
+  } catch (error: any) {
     console.error("Error checking follow request status:", error);
     return {
       success: false,
@@ -3393,9 +3585,7 @@ export async function getAccountType(authenticatedId: string) {
   try {
     await connectToDB();
 
-    const member = await MemberModel.findOne({ user: authenticatedId }).select(
-      "user accountType"
-    );
+    const member = await MemberModel.findOne({ user: authenticatedId });
 
     if (!member) {
       return {
@@ -3405,10 +3595,16 @@ export async function getAccountType(authenticatedId: string) {
       };
     }
 
+    const activeProfile = member.profiles[member.activeProfile];
+
+    const activeProfileType = await ProfileModel.findOne({
+      _id: activeProfile.toString(),
+    });
+
     return {
       success: true,
       message: "Successfully fetched the account type",
-      accountType: member.accountType,
+      accountType: activeProfileType.accountType,
     };
   } catch (error: any) {
     console.error(`Failed to fetch account type: ${error.message}`);
@@ -3425,10 +3621,22 @@ export async function getFollowRequest(authenticatedId: string) {
   try {
     await connectToDB();
 
+    const memberFound = await MemberModel.findOne({ user: authenticatedId });
+
+    if (!memberFound) {
+      return {
+        success: false,
+        message: "Member is not found",
+        followRequests: [],
+      };
+    }
+
+    const activeProfile = memberFound.profiles[memberFound.activeProfile];
+
     const followRequests = await FollowRequestModel.find({
-      receiver: authenticatedId,
+      receiver: activeProfile,
       status: 0, // pending
-    }).select("sender receiver status createdAt _id");
+    });
 
     if (!followRequests || followRequests.length === 0) {
       return {
@@ -3440,8 +3648,8 @@ export async function getFollowRequest(authenticatedId: string) {
 
     const populatedFollowRequests = await Promise.all(
       followRequests.map(async (request) => {
-        const senderMember = await MemberModel.findOne({
-          user: request.sender,
+        const senderMember = await ProfileModel.findOne({
+          _id: request.sender,
         }).select("accountname image");
 
         const imgUrl = await Image.findOne({
@@ -3501,8 +3709,14 @@ export async function acceptFollowRequest(followRequestId: string) {
       "updatedFollowRequest receiver" + updatedFollowRequest.receiver
     );
 
-    const followFromAuthUser = await MemberModel.findOneAndUpdate(
-      { user: updatedFollowRequest.sender },
+    // const followFromAuthUser = await MemberModel.findOneAndUpdate(
+    //   { user: updatedFollowRequest.sender },
+    //   { $addToSet: { following: updatedFollowRequest.receiver } },
+    //   { new: true }
+    // );
+
+    const followFromAuthUser = await ProfileModel.findOneAndUpdate(
+      { _id: updatedFollowRequest.sender },
       { $addToSet: { following: updatedFollowRequest.receiver } },
       { new: true }
     );
@@ -3514,8 +3728,24 @@ export async function acceptFollowRequest(followRequestId: string) {
       };
     }
 
-    const followingFromOtherUser = await MemberModel.findOneAndUpdate(
-      { user: updatedFollowRequest.receiver },
+    console.log("followFromAuthUser");
+    console.log(followFromAuthUser);
+
+    // const followingFromOtherUser = await MemberModel.findOneAndUpdate(
+    //   { user: updatedFollowRequest.receiver },
+    //   {
+    //     $addToSet: {
+    //       followers: {
+    //         followersId: updatedFollowRequest.sender,
+    //         followedAt: new Date(),
+    //       },
+    //     },
+    //   },
+    //   { new: true }
+    // );
+
+    const followingFromOtherUser = await ProfileModel.findOneAndUpdate(
+      { _id: updatedFollowRequest.receiver },
       {
         $addToSet: {
           followers: {
@@ -3526,6 +3756,9 @@ export async function acceptFollowRequest(followRequestId: string) {
       },
       { new: true }
     );
+
+    console.log("followingFromOtherUser");
+    console.log(followingFromOtherUser);
 
     if (!followingFromOtherUser) {
       return {

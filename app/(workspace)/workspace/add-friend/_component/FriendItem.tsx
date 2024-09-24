@@ -5,9 +5,9 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
-  checkIfFollowing,
-  sendFollowRequest,
+  checkFollowStatus,
   checkFollowRequestStatus,
+  sendFollowRequest,
 } from "@/lib/actions/user.actions";
 
 interface FriendItemProps {
@@ -15,6 +15,7 @@ interface FriendItemProps {
     userId: string;
     name: string;
     image: string | null;
+    profileId: string;
     friendStatus: string;
     accountType: string;
   };
@@ -24,43 +25,42 @@ interface FriendItemProps {
 const FriendItem: React.FC<FriendItemProps> = ({ user, senderId }) => {
   const [statusChecked, setStatusChecked] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
-  const [requestSent, setRequestSent] = useState(false); // New state for tracking follow request status
+  const [requestSent, setRequestSent] = useState(false);
 
   useEffect(() => {
     const checkStatus = async () => {
       try {
-        if (user.accountType === "PUBLIC") {
-          // Check if the current user is following the target user for public accounts
-          const followStatus = await checkIfFollowing({
-            authActiveProfileId: senderId,
-            accountId: user.userId,
-          });
+        const followStatusResponse = await checkFollowStatus({
+          senderId,
+          receiverId: user.profileId,
+        });
 
-          console.log("follow sattus");
-          console.log(followStatus);
+        console.log("followStatusResponse", followStatusResponse);
 
-          if (followStatus.success) {
-            setIsFollowing(followStatus.isFollowing);
+        if (followStatusResponse.success) {
+          if (followStatusResponse.followStatus) {
+            setIsFollowing(true); // Already following
           } else {
-            toast.error(
-              followStatus.message || "Failed to check follow status"
-            );
-          }
-        } else if (user.accountType === "PRIVATE") {
-          // Check if a follow request has been sent for private accounts
-          const followRequestStatus = await checkFollowRequestStatus({
-            senderId,
-            receiverId: user.userId,
-          });
+            const followRequestResponse = await checkFollowRequestStatus({
+              senderId,
+              receiverId: user.profileId,
+            });
 
-          if (followRequestStatus.success) {
-            setRequestSent(followRequestStatus.requestSent);
-          } else {
-            toast.error(
-              followRequestStatus.message ||
-                "Failed to check follow request status"
-            );
+            console.log("followRequestResponse", followRequestResponse);
+
+            if (followRequestResponse.success) {
+              setRequestSent(followRequestResponse.requestSent);
+            } else {
+              toast.error(
+                followRequestResponse.message ||
+                  "Failed to check follow request status"
+              );
+            }
           }
+        } else {
+          toast.error(
+            followStatusResponse.message || "Failed to check follow status"
+          );
         }
       } catch (error) {
         console.error("Error checking status:", error);
@@ -71,7 +71,7 @@ const FriendItem: React.FC<FriendItemProps> = ({ user, senderId }) => {
     };
 
     checkStatus();
-  }, [senderId, user.userId, user.accountType]);
+  }, [senderId, user.profileId]);
 
   const handleFollowRequest = async (senderId: string, receiverId: string) => {
     try {
@@ -112,24 +112,14 @@ const FriendItem: React.FC<FriendItemProps> = ({ user, senderId }) => {
       </Avatar>
       <div className="flex-1 truncate">
         <div className="font-medium">{user.name}</div>
-        {/* <div className="font-medium">{user.accountType}</div>
-        <div className="font-medium">{user.userId}</div> */}
+        <div className="font-medium">{user.accountType}</div>
       </div>
-      {user.accountType === "PRIVATE" ? (
-        requestSent ? (
-          <Button variant="outline" disabled>
-            Follow Request Sent
-          </Button>
-        ) : (
-          <Button
-            variant="outline"
-            onClick={() => handleFollowRequest(senderId, user.userId)}
-          >
-            Follow
-          </Button>
-        )
-      ) : isFollowing ? (
+      {isFollowing ? (
         <Button variant="green">Following</Button>
+      ) : requestSent ? (
+        <Button variant="outline" disabled>
+          Follow Request Sent
+        </Button>
       ) : (
         <Button
           variant="outline"

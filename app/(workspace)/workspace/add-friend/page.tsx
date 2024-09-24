@@ -51,14 +51,14 @@ export default async function Page() {
     if (accountTypeResponse.success) {
       accountType = accountTypeResponse.accountType;
 
-      console.log("accountType:" + accountType);
+      // console.log("accountType:" + accountType);
       if (accountType === "PRIVATE") {
         const followRequestResponse = await getFollowRequest(
           authenticatedUserId
         );
         if (followRequestResponse.success) {
           followRequests = followRequestResponse.followRequests;
-          console.log("followRequests frontend:" + followRequests);
+          // console.log("followRequests frontend:" + followRequests);
         } else {
           console.error(
             "Failed to fetch follow requests:",
