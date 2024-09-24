@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { getCurrentUserAllFriendRequest } from "@/lib/actions/user.actions";
 import { FriendRequest } from "@/types";
 import FriendRequestItem from "./ReceiveRequestItem";
@@ -20,13 +20,21 @@ const FriendRequestList: React.FC<FriendRequestListProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
-  const fetchFriendRequests = async () => {
+  const fetchFriendRequests = useCallback(async () => {
     try {
       const response = await getCurrentUserAllFriendRequest(
         authenticatedUserId
       );
-      if (response.success && response.length) {
-        setFriendRequests(response.friendRequests);
+      if (response.success && response.friendRequests) {
+        // setFriendRequests(response.friendRequests ?? []);
+        const validRequests = response.friendRequests.map((request: any) => ({
+          ...request,
+          senderName: request.sender?.name || "Unknown",
+          sender: request.sender || {},
+          receiver: request.receiver || {},
+          status: request.status || 0,
+        }));
+        setFriendRequests(validRequests);
       } else {
         setError(response.message || "Failed to fetch friend requests");
       }
@@ -35,11 +43,11 @@ const FriendRequestList: React.FC<FriendRequestListProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [authenticatedUserId]);
 
   useEffect(() => {
     fetchFriendRequests();
-  }, [authenticatedUserId]);
+  }, [fetchFriendRequests]);
 
   const handleUpdate = (msg: string) => {
     setMessage(msg);
@@ -74,7 +82,10 @@ const FriendRequestList: React.FC<FriendRequestListProps> = ({
           <p>No friend requests found.</p>
         ) : (
           filteredRequests.map((request) => (
-            <div className="text-sm font-medium text-muted-foreground">
+            <div
+              className="text-sm font-medium text-muted-foreground"
+              key={request._id}
+            >
               <FriendRequestItem
                 key={request._id}
                 friendRequest={request}

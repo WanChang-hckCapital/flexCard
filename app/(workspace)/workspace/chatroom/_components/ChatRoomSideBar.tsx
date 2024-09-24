@@ -151,6 +151,9 @@ export default function ChatRoomSideBar({
         selectedParticipants,
         groupChatName
       );
+
+      console.log("side bar function ");
+      console.log(newGroupChatroom);
       if (newGroupChatroom.success) {
         toast.success(newGroupChatroom.message);
         console.log(newGroupChatroom.chatroom._id);
@@ -343,7 +346,7 @@ export default function ChatRoomSideBar({
       <div className="flex-1 overflow-auto">
         <nav className="space-y-2">
           {chatrooms.map((chatroom, index) => {
-            const filteredParticipants = chatroom.participants.filter(
+            const filteredParticipants = chatroom?.participants.filter(
               (participant) => participant.participantId !== authenticatedUserId
             );
 

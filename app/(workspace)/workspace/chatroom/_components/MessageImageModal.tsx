@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 
 interface ImageModalProps {
   isOpen: boolean;
@@ -16,9 +17,11 @@ const ImageModal: React.FC<ImageModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
       <div className="relative">
-        <img
+        <Image
           src={imageSrc}
           alt="Full View"
+          width={300}
+          height={300}
           className="max-h-[90vh] max-w-[90vw]"
         />
         <button

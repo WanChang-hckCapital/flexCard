@@ -96,10 +96,25 @@ export default function ChatRoomComponent({
 
   const [allChatrooms, setAllChatrooms] = useState<Chatroom[]>(chatrooms);
 
-  const addNewChatroom = (newChatroom: Chatroom) => {
-    console.log("chatrrom added");
-    console.log(newChatroom);
+  const addNewChatroom = (newChatroom: any) => {
+    console.log("Chatroom added");
+    console.log("Original Chatrooms:", allChatrooms);
+    console.log("New Chatroom:", newChatroom);
     setAllChatrooms((prevChatrooms) => [...prevChatrooms, newChatroom]);
+
+    setAllChatrooms((prevChatrooms) => {
+      const existingIndex = prevChatrooms.findIndex(
+        (chatroom) => chatroom.chatroomId === newChatroom.chatroomId
+      );
+
+      if (existingIndex !== -1) {
+        const updatedChatrooms = [...prevChatrooms];
+        updatedChatrooms[existingIndex] = newChatroom;
+        return updatedChatrooms;
+      } else {
+        return [...prevChatrooms, newChatroom];
+      }
+    });
     setSelectedChatroom(newChatroom.chatroomId);
     setSelectedChatroomData(newChatroom);
   };

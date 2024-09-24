@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   checkIfFollowing,
   sendFollowRequest,
-  checkFollowRequestStatus, // Import the new function for checking follow request status
+  checkFollowRequestStatus,
 } from "@/lib/actions/user.actions";
 
 interface FriendItemProps {
@@ -112,8 +112,8 @@ const FriendItem: React.FC<FriendItemProps> = ({ user, senderId }) => {
       </Avatar>
       <div className="flex-1 truncate">
         <div className="font-medium">{user.name}</div>
-        <div className="font-medium">{user.accountType}</div>
-        <div className="font-medium">{user.userId}</div>
+        {/* <div className="font-medium">{user.accountType}</div>
+        <div className="font-medium">{user.userId}</div> */}
       </div>
       {user.accountType === "PRIVATE" ? (
         requestSent ? (
@@ -129,7 +129,7 @@ const FriendItem: React.FC<FriendItemProps> = ({ user, senderId }) => {
           </Button>
         )
       ) : isFollowing ? (
-        <Button variant="destructive">Following</Button>
+        <Button variant="green">Following</Button>
       ) : (
         <Button
           variant="outline"
