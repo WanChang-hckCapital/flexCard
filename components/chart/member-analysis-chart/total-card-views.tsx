@@ -32,7 +32,7 @@ export function TotalViewCardsByCardIdChart({ cardId, startDate, endDate }: Tota
         }
 
         fetchData();
-    }, [cardId]);
+    }, [cardId, startDate, endDate]);
 
     if(chartData.length === 0) {
         return (

@@ -2,6 +2,7 @@
 
 import { Badge } from '@/components/ui/badge';
 import { ColumnDef } from '@tanstack/react-table';
+import Image from 'next/image';
 
 export interface MembersListType {
     _id: string;
@@ -26,7 +27,7 @@ export const columns: ColumnDef<MembersListType>[] = [
             if (image && accountname) {
                 return (
                     <div className="flex gap-2">
-                        <img src={image} alt="Customer" className="w-10 h-10 rounded-full self-center" />
+                        <Image src={image} alt="Customer" className="w-10 h-10 rounded-full self-center" />
                         <div className="text-center w-full">
                             <span>{accountname}</span>
                         </div>

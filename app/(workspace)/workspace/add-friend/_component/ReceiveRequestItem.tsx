@@ -35,19 +35,19 @@ const FriendRequestItem: React.FC<FriendRequestItemProps> = ({
   const [open, setOpen] = useState(false);
 
   const handleAccept = async () => {
-    const response = await acceptFriendRequest(
-      authenticatedId,
-      friendRequest.sender,
-      friendRequest._id
-    );
-    if (response.success) {
-      // refresh the page
-      toast.success(response.message);
-      // onUpdate(response.message);
-    } else {
-      toast.error(response.message);
-      console.error(response.message);
-    }
+    // const response = await acceptFriendRequest(
+    //   authenticatedId,
+    //   friendRequest.sender,
+    //   friendRequest._id
+    // );
+    // if (response.success) {
+    //   // refresh the page
+    //   toast.success(response.message);
+    //   // onUpdate(response.message);
+    // } else {
+    //   toast.error(response.message);
+    //   console.error(response.message);
+    // }
   };
 
   const handleDecline = async () => {

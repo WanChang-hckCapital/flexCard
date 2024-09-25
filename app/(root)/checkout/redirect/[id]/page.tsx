@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/utils/authOptions";
 import { fetchTransactionStatusFromSubsciptionId } from "@/lib/actions/admin.actions";
 import Link from "next/link";
+import Image from "next/image";
 
 type Props = {
   params: { id: string };
@@ -25,7 +26,7 @@ const RedirectPage = async ({ params, searchParams }: Props) => {
       {paymentStatus.success === true ? (
         <div className="p-8 rounded-lg shadow-md text-center max-w-md w-full">
           <div className="flex justify-center mb-4">
-            <img src="/payment-success.png" alt="Success" className="h-48 w-48" />
+            <Image src="/payment-success.png" alt="Success" className="h-48 w-48" />
           </div>
           <h2 className="text-2xl font-bold mb-2">
             {paymentStatus.status === true ? 'Thank you for subscribing!' : 'Payment Failed'}
@@ -45,7 +46,7 @@ const RedirectPage = async ({ params, searchParams }: Props) => {
       ) : (
         <div className="p-8 rounded-lg shadow-md text-center max-w-md w-full">
           <div className="flex justify-center mb-4">
-            <img src="/payment-failed.png" alt="Failed" className="h-48 w-48" />
+            <Image src="/payment-failed.png" alt="Failed" className="h-48 w-48" />
           </div>
           <p className="text-gray-600 mb-4">
             {paymentStatus.message}

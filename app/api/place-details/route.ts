@@ -40,3 +40,36 @@
 //     );
 //   }
 // }
+
+// just a dummy function to simulate async operation
+import { NextRequest, NextResponse } from "next/server";
+
+// Force dynamic rendering for this route
+export const dynamic = "force-dynamic";
+
+export async function GET(request: NextRequest) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const queryParam = searchParams.get("param");
+
+        if (!queryParam) {
+            return NextResponse.json(
+                { success: false, message: "Missing required query parameter 'param'" },
+                { status: 400 }
+            );
+        }
+
+        const data = dummyOperation(queryParam);
+
+        return NextResponse.json({ success: true, data });
+    } catch (error: any) {
+        return NextResponse.json(
+            { success: false, message: error.message || "An error occurred" },
+            { status: 500 }
+        );
+    }
+}
+
+function dummyOperation(param: string) {
+    return { message: `You passed: ${param}` };
+}

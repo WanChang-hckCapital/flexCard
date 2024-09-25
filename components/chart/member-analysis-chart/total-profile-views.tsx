@@ -30,7 +30,7 @@ export function TotalViewProfileByDate({ profileId, startDate, endDate }: TotalV
         }
 
         fetchData();
-    }, [profileId]);
+    }, [profileId, startDate, endDate]);
 
     if(chartData.length === 0) {
         return (

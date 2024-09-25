@@ -183,7 +183,7 @@ function ProfileHeader({
   ): Promise<{ success: boolean; message: string }> => {
     try {
       const followerStatus = await checkIfFollowing({
-        authUserId,
+        authActiveProfileId: authUserId,
         accountId: removeFollowingId,
       });
 
@@ -225,7 +225,7 @@ function ProfileHeader({
 
   const handleUnfollowConfirm = async () => {
     if (selectedUser) {
-      await removeFollowingHandler(authUserId, selectedUser);
+      await removeFollowingHandler(authActiveProfileId, selectedUser);
     }
     setShowAlertDialog(false);
     setSelectedUser(null);
@@ -361,7 +361,7 @@ function ProfileHeader({
                       variant="destructive"
                       className="ml-auto"
                       onClick={() =>
-                        removeFollowerHandler(authUserId, user.userId)
+                        removeFollowerHandler(authActiveProfileId, user.userId)
                       }
                     >
                       {followerButtonText}
@@ -370,7 +370,7 @@ function ProfileHeader({
                 </div>
               ))
             ) : (
-              <p>You don't have any followers yet.</p>
+              <p>You don&apos;t have any followers yet.</p>
             )}
           </div>
           <DialogClose asChild>

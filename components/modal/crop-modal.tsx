@@ -193,13 +193,16 @@ const CropModal: React.FC<CropModalProps> = ({ updateImage, onExtractedInfo, clo
                                 <span className="sr-only">Close menu</span>
                                 <X />
                             </button>
-                            <ImageCropper
+                            {/* <ImageCropper
                                 updateImage={updateImage}
                                 handleOCRText={handleOCRText}
                                 setImageSrc={setImageSrc}
                                 closeModal={closeModal}
                                 onImageUpload={handleImageUpload}
-                            />
+                                handleImageAnalyze={handleImageAnalyze}
+                                handleCropEdgeImg={handleCropEdgeImg}
+                                handleChatGpt={handleChatGpt}
+                            /> */}
                         </div>
                     </div>
                 </div>

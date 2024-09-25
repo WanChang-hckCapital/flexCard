@@ -29,7 +29,7 @@ export function TransactionAnalysisByDate({ profileId, startDate, endDate }: Tra
         }
 
         fetchData();
-    }, [profileId]);
+    }, [profileId, startDate, endDate]);
 
     if (chartData.length === 0) {
         return (

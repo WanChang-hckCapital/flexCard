@@ -172,16 +172,26 @@ const MemberProfile = ({ profile, btnTitle }: Props) => {
       };
     }
 
-  }, [isFormDirty]);
+  }, [isFormDirty, pathname]);
 
+  // useEffect(() => {
+  //   const isDirty = Object.keys(defaultValues).some(
+  //     (key) =>
+  //       form.getValues(key as keyof typeof defaultValues) !== defaultValues[key as keyof typeof defaultValues]
+  //   );
+  //   setIsFormDirty(isDirty);
+  // }, [form.watch(), defaultValues]);
 
   useEffect(() => {
+    const watchedValues = form.watch();
+  
     const isDirty = Object.keys(defaultValues).some(
       (key) =>
-        form.getValues(key as keyof typeof defaultValues) !== defaultValues[key as keyof typeof defaultValues]
+        watchedValues[key as keyof typeof defaultValues] !== defaultValues[key as keyof typeof defaultValues]
     );
     setIsFormDirty(isDirty);
-  }, [form.watch()]);
+  }, [defaultValues, form]);
+  
 
   return (
     <Form {...form}>

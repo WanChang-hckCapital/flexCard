@@ -2,14 +2,14 @@
 
 import React, { useEffect, useState } from 'react';
 import {  Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Member } from '@/types';
+import { MemberType } from '@/types';
 
 
 type MembersCountryChartProps = {
-    members: Member[];
+    members: MemberType[];
 }
 
-async function getMembersCountry(members: Member[]) {
+async function getMembersCountry(members: MemberType[]) {
     try {
         const countryCount: any = {};
 
@@ -17,7 +17,7 @@ async function getMembersCountry(members: Member[]) {
             return [];
         }
 
-        members.forEach((member: Member) => {
+        members.forEach((member: MemberType) => {
             const country = member.country || 'Unknown';
             countryCount[country] = (countryCount[country] || 0) + 1;
         });

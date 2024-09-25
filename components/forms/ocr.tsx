@@ -7,6 +7,7 @@ import ReactCrop, {
   makeAspectCrop,
 } from "react-image-crop";
 import { ClipLoader } from "react-spinners";
+import NextImage from "next/image";
 // import ImageCropper from "../image-cropper";
 
 const ASPECT_RATIO = 3 / 4;
@@ -127,6 +128,15 @@ const OCRForm: React.FC<ImageCropperProps> = ({
 
     // Ensure crop is defined before calling centerCrop
     if (crop) {
+      const crop = makeAspectCrop(
+        {
+          unit: "%",
+          width: cropWidthInPercent,
+        },
+        ASPECT_RATIO,
+        width,
+        height
+      );
       const centeredCrop: any = centerCrop(crop, width, height);
       setCrop(centeredCrop);
     }
@@ -198,100 +208,85 @@ const OCRForm: React.FC<ImageCropperProps> = ({
   };
 
   const handleCropAndOCR = async (onImageUpload: (url: string) => void) => {
-    console.log("1");
-    // if (loading) return;
-
     if (imgRef.current && previewCanvasRef.current) {
-      console.log("2");
       setLoading(true);
-      setCanvasPreview(
-        imgRef.current,
-        previewCanvasRef.current,
-        convertToPixelCrop(crop, imgRef.current.width, imgRef.current.height)
-      );
-
-      previewCanvasRef.current.toBlob(async (blob) => {
-        console.log("3");
-        if (blob) {
-          console.log("4");
-          const croppedFile = new File([blob], "cropped_image.png", {
-            type: "image/png",
-          });
-
-          const { width, height } = await getImageDimensions(croppedFile);
-          console.log(`Cropped image dimensions: ${width} x ${height}`);
-
-          const formData = new FormData();
-          formData.append("file", croppedFile);
-
-          const uploadResponse = await fetch("/api/uploadImage", {
-            method: "POST",
-            body: formData,
-          });
-
-          const uploadData = await uploadResponse.json();
-
-          if (uploadResponse.ok) {
-            console.log("5");
-            const uploadedImageUrl = `/api/uploadImage/${uploadData.fileId}`;
-            const uploadImageUrlWithHttp = `${process.env.NEXT_PUBLIC_BASE_URL}${uploadedImageUrl}`;
-            updateImage(uploadImageUrlWithHttp);
-            onImageUpload(uploadImageUrlWithHttp);
-
-            const ocrFormData = new FormData();
-            ocrFormData.append("file", croppedFile); // Use the cropped file for OCR
-
-            const ocrResponse = await fetch("/api/ocr", {
-              method: "POST",
-              body: ocrFormData,
+  
+      const tempCrop =
+        crop && crop.unit === "%"
+          ? convertToPixelCrop(crop, imgRef.current.width, imgRef.current.height)
+          : crop;
+  
+      if (tempCrop) {
+        setCanvasPreview(
+          imgRef.current,
+          previewCanvasRef.current,
+          tempCrop
+        );
+  
+        previewCanvasRef.current.toBlob(async (blob) => {
+          if (blob) {
+            const croppedFile = new File([blob], "cropped_image.png", {
+              type: "image/png",
             });
-
-            const ocrData = await ocrResponse.json();
-
-            if (ocrResponse.ok) {
-              handleOCRText(
-                ocrData.ocrData,
-                originalImageWidth,
-                uploadImageUrlWithHttp
+  
+            const { width, height } = await getImageDimensions(croppedFile);
+            console.log(`Cropped image dimensions: ${width} x ${height}`);
+  
+            const formData = new FormData();
+            formData.append("file", croppedFile);
+  
+            const uploadResponse = await fetch("/api/uploadImage", {
+              method: "POST",
+              body: formData,
+            });
+  
+            const uploadData = await uploadResponse.json();
+  
+            if (uploadResponse.ok) {
+              const uploadedImageUrl = `/api/uploadImage/${uploadData.fileId}`;
+              const uploadImageUrlWithHttp = `${process.env.NEXT_PUBLIC_BASE_URL}${uploadedImageUrl}`;
+              updateImage(uploadImageUrlWithHttp);
+              onImageUpload(uploadImageUrlWithHttp);
+  
+              const ocrFormData = new FormData();
+              ocrFormData.append("file", croppedFile);
+  
+              const ocrResponse = await fetch("/api/ocr", {
+                method: "POST",
+                body: ocrFormData,
+              });
+  
+              const ocrData = await ocrResponse.json();
+  
+              if (ocrResponse.ok) {
+                handleOCRText(
+                  ocrData.ocrData,
+                  originalImageWidth,
+                  uploadImageUrlWithHttp
+                );
+              } else {
+                setError(`OCR failed: ${ocrData.message}`);
+              }
+  
+              const googleApiLabels = await handleImageAnalyze(
+                croppedFile,
+                originalImageWidth
               );
+              console.log("Google API return:", googleApiLabels);
+  
+              const chatgptRes = await handleChatGpt(croppedFile);
+  
+              console.log("chatgptRes", chatgptRes);
+  
+              closeModal();
             } else {
-              setError(`OCR failed: ${ocrData.message}`);
+              setError(`Upload failed: ${uploadData.message}`);
             }
-
-            // const base64Image = await fileToBase64(file);
-
-            // const response = await fetch("/api/gptapi", {
-            //     method: "POST",
-            //     headers: {
-            //       "Content-Type": "application/json",
-            //     },
-            //     body: JSON.stringify({ base64Image }),
-            //   });
-
-            // const data = await response.json();
-
-            // console.log("gptres" + data)
-
-            const googleApiLabels = await handleImageAnalyze(
-              croppedFile,
-              originalImageWidth
-            );
-            console.log("Google API return:", googleApiLabels);
-
-            const chatgptRes = await handleChatGpt(croppedFile);
-
-            console.log("chatgptRes" + chatgptRes);
-
-            closeModal();
-          } else {
-            setError(`Upload failed: ${uploadData.message}`);
           }
-        }
-        setLoading(false);
-      }, "image/png");
+          setLoading(false);
+        }, "image/png");
+      }
     }
-
-    console.log("end");
   };
 
   return (
@@ -313,7 +308,7 @@ const OCRForm: React.FC<ImageCropperProps> = ({
       {imgSrc && (
         <div>
           <div>
-            <img
+            <NextImage
               src={imgSrc}
               alt="Selected"
               ref={imgRef}

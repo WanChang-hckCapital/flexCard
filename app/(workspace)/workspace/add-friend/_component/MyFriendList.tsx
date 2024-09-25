@@ -16,7 +16,7 @@ const MyFriendList: React.FC<MyFriendListProps> = ({
 }) => {
   return (
     <div className="grid gap-2">
-      {userFriends.length === 0 ? (
+      {/* {userFriends.length === 0 ? (
         <p>No friend found.</p>
       ) : (
         userFriends.map((friend) => {
@@ -29,7 +29,7 @@ const MyFriendList: React.FC<MyFriendListProps> = ({
             />
           );
         })
-      )}
+      )} */}
     </div>
   );
 };

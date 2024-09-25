@@ -34,6 +34,7 @@ import GoogleLogoList from "@/components/forms/googlelogolist";
 import GptData from "@/components/forms/gpt-data";
 import { X } from "lucide-react";
 import { generateCustomID } from "@/lib/utils";
+import NextImage from "next/image";
 
 type Props = {};
 
@@ -552,7 +553,7 @@ function ComponentsTab(props: Props) {
                     <CardTitle>Uploaded Image :</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <img
+                    <NextImage
                       src={uploadedImageUrl}
                       alt="Uploaded"
                       className="max-w-full h-auto"
@@ -603,7 +604,7 @@ function ComponentsTab(props: Props) {
                                       key={index}
                                       className="flex flex-col items-center mb-4 relative"
                                     >
-                                      <img
+                                      <NextImage
                                         src={croppedImage}
                                         alt={`Manually cropped logo ${index}`}
                                         className="w-auto h-auto mt-2"

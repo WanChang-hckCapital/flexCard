@@ -145,7 +145,7 @@ const NewMemberProfile = ({ profile, btnTitle }: Props) => {
       };
     }
 
-  }, [isFormDirty]);
+  }, [isFormDirty, pathname]);
 
   return (
     <Form {...form}>

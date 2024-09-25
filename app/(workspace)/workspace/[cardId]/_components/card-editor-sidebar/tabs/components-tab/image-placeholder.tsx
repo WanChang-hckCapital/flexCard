@@ -15,10 +15,12 @@ function ImagePlaceholder(props: Props) {
       onDragStart={(e) => handleDragStart(e, 'image')}
       className="h-14 w-14 bg-muted rounded-lg flex items-center justify-center"
     >
-      <Image 
+      {/* eslint-disable-next-line jsx-a11y/alt-text */}
+      <Image
         size={40}
         className="text-muted-foreground"
       />
+
     </div>
   )
 }

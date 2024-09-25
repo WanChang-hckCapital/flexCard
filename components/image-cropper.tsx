@@ -9,6 +9,7 @@ import ReactCrop, {
 } from "react-image-crop";
 import { ClipLoader } from "react-spinners";
 import { Button } from "./ui/button";
+import NextImage from "next/image";
 
 const ASPECT_RATIO = 1;
 const MIN_DIMENSION = 150;
@@ -373,15 +374,15 @@ const ImageCropper: React.FC<ImageCropperProps> = ({
 
     // Ensure crop is defined before calling centerCrop
     if (crop) {
-      // const crop = makeAspectCrop(
-      //   {
-      //     unit: "%",
-      //     width: cropWidthInPercent,
-      //   },
-      //   ASPECT_RATIO,
-      //   width,
-      //   height
-      // );
+      const crop = makeAspectCrop(
+        {
+          unit: "%",
+          width: cropWidthInPercent,
+        },
+        ASPECT_RATIO,
+        width,
+        height
+      );
       const centeredCrop: any = centerCrop(crop, width, height);
       setCrop(centeredCrop);
     }
@@ -735,7 +736,7 @@ const ImageCropper: React.FC<ImageCropperProps> = ({
               keepSelection
               minWidth={MIN_DIMENSION}
             >
-              <img
+              <NextImage
                 ref={imgRef}
                 src={imgSrc}
                 alt="Upload"

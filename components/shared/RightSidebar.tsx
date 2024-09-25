@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { fetchAllMembers } from "@/lib/actions/user.actions";
-import { Member } from "@/types";
+import { MemberType } from "@/types";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
 
 function RightSidebar() {
-  const [members, setMembers] = useState<Member[]>([]);
+  const [members, setMembers] = useState<MemberType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -63,7 +63,7 @@ function RightSidebar() {
                     </AvatarFallback> */}
                   </Avatar>
                   <div>
-                    <p>{member.accountname || "Anonymous"}</p>
+                    {/* <p>{member.accountname || "Anonymous"}</p> */}
                     {/* <p>UserID: {member.user || "No User ID found"}</p>s */}
                     {/* <p>Email: {member.email || "No email provided"}</p>
                     <p>Country: {member.country || "No country provided"}</p> */}

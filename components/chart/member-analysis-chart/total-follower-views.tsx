@@ -30,7 +30,7 @@ export function TotalFollowersByDate({ profileId, startDate, endDate }: TotalFol
         }
 
         fetchData();
-    }, [profileId]);
+    }, [profileId, startDate, endDate]);
 
     if(chartData.length === 0) {
         return (

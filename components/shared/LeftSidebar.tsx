@@ -8,7 +8,7 @@ import { sidebarLinks } from "@/constants";
 import { Session } from "next-auth";
 import SignOutButton from "../buttons/signout-button";
 import SignInButton from "../buttons/signin-button";
-import { Member, UserImage } from "@/types";
+import { MemberType, UserImage } from "@/types";
 
 interface LeftSidebarProps {
   session: Session | null;

@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Input } from "./ui/input";
 
-
 interface Props {
   routeType: string;
 }
@@ -25,7 +24,7 @@ function Searchbar({ routeType }: Props) {
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [search, routeType]);
+  }, [search, routeType, router]);
 
   return (
     <div className='searchbar'>
