@@ -29,6 +29,8 @@ import FeedbackModel from "../models/feedback";
 import CommentModel from "../models/comment";
 import { generateCustomID } from "../utils";
 import { Comment, MemberType } from "@/types";
+import BlogModel from "../models/blog";
+const slugify = require("slugify");
 
 export async function authenticateUser(email: string, password: string) {
   try {
@@ -5083,6 +5085,236 @@ export async function removeUser(
     return {
       success: false,
       message: "An error occurred while removing the user",
+    };
+  }
+}
+
+export async function isProfileAdmin(profileId: string) {
+  try {
+    await connectToDB();
+
+    const currentProfile = await ProfileModel.findOne({ _id: profileId });
+    if (!currentProfile) {
+      return {
+        success: false,
+        message: "Authenticated user profile not found",
+      };
+    }
+
+    if (currentProfile.usertype == "FLEXADMIN") {
+      return {
+        success: true,
+        message: "User is an admin",
+      };
+    } else {
+      return {
+        success: false,
+        message: "User is not an admin",
+      };
+    }
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "Error:" + error,
+    };
+  }
+}
+
+export async function getProfileImage(profileId: string) {
+  try {
+    await connectToDB();
+
+    const currentProfile = await ProfileModel.findOne({ _id: profileId });
+    if (!currentProfile) {
+      return {
+        success: false,
+        message: "Authenticated user profile not found",
+      };
+    }
+
+    if (!currentProfile.image) {
+      return {
+        success: true,
+        message: "User doesnot have image",
+      };
+    }
+
+    const userImage = await Image.findOne({ _id: currentProfile.image }).select(
+      "binaryCode"
+    );
+
+    if (!userImage) {
+      return {
+        success: false,
+        message: "Image not found in the database",
+      };
+    }
+
+    return {
+      success: true,
+      imageUrl: userImage.binaryCode,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "Error:" + error,
+    };
+  }
+}
+
+export async function createNewBlog(
+  authenticatedUserId: string,
+  title: string,
+  content: string,
+  imageId: string
+) {
+  try {
+    await connectToDB();
+
+    const currentProfile = await ProfileModel.findOne({
+      _id: authenticatedUserId,
+    });
+    if (!currentProfile) {
+      return {
+        success: false,
+        message: "Authenticated user profile not found",
+      };
+    }
+
+    if (currentProfile.usertype !== "FLEXADMIN") {
+      return {
+        success: false,
+        message: "User is not an admin and not allow to submit blog.",
+      };
+    }
+
+    const slug = slugify(title, { lower: true, strict: true });
+
+    console.log("slugify");
+    console.log(slug);
+
+    const blogResponse = await BlogModel.create({
+      title: title,
+      excerpt: content,
+      slug: slug,
+      image: imageId,
+      author: authenticatedUserId,
+    });
+
+    return {
+      success: true,
+      message: "Blog created successfully",
+      // blog: blogResponse,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Error while creating blog: ${error.message}`,
+    };
+  }
+}
+
+export async function loadBlogs() {
+  try {
+    await connectToDB();
+
+    const blogResponse = await BlogModel.find({});
+
+    return {
+      success: true,
+      message: "Blogs loaded successfully",
+      blogs: blogResponse,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "Failed to load blogs",
+      error: error.message,
+    };
+  }
+}
+
+export async function getCreatorInfo(profileId: string) {
+  try {
+    await connectToDB();
+
+    const currentProfile = await ProfileModel.findOne({
+      _id: profileId,
+    }).select("image accountname");
+    if (!currentProfile) {
+      return {
+        success: false,
+        message: "Authenticated user profile not found",
+      };
+    }
+
+    const userImage = await Image.findOne({ _id: currentProfile.image }).select(
+      "binaryCode"
+    );
+
+    return {
+      success: true,
+      imageUrl: userImage.binaryCode,
+      accountname: currentProfile.accountname,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "Error:" + error,
+    };
+  }
+}
+
+export async function getBlogBySlug(slug: string) {
+  try {
+    await connectToDB();
+
+    const blogResponse = await BlogModel.findOne({ slug: slug });
+
+    if (!blogResponse) {
+      return {
+        success: false,
+        message: "Blogs not found",
+        blogs: [],
+      };
+    }
+
+    return {
+      success: true,
+      message: "Blogs found!!",
+      blogs: blogResponse,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "Error finding blog.",
+      blogs: [],
+    };
+  }
+}
+
+export async function getBlogById(blogId: string) {
+  try {
+    const blogResponse = await BlogModel.findOne({ _id: blogId });
+
+    if (!blogResponse) {
+      return {
+        success: false,
+        message: "Blogs not found",
+        blogs: [],
+      };
+    }
+
+    return {
+      success: true,
+      message: "Blogs found!!",
+      blogs: blogResponse,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "Error finding blog.",
+      blogs: [],
     };
   }
 }
