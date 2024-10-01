@@ -5188,10 +5188,16 @@ export async function createNewBlog(
       };
     }
 
-    const slug = slugify(title, { lower: true, strict: true });
+    const existingBlog = await BlogModel.findOne({ title });
+    if (existingBlog) {
+      return {
+        success: false,
+        message:
+          "A blog with this title already exists. Please choose another title.",
+      };
+    }
 
-    console.log("slugify");
-    console.log(slug);
+    const slug = slugify(title, { lower: true, strict: true });
 
     const blogResponse = await BlogModel.create({
       title: title,
@@ -5315,6 +5321,144 @@ export async function getBlogById(blogId: string) {
       success: false,
       message: "Error finding blog.",
       blogs: [],
+    };
+  }
+}
+
+export async function updateBlog(
+  blogId: string,
+  authActiveProfileId: string,
+  updatedData: any
+) {
+  try {
+    await connectToDB();
+
+    const blogResponse = await BlogModel.findById(blogId);
+
+    if (!blogResponse) {
+      return {
+        success: false,
+        message: "Blog not found",
+        blogs: [],
+      };
+    }
+
+    if (blogResponse.author.toString() !== authActiveProfileId) {
+      return {
+        success: false,
+        message: "Unauthorized: You do not have permission to update this blog",
+        blogs: [],
+      };
+    }
+
+    // const updatedBlog = await BlogModel.findByIdAndUpdate(blogId, updatedData, {
+    //   new: true,
+    // });
+
+    if (updatedData.title) {
+      blogResponse.title = updatedData.title;
+      blogResponse.slug = slugify(updatedData.title, {
+        lower: true,
+        strict: true,
+      });
+    }
+    if (updatedData.content) {
+      blogResponse.excerpt = updatedData.content;
+    }
+    if (updatedData.imageId) {
+      blogResponse.image = updatedData.imageId;
+    }
+
+    await blogResponse.save();
+
+    return {
+      success: true,
+      message: "Blogs found!!",
+      blogs: blogResponse,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "Error Updating blog.",
+      blogs: [],
+    };
+  }
+}
+
+export async function isFlexAdmin(authenticatedUserId: string) {
+  try {
+    await connectToDB();
+    const member = await Member.findOne({ user: authenticatedUserId }).select(
+      "activeProfile profiles"
+    );
+
+    const activeProfileIndex = member.activeProfile;
+    const activeProfileId = member.profiles[activeProfileIndex];
+
+    if (!member) {
+      return false;
+    }
+
+    const activeProfile = await ProfileModel.findOne({
+      _id: activeProfileId.toString(),
+    });
+
+    if (!activeProfile) {
+      return false;
+    }
+
+    const isAdmin = activeProfile.usertype === "FLEXADMIN";
+
+    return isAdmin;
+  } catch (error: any) {
+    console.error("Error checking if user is FLEXADMIN:", error);
+    return false;
+  }
+}
+
+export async function deleteBlog(authenticatedUserId: string, blogId: string) {
+  try {
+    await connectToDB();
+
+    const currentProfile = await ProfileModel.findOne({
+      _id: authenticatedUserId,
+    });
+
+    if (!currentProfile) {
+      return {
+        success: false,
+        message: "Authenticated user profile not found",
+      };
+    }
+
+    const isAdmin = currentProfile.usertype === "FLEXADMIN";
+    const blog = await BlogModel.findById(blogId);
+
+    if (!blog) {
+      return {
+        success: false,
+        message: "Blog not found",
+      };
+    }
+
+    if (!isAdmin && blog.author.toString() !== authenticatedUserId) {
+      return {
+        success: false,
+        message:
+          "Unauthorized: You do not have permission to delete this blog.",
+      };
+    }
+
+    await BlogModel.findByIdAndDelete(blogId);
+
+    return {
+      success: true,
+      message: "Blog deleted successfully",
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Error deleting blog: ${error.message}`,
     };
   }
 }

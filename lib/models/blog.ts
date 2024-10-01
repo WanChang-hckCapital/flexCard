@@ -6,6 +6,7 @@ const blogSchema = new Schema<Blog>(
     title: {
       type: String,
       required: true,
+      unique: true,
     },
     slug: {
       type: String,

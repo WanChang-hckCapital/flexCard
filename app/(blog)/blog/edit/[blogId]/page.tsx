@@ -10,10 +10,11 @@ import {
   isProfileAdmin,
   getProfileImage,
   getBlogById,
-  //   updateBlog,
+  updateBlog,
 } from "@/lib/actions/user.actions";
 import { useRouter, useParams } from "next/navigation";
 import BlogEditor from "../_components/BlogEditor";
+import { toast } from "sonner";
 
 export default function BlogEdit() {
   const { data: clientSession } = useSession();
@@ -70,15 +71,56 @@ export default function BlogEdit() {
     fetchActiveProfileId();
   }, [clientSession, blogId, router]);
 
+  // upload
   const handleSubmit = async (updatedData: any) => {
-    if (!authActiveProfileId || !blogId) return;
+    if (!authActiveProfileId || !parsedBlogId) return;
 
-    // const response = await updateBlog(id, authActiveProfileId, updatedData);
-    // if (response.success) {
-    //   router.push(`/blog/${id}`);
-    // } else {
-    //   console.error("Error updating blog");
-    // }
+    console.log("updatedData");
+    console.log(updatedData);
+    console.log(updatedData.imageFile);
+
+    try {
+      let imageId = null;
+
+      if (updatedData.imageFile) {
+        const formData = new FormData();
+        formData.append("imageFile", updatedData.imageFile as File);
+
+        const imageUploadResponse = await fetch("/api/blog-image-submit", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (imageUploadResponse) {
+          const result = await imageUploadResponse.json();
+          imageId = result.fileId;
+          // toast(result.message);
+        } else {
+          console.error("Failed to upload new thumbnail.");
+          return;
+        }
+      }
+
+      const blogData = {
+        title: updatedData.title,
+        content: updatedData.content,
+        imageId: imageId,
+      };
+
+      const response = await updateBlog(
+        parsedBlogId,
+        authActiveProfileId,
+        blogData
+      );
+
+      if (response.success) {
+        router.push("/blog");
+      } else {
+        console.error("Error updating blog");
+      }
+    } catch (error: any) {
+      console.error("Error during submission:", error);
+    }
   };
 
   if (!isAdmin || !blog) {
@@ -109,11 +151,7 @@ export default function BlogEdit() {
             )}
           </CardHeader>
           <CardContent>
-            <BlogEditor
-              //   authActiveProfileId={authActiveProfileId}
-              initialData={blog}
-              onSubmit={handleSubmit}
-            />
+            <BlogEditor initialData={blog} onSubmit={handleSubmit} />
           </CardContent>
         </Card>
       </div>

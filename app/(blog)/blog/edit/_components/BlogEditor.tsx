@@ -32,11 +32,12 @@ export default function BlogEditor({ initialData, onSubmit }: BlogEditorProps) {
   const [title, setTitle] = useState(initialData.title || "");
   const [content, setContent] = useState(initialData.excerpt || "");
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>("" || null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [uploadNewThumbnail, setUploadNewThumbnail] = useState<boolean>(false);
 
-  // thumbnail image
+  // Fetch thumbnail image from server
   const fetchBlogImage = async (imageId: string) => {
     try {
       const res = await fetch(`/api/blog-image-load/${imageId}`);
@@ -52,6 +53,7 @@ export default function BlogEditor({ initialData, onSubmit }: BlogEditorProps) {
     }
   };
 
+  // Load the current blog image if available
   useEffect(() => {
     if (initialData.image) {
       const loadImage = async () => {
@@ -81,7 +83,7 @@ export default function BlogEditor({ initialData, onSubmit }: BlogEditorProps) {
     const updatedData = {
       title,
       content,
-      imageFile,
+      imageFile: uploadNewThumbnail ? imageFile : null,
     };
 
     await onSubmit(updatedData);
@@ -106,27 +108,57 @@ export default function BlogEditor({ initialData, onSubmit }: BlogEditorProps) {
         </div>
 
         <div>
-          <Label htmlFor="image" className="block text-sm font-medium">
-            Thumbnail
-          </Label>
-          <div className="flex justify-center">
+          <div className="flex items-center space-x-2">
             <Input
-              type="file"
-              id="image"
-              className="mt-1"
-              accept="image/*"
-              onChange={handleImageChange}
+              type="checkbox"
+              id="uploadNewThumbnail"
+              checked={uploadNewThumbnail}
+              onChange={(e) => setUploadNewThumbnail(e.target.checked)}
+              className="form-checkbox h-5 w-5 text-blue-600 transition duration-150 ease-in-out rounded"
             />
+            <Label htmlFor="uploadNewThumbnail" className="text-sm">
+              Do you want to upload a new thumbnail?
+            </Label>
           </div>
-          {imagePreview && (
-            <div className="mt-4 flex justify-center">
+
+          {imagePreview && !uploadNewThumbnail && (
+            <div className="mt-4 flex flex-col justify-center items-center">
+              <span className="block text-sm font-medium mb-2">
+                Current Thumbnail:
+              </span>
               <Image
                 src={imagePreview}
-                alt="Image Preview"
+                alt="Current Thumbnail"
                 width={300}
                 height={200}
                 className="rounded object-cover"
               />
+            </div>
+          )}
+
+          {uploadNewThumbnail && (
+            <div className="mt-4">
+              <Label htmlFor="image" className="block text-sm font-medium">
+                Upload New Thumbnail
+              </Label>
+              <Input
+                type="file"
+                id="image"
+                className="mt-1"
+                accept="image/*"
+                onChange={handleImageChange}
+              />
+              {imageFile && (
+                <div className="mt-4 flex justify-center items-center">
+                  <Image
+                    src={imagePreview as string}
+                    alt="New Thumbnail Preview"
+                    width={300}
+                    height={200}
+                    className="rounded object-cover"
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -155,7 +187,7 @@ export default function BlogEditor({ initialData, onSubmit }: BlogEditorProps) {
           {isLoading ? "Updating..." : "Update Blog"}
         </Button>
 
-        {/* {error && <p className="text-red-500 mt-2">{error}</p>} */}
+        {error && <p className="text-red-500 mt-2">{error}</p>}
       </form>
     </div>
   );

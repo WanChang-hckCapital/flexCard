@@ -10,6 +10,8 @@ import { Pen } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/utils/authOptions";
 import { fetchCurrentActiveProfileId } from "@/lib/actions/user.actions";
+import { isFlexAdmin } from "@/lib/actions/user.actions";
+import DeleteBlogModal from "../delete/DeleteBlogModal";
 
 interface BlogProps {
   params: { slug: string };
@@ -59,11 +61,13 @@ export default async function BlogPostPage({ params }: BlogProps) {
   const user = session?.user;
 
   let isCreator = false;
+  let isAdmin = false;
   let currentUserProfileId = "";
 
   if (user) {
     currentUserProfileId = await fetchCurrentActiveProfileId(user?.id);
     isCreator = blog.author.toString() === currentUserProfileId.toString();
+    isAdmin = await isFlexAdmin(user?.id);
   }
 
   if (!blog) {
@@ -74,8 +78,9 @@ export default async function BlogPostPage({ params }: BlogProps) {
     <main>
       <Header />
 
-      {isCreator && (
-        <div className="flex justify-end mx-auto px-6 sm:px-8 lg:px-12 py-4">
+      <div className="flex justify-end gap-4 px-6 sm:px-8 lg:px-12 py-4">
+        {/* Show the Edit button if the user is the creator or admin */}
+        {(isAdmin || isCreator) && (
           <Button variant="outline" className="text-black">
             <Link
               href={`/blog/edit/${blog._id}`}
@@ -85,8 +90,17 @@ export default async function BlogPostPage({ params }: BlogProps) {
               <Pen />
             </Link>
           </Button>
-        </div>
-      )}
+        )}
+
+        {/* Show the Delete button if the user is an admin */}
+        {isAdmin && (
+          <DeleteBlogModal
+            blogId={blog._id}
+            coverImage={blog.image}
+            currentUserProfileId={currentUserProfileId}
+          />
+        )}
+      </div>
 
       <div className="mx-auto px-12">
         <Container>
