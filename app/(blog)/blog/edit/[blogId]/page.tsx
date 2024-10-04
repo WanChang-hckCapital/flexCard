@@ -11,10 +11,24 @@ import {
   getProfileImage,
   getBlogById,
   updateBlog,
+  checkIsCreator,
+  checkUniqueSlug,
 } from "@/lib/actions/user.actions";
 import { useRouter, useParams } from "next/navigation";
 import BlogEditor from "../_components/BlogEditor";
 import { toast } from "sonner";
+import LoadingSpinner from "@/app/(workspace)/workspace/chatroom/_components/LoadingSpinner";
+
+interface Blog {
+  _id: string;
+  title: string;
+  slug: string;
+  expert: string;
+  image: string;
+  author: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 export default function BlogEdit() {
   const { data: clientSession } = useSession();
@@ -27,62 +41,110 @@ export default function BlogEdit() {
     null
   );
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  const [blog, setBlog] = useState(null);
+
+  const [isInvitedCreator, setIsInvitedCreator] = useState<boolean>(false);
+
+  // const [blog, setBlog] = useState(null);
+  const [blog, setBlog] = useState<Blog | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [accountName, setAccountName] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [message, setMessage] = useState<string>("");
 
   useEffect(() => {
-    async function fetchActiveProfileId() {
-      if (clientSession) {
-        const user = clientSession.user;
-
-        if (user.name) setAccountName(user.name);
-
-        const authActiveProfileIdResponse = await fetchCurrentActiveProfileId(
-          user.id
-        );
-        setAuthActiveProfileId(authActiveProfileIdResponse);
-
-        if (authActiveProfileIdResponse) {
-          const adminCheck = await isProfileAdmin(authActiveProfileIdResponse);
-          if (adminCheck.success) {
-            setIsAdmin(true);
-          } else {
-            router.push("/blog");
-          }
-
-          const pictureUrl = await getProfileImage(authActiveProfileIdResponse);
-          if (pictureUrl.success) {
-            setImageUrl(pictureUrl.imageUrl);
-          }
-        }
-
+    async function fetchBlogData() {
+      try {
         if (parsedBlogId) {
           const blogResponse = await getBlogById(parsedBlogId);
           if (blogResponse.success) {
             setBlog(blogResponse.blogs);
+            // console.log("fecth blog");
+            // console.log(blogResponse.blogs);
           } else {
-            setBlog(null);
             router.push("/blog");
+            return;
           }
         }
+
+        if (clientSession) {
+          const user = clientSession.user;
+
+          if (user?.name) setAccountName(user.name);
+
+          const authActiveProfileIdResponse = await fetchCurrentActiveProfileId(
+            user.id
+          );
+          setAuthActiveProfileId(authActiveProfileIdResponse);
+
+          if (authActiveProfileIdResponse) {
+            // Check if user is admin
+            const adminCheck = await isProfileAdmin(
+              authActiveProfileIdResponse
+            );
+
+            // Check if the user is the creator of the blog
+            const creatorCheck = await checkIsCreator(
+              authActiveProfileIdResponse
+            );
+
+            if (adminCheck.success || creatorCheck.success) {
+              setIsAdmin(adminCheck.success);
+              setIsInvitedCreator(creatorCheck.success);
+            } else {
+              router.push("/blog");
+              return;
+            }
+
+            const pictureUrl = await getProfileImage(
+              authActiveProfileIdResponse
+            );
+            if (pictureUrl.success) {
+              setImageUrl(pictureUrl.imageUrl);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching blog data:", error);
+        router.push("/blog");
+      } finally {
+        setLoading(false);
       }
     }
-    fetchActiveProfileId();
-  }, [clientSession, blogId, router]);
+
+    fetchBlogData();
+  }, [clientSession, parsedBlogId, router]);
 
   // upload
   const handleSubmit = async (updatedData: any) => {
     if (!authActiveProfileId || !parsedBlogId) return;
 
-    console.log("updatedData");
-    console.log(updatedData);
-    console.log(updatedData.imageFile);
-
     try {
+      if (blog && updatedData.title.trim() !== blog.title.trim()) {
+        const isUniqueTitle = await checkUniqueSlug(updatedData.title.trim());
+        if (!isUniqueTitle.success) {
+          setMessage(isUniqueTitle.message);
+          toast.error(isUniqueTitle.message);
+          return;
+        }
+      }
+
       let imageId = null;
 
       if (updatedData.imageFile) {
+        // delete the previous image
+        if (blog && blog.image) {
+          const response = await fetch(`/api/blog-image-delete/${blog.image}`, {
+            method: "DELETE",
+          });
+          if (response.ok) {
+            toast.success("Previous image deleted successfully.");
+          } else {
+            toast.error("Failed to delete the image.");
+            return;
+          }
+        }
+
+        // submit the new image
         const formData = new FormData();
         formData.append("imageFile", updatedData.imageFile as File);
 
@@ -123,12 +185,17 @@ export default function BlogEdit() {
     }
   };
 
-  if (!isAdmin || !blog) {
-    return <p>Loading...</p>;
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!isAdmin && !isInvitedCreator) {
+    router.push("/blog");
+    return null;
   }
 
   return (
-    <main>
+    <>
       <Header />
       <div className="container mx-auto px-6 py-6 max-w-4xl">
         <Card>
@@ -151,10 +218,14 @@ export default function BlogEdit() {
             )}
           </CardHeader>
           <CardContent>
-            <BlogEditor initialData={blog} onSubmit={handleSubmit} />
+            <BlogEditor
+              initialData={blog}
+              onSubmit={handleSubmit}
+              message={message}
+            />
           </CardContent>
         </Card>
       </div>
-    </main>
+    </>
   );
 }

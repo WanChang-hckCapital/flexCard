@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import { createNewBlog } from "@/lib/actions/user.actions";
+import { createNewBlog, checkUniqueSlug } from "@/lib/actions/user.actions";
+import { toast } from "sonner";
 
 interface BlogCreatorProps {
   authActiveProfileId: string | null;
@@ -73,7 +74,17 @@ export default function BlogCreator({ authActiveProfileId }: BlogCreatorProps) {
       return;
     }
 
+    const isUnique = await checkUniqueSlug(title.trim());
+    if (!isUnique.success) {
+      setMessage(isUnique.message);
+      toast.error(isUnique.message);
+      setIsLoading(false);
+      console.log("duplicate title");
+      return;
+    }
+
     try {
+      console.log("should not see this");
       const formData = new FormData();
       formData.append("imageFile", imageFile);
 
@@ -95,17 +106,24 @@ export default function BlogCreator({ authActiveProfileId }: BlogCreatorProps) {
 
           if (blogCreateRes.success) {
             setMessage("Blog successfully submitted!");
+            toast.success("Blog successfully submitted!");
             router.push("/blog");
           } else {
-            setMessage("Error submitting blog. Please try again.");
+            setMessage(blogCreateRes.message);
+            toast.error(blogCreateRes.message);
           }
         } else {
           setMessage("Invalid profile ID.");
+          toast.error("Invalid profile ID.");
         }
+      } else {
+        setMessage("Image upload failed.");
+        toast.error("Image upload failed.");
       }
     } catch (error) {
       console.error(error);
       setMessage("An error occurred. Please try again.");
+      toast.error("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }

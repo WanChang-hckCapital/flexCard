@@ -17,6 +17,7 @@ interface BlogEditorProps {
     content: string;
     imageFile: File | null;
   }) => void;
+  message: string;
 }
 
 const modules = {
@@ -28,7 +29,11 @@ const modules = {
   ],
 };
 
-export default function BlogEditor({ initialData, onSubmit }: BlogEditorProps) {
+export default function BlogEditor({
+  initialData,
+  onSubmit,
+  message,
+}: BlogEditorProps) {
   const [title, setTitle] = useState(initialData.title || "");
   const [content, setContent] = useState(initialData.excerpt || "");
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -187,7 +192,17 @@ export default function BlogEditor({ initialData, onSubmit }: BlogEditorProps) {
           {isLoading ? "Updating..." : "Update Blog"}
         </Button>
 
-        {error && <p className="text-red-500 mt-2">{error}</p>}
+        {message && (
+          <p
+            className={`text-center mt-4 text-lg ${
+              message.includes("successfully")
+                ? "text-green-500"
+                : "text-red-500"
+            }`}
+          >
+            {message}
+          </p>
+        )}
       </form>
     </div>
   );

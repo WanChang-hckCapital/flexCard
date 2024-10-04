@@ -9,6 +9,7 @@ import {
   fetchCurrentActiveProfileId,
   isProfileAdmin,
   getProfileImage,
+  checkIsCreator,
 } from "@/lib/actions/user.actions";
 import { useRouter } from "next/navigation";
 import BlogCreator from "./_components/BlogCreator";
@@ -21,6 +22,7 @@ export default function BlogCreate() {
     null
   );
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [isInvitedCreator, setIsInvitedCreator] = useState<boolean>(false);
 
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [accountName, setAccountName] = useState<string | null>(null);
@@ -38,9 +40,21 @@ export default function BlogCreate() {
         setAuthActiveProfileId(authActiveProfileIdResponse);
 
         if (authActiveProfileIdResponse) {
+          // check whether the user is admin
           const adminCheck = await isProfileAdmin(authActiveProfileIdResponse);
-          if (adminCheck.success) {
-            setIsAdmin(true);
+          // check whether the user is a invited creator
+          const creatorCheck = await checkIsCreator(
+            authActiveProfileIdResponse
+          );
+
+          if (adminCheck.success || creatorCheck.success) {
+            if (adminCheck.success) {
+              setIsAdmin(true);
+            }
+
+            if (creatorCheck.success) {
+              setIsInvitedCreator(true);
+            }
           } else {
             router.push("/blog");
           }
@@ -55,12 +69,12 @@ export default function BlogCreate() {
     fetchActiveProfileId();
   }, [clientSession, router]);
 
-  if (!isAdmin) {
+  if (!isAdmin && !isInvitedCreator) {
     return null;
   }
 
   return (
-    <main>
+    <>
       <Header />
       <div className="container mx-auto px-6 py-6 max-w-4xl">
         <Card>
@@ -87,6 +101,6 @@ export default function BlogCreate() {
           </CardContent>
         </Card>
       </div>
-    </main>
+    </>
   );
 }

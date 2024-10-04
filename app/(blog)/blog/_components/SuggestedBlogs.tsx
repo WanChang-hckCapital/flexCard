@@ -17,8 +17,8 @@ export default function SuggestedBlogs({ blogs }: { blogs: Blog[] }) {
     <section>
       <h2 className="text-2xl font-semibold mb-6">Suggested Posts</h2>
       <div className="grid md:grid-cols-3 gap-8">
-        {blogs.map((post) => (
-          <SuggestedBlogItem key={post.id} post={post} />
+        {blogs.map((post, index) => (
+          <SuggestedBlogItem key={index} post={post} />
         ))}
       </div>
     </section>

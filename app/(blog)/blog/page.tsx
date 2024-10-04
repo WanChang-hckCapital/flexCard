@@ -5,18 +5,23 @@ import Image from "next/image";
 import Header from "@/components/blog/header";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Pen } from "lucide-react";
+import { Pen, UserPlusIcon, AlertCircle } from "lucide-react";
 import { useSession } from "next-auth/react";
 import {
   fetchCurrentActiveProfileId,
   isProfileAdmin,
   loadBlogs,
+  checkInvitationExist,
+  checkIsCreator,
 } from "@/lib/actions/user.actions";
 import BlogImage from "./_components/BlogImage";
 import { CreatorImage } from "./_components/CreatorImage";
 import SuggestedBlogs from "./_components/SuggestedBlogs";
 import SkeletonCard from "./_components/SkeletonCard";
 import Avatar from "@/components/blog/avatar";
+import InviteUserModal from "./_components/InviteUserModal";
+import InvitationModal from "./_components/InvitationModal";
+import { toast } from "sonner";
 
 interface Blog {
   id: string;
@@ -32,6 +37,16 @@ interface blogResponse {
   message: string;
   blogs?: Blog[];
   error?: string;
+}
+
+interface invitationResponse {
+  _id: string;
+  inviter: { _id: string; accountname: string; image: string };
+  invitor: string;
+  status: string;
+  acceptedAt: Date;
+  declinedAt: Date;
+  sentAt: Date;
 }
 
 export default function BlogPage() {
@@ -51,6 +66,17 @@ export default function BlogPage() {
 
   const [suggestedBlogs, setSuggestedBlogs] = useState<Blog[]>([]);
 
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+
+  const [hasPendingInvitation, setHasPendingInvitation] = useState(false);
+  const [invitationMessage, setInvitationMessage] = useState("");
+  const [isShowInvitationModalOpen, setIsShowInvitationModalOpen] =
+    useState(false);
+
+  const [invitation, setInvitation] = useState<invitationResponse>();
+
+  const [isInvitedCreator, setIsInvitedCreator] = useState(false);
+
   useEffect(() => {
     async function fetchActiveProfileId() {
       if (clientSession) {
@@ -69,6 +95,31 @@ export default function BlogPage() {
     }
     fetchActiveProfileId();
   }, [clientSession]);
+
+  useEffect(() => {
+    async function checkForInvitation() {
+      if (!authActiveProfileId) return;
+
+      try {
+        const invitationCheck = await checkInvitationExist(authActiveProfileId);
+
+        if (invitationCheck.success) {
+          setHasPendingInvitation(true);
+          setInvitationMessage(invitationCheck.message);
+          setInvitation(invitationCheck.invite);
+        } else {
+          setHasPendingInvitation(false);
+          setInvitation(undefined);
+        }
+      } catch (error) {
+        toast.error("Error checking invitation status.");
+      }
+    }
+
+    if (authActiveProfileId) {
+      checkForInvitation();
+    }
+  }, [authActiveProfileId]);
 
   useEffect(() => {
     async function loadBlogRes() {
@@ -99,6 +150,26 @@ export default function BlogPage() {
     }
   }, [blogs]);
 
+  useEffect(() => {
+    async function checkIsCreatorHandler() {
+      if (!authActiveProfileId) return;
+
+      try {
+        const invitationCheck = await checkIsCreator(authActiveProfileId);
+
+        if (invitationCheck.success) {
+          setIsInvitedCreator(true);
+        }
+      } catch (error) {
+        toast.error("Error checking invitation status.");
+      }
+    }
+
+    if (authActiveProfileId) {
+      checkIsCreatorHandler();
+    }
+  }, [authActiveProfileId]);
+
   const truncateText = (text: string, maxLength: number) => {
     if (text.length > maxLength) {
       return text.substring(0, maxLength) + "...";
@@ -106,54 +177,100 @@ export default function BlogPage() {
     return text;
   };
 
+  const handleInvitationResponded = () => {
+    setHasPendingInvitation(false); // hide the invitation notification
+    setIsInvitedCreator(true); // show the create button
+  };
+
   if (error) {
     return <p>{error}</p>;
   }
 
+  if (!clientSession) {
+    return null;
+  }
+
   return (
-    <>
+    <div>
       <Header />
-      {isAdmin && (
+      {hasPendingInvitation && (
+        <span
+          className="container flex items-center px-6 sm:px-8 lg:px-12 text-red-500 cursor-pointer"
+          onClick={() => setIsShowInvitationModalOpen(true)}
+        >
+          <AlertCircle size={16} className="mr-1" />
+          {invitationMessage}
+        </span>
+      )}
+      {isShowInvitationModalOpen && (
+        <InvitationModal
+          invitationMessage={invitationMessage}
+          invitation={invitation}
+          onClose={() => setIsShowInvitationModalOpen(false)}
+          onInvitationResponded={handleInvitationResponded}
+        />
+      )}
+      {(isAdmin || isInvitedCreator) && (
         <div className="flex justify-end mx-auto px-6 sm:px-8 lg:px-12 py-4">
-          <Button variant="outline" className="text-black">
-            <Link href="/blog/create" className="flex items-center gap-2">
-              Create
-              <Pen />
-            </Link>
-          </Button>
+          {/* show invite creator only if the user is admin */}
+          {isAdmin && (
+            <Button
+              variant="outline"
+              className="text-black mr-2"
+              onClick={() => setIsInviteModalOpen(true)}
+            >
+              Invite Creator
+              <UserPlusIcon />
+            </Button>
+          )}
+          {/* show create button when the user is a creator or admin */}
+          {(isAdmin || isInvitedCreator) && (
+            <Button variant="outline" className="text-black">
+              <Link href="/blog/create" className="flex items-center gap-2">
+                Create
+                <Pen />
+              </Link>
+            </Button>
+          )}
+          {isInviteModalOpen && (
+            <InviteUserModal
+              currentProfileId={authActiveProfileId || ""}
+              onClose={() => setIsInviteModalOpen(false)}
+            />
+          )}
         </div>
       )}
 
       <div className="container mx-auto px-6 sm:px-8 lg:px-12 py-10">
-        <main>
-          {loading ? (
-            <SkeletonCard />
-          ) : mainPost ? (
-            <Link href={`/blog/${mainPost?.slug}`} className="block mb-12">
-              <div className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow h-[450px] flex flex-col">
-                <div className="grid md:grid-cols-2 items-center">
-                  {mainPost.image && (
-                    <BlogImage imageId={mainPost.image} alt={mainPost.title} />
-                  )}
-                  <div className="p-4 flex flex-col flex-grow">
-                    <h2 className="text-2xl font-semibold mb-4">
-                      {truncateText(mainPost.title, 50)}
-                    </h2>
-                    <div
-                      dangerouslySetInnerHTML={{
-                        __html: truncateText(mainPost.excerpt, 50),
-                      }}
-                      className="text-gray-600 mb-4"
-                    ></div>
-                    <CreatorImage creatorId={mainPost.author} />
-                  </div>
+        {/* <main> */}
+        {loading ? (
+          <SkeletonCard />
+        ) : mainPost ? (
+          <Link href={`/blog/${mainPost?.slug}`} className="block mb-12">
+            <div className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow h-[400px] flex flex-col">
+              <div className="grid md:grid-cols-2 items-center">
+                {mainPost.image && (
+                  <BlogImage imageId={mainPost.image} alt={mainPost.title} />
+                )}
+                <div className="p-4 flex flex-col flex-grow">
+                  <h2 className="text-2xl font-semibold mb-4">
+                    {truncateText(mainPost.title, 50)}
+                  </h2>
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: truncateText(mainPost.excerpt, 50),
+                    }}
+                    className="text-gray-600 mb-4"
+                  ></div>
+                  <CreatorImage creatorId={mainPost.author} />
                 </div>
               </div>
-            </Link>
-          ) : (
-            <p>No main post available.</p>
-          )}
-        </main>
+            </div>
+          </Link>
+        ) : (
+          <p>No main post available.</p>
+        )}
+        {/* </main> */}
 
         {suggestedBlogs.length > 0 && (
           <section>
@@ -161,6 +278,6 @@ export default function BlogPage() {
           </section>
         )}
       </div>
-    </>
+    </div>
   );
 }

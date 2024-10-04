@@ -280,3 +280,30 @@ export type Blog = {
   image: {};
   author: {};
 };
+
+export type BlogComment = {
+  content: string;
+  blog: {};
+  image?: {};
+  author: {};
+  likes: { user: {}; likedAt: Date }[];
+  replyCount: number;
+};
+
+export type BlogCommentReply = {
+  content: string;
+  blog: {};
+  image?: {};
+  comment: {};
+  author: {};
+  likes: { user: {}; likedAt: Date }[];
+};
+
+export type BlogInvitation = {
+  inviter: {};
+  invitee: {};
+  status: {};
+  sentAt: Date;
+  acceptedAt: Date;
+  declinedAt: Date;
+};

@@ -24,10 +24,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  getChatroomParticipantsImage,
-  getImage,
-} from "@/lib/actions/user.actions";
+import { getChatroomParticipantsImage } from "@/lib/actions/user.actions";
 import {
   CheckCheck,
   Check,
