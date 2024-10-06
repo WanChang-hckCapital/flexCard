@@ -1,17 +1,28 @@
-"use client"
+"use client";
 
 import { X } from "lucide-react";
 import ImageCropper from "../image-cropper";
 import { createPortal } from "react-dom";
 import { loadOpenCV } from "@/lib/utils";
 import { useEffect, useState } from "react";
-import { addressPattern, emailPattern, jobTitlePatterns, namePatterns, phonePattern, websitePattern } from "@/lib/ocr-patterns";
+import {
+  addressPattern,
+  emailPattern,
+  jobTitlePatterns,
+  namePatterns,
+  phonePattern,
+  websitePattern,
+} from "@/lib/ocr-patterns";
 
 interface CropModalProps {
-    updateImage: any;
-    onExtractedInfo: (extractedInfo: any, originalImageWidth: number, uploadedImageUrl: string) => void;
-    closeModal: () => void;
-    onImageUpload: (uploadedImageUrl: string) => void;
+  updateImage: any;
+  onExtractedInfo: (
+    extractedInfo: any,
+    originalImageWidth: number,
+    uploadedImageUrl: string
+  ) => void;
+  closeModal: () => void;
+  onImageUpload: (uploadedImageUrl: string) => void;
 }
 
 // not working
@@ -74,142 +85,175 @@ interface CropModalProps {
 //     });
 // };
 
-
 const extractInfo = async (words: any, imageSrc: string) => {
-    console.log("Words: ", words);
+  console.log("Words: ", words);
 
-    let extractedInfo: { type: string; text: string; position: any; }[] = [];
+  let extractedInfo: { type: string; text: string; position: any }[] = [];
 
-    const lines = words.reduce((acc: any[], word: any) => {
-        const lastLine = acc[acc.length - 1];
-        if (lastLine && Math.abs(lastLine[0].bbox.y0 - word.bbox.y0) < 10) {
-            lastLine.push(word);
-        } else {
-            acc.push([word]);
-        }
+  const lines = words.reduce((acc: any[], word: any) => {
+    const lastLine = acc[acc.length - 1];
+    if (lastLine && Math.abs(lastLine[0].bbox.y0 - word.bbox.y0) < 10) {
+      lastLine.push(word);
+    } else {
+      acc.push([word]);
+    }
+    return acc;
+  }, []);
+
+  const concatenatedLines = lines.map((line: any[]) => {
+    const text = line.map((word) => word.text).join(" ");
+
+    const bbox = line.reduce(
+      (acc, word) => {
+        if (acc.x0 > word.bbox.x0) acc.x0 = word.bbox.x0;
+        if (acc.y0 > word.bbox.y0) acc.y0 = word.bbox.y0;
+        if (acc.x1 < word.bbox.x1) acc.x1 = word.bbox.x1;
+        if (acc.y1 < word.bbox.y1) acc.y1 = word.bbox.y1;
         return acc;
-    }, []);
+      },
+      { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity }
+    );
 
-    const concatenatedLines = lines.map((line: any[]) => {
-        const text = line.map(word => word.text).join(' ');
+    return { text, bbox };
+  });
 
-        const bbox = line.reduce((acc, word) => {
-            if (acc.x0 > word.bbox.x0) acc.x0 = word.bbox.x0;
-            if (acc.y0 > word.bbox.y0) acc.y0 = word.bbox.y0;
-            if (acc.x1 < word.bbox.x1) acc.x1 = word.bbox.x1;
-            if (acc.y1 < word.bbox.y1) acc.y1 = word.bbox.y1;
-            return acc;
-        }, { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity });
+  console.log("Concatenated Lines: ", concatenatedLines);
 
-        return { text, bbox };
-    });
+  concatenatedLines.forEach(
+    ({ text: lineText, bbox: lineBbox }: { text: string; bbox: any }) => {
+      console.log("Processing line: ", lineText);
+      let match: RegExpMatchArray | null;
 
-    console.log("Concatenated Lines: ", concatenatedLines);
+      if ((match = lineText.match(emailPattern))) {
+        console.log("Email match: ", match);
+        extractedInfo.push({
+          type: "email",
+          text: match[0],
+          position: lineBbox,
+        });
+      } else if ((match = lineText.match(phonePattern))) {
+        console.log("Phone match: ", match);
+        extractedInfo.push({
+          type: "phone",
+          text: match[0],
+          position: lineBbox,
+        });
+      } else if (
+        jobTitlePatterns.some(
+          (pattern) => (match = lineText.match(pattern)) !== null
+        )
+      ) {
+        console.log("Job Title match: ", match);
+        extractedInfo.push({
+          type: "jobTitle",
+          text: match![0],
+          position: lineBbox,
+        });
+      } else if ((match = lineText.match(addressPattern))) {
+        console.log("Address match: ", match);
+        extractedInfo.push({
+          type: "address",
+          text: match[0],
+          position: lineBbox,
+        });
+      } else if ((match = lineText.match(websitePattern))) {
+        console.log("Website match: ", match);
+        extractedInfo.push({
+          type: "website",
+          text: match[0],
+          position: lineBbox,
+        });
+      } else if (
+        namePatterns.some(
+          (pattern) => (match = lineText.match(pattern)) !== null
+        )
+      ) {
+        console.log("Name match: ", match);
+        extractedInfo.push({
+          type: "name",
+          text: match![0],
+          position: lineBbox,
+        });
+      } else {
+        console.log("No match found for line: ", lineText);
+      }
+    }
+  );
 
-    concatenatedLines.forEach(({ text: lineText, bbox: lineBbox }: { text: string, bbox: any }) => {
-        console.log("Processing line: ", lineText);
-        let match: RegExpMatchArray | null;
+  // logo detection
+  // try {
+  //     const logoPosition = await detectLogo(imageSrc);
+  //     if (logoPosition) {
+  //         extractedInfo.push({ type: 'logo', text: '', position: logoPosition });
+  //     }
+  // } catch (error) {
+  //     console.error("Error detecting logo:", error);
+  // }
 
-        if (match = lineText.match(emailPattern)) {
-            console.log("Email match: ", match);
-            extractedInfo.push({ type: 'email', text: match[0], position: lineBbox });
-        }
-        else if (match = lineText.match(phonePattern)) {
-            console.log("Phone match: ", match);
-            extractedInfo.push({ type: 'phone', text: match[0], position: lineBbox });
-        }
-        else if (jobTitlePatterns.some(pattern => (match = lineText.match(pattern)) !== null)) {
-            console.log("Job Title match: ", match);
-            extractedInfo.push({ type: 'jobTitle', text: match![0], position: lineBbox });
-        }
-        else if (match = lineText.match(addressPattern)) {
-            console.log("Address match: ", match);
-            extractedInfo.push({ type: 'address', text: match[0], position: lineBbox });
-        }
-        else if (match = lineText.match(websitePattern)) {
-            console.log("Website match: ", match);
-            extractedInfo.push({ type: 'website', text: match[0], position: lineBbox });
-        }
-        else if (namePatterns.some(pattern => (match = lineText.match(pattern)) !== null)) {
-            console.log("Name match: ", match);
-            extractedInfo.push({ type: 'name', text: match![0], position: lineBbox });
-        }
-        else {
-            console.log("No match found for line: ", lineText);
-        }
-    });
-
-    // logo detection
-    // try {
-    //     const logoPosition = await detectLogo(imageSrc);
-    //     if (logoPosition) {
-    //         extractedInfo.push({ type: 'logo', text: '', position: logoPosition });
-    //     }
-    // } catch (error) {
-    //     console.error("Error detecting logo:", error);
-    // }
-
-    console.log("Extracted Info: ", extractedInfo);
-    return extractedInfo;
+  console.log("Extracted Info: ", extractedInfo);
+  return extractedInfo;
 };
 
+const CropModal: React.FC<CropModalProps> = ({
+  updateImage,
+  onExtractedInfo,
+  closeModal,
+}) => {
+  const [imageSrc, setImageSrc] = useState<string>("");
 
-const CropModal: React.FC<CropModalProps> = ({ updateImage, onExtractedInfo, closeModal }) => {
-    const [imageSrc, setImageSrc] = useState<string>('');
+  let uploadedImageURL: string = "";
 
-    let uploadedImageURL: string = '';
+  const handleOCRText = async (ocrData: any, originalImageWidth: number) => {
+    if (!ocrData || !Array.isArray(ocrData)) {
+      console.error("Invalid OCR data received:", ocrData);
+      return;
+    }
 
-    const handleOCRText = async (ocrData: any, originalImageWidth: number) => {
-        if (!ocrData || !Array.isArray(ocrData)) {
-            console.error("Invalid OCR data received:", ocrData);
-            return;
-        }
+    const extractedInfo = await extractInfo(ocrData, imageSrc);
+    onExtractedInfo(extractedInfo, originalImageWidth, uploadedImageURL);
+  };
 
-        const extractedInfo = await extractInfo(ocrData, imageSrc);
-        onExtractedInfo(extractedInfo, originalImageWidth, uploadedImageURL);
-    };
+  const handleImageUpload = (uploadedImageUrl: string) => {
+    return (uploadedImageURL = uploadedImageUrl);
+  };
 
-    const handleImageUpload = (uploadedImageUrl: string) => {
-        return uploadedImageURL = uploadedImageUrl;
-    };
-
-    return createPortal(
-        <div
-            className="relative z-50 w-min-content justify-center items-center flex overflow-x-hidden overflow-y-auto outline-none focus:outline-none"
-            aria-labelledby="crop-image-dialog"
-            role="dialog"
-            aria-modal="true"
-        >
-            <div className="fixed inset-0 bg-gray-900 bg-opacity-75 transition-all backdrop-blur-sm"></div>
-            <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
-                <div className="flex min-h-full justify-center px-2 py-12 text-center ">
-                    <div className="relative w-[80%] sm:w-[60%] min-h-[60vh] rounded-2xl bg-gray-800 text-slate-100 text-left shadow-xl transition-all h-min self-center items-center">
-                        <div className="px-5 py-4 text-center">
-                            <button
-                                type="button"
-                                className="rounded-md p-1 inline-flex items-center justify-center text-gray-400 hover:bg-gray-700 focus:outline-none absolute top-2 right-2"
-                                onClick={closeModal}
-                            >
-                                <span className="sr-only">Close menu</span>
-                                <X />
-                            </button>
-                            {/* <ImageCropper
-                                updateImage={updateImage}
-                                handleOCRText={handleOCRText}
-                                setImageSrc={setImageSrc}
-                                closeModal={closeModal}
-                                onImageUpload={handleImageUpload}
-                                handleImageAnalyze={handleImageAnalyze}
-                                handleCropEdgeImg={handleCropEdgeImg}
-                                handleChatGpt={handleChatGpt}
-                            /> */}
-                        </div>
-                    </div>
-                </div>
+  return createPortal(
+    <div
+      className="relative z-50 w-min-content justify-center items-center flex overflow-x-hidden overflow-y-auto outline-none focus:outline-none"
+      aria-labelledby="crop-image-dialog"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div className="fixed inset-0 bg-gray-900 bg-opacity-75 transition-all backdrop-blur-sm"></div>
+      <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+        <div className="flex min-h-full justify-center px-2 py-12 text-center ">
+          <div className="relative w-[80%] sm:w-[60%] min-h-[60vh] rounded-2xl bg-gray-800 text-slate-100 text-left shadow-xl transition-all h-min self-center items-center">
+            <div className="px-5 py-4 text-center">
+              <button
+                type="button"
+                className="rounded-md p-1 inline-flex items-center justify-center text-gray-400 hover:bg-gray-700 focus:outline-none absolute top-2 right-2"
+                onClick={closeModal}
+              >
+                <span className="sr-only">Close menu</span>
+                <X />
+              </button>
+              {/* <ImageCropper
+                updateImage={updateImage}
+                handleOCRText={handleOCRText}
+                setImageSrc={setImageSrc}
+                closeModal={closeModal}
+                onImageUpload={handleImageUpload}
+                handleImageAnalyze={handleImageAnalyze}
+                handleCropEdgeImg={handleCropEdgeImg}
+                handleChatGpt={handleChatGpt}
+              /> */}
             </div>
-        </div>,
-        document.getElementById('modal-root')!
-    );
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.getElementById("modal-root")!
+  );
 };
 
 export default CropModal;

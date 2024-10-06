@@ -84,11 +84,11 @@ function ProfileHeader({
   const [showAlertDialog, setShowAlertDialog] = useState(false);
 
   const isDifferentUser = accountId !== authActiveProfileId;
-  const isOrganization = usertype.toUpperCase() == 'ORGANIZATION';
+  const isOrganization = usertype.toUpperCase() == "ORGANIZATION";
 
-  const handleButtonClick = async (method: 'FOLLOW' | 'UNFOLLOW') => {
+  const handleButtonClick = async (method: "FOLLOW" | "UNFOLLOW") => {
     if (!authActiveProfileId) {
-      toast.error('You need to login first before action.');
+      toast.error("You need to login first before action.");
       return;
     }
 
@@ -179,59 +179,59 @@ function ProfileHeader({
   };
 
   // auth user remove following
-  const removeFollowingHandler = async (
-    authUserId: any,
-    removeFollowingId: any
-  ): Promise<{ success: boolean; message: string }> => {
-    try {
-      const followerStatus = await checkIfFollowing({
-        authActiveProfileId: authUserId,
-        accountId: removeFollowingId,
-      });
+  // const removeFollowingHandler = async (
+  //   authUserId: any,
+  //   removeFollowingId: any
+  // ): Promise<{ success: boolean; message: string }> => {
+  //   try {
+  //     const followerStatus = await checkIfFollowing({
+  //       authUserId,
+  //       accountId: removeFollowingId,
+  //     });
 
-      if (followerStatus.success && followerStatus.isFollowing) {
-        const removeResponse = await removeFollowing(
-          authUserId,
-          removeFollowingId
-        );
+  //     if (followerStatus.success && followerStatus.isFollowing) {
+  //       const removeResponse = await removeFollowing(
+  //         authUserId,
+  //         removeFollowingId
+  //       );
 
-        if (removeResponse.success) {
-          toast.success("Following removed successfully.");
-          setFollowingLength((prev) => prev - 1);
-          setIsFollowingDialogOpen(false);
-          setShowAlertDialog(false);
-          return { success: true, message: "Following removed successfully." };
-        } else {
-          toast.error(removeResponse.message || "Failed to remove following.");
-          return {
-            success: false,
-            message: removeResponse.message || "Failed to remove following.",
-          };
-        }
-      } else {
-        const message = "You are not following this user.";
-        toast.error(message);
-        return { success: false, message };
-      }
-    } catch (error) {
-      const errorMessage = "Error removing follower.";
-      toast.error(errorMessage);
-      return { success: false, message: errorMessage };
-    }
-  };
+  //       if (removeResponse.success) {
+  //         toast.success("Following removed successfully.");
+  //         setFollowingLength((prev) => prev - 1);
+  //         setIsFollowingDialogOpen(false);
+  //         setShowAlertDialog(false);
+  //         return { success: true, message: "Following removed successfully." };
+  //       } else {
+  //         toast.error(removeResponse.message || "Failed to remove following.");
+  //         return {
+  //           success: false,
+  //           message: removeResponse.message || "Failed to remove following.",
+  //         };
+  //       }
+  //     } else {
+  //       const message = "You are not following this user.";
+  //       toast.error(message);
+  //       return { success: false, message };
+  //     }
+  //   } catch (error) {
+  //     const errorMessage = "Error removing follower.";
+  //     toast.error(errorMessage);
+  //     return { success: false, message: errorMessage };
+  //   }
+  // };
 
   const handleUnfollowClick = (userId: string) => {
     setSelectedUser(userId);
     setShowAlertDialog(true);
   };
 
-  const handleUnfollowConfirm = async () => {
-    if (selectedUser) {
-      await removeFollowingHandler(authActiveProfileId, selectedUser);
-    }
-    setShowAlertDialog(false);
-    setSelectedUser(null);
-  };
+  // const handleUnfollowConfirm = async () => {
+  //   if (selectedUser) {
+  //     await removeFollowingHandler(authUserId, selectedUser);
+  //   }
+  //   setShowAlertDialog(false);
+  //   setSelectedUser(null);
+  // };
 
   return (
     <div className="flex w-full flex-col justify-center mt-12 sm:mt-6">
@@ -358,7 +358,7 @@ function ProfileHeader({
                   )}
                   <span>{user.name}</span>
                   {/* <span>{user.userId}</span> */}
-                  {!isDifferentUser && (
+                  {/* {!isDifferentUser && (
                     <Button
                       variant="destructive"
                       className="ml-auto"
@@ -368,7 +368,7 @@ function ProfileHeader({
                     >
                       {followerButtonText}
                     </Button>
-                  )}
+                  )} */}
                 </div>
               ))
             ) : (
@@ -417,7 +417,7 @@ function ProfileHeader({
                   )}
                   <span>{user.name}</span>
                   {/* <span>{user.userId}</span> */}
-                  {!isDifferentUser && (
+                  {/* {!isDifferentUser && (
                     <>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -447,7 +447,7 @@ function ProfileHeader({
                         </AlertDialogContent>
                       </AlertDialog>
                     </>
-                  )}
+                  )} */}
                 </div>
               ))
             ) : (

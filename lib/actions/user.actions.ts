@@ -29,6 +29,10 @@ import FeedbackModel from "../models/feedback";
 import CommentModel from "../models/comment";
 import { generateCustomID } from "../utils";
 import { Comment, MemberType } from "@/types";
+import BlogModel from "../models/blog";
+const slugify = require("slugify");
+import BlogCommentReplyModel from "../models/blogcommentreply";
+import BlogInvitationModel from "../models/bloginvitation";
 
 export async function authenticateUser(email: string, password: string) {
   try {
@@ -506,7 +510,7 @@ export async function updateProfileViewData({
       }
     );
 
-    console.log("Profile View Data Updated: " + JSON.stringify(result));
+    // console.log("Profile View Data Updated: " + JSON.stringify(result));
 
     return result;
   } catch (error) {
@@ -647,6 +651,10 @@ export async function checkIfFollowing({
   try {
     await connectToDB();
 
+    // console.log("if following");
+    // console.log(authActiveProfileId);
+    // console.log(accountId);
+
     const authMember = await MemberModel.findOne({
       user: authActiveProfileId,
     });
@@ -654,6 +662,9 @@ export async function checkIfFollowing({
     const targetMember = await MemberModel.findOne({
       user: accountId,
     });
+
+    // console.log("authMember", authMember);
+    // console.log("targetMember", targetMember);
 
     const activeAuthProfile = authMember.profiles[authMember.activeProfile];
 
@@ -2376,6 +2387,9 @@ export async function sendFlexMessageLiff(flexContent: string) {
 import { MongoClient } from "mongodb";
 import { Friend, User } from "@/types";
 import ProfileModel from "../models/profile";
+import BlogCommentModel from "../models/blogcomment";
+import { connected } from "process";
+import InvitationModal from "@/app/(blog)/blog/_components/InvitationModal";
 
 // get all possible member // need to remove this
 export async function fetchAllMembers() {
@@ -2429,6 +2443,9 @@ export async function fetchAllUser(authenticatedUserId: string) {
           member.profiles[member.activeProfile]
         );
 
+        // console.log("active profil;e");
+        // console.log(activeProfile);
+
         let imgUrl = null;
         if (
           activeProfile &&
@@ -2445,6 +2462,7 @@ export async function fetchAllUser(authenticatedUserId: string) {
         return {
           userId: user._id.toString(),
           name: user.name,
+          profileId: activeProfile._id.toString(),
           accountType: activeProfile?.accountType || "PUBLIC",
           image: imgUrl,
         };
@@ -3113,21 +3131,51 @@ export async function getAllFollowers(userId: string) {
   try {
     await connectToDB();
 
-    // console.log("userId :" + userId);
-    const member = await MemberModel.findOne({ user: userId });
+    // console.log("userId :" + userId); // profile id
 
-    if (!member) {
+    const profile = await ProfileModel.findOne({ _id: userId });
+
+    if (!profile) {
       return { success: false, message: "User not found", followers: [] };
     }
 
+    const followerDetails = await Promise.all(
+      profile.followers.map(async (follower: any) => {
+        const followerProfile = await ProfileModel.findOne(
+          { _id: follower.followersId },
+          { accountname: 1, image: 1 }
+        );
+
+        if (!followerProfile) {
+          return {
+            _id: follower.followersId.toString(),
+            name: null,
+            image: null,
+            followedAt: follower.followedAt,
+          };
+        }
+
+        let imgUrl = null;
+        if (followerProfile.image) {
+          const imageDoc = await Image.findOne({
+            _id: followerProfile.image,
+          }).select("binaryCode");
+
+          imgUrl = imageDoc?.binaryCode || null;
+        }
+
+        return {
+          _id: follower.followersId.toString(),
+          name: followerProfile.accountname,
+          image: imgUrl,
+          followedAt: follower.followedAt,
+        };
+      })
+    );
+
     return {
       success: true,
-      followers: member.followers.map((follower: any) => ({
-        _id: follower.followersId._id,
-        name: follower.followersId.name,
-        image: follower.followersId.image,
-        followedAt: follower.followedAt,
-      })),
+      followers: followerDetails,
     };
   } catch (error: any) {
     console.error("Error fetching followers:", error);
@@ -3140,16 +3188,17 @@ export async function getAllFollowing(userId: string) {
   try {
     await connectToDB();
 
-    const member = await MemberModel.findOne({ user: userId });
+    const profile = await ProfileModel.findOne({ _id: userId });
+    // const member = await MemberModel.findOne({ user: userId });
 
-    if (!member) {
+    if (!profile) {
       return { success: false, message: "User not found", following: [] };
     }
 
     const followingWithDetails = await Promise.all(
-      member.following.map(async (following: any) => {
-        const followeingDetails = await MemberModel.findOne({
-          user: following,
+      profile.following.map(async (following: any) => {
+        const followeingDetails = await ProfileModel.findOne({
+          _id: following,
         }).select("accountname user image _id");
 
         const imgUrl = await Image.findOne({
@@ -3302,6 +3351,71 @@ export async function sendFollowRequest(
 }
 
 // check in followRequest Table
+// export async function checkFollowRequestStatus({
+//   senderId,
+//   receiverId,
+// }: {
+//   senderId: string;
+//   receiverId: string;
+// }): Promise<{
+//   success: boolean;
+//   requestSent: boolean;
+//   message?: string;
+// }> {
+//   try {
+//     await connectToDB();
+
+//     console.log("private api ");
+
+//     const memberFound = await MemberModel.findOne({ user: senderId });
+
+//     if (!memberFound)
+//       return {
+//         success: true,
+//         requestSent: false,
+//       };
+
+//     const activeProfileId = memberFound.profiles[memberFound.activeProfile];
+
+//     const profileInfo = await ProfileModel.findOne({ _id: activeProfileId });
+
+//     console.log("profileInfo");
+//     console.log(profileInfo);
+
+//     const followingStatus = profileInfo?.following
+//       ?.map((id: any) => id.toString())
+//       .includes(receiverId.toString());
+
+//     console.log("following status");
+//     console.log(followingStatus);
+//     if (followingStatus) {
+//       return {
+//         success: true,
+//         requestSent: true,
+//       };
+//     }
+
+//     const existingRequest = await FollowRequestModel.findOne({
+//       sender: activeProfileId,
+//       receiver: receiverId,
+//       status: 0, // Pending status
+//     });
+
+//     console.log(existingRequest);
+
+//     return {
+//       success: true,
+//       requestSent: !!existingRequest,
+//     };
+//   } catch (error) {
+//     console.error("Error checking follow request status:", error);
+//     return {
+//       success: false,
+//       requestSent: false,
+//       message: "Error checking follow request status",
+//     };
+//   }
+// }
 export async function checkFollowRequestStatus({
   senderId,
   receiverId,
@@ -3316,8 +3430,40 @@ export async function checkFollowRequestStatus({
   try {
     await connectToDB();
 
+    const memberFound = await MemberModel.findOne({ user: senderId });
+
+    if (!memberFound)
+      return {
+        success: false,
+        requestSent: false,
+        message: "Sender not found",
+      };
+
+    const activeProfileId = memberFound.profiles[memberFound.activeProfile];
+
+    const profileInfo = await ProfileModel.findOne({ _id: activeProfileId });
+
+    if (!profileInfo) {
+      return {
+        success: false,
+        requestSent: false,
+        message: "Profile not found",
+      };
+    }
+
+    // const followingStatus = profileInfo?.following
+    //   ?.map((id: any) => id.toString())
+    //   .includes(receiverId.toString());
+
+    // if (followingStatus) {
+    //   return {
+    //     success: true,
+    //     requestSent: true,
+    //   };
+    // }
+
     const existingRequest = await FollowRequestModel.findOne({
-      sender: senderId,
+      sender: activeProfileId,
       receiver: receiverId,
       status: 0, // Pending status
     });
@@ -3327,6 +3473,59 @@ export async function checkFollowRequestStatus({
       requestSent: !!existingRequest,
     };
   } catch (error) {
+    console.error("Error checking follow request status:", error);
+    return {
+      success: false,
+      requestSent: false,
+      message: "Error checking follow request status",
+    };
+  }
+}
+
+export async function checkFollowStatus({
+  senderId,
+  receiverId,
+}: {
+  senderId: string;
+  receiverId: string;
+}) {
+  try {
+    const memberFound = await MemberModel.findOne({ user: senderId });
+
+    if (!memberFound)
+      return {
+        success: false,
+        requestSent: false,
+        message: "Sender not found",
+      };
+
+    const activeProfileId = memberFound.profiles[memberFound.activeProfile];
+
+    const profileInfo = await ProfileModel.findOne({ _id: activeProfileId });
+
+    if (!profileInfo) {
+      return {
+        success: false,
+        requestSent: false,
+        message: "Profile not found",
+      };
+    }
+
+    const followingStatus = profileInfo?.following
+      ?.map((id: any) => id.toString())
+      .includes(receiverId.toString());
+
+    if (followingStatus) {
+      return {
+        success: true,
+        followStatus: true,
+      };
+    }
+    return {
+      success: true,
+      followStatus: false,
+    };
+  } catch (error: any) {
     console.error("Error checking follow request status:", error);
     return {
       success: false,
@@ -3393,9 +3592,7 @@ export async function getAccountType(authenticatedId: string) {
   try {
     await connectToDB();
 
-    const member = await MemberModel.findOne({ user: authenticatedId }).select(
-      "user accountType"
-    );
+    const member = await MemberModel.findOne({ user: authenticatedId });
 
     if (!member) {
       return {
@@ -3405,10 +3602,16 @@ export async function getAccountType(authenticatedId: string) {
       };
     }
 
+    const activeProfile = member.profiles[member.activeProfile];
+
+    const activeProfileType = await ProfileModel.findOne({
+      _id: activeProfile.toString(),
+    });
+
     return {
       success: true,
       message: "Successfully fetched the account type",
-      accountType: member.accountType,
+      accountType: activeProfileType.accountType,
     };
   } catch (error: any) {
     console.error(`Failed to fetch account type: ${error.message}`);
@@ -3425,10 +3628,22 @@ export async function getFollowRequest(authenticatedId: string) {
   try {
     await connectToDB();
 
+    const memberFound = await MemberModel.findOne({ user: authenticatedId });
+
+    if (!memberFound) {
+      return {
+        success: false,
+        message: "Member is not found",
+        followRequests: [],
+      };
+    }
+
+    const activeProfile = memberFound.profiles[memberFound.activeProfile];
+
     const followRequests = await FollowRequestModel.find({
-      receiver: authenticatedId,
+      receiver: activeProfile,
       status: 0, // pending
-    }).select("sender receiver status createdAt _id");
+    });
 
     if (!followRequests || followRequests.length === 0) {
       return {
@@ -3440,8 +3655,8 @@ export async function getFollowRequest(authenticatedId: string) {
 
     const populatedFollowRequests = await Promise.all(
       followRequests.map(async (request) => {
-        const senderMember = await MemberModel.findOne({
-          user: request.sender,
+        const senderMember = await ProfileModel.findOne({
+          _id: request.sender,
         }).select("accountname image");
 
         const imgUrl = await Image.findOne({
@@ -3501,8 +3716,14 @@ export async function acceptFollowRequest(followRequestId: string) {
       "updatedFollowRequest receiver" + updatedFollowRequest.receiver
     );
 
-    const followFromAuthUser = await MemberModel.findOneAndUpdate(
-      { user: updatedFollowRequest.sender },
+    // const followFromAuthUser = await MemberModel.findOneAndUpdate(
+    //   { user: updatedFollowRequest.sender },
+    //   { $addToSet: { following: updatedFollowRequest.receiver } },
+    //   { new: true }
+    // );
+
+    const followFromAuthUser = await ProfileModel.findOneAndUpdate(
+      { _id: updatedFollowRequest.sender },
       { $addToSet: { following: updatedFollowRequest.receiver } },
       { new: true }
     );
@@ -3514,8 +3735,24 @@ export async function acceptFollowRequest(followRequestId: string) {
       };
     }
 
-    const followingFromOtherUser = await MemberModel.findOneAndUpdate(
-      { user: updatedFollowRequest.receiver },
+    console.log("followFromAuthUser");
+    console.log(followFromAuthUser);
+
+    // const followingFromOtherUser = await MemberModel.findOneAndUpdate(
+    //   { user: updatedFollowRequest.receiver },
+    //   {
+    //     $addToSet: {
+    //       followers: {
+    //         followersId: updatedFollowRequest.sender,
+    //         followedAt: new Date(),
+    //       },
+    //     },
+    //   },
+    //   { new: true }
+    // );
+
+    const followingFromOtherUser = await ProfileModel.findOneAndUpdate(
+      { _id: updatedFollowRequest.receiver },
       {
         $addToSet: {
           followers: {
@@ -3526,6 +3763,9 @@ export async function acceptFollowRequest(followRequestId: string) {
       },
       { new: true }
     );
+
+    console.log("followingFromOtherUser");
+    console.log(followingFromOtherUser);
 
     if (!followingFromOtherUser) {
       return {
@@ -3972,24 +4212,25 @@ export async function getCurrentUserChatroom(authenticatedId: string) {
   }
 }
 
-// getImage of account
-export async function getImage(userId: string) {
+export async function getImage(profileId: string) {
   try {
     await connectToDB();
 
-    const member = await MemberModel.findOne({ user: userId }).select("image");
+    const profile = await ProfileModel.findOne({ _id: profileId }).select(
+      "image"
+    );
 
-    if (!member) {
+    if (!profile) {
       return {
         success: false,
-        message: "User not found",
+        message: "Profile not found",
       };
     }
 
     let imgUrl = null;
-    if (member && member.image && member.image.length > 0) {
+    if (profile && profile.image && profile.image.length > 0) {
       const imageRecord = await Image.findOne({
-        _id: member?.image,
+        _id: profile?.image,
       }).select("binaryCode");
 
       imgUrl = imageRecord?.binaryCode || null;
@@ -4850,6 +5091,1176 @@ export async function removeUser(
     return {
       success: false,
       message: "An error occurred while removing the user",
+    };
+  }
+}
+
+export async function isProfileAdmin(profileId: string) {
+  try {
+    await connectToDB();
+
+    const currentProfile = await ProfileModel.findOne({ _id: profileId });
+    if (!currentProfile) {
+      return {
+        success: false,
+        message: "Authenticated user profile not found",
+      };
+    }
+
+    if (currentProfile.usertype == "FLEXADMIN") {
+      return {
+        success: true,
+        message: "User is an admin",
+      };
+    } else {
+      return {
+        success: false,
+        message: "User is not an admin",
+      };
+    }
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "Error:" + error,
+    };
+  }
+}
+
+export async function getProfileImage(profileId: string) {
+  try {
+    await connectToDB();
+
+    const currentProfile = await ProfileModel.findOne({ _id: profileId });
+    if (!currentProfile) {
+      return {
+        success: false,
+        message: "Authenticated user profile not found",
+      };
+    }
+
+    if (!currentProfile.image) {
+      return {
+        success: true,
+        message: "User doesnot have image",
+      };
+    }
+
+    const userImage = await Image.findOne({ _id: currentProfile.image }).select(
+      "binaryCode"
+    );
+
+    if (!userImage) {
+      return {
+        success: false,
+        message: "Image not found in the database",
+      };
+    }
+
+    return {
+      success: true,
+      imageUrl: userImage.binaryCode,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "Error:" + error,
+    };
+  }
+}
+
+export async function createNewBlog(
+  authenticatedUserId: string,
+  title: string,
+  content: string,
+  imageId: string
+) {
+  try {
+    await connectToDB();
+
+    const currentProfile = await ProfileModel.findOne({
+      _id: authenticatedUserId,
+    });
+    if (!currentProfile) {
+      return {
+        success: false,
+        message: "Authenticated user profile not found",
+      };
+    }
+
+    const existingBlog = await BlogModel.findOne({ title });
+    if (existingBlog) {
+      return {
+        success: false,
+        message:
+          "A blog with this title already exists. Please choose another title.",
+      };
+    }
+
+    const slug = slugify(title, { lower: true, strict: true });
+
+    const blogResponse = await BlogModel.create({
+      title: title,
+      excerpt: content,
+      slug: slug,
+      image: imageId,
+      author: authenticatedUserId,
+    });
+
+    return {
+      success: true,
+      message: "Blog created successfully",
+      // blog: blogResponse,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Error while creating blog: ${error.message}`,
+    };
+  }
+}
+
+export async function checkUniqueSlug(blogTitle: string) {
+  try {
+    await connectToDB();
+
+    const slug = slugify(blogTitle, { lower: true, strict: true });
+
+    const existingBlog = await BlogModel.findOne({ slug });
+    if (existingBlog) {
+      return {
+        success: false,
+        message: "Please choose another title.",
+      };
+    }
+
+    return {
+      success: true,
+      message: "Blog slug is unique.",
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "Error happens when checking unique slug.",
+    };
+  }
+}
+
+export async function loadBlogs() {
+  try {
+    await connectToDB();
+
+    const blogResponse = await BlogModel.find({});
+
+    return {
+      success: true,
+      message: "Blogs loaded successfully",
+      blogs: blogResponse,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "Failed to load blogs",
+      error: error.message,
+    };
+  }
+}
+
+export async function getCreatorInfo(profileId: string) {
+  try {
+    await connectToDB();
+
+    const currentProfile = await ProfileModel.findOne({
+      _id: profileId,
+    }).select("image accountname");
+    if (!currentProfile) {
+      return {
+        success: false,
+        message: "Authenticated user profile not found",
+      };
+    }
+
+    const userImage = await Image.findOne({ _id: currentProfile.image }).select(
+      "binaryCode"
+    );
+
+    return {
+      success: true,
+      imageUrl: userImage.binaryCode,
+      accountname: currentProfile.accountname,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "Error:" + error,
+    };
+  }
+}
+
+export async function getBlogBySlug(slug: string) {
+  try {
+    await connectToDB();
+
+    const blogResponse = await BlogModel.findOne({ slug: slug });
+
+    if (!blogResponse) {
+      return {
+        success: false,
+        message: "Blogs not found",
+        blogs: [],
+      };
+    }
+
+    return {
+      success: true,
+      message: "Blogs found!!",
+      blogs: blogResponse,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "Error finding blog.",
+      blogs: [],
+    };
+  }
+}
+
+export async function getBlogById(blogId: string) {
+  try {
+    const blogResponse = await BlogModel.findOne({ _id: blogId });
+
+    if (!blogResponse) {
+      return {
+        success: false,
+        message: "Blogs not found",
+        blogs: [],
+      };
+    }
+
+    return {
+      success: true,
+      message: "Blogs found!!",
+      blogs: blogResponse,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "Error finding blog.",
+      blogs: [],
+    };
+  }
+}
+
+export async function updateBlog(
+  blogId: string,
+  authActiveProfileId: string,
+  updatedData: any
+) {
+  try {
+    await connectToDB();
+
+    const blogResponse = await BlogModel.findById(blogId);
+
+    if (!blogResponse) {
+      return {
+        success: false,
+        message: "Blog not found",
+        blogs: [],
+      };
+    }
+
+    if (blogResponse.author.toString() !== authActiveProfileId) {
+      return {
+        success: false,
+        message: "Unauthorized: You do not have permission to update this blog",
+        blogs: [],
+      };
+    }
+
+    // const updatedBlog = await BlogModel.findByIdAndUpdate(blogId, updatedData, {
+    //   new: true,
+    // });
+
+    if (updatedData.title) {
+      blogResponse.title = updatedData.title;
+      blogResponse.slug = slugify(updatedData.title, {
+        lower: true,
+        strict: true,
+      });
+    }
+    if (updatedData.content) {
+      blogResponse.excerpt = updatedData.content;
+    }
+    if (updatedData.imageId) {
+      blogResponse.image = updatedData.imageId;
+    }
+
+    await blogResponse.save();
+
+    return {
+      success: true,
+      message: "Blogs found!!",
+      blogs: blogResponse,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "Error Updating blog.",
+      blogs: [],
+    };
+  }
+}
+
+export async function isFlexAdmin(authenticatedUserId: string) {
+  try {
+    await connectToDB();
+    const member = await Member.findOne({ user: authenticatedUserId }).select(
+      "activeProfile profiles"
+    );
+
+    const activeProfileIndex = member.activeProfile;
+    const activeProfileId = member.profiles[activeProfileIndex];
+
+    if (!member) {
+      return false;
+    }
+
+    const activeProfile = await ProfileModel.findOne({
+      _id: activeProfileId.toString(),
+    });
+
+    if (!activeProfile) {
+      return false;
+    }
+
+    const isAdmin = activeProfile.usertype === "FLEXADMIN";
+
+    return isAdmin;
+  } catch (error: any) {
+    console.error("Error checking if user is FLEXADMIN:", error);
+    return false;
+  }
+}
+
+export async function deleteBlog(authenticatedUserId: string, blogId: string) {
+  try {
+    await connectToDB();
+
+    const currentProfile = await ProfileModel.findOne({
+      _id: authenticatedUserId,
+    });
+
+    if (!currentProfile) {
+      return {
+        success: false,
+        message: "Authenticated user profile not found",
+      };
+    }
+
+    const isAdmin = currentProfile.usertype === "FLEXADMIN";
+    const blog = await BlogModel.findById(blogId);
+
+    if (!blog) {
+      return {
+        success: false,
+        message: "Blog not found",
+      };
+    }
+
+    if (!isAdmin && blog.author.toString() !== authenticatedUserId) {
+      return {
+        success: false,
+        message:
+          "Unauthorized: You do not have permission to delete this blog.",
+      };
+    }
+
+    await BlogModel.findByIdAndDelete(blogId);
+
+    return {
+      success: true,
+      message: "Blog deleted successfully",
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Error deleting blog: ${error.message}`,
+    };
+  }
+}
+
+export async function submitBlogComment(
+  authenticatedUserId: string,
+  blogId: string,
+  comment: string,
+  imageId: string | null
+) {
+  try {
+    await connectToDB();
+
+    const profile = await ProfileModel.findOne({ _id: authenticatedUserId });
+
+    if (!profile) {
+      return { success: false, message: "User not found" };
+    }
+
+    const existingBlog = await BlogModel.findOne({ _id: blogId });
+    if (!existingBlog) {
+      return {
+        success: false,
+        message: "Blog not found.",
+      };
+    }
+
+    const newComment = new BlogCommentModel({
+      content: comment,
+      blog: blogId,
+      image: imageId ? new mongoose.Types.ObjectId(imageId) : null,
+      author: authenticatedUserId,
+      replyCount: 0,
+    });
+
+    await newComment.save();
+
+    return {
+      success: true,
+      message: "Comment added successfully.",
+      comment: newComment,
+    };
+  } catch (error: any) {
+    console.error("Error submitting comment:", error);
+    return {
+      success: false,
+      message: "An error occurred while submitting the comment.",
+    };
+  }
+}
+
+export async function loadBlogComment(blogId: string) {
+  try {
+    await connectToDB();
+
+    const allBlogComments = await BlogCommentModel.find({
+      blog: blogId,
+    })
+      .populate({
+        path: "author",
+        select: "accountname image _id",
+      })
+      .populate({
+        path: "likes.user",
+        select: "accountname image _id",
+      });
+
+    return {
+      success: true,
+      comments: allBlogComments.map((comment) => ({
+        _id: comment._id,
+        content: comment.content,
+        blog: comment.blog,
+        image: comment.image,
+        author: {
+          accountname: comment.author.accountname,
+          image: comment.author.image,
+          authorId: comment.author._id.toString(),
+        },
+        likes: comment.likes.map((like: any) => ({
+          user: like.user ? like.user._id.toString() : null,
+          likedAt: like.likedAt,
+        })),
+        created_at: comment.createdAt,
+        replyCount: comment.replyCount ? comment.replyCount : 0,
+      })),
+    };
+  } catch (error: any) {
+    console.error("Error loading blog comments:", error);
+    return { success: false, message: "Failed to load comments." };
+  }
+}
+
+export async function likeBlogComment(
+  blogCommentId: string,
+  likeProfileId: string
+) {
+  try {
+    await connectToDB();
+
+    const profile = await ProfileModel.findOne({ _id: likeProfileId });
+
+    if (!profile) {
+      return {
+        success: false,
+        message: "Profile not found",
+      };
+    }
+
+    const blogComment = await BlogCommentModel.findOne({ _id: blogCommentId });
+
+    if (!blogComment) {
+      return {
+        success: false,
+        message: "Blog Comment not found",
+      };
+    }
+
+    const hasLiked = blogComment.likes.some(
+      (like: any) => like.user.toString() === likeProfileId
+    );
+
+    if (hasLiked) {
+      return {
+        success: false,
+        message: "You have already liked this comment.",
+      };
+    }
+
+    blogComment.likes.push({
+      user: likeProfileId,
+      likedAt: new Date(),
+    });
+
+    await blogComment.save();
+
+    return {
+      success: true,
+      message: "Comment liked successfully",
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "Error liking the comment.",
+    };
+  }
+}
+
+export async function unlikeBlogComment(
+  blogCommentId: string,
+  unlikeProfileId: string
+) {
+  try {
+    await connectToDB();
+
+    const profile = await ProfileModel.findOne({ _id: unlikeProfileId });
+
+    if (!profile) {
+      return {
+        success: false,
+        message: "Profile not found",
+      };
+    }
+
+    const blogComment = await BlogCommentModel.findOne({ _id: blogCommentId });
+
+    if (!blogComment) {
+      return {
+        success: false,
+        message: "Blog Comment not found",
+      };
+    }
+
+    const updatedComment = await BlogCommentModel.findByIdAndUpdate(
+      blogCommentId,
+      { $pull: { likes: { user: unlikeProfileId } } },
+      { new: true }
+    );
+
+    return {
+      success: true,
+      message: "Comment unliked successfully",
+      updatedLikes: updatedComment.likes.length,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: "Error unliking the comment.",
+    };
+  }
+}
+
+export async function deleteBlogComment(
+  profileId: string,
+  blogCommentId: string
+) {
+  try {
+    await connectToDB();
+
+    const profile = await ProfileModel.findOne({ _id: profileId });
+
+    if (!profile) {
+      return {
+        success: false,
+        message: "Profile not found",
+      };
+    }
+
+    // const isAdmin = profile.usertype == "FLEXADMIN";
+
+    // if (!isAdmin) {
+    //   return {
+    //     success: false,
+    //     message: "Unauthorized: You do not have permission to delete this blog",
+    //   };
+    // }
+
+    const blogComment = await BlogCommentModel.findOne({ _id: blogCommentId });
+
+    if (!blogComment) {
+      return {
+        success: false,
+        message: "Blog Comment not found",
+      };
+    }
+
+    await BlogCommentModel.deleteOne({ _id: blogCommentId });
+
+    return {
+      success: true,
+      message: "Blog comment deleted successfully",
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "An error occurred while trying to delete the blog comment",
+    };
+  }
+}
+
+export async function getProfileName(profileId: string) {
+  try {
+    await connectToDB();
+
+    const profile = await ProfileModel.findOne({ _id: profileId });
+
+    if (!profile) {
+      return {
+        success: false,
+        message: "Profile not found",
+      };
+    }
+
+    return {
+      success: true,
+      message: "Accountname retrieved successfully",
+      accountname: profile.accountname,
+    };
+  } catch (error: any) {
+    console.error("Error fetching accountname:", error);
+    return {
+      success: false,
+      message: error.message || "An error occurred",
+      accountname: "",
+    };
+  }
+}
+
+export async function submitBlogCommentReply({
+  content,
+  commentId,
+  authenticatedUserId,
+  blogId,
+  imageId,
+}: {
+  content: string;
+  commentId: string;
+  authenticatedUserId: string;
+  blogId: string;
+  imageId: string | null;
+}) {
+  try {
+    await connectToDB();
+
+    console.log("server");
+    console.log("imageid", imageId);
+
+    const profile = await ProfileModel.findById(authenticatedUserId);
+
+    if (!profile) {
+      return { success: false, message: "User not found" };
+    }
+
+    const blog = await BlogModel.findById(blogId);
+
+    if (!blog) {
+      return { success: false, message: "Blog not found" };
+    }
+
+    const comment = await BlogCommentModel.findById(commentId);
+
+    if (!comment) {
+      return { success: false, message: "Comment not found" };
+    }
+
+    const newReply = new BlogCommentReplyModel({
+      content,
+      comment: commentId,
+      author: authenticatedUserId,
+      blog: blogId,
+      image: imageId ? new mongoose.Types.ObjectId(imageId) : null,
+    });
+
+    await newReply.save();
+    comment.replyCount += 1;
+
+    await comment.save();
+
+    return {
+      success: true,
+      message: "Reply successfully!",
+      reply: newReply,
+    };
+  } catch (error) {
+    console.error("Error submitting reply:", error);
+    return {
+      success: false,
+      message: "An error occurred while submitting the reply.",
+    };
+  }
+}
+
+export async function loadBlogCommentReply(commentId: string) {
+  try {
+    await connectToDB();
+
+    const replies = await BlogCommentReplyModel.find({
+      comment: commentId,
+    }).populate("author", "accountname image _id");
+
+    if (!replies.length) {
+      return {
+        success: false,
+        message: "No replies found for this blog.",
+        replies: [],
+      };
+    }
+
+    return {
+      success: true,
+      message: "Replies loaded successfully",
+      replies: replies.map((reply) => ({
+        _id: reply._id,
+        content: reply.content,
+        comment: reply.comment,
+        blog: reply.blog,
+        image: reply.image,
+        author: {
+          accountname: reply.author.accountname,
+          image: reply.author.image,
+          authorId: reply.author._id.toString(),
+        },
+        likes: reply.likes.map((reply: any) => ({
+          user: reply.user ? reply.user._id.toString() : null,
+          likedAt: reply.likedAt,
+        })),
+        createdAt: reply.createdAt,
+      })),
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "An error occurred while loading the replies.",
+      replies: [],
+    };
+  }
+}
+
+export async function likeBlogCommentReply(
+  blogCommentReplyId: string,
+  likeProfileId: string
+) {
+  try {
+    await connectToDB();
+
+    const profile = await ProfileModel.findOne({ _id: likeProfileId });
+
+    if (!profile) {
+      return {
+        success: false,
+        message: "Profile not found",
+      };
+    }
+
+    const blogCommentReply = await BlogCommentReplyModel.findOne({
+      _id: blogCommentReplyId,
+    });
+
+    if (!blogCommentReply) {
+      return {
+        success: false,
+        message: "Blog Comment Reply not found",
+      };
+    }
+
+    const hasLiked = blogCommentReply.likes.some(
+      (like: any) => like.user.toString() === likeProfileId
+    );
+
+    if (hasLiked) {
+      return {
+        success: false,
+        message: "You have already liked this comment.",
+      };
+    }
+
+    blogCommentReply.likes.push({
+      user: likeProfileId,
+      likedAt: new Date(),
+    });
+
+    await blogCommentReply.save();
+
+    return {
+      success: true,
+      message: "Comment Reply liked successfully",
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "Error liking the comment.",
+    };
+  }
+}
+
+export async function unlikeBlogCommentReply(
+  blogCommentReplyId: string,
+  unlikeProfileId: string
+) {
+  try {
+    await connectToDB();
+
+    const profile = await ProfileModel.findOne({ _id: unlikeProfileId });
+
+    if (!profile) {
+      return {
+        success: false,
+        message: "Profile not found",
+      };
+    }
+
+    const blogComment = await BlogCommentReplyModel.findOne({
+      _id: blogCommentReplyId,
+    });
+
+    if (!blogComment) {
+      return {
+        success: false,
+        message: "Blog Comment Reply not found",
+      };
+    }
+
+    const updatedComment = await BlogCommentReplyModel.findByIdAndUpdate(
+      blogCommentReplyId,
+      { $pull: { likes: { user: unlikeProfileId } } },
+      { new: true }
+    );
+
+    return {
+      success: true,
+      message: "Comment reply unliked successfully",
+      updatedLikes: updatedComment.likes.length,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "Error unliking the comment.",
+    };
+  }
+}
+
+export async function deleteBlogCommentReplies(
+  profileId: string,
+  blogCommentReplyId: string
+) {
+  try {
+    await connectToDB();
+
+    const profile = await ProfileModel.findOne({ _id: profileId });
+
+    if (!profile) {
+      return {
+        success: false,
+        message: "Profile not found",
+      };
+    }
+
+    const blogCommentReply = await BlogCommentReplyModel.findOne({
+      _id: blogCommentReplyId,
+    });
+
+    if (!blogCommentReply) {
+      return {
+        success: false,
+        message: "Blog Comment Reply not found",
+      };
+    }
+
+    await BlogCommentReplyModel.deleteOne({ _id: blogCommentReply });
+
+    return {
+      success: true,
+      message: "Blog comment Reply deleted successfully",
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message:
+        "An error occurred while trying to delete the blog comment reply",
+    };
+  }
+}
+
+// to invite user to write blog
+export async function getBlogWriterList(currentProfileId: string) {
+  try {
+    await connectToDB();
+
+    const profile = await ProfileModel.findOne({ _id: currentProfileId });
+
+    if (!profile) {
+      return {
+        success: false,
+        message: "Profile not found",
+        profiles: [],
+      };
+    }
+
+    const isAdmin = profile.usertype == "FLEXADMIN";
+
+    if (!isAdmin) {
+      return {
+        success: false,
+        message: "Unauthorized: You do not have permission to do so.",
+        profiles: [],
+      };
+    }
+
+    const profileList = await ProfileModel.find({
+      _id: { $ne: currentProfileId },
+    }).select("accountname email _id image");
+
+    // to filter out the profiles that alraedy sent request
+    const filteredProfiles = [];
+    for (const p of profileList) {
+      const existingInvitation = await BlogInvitationModel.findOne({
+        invitee: p._id,
+      });
+
+      if (!existingInvitation) {
+        filteredProfiles.push(p);
+      }
+    }
+
+    return {
+      success: true,
+      message: "Profile List.",
+      // profiles: profileList,
+      profiles: filteredProfiles,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: "An error occurred while fetching profile list.",
+      profiles: [],
+    };
+  }
+}
+
+export async function sendCreatorInvitation(
+  currentProfileId: string,
+  inviteId: string
+) {
+  try {
+    const profile = await ProfileModel.findById(currentProfileId);
+
+    if (!profile) {
+      return {
+        success: false,
+        message: "Profile not found",
+      };
+    }
+
+    const inviteProfile = await ProfileModel.findById(inviteId);
+
+    if (!inviteProfile) {
+      return {
+        success: false,
+        message: "Invitor Profile not found",
+      };
+    }
+
+    const isInvitationSent = await BlogInvitationModel.findOne({
+      invitee: inviteId,
+    });
+
+    if (isInvitationSent) {
+      return {
+        success: false,
+        message: "Invitation already sent to this user",
+      };
+    }
+
+    const newInvitation = new BlogInvitationModel({
+      inviter: currentProfileId,
+      invitee: inviteId,
+      status: "Pending",
+    });
+
+    await newInvitation.save();
+
+    return {
+      success: true,
+      message: "Invitation sent successfully",
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "An error occurred while sending the invitation",
+    };
+  }
+}
+
+interface invitationResponse {
+  _id: string;
+  inviter: { _id: string; accountname: string; image: string };
+  invitor: string;
+  status: string;
+  acceptedAt: Date;
+  declinedAt: Date;
+  sentAt: Date;
+}
+
+export async function checkInvitationExist(targetProfileId: string): Promise<{
+  success: boolean;
+  message: string;
+  invite?: invitationResponse;
+}> {
+  try {
+    const profile = await ProfileModel.findById(targetProfileId);
+
+    if (!profile) {
+      return {
+        success: false,
+        message: "Profile not found",
+      };
+    }
+
+    const existingInvitation = await BlogInvitationModel.findOne({
+      invitee: targetProfileId,
+      status: "Pending",
+    })
+      .populate("inviter", "accountname image _id")
+      .lean();
+
+    if (existingInvitation) {
+      return {
+        success: true,
+        message: "You have an invitation.",
+        invite: existingInvitation as invitationResponse,
+      };
+    }
+
+    return {
+      success: false,
+      message: "No existing invitation found.",
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "An error occurred while checking the invitation.",
+    };
+  }
+}
+
+export async function acceptInvitation(invitationId: string) {
+  try {
+    await connectToDB();
+
+    const invitation = await BlogInvitationModel.findOne({
+      _id: invitationId,
+      status: "Pending",
+    });
+
+    if (!invitation) {
+      return {
+        success: false,
+        message: "Invitation not found or already accepted/declined.",
+      };
+    }
+
+    invitation.status = "Accepted";
+    invitation.acceptedAt = new Date();
+
+    // Save the updated invitation
+    await invitation.save();
+
+    return {
+      success: true,
+      message: "Invitation accepted successfully.",
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "An error occurred while accepting the invitation.",
+    };
+  }
+}
+
+export async function declineInvitation(invitationId: string) {
+  try {
+    await connectToDB();
+
+    const invitation = await BlogInvitationModel.findOne({
+      _id: invitationId,
+      status: "Pending",
+    });
+
+    if (!invitation) {
+      return {
+        success: false,
+        message: "Invitation not found or already accepted/declined.",
+      };
+    }
+
+    invitation.status = "Declined";
+    invitation.declinedAt = new Date();
+
+    await invitation.save();
+
+    return {
+      success: true,
+      message: "Invitation declined successfully.",
+    };
+  } catch (error: any) {
+    console.error("Error declining invitation:", error);
+    return {
+      success: false,
+      message: "An error occurred while declining the invitation.",
+    };
+  }
+}
+
+export async function checkIsCreator(profileId: string) {
+  try {
+    await connectToDB();
+
+    const existingInvitation = await BlogInvitationModel.findOne({
+      invitee: profileId,
+      status: "Accepted",
+    });
+
+    if (existingInvitation) {
+      return {
+        success: true,
+        message: "Yes, the user is a creator",
+      };
+    }
+
+    return {
+      success: false,
+      message: "No, the user is not a creator",
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "Checking creator has some error.",
     };
   }
 }
