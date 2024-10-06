@@ -17,7 +17,7 @@ function IconPlaceholder(props: Props) {
     >
       <Sparkle 
         size={40}
-        className="text-muted-foreground"
+        className="dark:text-black text-stone-800"
       />
     </div>
   )

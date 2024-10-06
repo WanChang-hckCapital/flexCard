@@ -11,9 +11,10 @@ import { Loader2 } from "lucide-react";
 
 interface Props {
     authActiveProfileId: string;
+    dict: any;
 }
 
-function CloseFriends({ authActiveProfileId }: Props) {
+function CloseFriends({ authActiveProfileId, dict }: Props) {
     const [followers, setFollowers] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [loading, setLoading] = useState(true);
@@ -63,18 +64,18 @@ function CloseFriends({ authActiveProfileId }: Props) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Close Friends</CardTitle>
+                <CardTitle>{dict.userSettings.closeFriends.title}</CardTitle>
             </CardHeader>
             <CardContent>
                 {loading ? (
                     <div className="flex justify-center items-center py-6">
-                        <Loader2 className="animate-spin h-8 w-8 text-light-2" />
+                        <Loader2 className="animate-spin h-8 w-8 dark:text-light-2 text-slate-700" />
                     </div>
                 ) : (
                     <>
                         <div className="mb-4">
                             <Input
-                                className="bg-black text-light-2"
+                                className="dark:bg-black dark:text-light-2"
                                 placeholder="Search"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -91,7 +92,7 @@ function CloseFriends({ authActiveProfileId }: Props) {
                                             height={24}
                                             className="rounded-full h-8 w-8" />
                                         <div>
-                                            <p className="text-light-2">{follower.accountname}</p>
+                                            <p className="dark:text-light-2 text-slate-700">{follower.accountname}</p>
                                         </div>
                                     </div>
                                     <Checkbox

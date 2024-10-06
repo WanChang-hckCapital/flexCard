@@ -31,9 +31,8 @@ function CardEditorSidebar() {
         <SheetContent
           showX={false}
           side="right"
-          style={{ backgroundColor: 'black' }}
           className={clsx(
-            'mt-[97px] z-[40] shadow-none p-0 bg-background h-full transition-all overflow-hidden ',
+            'mt-[97px] z-[40] shadow-none p-0 dark:bg-black bg-stone-400 h-full transition-all overflow-hidden ',
             { hidden: state.editor.previewMode }
           )}
         >
@@ -58,8 +57,8 @@ function CardEditorSidebar() {
               ) : (
                 <React.Fragment>
                   <SheetHeader className="text-left p-4">
-                    <SheetTitle><b>COMPONENTS</b></SheetTitle>
-                    <SheetDescription>
+                    <SheetTitle className='dark:text-black text-grey-600'><b>COMPONENTS</b></SheetTitle>
+                    <SheetDescription className='dark:text-black text-grey-600'>
                       You can drag and drop components on the canvas.
                     </SheetDescription>
                   </SheetHeader>

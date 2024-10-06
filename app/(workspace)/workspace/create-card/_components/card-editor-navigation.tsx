@@ -252,7 +252,7 @@ function CardEditorNavigation({ cardDetails, authActiveProfileId }: Props) {
     <TooltipProvider>
       <nav
         className={clsx(
-          'border-b-[1px] flex items-center justify-between p-6 gap-2 transition-all',
+          'border-b-[1px] flex items-center justify-between p-6 gap-2 transition-all bg-stone-400 dark:bg-black',
           { '!h-0 !p-0 !overflow-hidden': state.editor.previewMode }
         )}
       >
@@ -288,7 +288,7 @@ function CardEditorNavigation({ cardDetails, authActiveProfileId }: Props) {
                 <TooltipTrigger>
                   <TabsTrigger
                     value="Desktop"
-                    className="data-[state=active]:bg-muted w-10 h-10 p-0"
+                    className="dark:data-[state=active]:bg-muted data-[state=active]:bg-stone-700 w-10 h-10 p-0"
                   >
                     <Laptop />
                   </TabsTrigger>
@@ -301,7 +301,7 @@ function CardEditorNavigation({ cardDetails, authActiveProfileId }: Props) {
                 <TooltipTrigger>
                   <TabsTrigger
                     value="Tablet"
-                    className="w-10 h-10 p-0 data-[state=active]:bg-muted"
+                    className="w-10 h-10 p-0 dark:data-[state=active]:bg-muted data-[state=active]:bg-stone-700"
                   >
                     <Tablet />
                   </TabsTrigger>
@@ -314,7 +314,7 @@ function CardEditorNavigation({ cardDetails, authActiveProfileId }: Props) {
                 <TooltipTrigger>
                   <TabsTrigger
                     value="Mobile"
-                    className="w-10 h-10 p-0 data-[state=active]:bg-muted"
+                    className="w-10 h-10 p-0 dark:data-[state=active]:bg-muted data-[state=active]:bg-stone-700"
                   >
                     <Smartphone />
                   </TabsTrigger>
@@ -330,7 +330,7 @@ function CardEditorNavigation({ cardDetails, authActiveProfileId }: Props) {
           <Button
             variant={'ghost'}
             size={'icon'}
-            className="hover:bg-slate-800"
+            className="dark:hover:bg-slate-800 hover:bg-stone-700 hover:text-white"
             onClick={handlePreviewClick}
           >
             <EyeIcon />
@@ -340,7 +340,7 @@ function CardEditorNavigation({ cardDetails, authActiveProfileId }: Props) {
             onClick={handleUndo}
             variant={'ghost'}
             size={'icon'}
-            className="hover:bg-slate-800"
+            className="dark:hover:bg-slate-800 hover:bg-stone-700 hover:text-white"
           >
             <Undo2 />
           </Button>
@@ -351,7 +351,7 @@ function CardEditorNavigation({ cardDetails, authActiveProfileId }: Props) {
             onClick={handleRedo}
             variant={'ghost'}
             size={'icon'}
-            className="hover:bg-slate-800 mr-4"
+            className="dark:hover:bg-slate-800 hover:bg-stone-700 hover:text-white mr-4"
           >
             <Redo2 />
           </Button>
@@ -360,7 +360,7 @@ function CardEditorNavigation({ cardDetails, authActiveProfileId }: Props) {
               Last updated: {cardDetails.updatedAt.toLocaleDateString()}
             </span>
           </div>
-          <Button onClick={handleOnSave}>Save</Button>
+          <Button variant="purple" onClick={handleOnSave}>Save</Button>
         </aside>
       </nav>
     </TooltipProvider>

@@ -18,7 +18,7 @@ function BubblePlaceholder(props: Props) {
       {/* <div className="border-dashed border-[1px] h-full rounded-sm bg-muted border-muted-foreground/50 w-full" /> */}
       <RectangleVertical 
         size={40}
-        className="text-muted-foreground"
+        className="dark:text-black text-stone-800"
       />
       {/* <Columns2 /> */}
     </div>

@@ -4,7 +4,7 @@ import { useState, useEffect, SetStateAction } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import MemberProfile from "@/components/forms/member-profile";
 import { getFollowers } from "@/lib/actions/admin.actions";
-import { Ban, Bell, BellOff, Lock, Star, User2, UsersRound } from "lucide-react";
+import { Ban, Bell, BellOff, Lock, Palette, Star, User2, UsersRound } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { setActiveProfile, updateAccountType } from "@/lib/actions/user.actions";
 import { toast } from "sonner";
@@ -15,15 +15,18 @@ import ProfileList from "@/components/root-settings/profile-list";
 import AddProfileForm from "@/components/root-settings/add-profile-form";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import ThemeToggle from "@/components/theme-toogle";
+import LanguageSwitcher from "@/components/language-switcher";
 
 interface Props {
     authUserId: string;
     authActiveProfileId: string;
     profileData: any;
     profiles: any[];
+    dict: any;
 }
 
-function RootSetting({ authUserId, authActiveProfileId, profileData, profiles }: Props) {
+function RootSetting({ authUserId, authActiveProfileId, profileData, profiles, dict }: Props) {
     const [activeSection, setActiveSection] = useState("edit-profile");
     const [lineOAFollowers, setLineOAFollowers] = useState<string[]>([]);
     const [isPrivate, setIsPrivate] = useState(profileData.accountType === "PRIVATE");
@@ -67,106 +70,125 @@ function RootSetting({ authUserId, authActiveProfileId, profileData, profiles }:
     }, []);
 
     return (
-        <div className="flex min-h-screen bg-neutral-900 w-full">
-            <aside className="w-64 bg-black p-6">
-                <div className="text-light-2 mb-10">
-                    <h2 className="text-xl font-semibold">Settings</h2>
+        <div className="flex min-h-screen dark:bg-neutral-900 w-full">
+            <aside className="w-64 dark:bg-black border-r-2 p-6">
+                <div className="dark:text-light-2 mb-10">
+                    <h2 className="text-xl font-semibold">{dict.userSettingsLeftBar.title}</h2>
                 </div>
                 <nav className="space-y-4">
-                    <p className="text-slate-400 text-[12px]">Account</p>
+                    <p className="dark:text-slate-400 text-[12px]">{dict.userSettingsLeftBar.themeSection}</p>
+                    <a
+                        onClick={() => handleNavClick("theme")}
+                        className={`flex p-3 rounded-lg items-center cursor-pointer ${activeSection === "theme" ? "dark:bg-light-3 dark:text-primary bg-stone-400 text-white" : ""
+                            }`}
+                    >
+                        <Palette className="mr-2 w-5 h-5" />
+                        {dict.userSettingsLeftBar.theme}
+                    </a>
+                    <p className="dark:text-slate-400 text-[12px]">{dict.userSettingsLeftBar.accountSection}</p>
                     <a
                         onClick={() => handleNavClick("edit-profile")}
-                        className={`flex p-3 rounded-lg items-center cursor-pointer ${activeSection === "edit-profile" ? "bg-light-3 text-primary" : ""
+                        className={`flex p-3 rounded-lg items-center cursor-pointer ${activeSection === "edit-profile" ? "dark:bg-light-3 dark:text-primary bg-stone-400 text-white" : ""
                             }`}
                     >
                         <User2 className="mr-2 w-5 h-5" />
-                        Edit profile
+                        {dict.userSettingsLeftBar.profile}
                     </a>
                     <a
                         onClick={() => handleNavClick("manage-account")}
-                        className={`flex p-3 rounded-lg items-center cursor-pointer ${activeSection === "manage-account" ? "bg-light-3 text-primary" : ""
+                        className={`flex p-3 rounded-lg items-center cursor-pointer ${activeSection === "manage-account" ? "dark:bg-light-3 dark:text-primary bg-stone-400 text-white" : ""
                             }`}
                     >
                         <UsersRound className="mr-2 w-5 h-5" />
-                        Manage account
+                        {dict.userSettingsLeftBar.account}
                     </a>
                     <a
                         onClick={() => handleNavClick("notifications")}
-                        className={`flex p-3 rounded-lg items-center cursor-pointer ${activeSection === "notifications" ? "bg-light-3 text-primary" : ""
+                        className={`flex p-3 rounded-lg items-center cursor-pointer ${activeSection === "notifications" ? "dark:bg-light-3 dark:text-primary bg-stone-400 text-white" : ""
                             }`}
                     >
                         <Bell className="mr-2 w-5 h-5" />
-                        Notifications
+                        {dict.userSettingsLeftBar.notification}
                     </a>
-                    <p className="text-slate-400 text-[12px] mt-6">Who can view your bubble</p>
+                    <p className="dark:text-slate-400 text-[12px] mt-6">{dict.userSettingsLeftBar.privacySection}</p>
                     <a
                         onClick={() => handleNavClick("accounts-privacy")}
-                        className={`flex p-3 rounded-lg items-center cursor-pointer ${activeSection === "accounts-privacy" ? "bg-light-3 text-primary" : ""
+                        className={`flex p-3 rounded-lg items-center cursor-pointer ${activeSection === "accounts-privacy" ? "dark:bg-light-3 dark:text-primary bg-stone-400 text-white" : ""
                             }`}
                     >
                         <Lock className="mr-2 w-5 h-5" />
-                        Accounts privacy
+                        {dict.userSettingsLeftBar.privacy}
                     </a>
                     <a
                         onClick={() => handleNavClick("close-friends")}
-                        className={`flex p-3 rounded-lg items-center cursor-pointer ${activeSection === "close-friends" ? "bg-light-3 text-primary" : ""
+                        className={`flex p-3 rounded-lg items-center cursor-pointer ${activeSection === "close-friends" ? "dark:bg-light-3 dark:text-primary bg-stone-400 text-white" : ""
                             }`}
                     >
                         <Star className="mr-2 w-5 h-5" />
-                        Close friends
+                        {dict.userSettingsLeftBar.closeFriends}
                     </a>
                     <a
                         onClick={() => handleNavClick("blocked")}
-                        className={`flex p-3 rounded-lg items-center cursor-pointer ${activeSection === "blocked" ? "bg-light-3 text-primary" : ""
+                        className={`flex p-3 rounded-lg items-center cursor-pointer ${activeSection === "blocked" ? "dark:bg-light-3 dark:text-primary bg-stone-400 text-white" : ""
                             }`}
                     >
                         <Ban className="mr-2 w-5 h-5" />
-                        Blocked
+                        {dict.userSettingsLeftBar.blockedUsers}
                     </a>
-                    <p className="text-slate-400 text-[12px] mt-6">Who&apos;s bubble you wanted to view</p>
+                    <p className="dark:text-slate-400 text-[12px] mt-6">{dict.userSettingsLeftBar.notificationSection}</p>
                     <a
                         onClick={() => handleNavClick("muted-accounts")}
-                        className={`flex p-3 rounded-lg items-center cursor-pointer ${activeSection === "muted-accounts" ? "bg-light-3 text-primary" : ""
+                        className={`flex p-3 rounded-lg items-center cursor-pointer ${activeSection === "muted-accounts" ? "dark:bg-light-3 dark:text-primary bg-stone-400 text-white" : ""
                             }`}
                     >
                         <BellOff className="mr-2 w-5 h-5" />
-                        Muted Friends
+                        {dict.userSettingsLeftBar.mutedUsers}
                     </a>
                 </nav>
             </aside>
 
             <main className="py-6 w-[60%] mx-auto">
                 <div className="grid gap-6">
+                    {activeSection === "theme" && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>{dict.userSettings.theme.title}</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <ThemeToggle dict={dict} />
+                                {/* <LanguageSwitcher /> */}
+                            </CardContent>
+                        </Card>
+                    )}
                     {activeSection === "edit-profile" && (
                         <Card>
                             <CardHeader>
-                                <CardTitle>Edit Profile</CardTitle>
+                                <CardTitle>{dict.userSettings.profile.title}</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <MemberProfile profile={profileData} btnTitle="Continue" />
+                                <MemberProfile profile={profileData} btnTitle={dict.userSettings.profile.btnContinue} dict={dict} />
                             </CardContent>
                         </Card>
                     )}
                     {activeSection === "manage-account" && (
                         <Card>
                             <CardHeader className="flex flex-row justify-between items-center">
-                                <CardTitle>Manage Account</CardTitle>
+                                <CardTitle>{dict.userSettings.account.title}</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <ProfileList profiles={profiles} authActiveProfileId={authActiveProfileId} authUserId={authUserId} />
+                                <ProfileList profiles={profiles} authActiveProfileId={authActiveProfileId} authUserId={authUserId} dict={dict} />
                             </CardContent>
-
                         </Card>
                     )}
                     {activeSection === "notifications" && (
                         <Card>
                             <CardHeader>
-                                <CardTitle>Notifications</CardTitle>
+                                <CardTitle>{dict.userSettings.notification.title}</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div>
-                                    <h1>Notifications Settings</h1>
-                                    <p>Manage your notification preferences.</p>
+                                    <h1>{dict.userSettings.notification.subTitle}</h1>
+                                    <p>{dict.userSettings.notification.description}</p>
                                 </div>
                             </CardContent>
                         </Card>
@@ -174,36 +196,35 @@ function RootSetting({ authUserId, authActiveProfileId, profileData, profiles }:
                     {activeSection === "accounts-privacy" && (
                         <Card>
                             <CardHeader>
-                                <CardTitle>Accounts Privacy</CardTitle>
+                                <CardTitle>{dict.userSettings.privacy.title}</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div>
-
                                     <div className="mt-4 mb-6 flex items-center justify-between">
-                                        <h1>{isPrivate ? "Private Account" : "Public Account"}</h1>
+                                        <h1>{isPrivate ? dict.userSettings.privacy.private : dict.userSettings.privacy.public}</h1>
                                         <div className="items-center">
                                             <Switch checked={isPrivate} onCheckedChange={handleTogglePrivacy} />
                                         </div>
                                     </div>
-                                    <p className="text-slate-300 text-[12px]">
-                                        When your account is public, your profile and bubbles can be seen by anyone, on or off flexCard, even if they don&apos;t have an flexCard account.
+                                    <p className="dark:text-slate-300 text-[12px]">
+                                        {dict.userSettings.privacy.description}
                                     </p>
                                     <br />
-                                    <p className="text-slate-300 text-[12px]">
-                                        When your account is private, only the followers you approve can see what you share, and your followers and following lists.
+                                    <p className="dark:text-slate-300 text-[12px]">
+                                        {dict.userSettings.privacy.description2}
                                     </p>
                                 </div>
                             </CardContent>
                         </Card>
                     )}
                     {activeSection === "close-friends" && (
-                        <CloseFriends authActiveProfileId={authActiveProfileId} />
+                        <CloseFriends authActiveProfileId={authActiveProfileId} dict={dict} />
                     )}
                     {activeSection === "blocked" && (
-                        <Blocked authActiveProfileId={authActiveProfileId} />
+                        <Blocked authActiveProfileId={authActiveProfileId} dict={dict} />
                     )}
                     {activeSection === "muted-accounts" && (
-                        <MutedAccount authActiveProfileId={authActiveProfileId} />
+                        <MutedAccount authActiveProfileId={authActiveProfileId} dict={dict} />
                     )}
                 </div>
             </main>

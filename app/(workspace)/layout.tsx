@@ -11,6 +11,7 @@ import { fetchMemberImage } from "@/lib/actions/user.actions";
 import Header from "@/components/shared/header";
 import { fetchMember } from "@/lib/actions/admin.actions";
 import Script from "next/script";
+import { ThemeProvider } from "../context/theme-context";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -49,25 +50,27 @@ export default async function WorkspaceLayout({
 
   return (
     <AuthSessionProvider>
-      <html lang="en">
-        {/* <Script src="/opencv.js" strategy="beforeInteractive" />{" "} */}
-        <body
-          className={cn(
-            "min-h-screen flex flex-col bg-dark-1 justify-center text-white font-sans antialiased",
-            fontSans.variable
-          )}
-        >
-          <main className="h-screen overflow-hidden">
-            <section className="flex h-full flex-row">
-              {/* <Header session={session} userInfoImage={userImage} /> */}
-              {/* <LeftSidebar /> */}
-              <div className="z-99" id="modal-root"></div>
-              <div className="w-full">{children}</div>
-            </section>
-          </main>
-          <SonnarToaster position="bottom-left" />
-        </body>
-      </html>
+      <ThemeProvider>
+        <html lang="en">
+          {/* <Script src="/opencv.js" strategy="beforeInteractive" />{" "} */}
+          <body
+            className={cn(
+              "min-h-screen flex flex-col dark:bg-dark-1 justify-center dark:text-white font-sans antialiased",
+              fontSans.variable
+            )}
+          >
+            <main className="h-screen overflow-hidden">
+              <section className="flex h-full flex-row">
+                {/* <Header session={session} userInfoImage={userImage} /> */}
+                {/* <LeftSidebar /> */}
+                <div className="z-99" id="modal-root"></div>
+                <div className="w-full">{children}</div>
+              </section>
+            </main>
+            <SonnarToaster position="bottom-left" />
+          </body>
+        </html>
+      </ThemeProvider>
     </AuthSessionProvider>
   );
 }

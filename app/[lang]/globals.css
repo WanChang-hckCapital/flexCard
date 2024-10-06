@@ -5,7 +5,7 @@
 @layer components {
   /* main */
   .main-container {
-    @apply flex min-h-screen flex-1 flex-col items-center bg-dark-1 px-2 max-sm:pt-0 max-md:pt-3 md:pt-3 lg:pt-16;
+    @apply flex min-h-screen flex-1 flex-col items-center dark:bg-dark-1 max-sm:pt-0 max-md:pt-3 md:pt-3 lg:pt-16;
   }
 
   /* Head Text */
@@ -51,11 +51,11 @@
   }
 
   .searchbar {
-    @apply flex gap-1 rounded-lg bg-slate-800 px-4 w-8/12;
+    @apply flex gap-1 rounded-lg dark:bg-slate-800 bg-slate-200 px-4 w-8/12;
   }
 
   .searchbar_input {
-    @apply border-none bg-slate-800 text-base-regular text-light-4 outline-none !important;
+    @apply border-none dark:bg-slate-800 bg-slate-200 text-base-regular text-light-4 outline-none !important;
   }
 
   .topbar {
@@ -131,7 +131,7 @@
 
 /* Tab */
 .tab {
-  @apply flex min-h-[50px] flex-1 items-center gap-3 bg-dark-2 text-light-2 data-[state=active]:bg-[#0e0e12] data-[state=active]:text-light-2 !important;
+  @apply flex min-h-[50px] flex-1 items-center max-w-min gap-8 dark:text-slate-400 bg-transparent text-slate-400 data-[state=active]:border-t-2 data-[state=active]:border-stone-400 data-[state=active]:text-slate-700 dark:data-[state=active]:text-white !important;
 }
 
 .no-focus {
@@ -148,7 +148,7 @@
 }
 
 .account-form_input {
-  @apply border border-dark-4 bg-dark-3 text-light-1 !important;
+  @apply border dark:border-dark-4 dark:bg-dark-3 dark:text-light-1 text-slate-600 !important;
 }
 
 /* Comment Form */

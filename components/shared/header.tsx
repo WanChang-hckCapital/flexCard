@@ -11,25 +11,28 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { Menu } from "lucide-react";
+import { Heart, Menu, MessageSquare, User } from "lucide-react";
 import { Session } from "next-auth";
 import SignInButton from "../buttons/signin-button";
 import SignOutButton from "../buttons/signout-button";
 import Searchbar from "../Searchbar";
 import { UserImage } from "@/types";
 import { fetchCurrentActiveProfileId } from "@/lib/actions/user.actions";
+import { MdOutlineAddBox } from "react-icons/md";
+import LanguageSwitcher from "../language-switcher";
 
 interface HeaderProps {
   session: Session | null;
   userInfoImage: UserImage | null | undefined;
+  dict: any;
 }
 
-async function Header({ session, userInfoImage }: HeaderProps) {
+async function Header({ session, userInfoImage, dict }: HeaderProps) {
   let authActiveProfileId = "";
   let userId = "";
   let user = null;
 
-  if(session) {
+  if (session) {
     user = session?.user;
     userId = user.id.toString();
 
@@ -52,11 +55,11 @@ async function Header({ session, userInfoImage }: HeaderProps) {
 
   return (
     <header className="fixed w-full z-50">
-      <nav className="topbar shadow-xl">
+      <nav className="topbar shadow-xl dark:text-gray-300 dark:bg-black bg-white">
         {/* logo */}
         <div className="flex">
           <Link href="/">
-            <span className="head-text font-bold">flexCard</span>
+            <span className="head-text font-bold text-gray-800 dark:text-white">flxBubble</span>
           </Link>
         </div>
 
@@ -64,12 +67,9 @@ async function Header({ session, userInfoImage }: HeaderProps) {
 
         <div className="flex items-center gap-4 w-50">
           <Link href="/workspace/create-card">
-            <Image
-              width={24}
-              height={24}
-              className=""
-              src="/assets/new-card-dark.svg"
-              alt="icon create"
+            <MdOutlineAddBox
+              className="text-gray-800 dark:text-white"
+              size={24}
             />
           </Link>
 
@@ -81,37 +81,34 @@ async function Header({ session, userInfoImage }: HeaderProps) {
                     </Link> */}
           {/* <Link href="/workspace/6657da7c793f3b540da23a34"> */}
           <Link href="/workspace/66b332c9339423ac1861e9d8">
-            <Image width={24} height={24}
-              className=""
-              src="/assets/heart.svg"
-              alt="icon heart" />
+            <Heart
+              className="text-gray-800 dark:text-white"
+              size={24}
+            />
           </Link>
 
           <Link href={`/workspace/chatroom/${userId}`}>
-            <Image
-              width={24}
-              height={24}
-              className=""
-              src="/assets/chatroom.svg"
-              alt="icon create"
+            <MessageSquare
+              className="text-gray-800 dark:text-white"
+              size={24}
             />
           </Link>
 
           {/* add more friend page */}
           <Link href="/workspace/add-friend">
-            <Image
-              width={24}
-              height={24}
-              className=""
-              src="/assets/user.svg"
-              alt="icon create"
+            <User
+              className="text-gray-800 dark:text-white"
+              size={24}
             />
           </Link>
           {/* drop down menu*/}
           <DropdownMenu>
             <DropdownMenuTrigger>
               <div className="flex">
-                <Menu />
+                <Menu 
+                  className="text-gray-800 dark:text-white"
+                  size={24}
+                />
                 {/* {
                                     session?.user &&
                                     <p>{session.user.name?.split(' ')[0]}</p>
@@ -122,10 +119,10 @@ async function Header({ session, userInfoImage }: HeaderProps) {
               {session && (
                 <DropdownMenuItem className="justify-center">
                   <Link
-                    className="flex font-bold"
+                    className="flex font-bold text-gray-800 dark:text-white"
                     href={`${session ? "/product" : "api/auth/signin"}`}
                   >
-                    Subscription
+                    {dict.header.subscription}
                   </Link>
                 </DropdownMenuItem>
               )}
@@ -133,7 +130,7 @@ async function Header({ session, userInfoImage }: HeaderProps) {
                 <>
                   <DropdownMenuItem className="justify-center">
                     <Link
-                      className="font-bold"
+                      className="font-bold text-gray-800 dark:text-white"
                       // href={`${session ? '/cards/665124264a34e4d57fcc506e' : 'api/auth/signin'}`} >
                       href={"/cards/6673eab3337c9a8447de531d"}
                     >
@@ -146,7 +143,7 @@ async function Header({ session, userInfoImage }: HeaderProps) {
                 <>
                   <DropdownMenuItem className="justify-center">
                     <Link
-                      className="font-bold"
+                      className="font-bold text-gray-800 dark:text-white"
                       // href={`${session ? '/profile/66511403ce0e911348378718' : 'api/auth/signin'}`} >
                       // href={'/profile/6651901f2dc11fd640957e8a'} >
                       href={"/profile/66b41db4e2c63bb042600381"}
@@ -155,6 +152,9 @@ async function Header({ session, userInfoImage }: HeaderProps) {
                     </Link>
                   </DropdownMenuItem>
                 </>
+              }
+              {
+                <LanguageSwitcher />
               }
             </DropdownMenuContent>
           </DropdownMenu>
@@ -183,11 +183,11 @@ async function Header({ session, userInfoImage }: HeaderProps) {
                   {session && (
                     <DropdownMenuItem className="justify-center">
                       <Link
-                        className="flex font-bold"
+                        className="flex font-bold text-gray-800 dark:text-white"
                         href={`${session ? `/profile/${authActiveProfileId}` : "api/auth/signin"
                           }`}
                       >
-                        My Card
+                        {dict.header.myCard}
                       </Link>
                     </DropdownMenuItem>
                   )}
@@ -195,19 +195,19 @@ async function Header({ session, userInfoImage }: HeaderProps) {
                     <>
                       <DropdownMenuItem className="justify-center">
                         <Link
-                          className="font-bold"
+                          className="font-bold text-gray-800 dark:text-white"
                           href={`${session ? "/settings" : "api/auth/signin"
                             }`}
                         >
-                          Settings
+                          {dict.header.setting}
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem className="justify-center">
                         <Link
-                          className="font-bold"
+                          className="font-bold text-gray-800 dark:text-white"
                           href={`${session ? "/dashboard" : "api/auth/signin"}`}
                         >
-                          Dashboard
+                          {dict.header.dashboard}
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator></DropdownMenuSeparator>
@@ -215,7 +215,7 @@ async function Header({ session, userInfoImage }: HeaderProps) {
                   )}
 
                   <DropdownMenuItem className="flex text-left py-0 w-full">
-                    {session ? <SignOutButton /> : <SignInButton />}
+                    {session ? <SignOutButton dict={dict} /> : <SignInButton dict={dict} />}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

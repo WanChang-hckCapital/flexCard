@@ -121,7 +121,7 @@ const Page = async ({ params }: Props) => {
         />
         <div
           style={{ backgroundImage: "url('../paper-dark.svg')" }}
-          className="h-full flex justify-center"
+          className="h-full flex justify-center dark:bg-background bg-stone-300"
         >
           <CardEditor />
         </div>

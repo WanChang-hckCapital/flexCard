@@ -12,9 +12,10 @@ import { Button } from "@/components/ui/button";
 
 interface Props {
     authActiveProfileId: string;
+    dict: any;
 }
 
-function MutedAccount({ authActiveProfileId }: Props) {
+function MutedAccount({ authActiveProfileId, dict }: Props) {
     const [mutedAccounts, setMutedAccounts] = useState<any[]>([]);
     const [selectedAccount, setSelectedAccount] = useState<any | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
@@ -57,24 +58,24 @@ function MutedAccount({ authActiveProfileId }: Props) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Muted Accounts</CardTitle>
+                <CardTitle>{dict.userSettings.mutedUsers.title}</CardTitle>
             </CardHeader>
             <CardContent>
                 {loading ? (
                     <div className="flex justify-center items-center py-6">
-                        <Loader2 className="animate-spin h-8 w-8 text-light-2" />
+                        <Loader2 className="animate-spin h-8 w-8 dark:text-light-2 text-slate-700" />
                     </div>
                 ) : (
                     <>
                         {filteredMutedAccounts.length === 0 ? (
                             <div className="flex justify-center items-center py-6">
-                                <p className="text-light-2">No muted accounts</p>
+                                <p className="dark:text-light-2 text-slate-700">{dict.userSettings.mutedUsers.noMutedUsers}</p>
                             </div>
                         ) : (
                             <>
                                 <div className="mb-4">
                                     <Input
-                                        className="bg-black text-light-2"
+                                        className="dark:bg-black dark:text-light-2"
                                         placeholder="Search"
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -91,7 +92,7 @@ function MutedAccount({ authActiveProfileId }: Props) {
                                                     height={24}
                                                     className="rounded-full h-8 w-8" />
                                                 <div>
-                                                    <p className="text-light-2">{mutedAccount.accountname}</p>
+                                                    <p className="dark:text-light-2">{mutedAccount.accountname}</p>
                                                 </div>
                                             </div>
                                             <Button
@@ -101,7 +102,7 @@ function MutedAccount({ authActiveProfileId }: Props) {
                                                     setIsModalOpen(true);
                                                 }}
                                             >
-                                                Unmuted
+                                                {dict.userSettings.mutedUsers.btnUnmuted}
                                             </Button>
                                         </div>
                                     ))}
@@ -115,17 +116,17 @@ function MutedAccount({ authActiveProfileId }: Props) {
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Confirm Unmute</DialogTitle>
+                        <DialogTitle>{dict.userSettings.mutedUsers.dialog.title}</DialogTitle>
                         <DialogDescription>
-                            Are you sure you want to unmuted {selectedAccount?.accountname}? This action cannot be undone.
+                            {dict.userSettings.mutedUsers.dialog.confirmUnmutedDesc}
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
                         <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
-                            Cancel
+                            {dict.userSettings.mutedUsers.dialog.cancelUnmuted}
                         </Button>
                         <Button variant="destructive" onClick={handleUnmuted}>
-                            Confirm
+                            {dict.userSettings.mutedUsers.dialog.confirmUnmuted}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

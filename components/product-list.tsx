@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
-const ProductList = ({ products, isOrganization }: any) => {
+const ProductList = ({ products, isOrganization, dict }: any) => {
     const router = useRouter();
 
     const personalProducts = products.filter((product: any) => product.category === 'personal');
@@ -28,10 +28,10 @@ const ProductList = ({ products, isOrganization }: any) => {
 
     const renderProducts = (productList: any[], isOrganizationCategory: boolean) => (
         productList.map((product, index) => (
-            <Card key={product._id} className={`bg-gray-900 p-6 w-[336px] rounded-lg shadow-lg ${index === 1 ? 'border-2 border-purple-600' : ''}`}>
+            <Card key={product._id} className={`dark:bg-gray-900 p-6 w-[336px] rounded-lg shadow-lg ${index === 1 ? 'border-2 dark:border-purple-600' : ''}`}>
                 <CardHeader className="mb-6 p-0">
                     {index === 1 && (
-                        <div className="text-sm text-purple-400 mb-2">MOST POPULAR</div>
+                        <div className="text-sm dark:text-purple-400 text-stone-400 mb-2">{dict.productList.mostPopular}</div>
                     )}
                     <CardTitle className="text-[2xl] font-bold">{product.name}</CardTitle>
                     <CardDescription className="text-gray-400 mt-2">{product.description}</CardDescription>
@@ -39,7 +39,7 @@ const ProductList = ({ products, isOrganization }: any) => {
                         <span className="text-[36px]">
                             {product.price}
                         </span>
-                        /month
+                        /{dict.productList.month}
                     </div>
                 </CardHeader>
                 <CardContent className="px-0 pt-0 pb-6">
@@ -49,7 +49,7 @@ const ProductList = ({ products, isOrganization }: any) => {
                             variant={`${index === 1 ? 'purple' : 'outline'}`}
                             onClick={() => handleChoosePlanClick(product._id)}
                         >
-                            Choose Plan
+                            {dict.productList.choosePlan}
                         </Button>
                     ) : (
                         <Link className="w-full" href={`/checkout?productId=${product._id}`}>
@@ -57,7 +57,7 @@ const ProductList = ({ products, isOrganization }: any) => {
                                 className={`rounded-lg w-full`}
                                 variant={`${index === 1 ? 'purple' : 'outline'}`}
                             >
-                                Choose Plan
+                                {dict.productList.choosePlan}
                             </Button>
                         </Link>
                     )}
@@ -81,8 +81,8 @@ const ProductList = ({ products, isOrganization }: any) => {
         <Tabs defaultValue="personal" className="justify-center">
             <div className="flex justify-center">
                 <TabsList className="flex justify-center mb-8 w-[336px] text-[14px]">
-                    <TabsTrigger value="personal" className="px-4 py-2">Personal Plans</TabsTrigger>
-                    <TabsTrigger value="organization" className="px-4 py-2">Organization Plans</TabsTrigger>
+                    <TabsTrigger value="personal" className="px-4 py-2">{dict.productList.personal}</TabsTrigger>
+                    <TabsTrigger value="organization" className="px-4 py-2">{dict.productList.organization}</TabsTrigger>
                 </TabsList>
             </div>
             <TabsContent value="personal" className="flex flex-col lg:flex-row justify-center space-y-6 lg:space-y-0 lg:space-x-6">

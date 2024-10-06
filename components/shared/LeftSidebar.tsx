@@ -13,12 +13,12 @@ import { MemberType, UserImage } from "@/types";
 interface LeftSidebarProps {
   session: Session | null;
   userInfoImage: UserImage | null | undefined;
+  dict: any;
 }
 
-function LeftSidebar({ session, userInfoImage }: LeftSidebarProps) {
+function LeftSidebar({ session, userInfoImage, dict }: LeftSidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
-
   const userId = session?.user.id;
 
   let userImage = null;
@@ -47,12 +47,12 @@ function LeftSidebar({ session, userInfoImage }: LeftSidebarProps) {
             >
               <Image
                 src={link.imgURL}
-                alt={link.label}
+                alt={dict.sidebar[link.label]}
                 width={24}
                 height={24}
               />
 
-              <p className="text-light-1">{link.label}</p>
+              <p className="text-light-1">{dict.sidebar[link.label]}</p>
             </Link>
           );
         })}
@@ -79,9 +79,9 @@ function LeftSidebar({ session, userInfoImage }: LeftSidebarProps) {
             )}
           </div>
         ) : session ? (
-          <SignOutButton />
+          <SignOutButton dict={dict} />
         ) : (
-          <SignInButton />
+          <SignInButton dict={dict} />
         )}
       </div>
     </section>

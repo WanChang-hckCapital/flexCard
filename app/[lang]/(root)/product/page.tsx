@@ -4,8 +4,15 @@ import { redirect } from "next/navigation";
 import { fetchCurrentActiveProfileId, fetchProfleRole } from '@/lib/actions/user.actions';
 import ProductList from '@/components/product-list';
 import { authOptions } from '@/app/api/utils/authOptions';
+import { getDictionary } from '../../dictionaries';
 
-const ProductPage = async () => {
+interface ProductPageProps {
+    params: {
+        lang: string;
+    };
+}
+
+const ProductPage = async ({ params: { lang } }: ProductPageProps) => {
     const session = await getServerSession(authOptions);
     const user = session?.user;
 
@@ -34,15 +41,17 @@ const ProductPage = async () => {
         });
     }
 
+    const dict = await getDictionary(lang);
+
     return (
-        <div className="bg-black text-white py-16 px-4 min-h-screen">
+        <div className="dark:bg-black dark:text-white text-slate-700 py-16 px-4 min-h-screen">
             <div className="text-center mb-8">
-                <h1 className="text-[32px] font-bold">Choose your right Plan!</h1>
-                <span className="text-gray-400">No hidden fees, cancel anytime.</span>
+                <h1 className="text-[32px] font-bold">{dict.products.title}</h1>
+                <span className="dark:text-gray-400 text-slate-400">{dict.products.subtitle}</span>
             </div>
-            <ProductList products={products} isOrganization={isOrganization} />
+            <ProductList products={products} isOrganization={isOrganization} dict={dict} />
             <div className="text-center mt-12">
-                <a href="#" className="text-purple-400">Payment terms</a>
+                <a href="#" className="dark:text-purple-400 text-stone-700">{dict.products.paymentTerms}</a>
             </div>
         </div>
     );

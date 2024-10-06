@@ -17,6 +17,7 @@ interface ProfileListProps {
     profiles: any[];
     authActiveProfileId: string;
     authUserId: string;
+    dict: any;
 }
 
 const USER_TYPES = ["PERSONAL", "ORGANIZATION", "ENTREPRENEUR"];
@@ -25,6 +26,7 @@ const ProfileList: React.FC<ProfileListProps> = ({
     profiles,
     authActiveProfileId,
     authUserId,
+    dict,
 }) => {
     const [selectedUserType, setSelectedUserType] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -88,7 +90,7 @@ const ProfileList: React.FC<ProfileListProps> = ({
 
     return (
         <div>
-            <h3 className="text-lg font-semibold mb-4">Profiles</h3>
+            <h3 className="text-lg font-semibold mb-4">{dict.userSettings.account.subTitle}</h3>
             <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {USER_TYPES.map((userType) => {
                     const profile = profileMap[userType];
@@ -98,7 +100,7 @@ const ProfileList: React.FC<ProfileListProps> = ({
                     return (
                         <li key={userType}>
                             <Card
-                                className={`p-4 shadow-md ${isActiveProfile ? "border border-primary" : "border border-neutral-500"
+                                className={`p-4 shadow-md ${isActiveProfile ? "border border-primary" : "border dark:border-neutral-500 border-neutral-300"
                                     }`}
                             >
                                 <CardHeader className="flex flex-col items-center">
@@ -130,21 +132,21 @@ const ProfileList: React.FC<ProfileListProps> = ({
                                                 onClick={() => handleSetActiveProfileClick(profile._id)}
                                                 disabled={isLoading || isActiveProfile}
                                             >
-                                                {isActiveProfile ? "Active" : isLoading ? "Activating..." : "Activate"}
+                                                {isActiveProfile ? dict.userSettings.account.btnActivate : isLoading ? dict.userSettings.account.activating : dict.userSettings.account.activated}
                                             </Button>
 
                                             <Button
                                                 variant="sky"
                                                 onClick={() => handleEditProfileClick(profile)}
                                             >
-                                                Edit
+                                                {dict.userSettings.account.btnEdit}
                                             </Button>
 
                                             <Button
                                                 variant="destructive"
                                                 onClick={() => handleDeleteProfileClick(profile)}
                                             >
-                                                Delete
+                                                {dict.userSettings.account.btnDelete}
                                             </Button>
                                         </div>
                                     ) : (
@@ -154,7 +156,7 @@ const ProfileList: React.FC<ProfileListProps> = ({
                                                     variant="purple"
                                                     onClick={() => setSelectedUserType(userType)}
                                                 >
-                                                    <p className="text-[14px]">{userType}</p>
+                                                    <p className="text-[14px]">{dict.userSettings.account.userType[userType]}</p>
                                                 </Button>
                                             </DialogTrigger>
                                             <DialogContent
@@ -162,17 +164,17 @@ const ProfileList: React.FC<ProfileListProps> = ({
                                                     } max-h-[80%] overflow-y-scroll`}
                                             >
                                                 <DialogHeader>
-                                                    <DialogTitle>Creating {userType} Profile</DialogTitle>
+                                                    <DialogTitle>{dict.userSettings.account.dialogTitle[userType]}</DialogTitle>
                                                 </DialogHeader>
                                                 <CardContent>
                                                     {userType === "PERSONAL" && (
-                                                        <AddProfileForm userId={authActiveProfileId} />
+                                                        <AddProfileForm userId={authActiveProfileId} dict={dict}/>
                                                     )}
                                                     {userType === "ORGANIZATION" && (
-                                                        <AddEntrepreneurForm authActiveProfileId={authActiveProfileId} />
+                                                        <AddEntrepreneurForm authActiveProfileId={authActiveProfileId} dict={dict}/>
                                                     )}
                                                     {userType === "ENTREPRENEUR" && (
-                                                        <AddEntrepreneurForm authActiveProfileId={authActiveProfileId} />
+                                                        <AddEntrepreneurForm authActiveProfileId={authActiveProfileId} dict={dict}/>
                                                     )}
                                                 </CardContent>
                                             </DialogContent>
@@ -189,7 +191,7 @@ const ProfileList: React.FC<ProfileListProps> = ({
                 <Dialog open={!!selectedProfile} onOpenChange={() => setSelectedProfile(null)}>
                     <DialogContent className="max-w-[70%] max-h-[80%] overflow-y-scroll">
                         <DialogHeader>
-                            <DialogTitle>Edit {selectedProfile.usertype} Profile</DialogTitle>
+                            <DialogTitle>{dict.userSettings.account.editDialogTitle[selectedProfile.usertype]}</DialogTitle>
                         </DialogHeader>
                         <CardContent>
                             <SignupOrganizationForm
@@ -205,13 +207,13 @@ const ProfileList: React.FC<ProfileListProps> = ({
             <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                 <DialogContent className="max-w-[30%]">
                     <DialogHeader>
-                        <DialogTitle>Confirm Delete</DialogTitle>
+                        <DialogTitle>{dict.userSettings.account.dialog.confirmDeleteTitle}</DialogTitle>
                     </DialogHeader>
                     <CardContent className="pt-6 pb-0">
-                        <p className="text-center">Are you sure you want to delete this profile? This action cannot be undone.</p>
+                        <p className="text-center">{dict.userSettings.account.dialog.confirmDeleteDesc}</p>
                         <div className="flex justify-center space-x-4 mt-6">
                             <Button variant="secondary" onClick={() => setIsDeleteDialogOpen(false)}>
-                                Cancel
+                                {dict.userSettings.account.dialog.btnCancel}
                             </Button>
                             <Button
                                 variant="destructive"

@@ -1,6 +1,6 @@
 import MaxWContainer from "@/components/max-w-container";
 import Link from "next/link";
-import { authOptions } from "../api/utils/authOptions";
+import { authOptions } from "../../api/utils/authOptions";
 import { getServerSession } from "next-auth";
 import {
   fetchAllCards,

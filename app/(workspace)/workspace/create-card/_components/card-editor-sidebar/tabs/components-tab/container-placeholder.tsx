@@ -16,7 +16,7 @@ function ContainerPlaceholder(props: Props) {
       className=" h-14 w-14 bg-muted/70 rounded-lg p-2 flex flex-row gap-[4px]"
     >
       <BoxSelect size={40}
-        className="text-muted-foreground"
+        className="dark:text-black text-stone-800"
       />
       {/* <div className="border-dashed border-[1px] h-full rounded-sm bg-muted border-muted-foreground/50 w-full" /> */}
     </div>

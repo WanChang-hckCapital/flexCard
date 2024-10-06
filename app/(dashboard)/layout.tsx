@@ -56,31 +56,33 @@ export default async function RootLayout({
 
   return (
     <AuthSessionProvider>
-      <html lang="en">
-        <body
-          className={cn(
-            "min-h-screen flex flex-col bg-dark-1 justify-center text-white font-sans antialiased",
-            fontSans.variable
-          )}>
-          <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
-            <SideBar usertype={profileInfo.usertype} />
-            <div className="flex flex-col">
-              <Header
-                session={session}
-                userInfoImage={userProfileImage}
-                usertype={profileInfo.usertype}
-              />
-              <main className="flex flex-row">
-                <TooltipProvider>
-                  <div className="w-full">{children}</div>
-                </TooltipProvider>
-              </main>
+      {/* <ThemeProvider> */}
+        <html lang="en">
+          <body
+            className={cn(
+              "min-h-screen flex flex-col bg-dark-1 justify-center text-white font-sans antialiased",
+              fontSans.variable
+            )}>
+            <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+              <SideBar usertype={profileInfo.usertype} />
+              <div className="flex flex-col">
+                <Header
+                  session={session}
+                  userInfoImage={userProfileImage}
+                  usertype={profileInfo.usertype}
+                />
+                <main className="flex flex-row">
+                  <TooltipProvider>
+                    <div className="w-full">{children}</div>
+                  </TooltipProvider>
+                </main>
+              </div>
             </div>
-          </div>
-          <SonnarToaster position="bottom-left" />
-          {/* <Footer /> */}
-        </body>
-      </html>
+            <SonnarToaster position="bottom-left" />
+            {/* <Footer /> */}
+          </body>
+        </html>
+      {/* </ThemeProvider> */}
     </AuthSessionProvider>
   );
 }

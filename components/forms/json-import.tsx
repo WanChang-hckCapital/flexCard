@@ -33,7 +33,7 @@ const JSONImportForm = ({ onImport }: any) => {
         rows={5}
         placeholder="Paste your JSON here"
       />
-      <Button type="submit" className="mt-2">
+      <Button variant="stone" type="submit" className="mt-2">
         Import JSON
       </Button>
     </form>

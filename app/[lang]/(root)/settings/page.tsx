@@ -4,10 +4,12 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/app/api/utils/authOptions";
 import RootSetting from "./component/page";
 import { fetchMemberWithProfiles } from "@/lib/actions/user.actions";
+import { getDictionary } from "../../dictionaries";
 
-export default async function SettingsPage() {
+export default async function SettingsPage({ params }: { params: { lang: string } }) {
   const session = await getServerSession(authOptions);
   const user = session?.user;
+  const dict = await getDictionary(params.lang);
 
   if (!user) {
     redirect("/sign-in");
@@ -42,5 +44,5 @@ export default async function SettingsPage() {
     shortdescription: activeProfile?.shortdescription || "",
   };
 
-  return <RootSetting authUserId={authUserId} authActiveProfileId={activeProfileId} profileData={profileData} profiles={profiles} />;
+  return <RootSetting authUserId={authUserId} authActiveProfileId={activeProfileId} profileData={profileData} profiles={profiles} dict={dict} />;
 }

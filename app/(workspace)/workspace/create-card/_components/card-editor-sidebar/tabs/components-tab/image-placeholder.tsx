@@ -18,7 +18,7 @@ function ImagePlaceholder(props: Props) {
       {/* eslint-disable-next-line jsx-a11y/alt-text */}
       <Image
         size={40}
-        className="text-muted-foreground"
+        className="dark:text-black text-stone-800"
       />
 
     </div>

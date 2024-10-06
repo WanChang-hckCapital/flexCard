@@ -36,10 +36,11 @@ interface Props {
     shortdescription: string;
   };
   btnTitle: string;
+  dict: any;
   onSubmit?: () => void;
 }
 
-const MemberProfile = ({ profile, btnTitle }: Props) => {
+const MemberProfile = ({ profile, btnTitle, dict }: Props) => {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -184,14 +185,14 @@ const MemberProfile = ({ profile, btnTitle }: Props) => {
 
   useEffect(() => {
     const watchedValues = form.watch();
-  
+
     const isDirty = Object.keys(defaultValues).some(
       (key) =>
         watchedValues[key as keyof typeof defaultValues] !== defaultValues[key as keyof typeof defaultValues]
     );
     setIsFormDirty(isDirty);
   }, [defaultValues, form]);
-  
+
 
   return (
     <Form {...form}>
@@ -223,7 +224,7 @@ const MemberProfile = ({ profile, btnTitle }: Props) => {
                     />
                   )}
                 </FormLabel>
-                <div className="absolute inset-0 flex items-center justify-center cursor-pointer rounded-full bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="absolute inset-0 flex items-center justify-center cursor-pointer rounded-full dark:bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <Pencil size={24} className="text-white" />
                   <FormControl className='absolute inset-0 opacity-0 cursor-pointer'>
                     <Input
@@ -245,8 +246,8 @@ const MemberProfile = ({ profile, btnTitle }: Props) => {
           name='accountname'
           render={({ field }) => (
             <FormItem className='flex w-full flex-col gap-3'>
-              <FormLabel className='text-base-semibold text-light-2'>
-                Account Nickname
+              <FormLabel className='text-base-semibold dark:text-light-2'>
+                {dict.userSettings.profile.accountname}
               </FormLabel>
               <FormControl>
                 <Input
@@ -265,8 +266,8 @@ const MemberProfile = ({ profile, btnTitle }: Props) => {
           name='email'
           render={({ field }) => (
             <FormItem className='flex w-full flex-col gap-3'>
-              <FormLabel className='text-base-semibold text-light-2'>
-                Email
+              <FormLabel className='text-base-semibold dark:text-light-2'>
+                {dict.userSettings.profile.email}
               </FormLabel>
               <FormControl>
                 <Input
@@ -285,8 +286,8 @@ const MemberProfile = ({ profile, btnTitle }: Props) => {
           name='password'
           render={({ field }) => (
             <FormItem className='flex w-full flex-col gap-3'>
-              <FormLabel className='text-base-semibold text-light-2'>
-                Password
+              <FormLabel className='text-base-semibold dark:text-light-2'>
+                {dict.userSettings.profile.password}
               </FormLabel>
               <FormControl>
                 <Input
@@ -305,8 +306,8 @@ const MemberProfile = ({ profile, btnTitle }: Props) => {
           name='confirmPassword'
           render={({ field }) => (
             <FormItem className='flex w-full flex-col gap-3'>
-              <FormLabel className='text-base-semibold text-light-2'>
-                Confirm Password
+              <FormLabel className='text-base-semibold dark:text-light-2'>
+                {dict.userSettings.profile.confirmPassword}
               </FormLabel>
               <FormControl>
                 <Input
@@ -325,8 +326,8 @@ const MemberProfile = ({ profile, btnTitle }: Props) => {
           name='phone'
           render={({ field }) => (
             <FormItem className='flex w-full flex-col gap-3'>
-              <FormLabel className='text-base-semibold text-light-2'>
-                Phone No
+              <FormLabel className='text-base-semibold dark:text-light-2'>
+                {dict.userSettings.profile.phone}
               </FormLabel>
               <FormControl>
                 <Input
@@ -345,8 +346,8 @@ const MemberProfile = ({ profile, btnTitle }: Props) => {
           name='shortdescription'
           render={({ field }) => (
             <FormItem className='flex w-full flex-col gap-3'>
-              <FormLabel className='text-base-semibold text-light-2'>
-                Short Description
+              <FormLabel className='text-base-semibold dark:ext-light-2'>
+                {dict.userSettings.profile.shortDescription}
               </FormLabel>
               <FormControl>
                 <Textarea
@@ -360,7 +361,7 @@ const MemberProfile = ({ profile, btnTitle }: Props) => {
           )}
         />
 
-        <Button type='submit' className='bg-primary-500'>
+        <Button type='submit' className='dark:bg-primary-500 bg-stone-700'>
           {btnTitle}
         </Button>
       </form>
