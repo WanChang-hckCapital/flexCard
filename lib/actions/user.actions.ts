@@ -5222,11 +5222,12 @@ export async function createNewBlog(
   }
 }
 
+// for blog
 export async function checkUniqueSlug(blogTitle: string) {
   try {
     await connectToDB();
 
-    const slug = slugify(blogTitle, { lower: true, strict: true });
+    const slug = createAllRoundedSlug(blogTitle);
 
     const existingBlog = await BlogModel.findOne({ slug });
     if (existingBlog) {
@@ -5239,6 +5240,33 @@ export async function checkUniqueSlug(blogTitle: string) {
     return {
       success: true,
       message: "Blog slug is unique.",
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "Error happens when checking unique slug.",
+    };
+  }
+}
+
+// for forum
+export async function checkUniqueSlugForum(forumTitle: string) {
+  try {
+    await connectToDB();
+
+    const slug = createAllRoundedSlug(forumTitle);
+
+    const existingBlog = await ForumModel.findOne({ slug });
+    if (existingBlog) {
+      return {
+        success: false,
+        message: "Please choose another title.",
+      };
+    }
+
+    return {
+      success: true,
+      message: "Forum slug is unique.",
     };
   } catch (error: any) {
     return {
@@ -5303,7 +5331,9 @@ export async function getBlogBySlug(slug: string) {
   try {
     await connectToDB();
 
-    const blogResponse = await BlogModel.findOne({ slug: slug });
+    const decodedSlug = decodeURIComponent(slug);
+
+    const blogResponse = await BlogModel.findOne({ slug: decodedSlug });
 
     if (!blogResponse) {
       return {
@@ -5385,10 +5415,7 @@ export async function updateBlog(
 
     if (updatedData.title) {
       blogResponse.title = updatedData.title;
-      blogResponse.slug = slugify(updatedData.title, {
-        lower: true,
-        strict: true,
-      });
+      blogResponse.slug = createAllRoundedSlug(updatedData.title);
     }
     if (updatedData.content) {
       blogResponse.excerpt = updatedData.content;
@@ -5994,6 +6021,13 @@ export async function deleteBlogCommentReplies(
         message: "Blog Comment Reply not found",
       };
     }
+
+    const blogComment = await BlogCommentModel.findOne({
+      _id: blogCommentReply.comment,
+    });
+
+    blogComment.replyCount -= 1;
+    await blogComment.save();
 
     await BlogCommentReplyModel.deleteOne({ _id: blogCommentReply });
 
@@ -6678,7 +6712,7 @@ export async function submitForumCommentReply({
       return { success: false, message: "Comment not found" };
     }
 
-    const newReply = new BlogCommentReplyModel({
+    const newReply = new ForumCommentReplyModel({
       content,
       comment: commentId,
       author: authenticatedUserId,
@@ -6701,6 +6735,53 @@ export async function submitForumCommentReply({
     return {
       success: false,
       message: "An error occurred while submitting the reply.",
+    };
+  }
+}
+
+export async function deleteForumCommentReplies(
+  profileId: string,
+  forumCommentReplyId: string
+) {
+  try {
+    await connectToDB();
+
+    const profile = await ProfileModel.findOne({ _id: profileId });
+
+    if (!profile) {
+      return {
+        success: false,
+        message: "Profile not found",
+      };
+    }
+
+    const forumCommentReply = await ForumCommentReplyModel.findOne({
+      _id: forumCommentReplyId,
+    });
+
+    if (!forumCommentReply) {
+      return {
+        success: false,
+        message: "Blog Comment Reply not found",
+      };
+    }
+
+    const comment = await ForumCommentModel.findById(forumCommentReply.comment);
+
+    comment.replyCount -= 1;
+    await comment.save();
+
+    await ForumCommentReplyModel.deleteOne({ _id: forumCommentReply });
+
+    return {
+      success: true,
+      message: "Forum comment Reply deleted successfully",
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message:
+        "An error occurred while trying to delete the forum comment reply",
     };
   }
 }

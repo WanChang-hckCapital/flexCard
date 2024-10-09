@@ -189,7 +189,7 @@ export default function ForumEditor({
           className="w-full"
           disabled={isLoading}
         >
-          {isLoading ? "Updating..." : "Update Blog"}
+          {isLoading ? "Updating..." : "Update Forum"}
         </Button>
 
         {message && (

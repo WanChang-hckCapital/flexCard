@@ -12,6 +12,7 @@ import {
   checkIsCreator,
   getForumById,
   updateForum,
+  checkUniqueSlugForum,
 } from "@/lib/actions/user.actions";
 import { useRouter, useParams } from "next/navigation";
 import ForumEditor from "../_component/ForumEditor";
@@ -116,14 +117,16 @@ export default function BlogEdit() {
     if (!authActiveProfileId || !parsedForumId) return;
 
     try {
-      //   if (forum && updatedData.title.trim() !== forum.title.trim()) {
-      //     const isUniqueTitle = await checkUniqueSlug(updatedData.title.trim());
-      //     if (!isUniqueTitle.success) {
-      //       setMessage(isUniqueTitle.message);
-      //       toast.error(isUniqueTitle.message);
-      //       return;
-      //     }
-      //   }
+      if (forum && updatedData.title.trim() !== forum.title.trim()) {
+        const isUniqueTitle = await checkUniqueSlugForum(
+          updatedData.title.trim()
+        );
+        if (!isUniqueTitle.success) {
+          setMessage(isUniqueTitle.message);
+          toast.error(isUniqueTitle.message);
+          return;
+        }
+      }
 
       let imageId = null;
 
@@ -190,7 +193,7 @@ export default function BlogEdit() {
   }
 
   if (!isAdmin && !isInvitedCreator) {
-    router.push("/blog");
+    router.push("/forum");
     return null;
   }
 

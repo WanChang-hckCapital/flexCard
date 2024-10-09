@@ -46,11 +46,6 @@ async function Forum() {
     forums = forumsResponse.forums;
   }
 
-  const handleSearch = (keyword: string) => {
-    console.log("Searching for:", keyword);
-    // Implement search logic here
-  };
-
   return (
     <div className="min-h-screen w-full bg-black text-white">
       <Header />
