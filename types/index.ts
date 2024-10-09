@@ -307,3 +307,29 @@ export type BlogInvitation = {
   acceptedAt: Date;
   declinedAt: Date;
 };
+
+export type Forum = {
+  title: string;
+  slug: string;
+  content: string;
+  image: {};
+  author: {};
+};
+
+export type ForumComment = {
+  content: string;
+  forum: {};
+  image?: {};
+  author: {};
+  likes: { user: {}; likedAt: Date }[];
+  replyCount: number;
+};
+
+export type ForumCommentReply = {
+  content: string;
+  forum: {};
+  image?: {};
+  comment: {};
+  author: {};
+  likes: { user: {}; likedAt: Date }[];
+};

@@ -2390,6 +2390,9 @@ import ProfileModel from "../models/profile";
 import BlogCommentModel from "../models/blogcomment";
 import { connected } from "process";
 import InvitationModal from "@/app/(blog)/blog/_components/InvitationModal";
+import ForumModel from "../models/forum";
+import ForumCommentModel from "../models/forumcomment";
+import ForumCommentReplyModel from "../models/forumcommentreply";
 
 // get all possible member // need to remove this
 export async function fetchAllMembers() {
@@ -6261,6 +6264,471 @@ export async function checkIsCreator(profileId: string) {
     return {
       success: false,
       message: "Checking creator has some error.",
+    };
+  }
+}
+
+export async function loadForums() {
+  try {
+    await connectToDB();
+
+    const forumResponse = await ForumModel.find({});
+
+    return {
+      success: true,
+      message: "Forums loaded successfully",
+      forums: forumResponse,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "Failed to load Forums",
+      error: error.message,
+    };
+  }
+}
+
+export async function createNewForum(
+  authenticatedUserId: string,
+  title: string,
+  content: string,
+  imageId: string
+) {
+  try {
+    await connectToDB();
+
+    const currentProfile = await ProfileModel.findOne({
+      _id: authenticatedUserId,
+    });
+    if (!currentProfile) {
+      return {
+        success: false,
+        message: "Authenticated user profile not found",
+      };
+    }
+
+    const existingForum = await ForumModel.findOne({ title });
+    if (existingForum) {
+      return {
+        success: false,
+        message:
+          "A Forum with this title already exists. Please choose another title.",
+      };
+    }
+
+    const slug = createAllRoundedSlug(title);
+
+    const forumResponse = await ForumModel.create({
+      title: title,
+      content: content,
+      slug: slug,
+      image: imageId,
+      author: authenticatedUserId,
+    });
+
+    return {
+      success: true,
+      message: "Forum created successfully",
+      // blog: blogResponse,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Error while creating Forum: ${error.message}`,
+    };
+  }
+}
+
+function createAllRoundedSlug(title: string): string {
+  // Define regex to match Chinese, Japanese, Korean, Arabic, Cyrillic, Hebrew, etc.
+  const nonLatinRegex =
+    /[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af\u0600-\u06ff\u0400-\u04ff\u0590-\u05ff]/g;
+  const nonWordRegex =
+    /[^\w\s\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af\u0600-\u06ff\u0400-\u04ff\u0590-\u05ff]+/g;
+
+  // Remove non-word characters (punctuation, special symbols, etc.)
+  const cleanedTitle = title.replace(nonWordRegex, "");
+
+  if (nonLatinRegex.test(cleanedTitle)) {
+    return cleanedTitle.replace(/\s+/g, "").split("").join("+");
+  } else {
+    return cleanedTitle.trim().replace(/\s+/g, "+").toLowerCase();
+  }
+}
+
+export async function getForumById(forumId: string) {
+  try {
+    const forumResponse = await ForumModel.findOne({ _id: forumId });
+
+    if (!forumResponse) {
+      return {
+        success: false,
+        message: "Forums not found",
+        forums: [],
+      };
+    }
+
+    return {
+      success: true,
+      message: "Forums found!!",
+      forums: forumResponse,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "Error finding forum.",
+      blogs: [],
+    };
+  }
+}
+
+export async function updateForum(
+  forumId: string,
+  authActiveProfileId: string,
+  updatedData: any
+) {
+  try {
+    await connectToDB();
+
+    const forumResponse = await ForumModel.findById(forumId);
+
+    if (!forumResponse) {
+      return {
+        success: false,
+        message: "Forum not found",
+        forums: [],
+      };
+    }
+
+    if (forumResponse.author.toString() !== authActiveProfileId) {
+      return {
+        success: false,
+        message:
+          "Unauthorized: You do not have permission to update this forums",
+        forums: [],
+      };
+    }
+
+    if (updatedData.title) {
+      forumResponse.title = updatedData.title;
+      forumResponse.slug = createAllRoundedSlug(updatedData.title);
+    }
+    if (updatedData.content) {
+      forumResponse.content = updatedData.content;
+    }
+    if (updatedData.imageId) {
+      forumResponse.image = updatedData.imageId;
+    }
+
+    await forumResponse.save();
+
+    return {
+      success: true,
+      message: "Forums found!!",
+      forums: forumResponse,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "Error Updating forums.",
+      forums: [],
+    };
+  }
+}
+
+export async function getForumBySlug(slug: string) {
+  try {
+    await connectToDB();
+
+    const decodedSlug = decodeURIComponent(slug);
+
+    const formResponse = await ForumModel.findOne({ slug: decodedSlug });
+
+    // console.log()
+
+    if (!formResponse) {
+      return {
+        success: false,
+        message: "Forums not found",
+        forums: [],
+      };
+    }
+
+    return {
+      success: true,
+      message: "Forums found!!",
+      forums: formResponse,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "Error finding forum.",
+      blogs: [],
+    };
+  }
+}
+
+export async function loadForumComment(forumId: string) {
+  try {
+    await connectToDB();
+
+    const allForumComments = await ForumCommentModel.find({
+      forum: forumId,
+    })
+      .populate({
+        path: "author",
+        select: "accountname image _id",
+      })
+      .populate({
+        path: "likes.user",
+        select: "accountname image _id",
+      });
+
+    return {
+      success: true,
+      comments: allForumComments.map((comment) => ({
+        _id: comment._id,
+        content: comment.content,
+        forum: comment.forum,
+        image: comment.image,
+        author: {
+          accountname: comment.author.accountname,
+          image: comment.author.image,
+          authorId: comment.author._id.toString(),
+        },
+        likes: comment.likes.map((like: any) => ({
+          user: like.user ? like.user._id.toString() : null,
+          likedAt: like.likedAt,
+        })),
+        created_at: comment.createdAt,
+        replyCount: comment.replyCount ? comment.replyCount : 0,
+      })),
+    };
+  } catch (error: any) {
+    console.error("Error loading forum comments:", error);
+    return { success: false, message: "Failed to load comments." };
+  }
+}
+
+export async function submitForumComment(
+  authenticatedUserId: string,
+  forumId: string,
+  comment: string,
+  imageId: string | null
+) {
+  try {
+    await connectToDB();
+
+    const profile = await ProfileModel.findOne({ _id: authenticatedUserId });
+
+    if (!profile) {
+      return { success: false, message: "User not found" };
+    }
+
+    const existingForum = await ForumModel.findOne({ _id: forumId });
+    if (!existingForum) {
+      return {
+        success: false,
+        message: "Forum not found.",
+      };
+    }
+
+    const newComment = new ForumCommentModel({
+      content: comment,
+      forum: forumId,
+      image: imageId ? new mongoose.Types.ObjectId(imageId) : null,
+      author: authenticatedUserId,
+      replyCount: 0,
+    });
+
+    await newComment.save();
+
+    return {
+      success: true,
+      message: "Comment added successfully.",
+      comment: newComment,
+    };
+  } catch (error: any) {
+    console.error("Error submitting comment:", error);
+    return {
+      success: false,
+      message: "An error occurred while submitting the comment.",
+    };
+  }
+}
+
+export async function deleteForumComment(
+  profileId: string,
+  forumCommentId: string
+) {
+  try {
+    await connectToDB();
+
+    const profile = await ProfileModel.findOne({ _id: profileId });
+
+    if (!profile) {
+      return {
+        success: false,
+        message: "Profile not found",
+      };
+    }
+
+    const forumComment = await ForumCommentModel.findOne({
+      _id: forumCommentId,
+    });
+
+    if (!forumComment) {
+      return {
+        success: false,
+        message: "Forum Comment not found",
+      };
+    }
+
+    await ForumCommentModel.deleteOne({ _id: forumComment });
+
+    return {
+      success: true,
+      message: "Forum comment deleted successfully",
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "An error occurred while trying to delete the forum comment",
+    };
+  }
+}
+
+export async function loadForumCommentReply(commentId: string) {
+  try {
+    await connectToDB();
+
+    const replies = await ForumCommentReplyModel.find({
+      comment: commentId,
+    }).populate("author", "accountname image _id");
+
+    if (!replies.length) {
+      return {
+        success: false,
+        message: "No replies found for this forum.",
+        replies: [],
+      };
+    }
+
+    return {
+      success: true,
+      message: "Replies loaded successfully",
+      replies: replies.map((reply) => ({
+        _id: reply._id,
+        content: reply.content,
+        comment: reply.comment,
+        forum: reply.forum,
+        image: reply.image,
+        author: {
+          accountname: reply.author.accountname,
+          image: reply.author.image,
+          authorId: reply.author._id.toString(),
+        },
+        likes: reply.likes.map((reply: any) => ({
+          user: reply.user ? reply.user._id.toString() : null,
+          likedAt: reply.likedAt,
+        })),
+        createdAt: reply.createdAt,
+      })),
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "An error occurred while loading the replies.",
+      replies: [],
+    };
+  }
+}
+
+export async function submitForumCommentReply({
+  content,
+  commentId,
+  authenticatedUserId,
+  forumId,
+  imageId,
+}: {
+  content: string;
+  commentId: string;
+  authenticatedUserId: string;
+  forumId: string;
+  imageId: string | null;
+}) {
+  try {
+    await connectToDB();
+
+    const profile = await ProfileModel.findById(authenticatedUserId);
+
+    if (!profile) {
+      return { success: false, message: "User not found" };
+    }
+
+    const forum = await ForumModel.findById(forumId);
+
+    if (!forum) {
+      return { success: false, message: "Forum not found" };
+    }
+
+    const comment = await ForumCommentModel.findById(commentId);
+
+    if (!comment) {
+      return { success: false, message: "Comment not found" };
+    }
+
+    const newReply = new BlogCommentReplyModel({
+      content,
+      comment: commentId,
+      author: authenticatedUserId,
+      forum: forumId,
+      image: imageId ? new mongoose.Types.ObjectId(imageId) : null,
+    });
+
+    await newReply.save();
+    comment.replyCount += 1;
+
+    await comment.save();
+
+    return {
+      success: true,
+      message: "Reply successfully!",
+      reply: newReply,
+    };
+  } catch (error) {
+    console.error("Error submitting reply:", error);
+    return {
+      success: false,
+      message: "An error occurred while submitting the reply.",
+    };
+  }
+}
+
+export async function handleForumSearch(keyword: string) {
+  try {
+    await connectToDB();
+
+    const searchPattern = new RegExp(keyword, "i"); // 'i' flag for case-insensitive
+
+    const results = await ForumModel.find({
+      $or: [
+        { title: { $regex: searchPattern } },
+        { content: { $regex: searchPattern } },
+      ],
+    });
+
+    return {
+      success: true,
+      message: "Search completed successfully",
+      forums: results,
+    };
+  } catch (error: any) {
+    console.error("Error during forum search:", error);
+    return {
+      success: false,
+      message: "An error occurred during the search",
+      error: error.message,
     };
   }
 }

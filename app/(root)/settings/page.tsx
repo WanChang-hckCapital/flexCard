@@ -15,7 +15,7 @@ export default async function SettingsPage() {
   }
 
   const authUserId = user.id.toString();
-  
+
   const member = await fetchMemberWithProfiles(authUserId);
 
   if (!member) {
@@ -26,7 +26,9 @@ export default async function SettingsPage() {
   const profiles = member.profiles || [];
 
   const activeProfileId = profiles[member.activeProfile]?._id;
-  const activeProfile = profiles.find(profile => profile._id.toString() === activeProfileId?.toString());
+  const activeProfile = profiles.find(
+    (profile) => profile._id.toString() === activeProfileId?.toString()
+  );
 
   if (!activeProfile?.onboarded) {
     redirect("/onboarding");
@@ -42,5 +44,12 @@ export default async function SettingsPage() {
     shortdescription: activeProfile?.shortdescription || "",
   };
 
-  return <RootSetting authUserId={authUserId} authActiveProfileId={activeProfileId} profileData={profileData} profiles={profiles} />;
+  return (
+    <RootSetting
+      authUserId={authUserId}
+      authActiveProfileId={activeProfileId}
+      profileData={profileData}
+      profiles={profiles}
+    />
+  );
 }
