@@ -1,0 +1,196 @@
+{
+  "header": {
+    "subscription": "Subscription",
+    "language": "Switch Language",
+    "myCard": "My Card",
+    "setting": "Settings",
+    "dashboard": "Dashboard",
+    "signIn": "Sign In",
+    "signOut": "Sign Out"
+  },
+  "products": {
+    "title": "Choose your right Plan!",
+    "subtitle": "No hidden fees, cancel anytime.",
+    "paymentTerms": "Payment terms"
+  },
+  "productList": {
+    "mostPopular": "MOST POPULAR",
+    "month": "month",
+    "choosePlan": "Choose Plan",
+    "personal": "Personal Plans",
+    "organization": "Organization Plans"
+  },
+  "sidebar": {
+    "Home": "Home",
+    "Search": "Search",
+    "Notification": "Notification",
+    "Create Card": "Create Card",
+    "Profile": "Profile"
+  },
+  "profile": {
+    "card": "Card",
+    "followers": "Followers",
+    "following": "Following",
+    "follow": "Follow",
+    "unfollow": "Unfollow",
+    "shortDescription": "Short Description",
+    "close": "Close",
+    "cancel": "Cancel",
+    "confirmUnfollow": "Confirm Unfollow",
+    "noFollowersDesc": "You don't have any followers yet.",
+    "confirmUnfollowDesc": "Are you sure you want to unfollow this user? This action cannot be undone."
+  },
+  "newProfile": {
+    "title": {
+      "edit": "Edit Profile",
+      "add": "Add Profile",
+      "update": "Update Profile"
+    }
+  },
+  "profileTab": {
+    "CARDS": "CARDS",
+    "SAVED": "SAVED"
+  },
+  "organization": {
+    "profile": {
+      "title": "Profile Information",
+      "accountname": "Account Nickname",
+      "email": "Email",
+      "phone": "Phone No",
+      "shortdescription": "Short Description"
+    },
+    "business": {
+      "title": "Tell us about your business",
+      "subTitle": "flxBubble gathers this information to better support your business and fulfill the obligations of regulators, financial partners, and our Services Agreement.",
+      "info": "Business Information",
+      "businessType": "Type of Business",
+      "selectBusinessType": "Select Business Type",
+      "businessLocation": "Business Location",
+      "selectBusinessLocation": "Select Business Location",
+      "legalBusinessName": "Legal Business Name",
+      "businessRegistrationNumber": "Company Registration Number",
+      "businessName": "Business Name",
+      "businessAddressTitle": "Business Address",
+      "businessAddress1": "Address 1",
+      "businessAddress2": "Address 2",
+      "businessPhone": "Business Phone Number",
+      "industry": "Industry",
+      "selectIndustry": "Select Industry",
+      "businessWebsite": "Business Website",
+      "businessProductDescription": "Product Description"
+    },
+    "bank": {
+      "title": "Add your bank to verify company details",
+      "subTitle": "We will verify your company details base on your bank details.",
+      "info": "Bank Information",
+      "bankAccountHolder": "Bank Account Holder",
+      "bankName": "Choose Your Bank",
+      "bankAccountNumber": "Account Number",
+      "reBankAccountNumber": "Re-confirm Account Number"
+    },
+    "review": {
+      "title": "Review and finish up",
+      "subTitle": "You're almost ready to get started with flxBubble. Take a moment to review and confirm your information.",
+      "terms": "By submitting this form, you agree to the flxBubble Services Agreement, to receiving text messages from flxBubble, and you certify that the information provided is complete and correct."
+    },
+    "btn": {
+      "continue": "Continue",
+      "edit": "Edit",
+      "submit": "Agree and Submit"
+    }
+  },
+  "userSettings": {
+    "theme": {
+      "title": "Edit Theme",
+      "choice": "Select Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "profile": {
+      "title": "Edit Profile",
+      "accountname": "Account Nickname",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "phone": "Phone No",
+      "shortDescription": "Short Description",
+      "btnContinue": "Continue"
+    },
+    "account": {
+      "title": "Manage Account",
+      "subTitle": "Profiles",
+      "waitingDesc": "Waiting to be activated",
+      "usertype": {
+        "personalType": "Personal",
+        "organizationType": "Organization",
+        "enterpreneurType": "Enterpreneur"
+      },
+      "dialogTitle": {
+        "PERSONAL": "Creating Personal Profile",
+        "ORGANIZATION": "Creating Organization Profile",
+        "ENTREPRENEUR": "Creating Entrepreneur Profile"
+      },
+      "editDialogTitle": {
+        "PERSONAL": "Edit Personal Profile",
+        "ORGANIZATION": "Edit Organization Profile",
+        "ENTREPRENEUR": "Edit Entrepreneur Profile"
+      },
+      "dialog": {
+        "confirmDeleteTitle": "Confirm Delete",
+        "confirmDeleteDesc": "Are you sure you want to delete this account? This action cannot be undone.",
+        "btnCancel": "Cancel"
+      },
+      "btnActive": "Active",
+      "activating": "Activating",
+      "activated": "Activated",
+      "btnEdit": "Edit",
+      "btnDelete": "Delete"
+    },
+    "notification": {
+      "title": "Notifications",
+      "subTitle": "Notificatios Settings",
+      "description": "Get notified when someone follows you, likes your card, comments on your card, and more."
+    },
+    "privacy": {
+      "title": "Accounts Privacy",
+      "public": "Public Account",
+      "private": "Private Account",
+      "description": "When your account is public, your profile and bubbles can be seen by anyone, on or off flxBubble, even if they don't have an flxBubble account.",
+      "description2": "When your account is private, only the followers you approve can see what you share, and your followers and following lists."
+    },
+    "closeFriends": {
+      "title": "Close Friends"
+    },
+    "blockedUsers": {
+      "title": "Blocked Accounts",
+      "noBlockedUsers": "You don't have any blocked accounts."
+    },
+    "mutedUsers": {
+      "title": "Muted Accounts",
+      "noMutedUsers": "You don't have any muted accounts.",
+      "btnUnmuted": "Unmuted",
+      "dialog": {
+        "title": "Confirm Unmute",
+        "confirmUnmuted": "Confirm",
+        "cancelUnmuted": "Cancel",
+        "confirmUnmutedDesc": "Are you sure you want to unmute this user? This action cannot be undone."
+      }
+    }
+  },
+  "userSettingsLeftBar": {
+    "title": "Settings",
+    "themeSection": "Theme",
+    "accountSection": "Account",
+    "privacySection": "Who can view your bubble",
+    "notificationSection": "Who's bubble you wanted to view",
+    "theme": "Theme",
+    "profile": "Edit Profile",
+    "account": "Manage Account",
+    "notification": "Notifications",
+    "privacy": "Accounts Privacy",
+    "closeFriends": "Close Friends",
+    "blockedUsers": "Blocked Accounts",
+    "mutedUsers": "Muted Accounts"
+  }
+}
