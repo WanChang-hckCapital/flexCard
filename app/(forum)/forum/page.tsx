@@ -4,18 +4,29 @@ import { authOptions } from "@/app/api/utils/authOptions";
 import {
   fetchCurrentActiveProfileId,
   loadForums,
+  isFlexAdmin,
+  loadForumType,
 } from "@/lib/actions/user.actions";
 import Header from "@/components/forum/header";
-import ForumList from "./_components/ForumList";
-import ForumActionBar from "./_components/ForumActionBar";
+import ForumContainer from "./_components/FormContainer";
+
+interface ForumType {
+  _id: string;
+  name: string;
+  active: boolean;
+}
 
 interface Forum {
-  id: string;
+  _id: string;
   title: string;
   slug: string;
   content: string;
   image: string;
   author: string;
+  forumType: ForumType;
+  viewCount: number;
+  commentCount: number;
+  createdAt: Date;
 }
 
 interface forumResponse {
@@ -32,35 +43,37 @@ async function Forum() {
   let isLogin = !!user;
   let authActiveProfileId: string | null = null;
   let forums: Forum[] = [];
-
-  let isSearchBarVisible = true;
+  let isAdmin = false;
+  let forumTypes = [];
 
   if (isLogin) {
     const authUserId = user!.id.toString();
     authActiveProfileId = await fetchCurrentActiveProfileId(authUserId);
+    isAdmin = await isFlexAdmin(authUserId);
   }
 
-  const forumsResponse: forumResponse = await loadForums();
+  const forumsResponse: any = await loadForums();
 
   if (forumsResponse.success && forumsResponse.forums) {
     forums = forumsResponse.forums;
   }
 
+  const forumTypesResponse = await loadForumType();
+
+  if (forumTypesResponse.success && forumTypesResponse.forumTypes) {
+    forumTypes = forumTypesResponse.forumTypes;
+  }
+
   return (
     <div className="min-h-screen w-full bg-black text-white">
       <Header />
-      <div className="container flex justify-end mx-auto px-6 sm:px-8 lg:px-12 py-4">
-        <ForumActionBar isLogin={isLogin} />
-      </div>
-      <div className="container mx-auto px-6 sm:px-8 lg:px-12 py-10">
-        {forums.length > 0 ? (
-          <section>
-            <ForumList forums={forums} />
-          </section>
-        ) : (
-          <p>No forums available.</p>
-        )}
-      </div>
+      <ForumContainer
+        isLogin={isLogin}
+        isAdmin={isAdmin}
+        authActiveProfileId={authActiveProfileId}
+        initialForums={forums}
+        initialForumTypes={forumTypes}
+      />
     </div>
   );
 }

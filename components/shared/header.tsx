@@ -29,7 +29,7 @@ async function Header({ session, userInfoImage }: HeaderProps) {
   let userId = "";
   let user = null;
 
-  if(session) {
+  if (session) {
     user = session?.user;
     userId = user.id.toString();
 
@@ -81,10 +81,13 @@ async function Header({ session, userInfoImage }: HeaderProps) {
                     </Link> */}
           {/* <Link href="/workspace/6657da7c793f3b540da23a34"> */}
           <Link href="/workspace/66b332c9339423ac1861e9d8">
-            <Image width={24} height={24}
+            <Image
+              width={24}
+              height={24}
               className=""
               src="/assets/heart.svg"
-              alt="icon heart" />
+              alt="icon heart"
+            />
           </Link>
 
           <Link href={`/workspace/chatroom/${userId}`}>
@@ -156,6 +159,24 @@ async function Header({ session, userInfoImage }: HeaderProps) {
                   </DropdownMenuItem>
                 </>
               }
+              {
+                <>
+                  <DropdownMenuItem className="justify-center">
+                    <Link className="font-bold" href={"/forum"}>
+                      Forum
+                    </Link>
+                  </DropdownMenuItem>
+                </>
+              }
+              {
+                <>
+                  <DropdownMenuItem className="justify-center">
+                    <Link className="font-bold" href={"/blog"}>
+                      Blog
+                    </Link>
+                  </DropdownMenuItem>
+                </>
+              }
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -164,8 +185,9 @@ async function Header({ session, userInfoImage }: HeaderProps) {
               <DropdownMenu>
                 <DropdownMenuTrigger>
                   <div
-                    className={`relative ${userImage ? "w-8 h-8" : "h-8"
-                      } object-cover content-center`}
+                    className={`relative ${
+                      userImage ? "w-8 h-8" : "h-8"
+                    } object-cover content-center`}
                   >
                     {userImage ? (
                       <Image
@@ -184,8 +206,11 @@ async function Header({ session, userInfoImage }: HeaderProps) {
                     <DropdownMenuItem className="justify-center">
                       <Link
                         className="flex font-bold"
-                        href={`${session ? `/profile/${authActiveProfileId}` : "api/auth/signin"
-                          }`}
+                        href={`${
+                          session
+                            ? `/profile/${authActiveProfileId}`
+                            : "api/auth/signin"
+                        }`}
                       >
                         My Card
                       </Link>
@@ -196,8 +221,7 @@ async function Header({ session, userInfoImage }: HeaderProps) {
                       <DropdownMenuItem className="justify-center">
                         <Link
                           className="font-bold"
-                          href={`${session ? "/settings" : "api/auth/signin"
-                            }`}
+                          href={`${session ? "/settings" : "api/auth/signin"}`}
                         >
                           Settings
                         </Link>

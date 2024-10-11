@@ -25,6 +25,19 @@ const forumSchema = new Schema<Forum>(
       ref: "Profile",
       required: true,
     },
+    forumType: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "ForumType",
+      required: true,
+    },
+    viewCount: {
+      type: Number,
+      default: 0,
+    },
+    commentCount: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

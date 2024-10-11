@@ -3,7 +3,7 @@ import Container from "@/components/blog/container";
 import Header from "@/components/forum/header";
 import { PostBody } from "@/components/forum/post-body";
 import { PostHeader } from "@/components/forum/post-header";
-import { getBlogBySlug, getCreatorInfo } from "@/lib/actions/user.actions";
+import { getCreatorInfo } from "@/lib/actions/user.actions";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Pen } from "lucide-react";
@@ -11,15 +11,13 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/utils/authOptions";
 import {
   fetchCurrentActiveProfileId,
-  //   loadBlogComment,
   loadForumComment,
   getImage,
   getProfileName,
   getForumBySlug,
 } from "@/lib/actions/user.actions";
 import { isFlexAdmin } from "@/lib/actions/user.actions";
-// import DeleteBlogModal from "../delete/DeleteBlogModal";
-// import BlogCommentList from "../comment/_components/BlogCommentList";
+import DeleteForumModal from "../delete/_component/DeleteForumModal";
 import ForumCommentList from "../comment/_component/ForumCommentList";
 import { redirect } from "next/navigation";
 
@@ -39,65 +37,65 @@ interface UserAccountname {
   accountname: string | null;
 }
 
-// export async function generateMetadata({ params }: BlogProps) {
-//   const { slug } = params;
-//   const blogResponse = await getBlogBySlug(slug);
+export async function generateMetadata({ params }: ForumProps) {
+  const { slug } = params;
+  const forumResponse = await getForumBySlug(slug);
 
-//   const blog = blogResponse.blogs;
+  const forum = forumResponse.forums;
 
-//   if (!blog) {
-//     return {
-//       title: "Blog post not found",
-//       description: "The blog post you are looking for does not exist.",
-//     };
-//   }
+  if (!forum) {
+    return {
+      title: "Forum post not found",
+      description: "The forum post you are looking for does not exist.",
+    };
+  }
 
-//   const metadataBase = new URL(
-//     process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
-//   );
+  const metadataBase = new URL(
+    process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
+  );
 
-//   let imageUrl = null;
-//   try {
-//     const domainName = process.env.NEXT_PUBLIC_BASE_URL;
-//     const fullApiUrl = `${domainName}/api/blog-image-load/${blog.image}`;
+  let imageUrl = null;
+  try {
+    const domainName = process.env.NEXT_PUBLIC_BASE_URL;
+    const fullApiUrl = `${domainName}/api/forum-image-load/${forum.image}`;
 
-//     const res = await fetch(fullApiUrl);
-//     if (!res.ok) {
-//       console.error(`Failed to fetch image. Status: ${res.status}`);
-//     } else {
-//       const imageData = await res.json();
-//       imageUrl = imageData?.fileDataUrl;
-//     }
-//   } catch (error) {
-//     console.error("Error fetching image for metadata:", error);
-//   }
+    const res = await fetch(fullApiUrl);
+    if (!res.ok) {
+      console.error(`Failed to fetch image. Status: ${res.status}`);
+    } else {
+      const imageData = await res.json();
+      imageUrl = imageData?.fileDataUrl;
+    }
+  } catch (error) {
+    console.error("Error fetching image for metadata:", error);
+  }
 
-//   return {
-//     title: blog.title,
-//     description: blog.excerpt,
-//     openGraph: {
-//       title: blog.title,
-//       description: blog.excerpt,
-//       images: imageUrl
-//         ? [
-//             {
-//               url: imageUrl,
-//               alt: blog.title,
-//             },
-//           ]
-//         : undefined,
-//     },
-//     metadataBase,
-//   };
-// }
+  return {
+    title: forum.title,
+    description: forum.excerpt,
+    openGraph: {
+      title: forum.title,
+      description: forum.content,
+      images: imageUrl
+        ? [
+            {
+              url: imageUrl,
+              alt: forum.title,
+            },
+          ]
+        : undefined,
+    },
+    metadataBase,
+  };
+}
 
 export default async function ForumPostPage({ params }: ForumProps) {
   const { slug } = params;
 
   const forumResponse = await getForumBySlug(slug);
-  // if (!blogResponse.success) {
-  //   redirect("/blog");
-  // }
+  if (!forumResponse.success) {
+    redirect("/forum");
+  }
 
   const forum = forumResponse.forums;
 
@@ -123,10 +121,6 @@ export default async function ForumPostPage({ params }: ForumProps) {
 
   const session = await getServerSession(authOptions);
   const user = session?.user;
-
-  //   if (!session) {
-  //     return <p>You need to log in to see this page.</p>;
-  //   }
 
   if (user && forum) {
     currentUserProfileId = await fetchCurrentActiveProfileId(user?.id);
@@ -170,13 +164,13 @@ export default async function ForumPostPage({ params }: ForumProps) {
         )}
 
         {/* Show the Delete button if the user is an admin */}
-        {/* {isAdmin && (
-          <DeleteBlogModal
-            blogId={blog._id}
-            coverImage={blog.image}
+        {isAdmin && (
+          <DeleteForumModal
+            forumId={forum._id}
+            coverImage={forum.image}
             currentUserProfileId={currentUserProfileId}
           />
-        )} */}
+        )}
       </div>
 
       <div className="mx-auto px-12 bg-black text-white">
@@ -195,7 +189,7 @@ export default async function ForumPostPage({ params }: ForumProps) {
       </div>
       <div className="mx-auto px-12">
         <Container>
-          <article className="mb-32 px-6">
+          <article className="px-6">
             <ForumCommentList
               forumId={forum._id}
               comments={comments}

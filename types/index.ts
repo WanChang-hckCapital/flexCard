@@ -314,6 +314,9 @@ export type Forum = {
   content: string;
   image: {};
   author: {};
+  forumType: {};
+  viewCount: number;
+  commentCount: number;
 };
 
 export type ForumComment = {
@@ -332,4 +335,11 @@ export type ForumCommentReply = {
   comment: {};
   author: {};
   likes: { user: {}; likedAt: Date }[];
+};
+
+export type ForumType = {
+  name: string;
+  active: Boolean;
+  createdBy: {};
+  createdAt: Date;
 };

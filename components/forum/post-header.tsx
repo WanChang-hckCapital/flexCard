@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { X } from "lucide-react";
 import Avatar from "./avatar";
 import DateFormatter from "./date.formatter";
 import { PostTitle } from "./post-title";
@@ -59,7 +60,7 @@ export function PostHeader({
       <div className="mb-8 md:mb-16 sm:mx-0">
         {blogImg && (
           <div
-            className={`cursor-pointer transition-all duration-300 ease-in-out ${
+            className={`relative cursor-pointer transition-all duration-300 ease-in-out ${
               isExpanded ? "max-h-none" : "max-h-64"
             }`}
             onClick={handleImageClick}
@@ -71,6 +72,12 @@ export function PostHeader({
                 isExpanded ? "h-auto" : "h-64"
               }`}
             />
+
+            {isExpanded && (
+              <button className="absolute top-2 right-2 text-white bg-black bg-opacity-50 rounded-full z-10">
+                <X className="w-6 h-6" onClick={handleImageClick} />
+              </button>
+            )}
           </div>
         )}
       </div>

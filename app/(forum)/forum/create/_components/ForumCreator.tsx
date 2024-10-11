@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
 import { Label } from "@/components/ui/label";
@@ -8,7 +8,11 @@ import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import { createNewForum, checkUniqueSlug } from "@/lib/actions/user.actions";
+import {
+  createNewForum,
+  checkUniqueSlug,
+  loadForumType,
+} from "@/lib/actions/user.actions";
 import { toast } from "sonner";
 
 interface ForumCreatorProps {
@@ -52,7 +56,26 @@ export default function ForumCreator({
 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  const [forumTypes, setForumTypes] = useState<any[]>([]);
+  const [selectedForumType, setSelectedForumType] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    // Load available forum types
+    const fetchForumTypes = async () => {
+      try {
+        const response = await loadForumType();
+        if (response.success && response.forumTypes) {
+          setForumTypes(response.forumTypes);
+        }
+      } catch (error) {
+        console.error("Failed to load forum types:", error);
+      }
+    };
+
+    fetchForumTypes();
+  }, []);
 
   const handleContentChange = (value: string) => {
     setContent(value);
@@ -113,7 +136,8 @@ export default function ForumCreator({
           authActiveProfileId,
           title,
           content,
-          fileId
+          fileId,
+          selectedForumType
         );
 
         if (forumCreateRes.success) {
@@ -140,6 +164,28 @@ export default function ForumCreator({
   return (
     <div className="container mx-auto px-6 py-10 max-w-4xl">
       <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <Label
+            htmlFor="forumType"
+            className="block text-base font-semibold text-white mb-2"
+          >
+            Forum Type
+          </Label>
+          <select
+            id="forumType"
+            value={selectedForumType}
+            onChange={(e) => setSelectedForumType(e.target.value)}
+            className="w-full px-4 py-2 text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="">Select Forum Type</option>
+            {forumTypes.map((type) => (
+              <option key={type._id} value={type._id}>
+                {type.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div>
           <Label
             htmlFor="title"

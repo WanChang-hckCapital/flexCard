@@ -33,6 +33,7 @@ import BlogModel from "../models/blog";
 const slugify = require("slugify");
 import BlogCommentReplyModel from "../models/blogcommentreply";
 import BlogInvitationModel from "../models/bloginvitation";
+import ForumTypeModel from "../models/forumtype";
 
 export async function authenticateUser(email: string, password: string) {
   try {
@@ -2427,7 +2428,7 @@ export async function fetchAllUser(authenticatedUserId: string) {
     const members = await MemberModel.find({});
 
     const userIds = members
-      .map((member) => member.user.toString())
+      .map((member) => member.user)
       .filter((userId) => userId !== authenticatedUserId);
 
     // filter out the current userId
@@ -2445,9 +2446,6 @@ export async function fetchAllUser(authenticatedUserId: string) {
         const activeProfile = await ProfileModel.findOne(
           member.profiles[member.activeProfile]
         );
-
-        // console.log("active profil;e");
-        // console.log(activeProfile);
 
         let imgUrl = null;
         if (
@@ -6306,7 +6304,10 @@ export async function loadForums() {
   try {
     await connectToDB();
 
-    const forumResponse = await ForumModel.find({});
+    const forumResponse = await ForumModel.find({})
+      .sort({ createdAt: -1 })
+      .populate("forumType")
+      .lean();
 
     return {
       success: true,
@@ -6322,11 +6323,95 @@ export async function loadForums() {
   }
 }
 
+export async function loadForumByType(forumTypeId: string) {
+  try {
+    await connectToDB();
+
+    const forumTypeChek = await ForumTypeModel.findById(forumTypeId);
+
+    if (!forumTypeChek) {
+      return {
+        success: false,
+        message: "Forum type is not correct.",
+        error: "Invalid ForumType ID.",
+      };
+    }
+
+    const forumResponse = await ForumModel.find({ forumType: forumTypeId })
+      .sort({ createdAt: -1 })
+      .populate("forumType")
+      .lean();
+
+    return {
+      success: true,
+      message: "Forums loaded successfully",
+      forums: forumResponse,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "Failed to load Forums",
+      error: error.message,
+    };
+  }
+}
+
+export async function deleteForum(
+  authenticatedUserId: string,
+  forumId: string
+) {
+  try {
+    await connectToDB();
+
+    const currentProfile = await ProfileModel.findOne({
+      _id: authenticatedUserId,
+    });
+
+    if (!currentProfile) {
+      return {
+        success: false,
+        message: "Authenticated user profile not found",
+      };
+    }
+
+    const isAdmin = currentProfile.usertype === "FLEXADMIN";
+    const forum = await ForumModel.findById(forumId);
+
+    if (!forum) {
+      return {
+        success: false,
+        message: "Forum not found",
+      };
+    }
+
+    if (!isAdmin && forum.author.toString() !== authenticatedUserId) {
+      return {
+        success: false,
+        message:
+          "Unauthorized: You do not have permission to delete this forum.",
+      };
+    }
+
+    await ForumModel.findByIdAndDelete(forumId);
+
+    return {
+      success: true,
+      message: "Forum deleted successfully",
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Error deleting forum: ${error.message}`,
+    };
+  }
+}
+
 export async function createNewForum(
   authenticatedUserId: string,
   title: string,
   content: string,
-  imageId: string
+  imageId: string,
+  selectedForumType: string
 ) {
   try {
     await connectToDB();
@@ -6350,6 +6435,14 @@ export async function createNewForum(
       };
     }
 
+    const forumTypeFound = await ForumTypeModel.findById(selectedForumType);
+    if (!forumTypeFound) {
+      return {
+        success: false,
+        message: "Forum Type not found.",
+      };
+    }
+
     const slug = createAllRoundedSlug(title);
 
     const forumResponse = await ForumModel.create({
@@ -6358,6 +6451,9 @@ export async function createNewForum(
       slug: slug,
       image: imageId,
       author: authenticatedUserId,
+      forumType: forumTypeFound._id,
+      viewCount: 0,
+      commentCount: 0,
     });
 
     return {
@@ -6497,7 +6593,7 @@ export async function getForumBySlug(slug: string) {
     return {
       success: false,
       message: "Error finding forum.",
-      blogs: [],
+      forums: [],
     };
   }
 }
@@ -6566,6 +6662,9 @@ export async function submitForumComment(
         message: "Forum not found.",
       };
     }
+
+    existingForum.commentCount += 1;
+    await existingForum.save();
 
     const newComment = new ForumCommentModel({
       content: comment,
@@ -6810,6 +6909,104 @@ export async function handleForumSearch(keyword: string) {
       success: false,
       message: "An error occurred during the search",
       error: error.message,
+    };
+  }
+}
+
+export async function addNewForumType(
+  authenticatedUserId: string,
+  forumName: string,
+  activeStatus: boolean
+) {
+  try {
+    await connectToDB();
+
+    const profile = await ProfileModel.findOne({ _id: authenticatedUserId });
+
+    if (!profile) {
+      return {
+        success: false,
+        message: "Profile not found",
+      };
+    }
+
+    if (profile.usertype !== "FLEXADMIN") {
+      return {
+        success: false,
+        message: "Unauthorized: You do not have permission to do this.",
+      };
+    }
+
+    const existingForumType = await ForumTypeModel.findOne({ name: forumName });
+    if (existingForumType) {
+      return {
+        success: false,
+        message: "A forum type with this name already exists.",
+      };
+    }
+
+    const newForumType = await ForumTypeModel.create({
+      name: forumName,
+      active: activeStatus,
+      createdBy: authenticatedUserId,
+    });
+
+    return {
+      success: true,
+      message: "New forum type created successfully.",
+      forumType: newForumType,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "An error occurred while creating the forum type.",
+    };
+  }
+}
+
+export async function loadForumType() {
+  try {
+    await connectToDB();
+
+    const forumTypes = await ForumTypeModel.find({ active: true });
+
+    return {
+      success: true,
+      forumTypes,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: "Failed to load forum types",
+    };
+  }
+}
+
+export async function updateForumViews(forumId: string) {
+  try {
+    await connectToDB();
+
+    const forumFound = await ForumModel.findById(forumId);
+
+    if (!forumFound) {
+      return {
+        success: false,
+        message: "Forum not found",
+      };
+    }
+
+    forumFound.viewCount += 1;
+
+    await forumFound.save();
+
+    return {
+      success: true,
+      message: "Forum view count updated successfully",
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Error while updating forum views: ${error.message}`,
     };
   }
 }
