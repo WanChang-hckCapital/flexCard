@@ -130,13 +130,10 @@ export default function BlogCreator({ authActiveProfileId }: BlogCreatorProps) {
   };
 
   return (
-    <div className="container mx-auto px-6 py-10 max-w-4xl">
+    <div className="container mx-auto px-6 py-10 max-w-4xl dark:text-white text-black">
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <Label
-            htmlFor="title"
-            className="block text-base font-semibold text-white mb-2"
-          >
+          <Label htmlFor="title" className="block text-base font-semibold mb-2">
             Blog Title
           </Label>
           <Input
@@ -144,23 +141,20 @@ export default function BlogCreator({ authActiveProfileId }: BlogCreatorProps) {
             id="title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-4 py-2 text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             placeholder="Enter the blog title"
           />
         </div>
 
         <div>
-          <Label
-            htmlFor="image"
-            className="block text-white font-semibold text-white mb-2"
-          >
+          <Label htmlFor="image" className="block font-semibold mb-2">
             Thumbnail
           </Label>
           <Input
             type="file"
             id="image"
             accept="image/*"
-            className="w-full text-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             onChange={handleImageChange}
           />
         </div>
@@ -180,7 +174,7 @@ export default function BlogCreator({ authActiveProfileId }: BlogCreatorProps) {
         <div>
           <Label
             htmlFor="content"
-            className="block text-base font-semibold text-white mb-2"
+            className="block text-base font-semibold mb-2"
           >
             Blog Content
           </Label>
@@ -188,7 +182,7 @@ export default function BlogCreator({ authActiveProfileId }: BlogCreatorProps) {
             theme="snow"
             value={content}
             onChange={handleContentChange}
-            className="w-full border border-gray-300 text-white rounded-lg overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 rounded-lg overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-500"
             modules={modules}
             formats={formats}
             placeholder="Write the blog content here..."
@@ -198,7 +192,7 @@ export default function BlogCreator({ authActiveProfileId }: BlogCreatorProps) {
 
         <Button
           type="submit"
-          variant="outline"
+          // variant="outline"
           className="w-full"
           disabled={isLoading}
         >

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { getCreatorInfo, updateForumViews } from "@/lib/actions/user.actions";
-import SkeletonCard from "@/app/(blog)/blog/_components/SkeletonCard";
+import SkeletonCard from "@/app/[lang]/(blog)/blog/_components/SkeletonCard";
 
 interface ForumType {
   _id: string;

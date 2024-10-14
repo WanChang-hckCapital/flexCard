@@ -248,7 +248,7 @@ const BlogCommentItem: React.FC<BlogCommentItemProps> = ({
   };
 
   return (
-    <div className="relative p-5 bg-neutral-900 text-white border border-neutral-800 rounded-lg shadow-lg">
+    <div className="relative p-5 dark:bg-neutral-900 bg-white dark:text-white text-black border border-neutral-800 rounded-lg shadow-lg">
       {(isAdmin || isCreator) && (
         <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
           <AlertDialogTrigger asChild>
@@ -294,16 +294,18 @@ const BlogCommentItem: React.FC<BlogCommentItemProps> = ({
           <div className="w-12 h-12 bg-gray-500 rounded-full mr-4"></div>
         )}
         <div>
-          <p className="text-sm font-semibold text-white">
+          <p className="text-sm font-semibold dark:text-white text-black">
             {comment.author.accountname}
           </p>
-          <p className="text-xs text-neutral-400">
+          <p className="text-xs dark:text-neutral-400 text-black">
             {formatSentTime(comment.created_at.toISOString())}
           </p>
         </div>
       </div>
 
-      <p className="text-base text-neutral-300 mb-2">{comment.content}</p>
+      <p className="text-base dark:text-neutral-300 text-black mb-2">
+        {comment.content}
+      </p>
 
       {commentImage && (
         <div className="mb-2">
@@ -329,17 +331,17 @@ const BlogCommentItem: React.FC<BlogCommentItemProps> = ({
             />
           ) : (
             <Heart
-              className="text-white cursor-pointer hover:text-red-500"
+              className="dark:text-white text-black cursor-pointer hover:text-red-500"
               onClick={handleLikeButton}
               role="button"
               aria-label="Like comment"
             />
           )}
-          <span className="text-xs text-neutral-400">
+          <span className="text-xs dark:text-neutral-400 text-black">
             {likes} {likes <= 1 ? "like" : "likes"}
           </span>
           <span
-            className="text-xs text-neutral-400 cursor-pointer"
+            className="text-xs dark:text-neutral-400 text-black cursor-pointer"
             onClick={() => setReplyMode(!replyMode)}
           >
             Reply

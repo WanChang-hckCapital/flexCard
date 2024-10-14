@@ -215,8 +215,8 @@ export default function BlogPage() {
           {/* show invite creator only if the user is admin */}
           {isAdmin && (
             <Button
-              variant="outline"
-              className="text-black mr-2"
+              // variant="outline"
+              className="mr-2"
               onClick={() => setIsInviteModalOpen(true)}
             >
               Invite Creator
@@ -225,7 +225,10 @@ export default function BlogPage() {
           )}
           {/* show create button when the user is a creator or admin */}
           {(isAdmin || isInvitedCreator) && (
-            <Button variant="outline" className="text-black">
+            <Button
+            // variant="outline"
+            // className="text-slate:700"
+            >
               <Link href="/blog/create" className="flex items-center gap-2">
                 Create
                 <Pen />
@@ -247,20 +250,20 @@ export default function BlogPage() {
           <SkeletonCard />
         ) : mainPost ? (
           <Link href={`/blog/${mainPost?.slug}`} className="block mb-12">
-            <div className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow h-[400px] flex flex-col">
+            <div className="border dark:bg-black dark:text-white bg-white text-black rounded-lg overflow-hidden shadow-xl hover:shadow-2xl transition-shadow h-[400px] flex flex-col">
               <div className="grid md:grid-cols-2 items-center">
                 {mainPost.image && (
                   <BlogImage imageId={mainPost.image} alt={mainPost.title} />
                 )}
                 <div className="p-4 flex flex-col flex-grow">
-                  <h2 className="text-2xl font-semibold mb-4">
+                  <h2 className="text-2xl dark:text-white text-slate:700 font-semibold mb-4">
                     {truncateText(mainPost.title, 50)}
                   </h2>
                   <div
                     dangerouslySetInnerHTML={{
                       __html: truncateText(mainPost.excerpt, 50),
                     }}
-                    className="text-gray-600 mb-4"
+                    className="dark:text-slate-700 text-gray-600 mb-4"
                   ></div>
                   <CreatorImage creatorId={mainPost.author} />
                 </div>

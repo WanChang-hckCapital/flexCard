@@ -76,7 +76,7 @@ export default function BlogCreate() {
   return (
     <>
       <Header />
-      <div className="container mx-auto px-6 py-6 max-w-4xl">
+      <div className="container mx-auto px-6 py-6 max-w-4xl dark:text-white text-black">
         <Card>
           <CardHeader>
             {accountName && (

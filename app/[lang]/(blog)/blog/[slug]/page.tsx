@@ -154,7 +154,9 @@ export default async function BlogPostPage({ params }: BlogProps) {
       <div className="flex justify-end gap-4 px-6 sm:px-8 lg:px-12 py-4">
         {/* Show the Edit button if the user is the creator or admin */}
         {(isAdmin || isCreator) && (
-          <Button variant="outline" className="text-black">
+          <Button
+          // variant="outline"
+          >
             <Link
               href={`/blog/edit/${blog._id}`}
               className="flex items-center gap-2"

@@ -201,7 +201,7 @@ export default function BlogEdit() {
         <Card>
           <CardHeader>
             {accountName && (
-              <div className="flex justify-center mb-4">
+              <div className="flex dark:text-white text-black justify-center mb-4">
                 <span className="text-lg font-bold">{accountName}</span>
               </div>
             )}

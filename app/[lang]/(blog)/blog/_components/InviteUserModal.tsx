@@ -104,7 +104,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({
   return (
     <>
       <Dialog open onOpenChange={onClose}>
-        <DialogContent className="bg-black text-white max-w-lg">
+        <DialogContent className="dark:bg-black dark:text-white bg-white text-black max-w-lg">
           <DialogHeader>
             <DialogTitle>Invite Creator to Write a Blog</DialogTitle>
           </DialogHeader>
@@ -141,7 +141,10 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({
             </ul>
           )}
           <div className="mt-4 flex justify-end">
-            <Button variant="outline" onClick={onClose}>
+            <Button
+              // variant="outline"
+              onClick={onClose}
+            >
               Close
             </Button>
           </div>
@@ -150,7 +153,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({
 
       {selectedProfile && (
         <Dialog open={isConfirmModalOpen} onOpenChange={setIsConfirmModalOpen}>
-          <DialogContent className="bg-black text-white max-w-lg">
+          <DialogContent className="dark:bg-black dark:text-white bg-white text-black max-w-lg">
             <DialogHeader>
               <DialogTitle>Confirm Invitation</DialogTitle>
             </DialogHeader>
@@ -160,13 +163,13 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({
             </p>
             <div className="mt-4 flex justify-end">
               <Button
-                variant="destructive"
+                // variant="destructive"
                 onClick={() => setIsConfirmModalOpen(false)}
               >
                 Cancel
               </Button>
               <Button
-                variant="outline"
+                // variant="outline"
                 className="ml-2"
                 onClick={handleConfirmInvite}
               >

@@ -170,7 +170,7 @@ const ReplyItem: React.FC<ReplyItemProps> = ({
 
   return (
     <div className="flex justify-end w-full">
-      <div className="relative w-full md:w-3/4 lg:w-1/2 p-4 bg-neutral-800 rounded-lg shadow-sm hover:bg-neutral-700 transition-all duration-300 ease-in-out mb-2 border border-neutral-600">
+      <div className="relative w-full md:w-3/4 lg:w-1/2 p-4 dark:bg-neutral-800 bg-white rounded-lg shadow-sm hover:bg-neutral-700 transition-all duration-300 ease-in-out mb-2 border border-neutral-600">
         {(isAdmin || isCreator) && (
           <div className="absolute top-2 right-2">
             <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
@@ -219,16 +219,16 @@ const ReplyItem: React.FC<ReplyItemProps> = ({
             <div className="w-12 h-12 bg-gray-500 rounded-full mr-3 shadow-md"></div>
           )}
           <div>
-            <p className="text-base font-semibold text-white leading-tight">
+            <p className="text-base font-semibold dark:text-white text-black leading-tight">
               {reply.author.accountname}
             </p>
-            <p className="text-xs text-neutral-400">
+            <p className="text-xs dark:text-neutral-400 text-black">
               {formatSentTime(reply.createdAt.toString())}
             </p>
           </div>
         </div>
 
-        <p className="text-base text-neutral-300 leading-relaxed mb-3">
+        <p className="text-base dark:text-neutral-300 text-black leading-relaxed mb-3">
           {reply.content}
         </p>
 
@@ -255,13 +255,13 @@ const ReplyItem: React.FC<ReplyItemProps> = ({
             />
           ) : (
             <Heart
-              className="text-white cursor-pointer hover:text-red-500 transition-colors"
+              className="dark:text-white text-black cursor-pointer hover:text-red-500 transition-colors"
               onClick={handleLikeButton}
               role="button"
               aria-label="Like reply"
             />
           )}
-          <span className="text-xs text-neutral-400 mt-1">
+          <span className="text-xs dark:text-neutral-400 text-black mt-1">
             {likes} {likes === 1 ? "like" : "likes"}
           </span>
         </div>

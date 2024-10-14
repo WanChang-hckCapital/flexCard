@@ -24,8 +24,6 @@ export default function DeleteBlogModal({
   currentUserProfileId,
 }: DeleteBlogModalProps) {
   const handleDelete = async () => {
-    console.log("delete id", blogId);
-    console.log(coverImage);
     try {
       const blogDeleteRes = await deleteBlog(currentUserProfileId, blogId);
 
@@ -53,8 +51,8 @@ export default function DeleteBlogModal({
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button
-          variant="outline"
-          className="text-black flex items-center gap-2"
+        // variant="outline"
+        // className="dark:text-white text-black flex items-center gap-2"
         >
           Delete
           <Pen />
@@ -68,10 +66,17 @@ export default function DeleteBlogModal({
         </p>
         <div className="flex justify-end gap-4 mt-4">
           <AlertDialogCancel asChild>
-            <Button variant="outline">Cancel</Button>
+            <Button
+            // variant="outline"
+            >
+              Cancel
+            </Button>
           </AlertDialogCancel>
           <AlertDialogAction asChild>
-            <Button variant="destructive" onClick={handleDelete}>
+            <Button
+              // variant="destructive"
+              onClick={handleDelete}
+            >
               Confirm
             </Button>
           </AlertDialogAction>

@@ -96,7 +96,7 @@ export default function BlogEditor({
   };
 
   return (
-    <div className="container mx-auto px-6 py-10 max-w-4xl">
+    <div className="container dark:text-white text-black mx-auto px-6 py-10 max-w-4xl">
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <Label htmlFor="title" className="block text-sm font-medium">
@@ -177,7 +177,7 @@ export default function BlogEditor({
             value={content}
             onChange={handleContentChange}
             modules={modules}
-            className="w-full border border-gray-300 text-white rounded-lg overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 dark:text-white text-black rounded-lg overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Write the blog content here..."
             style={{ height: "400px" }}
           />
@@ -185,7 +185,7 @@ export default function BlogEditor({
 
         <Button
           type="submit"
-          variant="outline"
+          // variant="outline"
           className="w-full"
           disabled={isLoading}
         >

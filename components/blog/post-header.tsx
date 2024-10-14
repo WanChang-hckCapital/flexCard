@@ -86,7 +86,7 @@ export function PostHeader({
         <div className="mb-12 text-lg">
           <DateFormatter dateString={new Date(date).toISOString()} />
         </div>
-        <div className="hidden md:block md:mb-12">
+        <div className="hidden md:block dark:text-white text-black md:mb-12">
           <Avatar name={author} picture={authorImg} />
         </div>
       </div>

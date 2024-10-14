@@ -52,7 +52,9 @@ export function CreatorImage({ creatorId }: { creatorId: string }) {
         height={40}
         className="w-12 h-12 rounded-full mr-4"
       />
-      <span className="text-sm text-gray-500">{creatorName}</span>
+      <span className="text-sm dark:text-white text-gray-600">
+        {creatorName}
+      </span>
     </div>
   );
 }
