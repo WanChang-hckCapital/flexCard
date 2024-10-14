@@ -43,13 +43,6 @@ async function Header({ session, userInfoImage }: HeaderProps) {
     userImage = user?.image;
   }
 
-  // const [isSidebarVisible, setIsSidebarVisible] = useState(false);
-
-  // const toggleSidebar = () => {
-  //   console.log
-  //   setIsSidebarVisible(!isSidebarVisible);
-  // };
-
   return (
     <header className="fixed w-full z-50">
       <nav className="topbar shadow-xl">
@@ -70,23 +63,6 @@ async function Header({ session, userInfoImage }: HeaderProps) {
               className=""
               src="/assets/new-card-dark.svg"
               alt="icon create"
-            />
-          </Link>
-
-          {/* <Link href="/notifications">
-                        <Image width={24} height={24}
-                            className=""
-                            src='/assets/heart.svg'
-                            alt='icon heart' />
-                    </Link> */}
-          {/* <Link href="/workspace/6657da7c793f3b540da23a34"> */}
-          <Link href="/workspace/66b332c9339423ac1861e9d8">
-            <Image
-              width={24}
-              height={24}
-              className=""
-              src="/assets/heart.svg"
-              alt="icon heart"
             />
           </Link>
 
@@ -115,10 +91,6 @@ async function Header({ session, userInfoImage }: HeaderProps) {
             <DropdownMenuTrigger>
               <div className="flex">
                 <Menu />
-                {/* {
-                                    session?.user &&
-                                    <p>{session.user.name?.split(' ')[0]}</p>
-                                } */}
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="mt-3">
@@ -132,33 +104,6 @@ async function Header({ session, userInfoImage }: HeaderProps) {
                   </Link>
                 </DropdownMenuItem>
               )}
-              {
-                <>
-                  <DropdownMenuItem className="justify-center">
-                    <Link
-                      className="font-bold"
-                      // href={`${session ? '/cards/665124264a34e4d57fcc506e' : 'api/auth/signin'}`} >
-                      href={"/cards/6673eab3337c9a8447de531d"}
-                    >
-                      cards testing
-                    </Link>
-                  </DropdownMenuItem>
-                </>
-              }
-              {
-                <>
-                  <DropdownMenuItem className="justify-center">
-                    <Link
-                      className="font-bold"
-                      // href={`${session ? '/profile/66511403ce0e911348378718' : 'api/auth/signin'}`} >
-                      // href={'/profile/6651901f2dc11fd640957e8a'} >
-                      href={"/profile/66b41db4e2c63bb042600381"}
-                    >
-                      other user test
-                    </Link>
-                  </DropdownMenuItem>
-                </>
-              }
               {
                 <>
                   <DropdownMenuItem className="justify-center">
