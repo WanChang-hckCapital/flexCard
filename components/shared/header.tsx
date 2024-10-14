@@ -59,7 +59,9 @@ async function Header({ session, userInfoImage, dict }: HeaderProps) {
         {/* logo */}
         <div className="flex">
           <Link href="/">
-            <span className="head-text font-bold text-gray-800 dark:text-white">flxBubble</span>
+            <span className="head-text font-bold text-gray-800 dark:text-white">
+              flxBubble
+            </span>
           </Link>
         </div>
 
@@ -81,10 +83,7 @@ async function Header({ session, userInfoImage, dict }: HeaderProps) {
                     </Link> */}
           {/* <Link href="/workspace/6657da7c793f3b540da23a34"> */}
           <Link href="/workspace/66b332c9339423ac1861e9d8">
-            <Heart
-              className="text-gray-800 dark:text-white"
-              size={24}
-            />
+            <Heart className="text-gray-800 dark:text-white" size={24} />
           </Link>
 
           <Link href={`/workspace/chatroom/${userId}`}>
@@ -96,19 +95,13 @@ async function Header({ session, userInfoImage, dict }: HeaderProps) {
 
           {/* add more friend page */}
           <Link href="/workspace/add-friend">
-            <User
-              className="text-gray-800 dark:text-white"
-              size={24}
-            />
+            <User className="text-gray-800 dark:text-white" size={24} />
           </Link>
           {/* drop down menu*/}
           <DropdownMenu>
             <DropdownMenuTrigger>
               <div className="flex">
-                <Menu 
-                  className="text-gray-800 dark:text-white"
-                  size={24}
-                />
+                <Menu className="text-gray-800 dark:text-white" size={24} />
                 {/* {
                                     session?.user &&
                                     <p>{session.user.name?.split(' ')[0]}</p>
@@ -166,8 +159,24 @@ async function Header({ session, userInfoImage, dict }: HeaderProps) {
                 </>
               }
               {
-                <LanguageSwitcher />
+                <>
+                  <DropdownMenuItem className="justify-center">
+                    <Link className="font-bold" href={"/forum"}>
+                      Forum
+                    </Link>
+                  </DropdownMenuItem>
+                </>
               }
+              {
+                <>
+                  <DropdownMenuItem className="justify-center">
+                    <Link className="font-bold" href={"/blog"}>
+                      Blog
+                    </Link>
+                  </DropdownMenuItem>
+                </>
+              }
+              {<LanguageSwitcher />}
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -176,8 +185,9 @@ async function Header({ session, userInfoImage, dict }: HeaderProps) {
               <DropdownMenu>
                 <DropdownMenuTrigger>
                   <div
-                    className={`relative ${userImage ? "w-8 h-8" : "h-8"
-                      } object-cover content-center`}
+                    className={`relative ${
+                      userImage ? "w-8 h-8" : "h-8"
+                    } object-cover content-center`}
                   >
                     {userImage ? (
                       <Image
@@ -196,8 +206,11 @@ async function Header({ session, userInfoImage, dict }: HeaderProps) {
                     <DropdownMenuItem className="justify-center">
                       <Link
                         className="flex font-bold text-gray-800 dark:text-white"
-                        href={`${session ? `/profile/${authActiveProfileId}` : "api/auth/signin"
-                          }`}
+                        href={`${
+                          session
+                            ? `/profile/${authActiveProfileId}`
+                            : "api/auth/signin"
+                        }`}
                       >
                         {dict.header.myCard}
                       </Link>
@@ -208,8 +221,7 @@ async function Header({ session, userInfoImage, dict }: HeaderProps) {
                       <DropdownMenuItem className="justify-center">
                         <Link
                           className="font-bold text-gray-800 dark:text-white"
-                          href={`${session ? "/settings" : "api/auth/signin"
-                            }`}
+                          href={`${session ? "/settings" : "api/auth/signin"}`}
                         >
                           {dict.header.setting}
                         </Link>
@@ -227,7 +239,11 @@ async function Header({ session, userInfoImage, dict }: HeaderProps) {
                   )}
 
                   <DropdownMenuItem className="flex text-left py-0 w-full">
-                    {session ? <SignOutButton dict={dict} /> : <SignInButton dict={dict} />}
+                    {session ? (
+                      <SignOutButton dict={dict} />
+                    ) : (
+                      <SignInButton dict={dict} />
+                    )}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

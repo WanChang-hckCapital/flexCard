@@ -307,3 +307,39 @@ export type BlogInvitation = {
   acceptedAt: Date;
   declinedAt: Date;
 };
+
+export type Forum = {
+  title: string;
+  slug: string;
+  content: string;
+  image: {};
+  author: {};
+  forumType: {};
+  viewCount: number;
+  commentCount: number;
+};
+
+export type ForumComment = {
+  content: string;
+  forum: {};
+  image?: {};
+  author: {};
+  likes: { user: {}; likedAt: Date }[];
+  replyCount: number;
+};
+
+export type ForumCommentReply = {
+  content: string;
+  forum: {};
+  image?: {};
+  comment: {};
+  author: {};
+  likes: { user: {}; likedAt: Date }[];
+};
+
+export type ForumType = {
+  name: string;
+  active: Boolean;
+  createdBy: {};
+  createdAt: Date;
+};

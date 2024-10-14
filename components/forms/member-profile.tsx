@@ -20,7 +20,10 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
 import { UserValidation } from "@/lib/validations/user";
-import { getIPCountryInfo, updateMemberDetails } from "@/lib/actions/user.actions";
+import {
+  getIPCountryInfo,
+  updateMemberDetails,
+} from "@/lib/actions/user.actions";
 import { toast } from "sonner";
 import imageCompression from "browser-image-compression";
 import { CircleUser, Pencil } from "lucide-react";
@@ -61,7 +64,6 @@ const MemberProfile = ({ profile, btnTitle, dict }: Props) => {
   });
 
   const onSubmit = async (values: z.infer<typeof UserValidation>) => {
-
     const geoInfo = await getIPCountryInfo();
 
     if (!file && pathname !== "/profile/edit") {
@@ -108,7 +110,6 @@ const MemberProfile = ({ profile, btnTitle, dict }: Props) => {
     } else {
       router.push("/");
     }
-
   };
 
   const handleImage = async (
@@ -135,7 +136,9 @@ const MemberProfile = ({ profile, btnTitle, dict }: Props) => {
 
         const MAX_SIZE_MB = 5;
         if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-          toast.info("File size exceeds the 5 MB limit. Please upload a smaller image.");
+          toast.info(
+            "File size exceeds the 5 MB limit. Please upload a smaller image."
+          );
           return;
         }
 
@@ -172,23 +175,15 @@ const MemberProfile = ({ profile, btnTitle, dict }: Props) => {
         window.removeEventListener("beforeunload", handleBeforeUnload);
       };
     }
-
-  }, [isFormDirty, pathname]);
-
-  // useEffect(() => {
-  //   const isDirty = Object.keys(defaultValues).some(
-  //     (key) =>
-  //       form.getValues(key as keyof typeof defaultValues) !== defaultValues[key as keyof typeof defaultValues]
-  //   );
-  //   setIsFormDirty(isDirty);
-  // }, [form.watch(), defaultValues]);
+  }, [isFormDirty]);
 
   useEffect(() => {
     const watchedValues = form.watch();
 
     const isDirty = Object.keys(defaultValues).some(
       (key) =>
-        watchedValues[key as keyof typeof defaultValues] !== defaultValues[key as keyof typeof defaultValues]
+        form.getValues(key as keyof typeof defaultValues) !==
+        defaultValues[key as keyof typeof defaultValues]
     );
     setIsFormDirty(isDirty);
   }, [defaultValues, form]);
@@ -197,41 +192,41 @@ const MemberProfile = ({ profile, btnTitle, dict }: Props) => {
   return (
     <Form {...form}>
       <form
-        className='flex flex-col justify-start gap-8'
+        className="flex flex-col justify-start gap-8"
         onSubmit={form.handleSubmit(onSubmit)}
       >
         <FormField
           control={form.control}
-          name='profile_image'
+          name="profile_image"
           render={({ field }) => (
-            <FormItem className='flex items-center gap-4 justify-center relative'>
+            <FormItem className="flex items-center gap-4 justify-center relative">
               <div className="relative group">
-                <FormLabel className='account-form_image-label'>
+                <FormLabel className="account-form_image-label">
                   {field.value.length !== 0 ? (
                     <Image
                       src={field.value}
-                      alt='profile_icon'
+                      alt="profile_icon"
                       width={96}
                       height={96}
                       priority
-                      className='rounded-full object-contain'
+                      className="rounded-full object-contain"
                     />
                   ) : (
                     <CircleUser
                       width={96}
                       height={96}
-                      className='rounded-full object-contain text-gray-500'
+                      className="rounded-full object-contain text-gray-500"
                     />
                   )}
                 </FormLabel>
                 <div className="absolute inset-0 flex items-center justify-center cursor-pointer rounded-full dark:bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <Pencil size={24} className="text-white" />
-                  <FormControl className='absolute inset-0 opacity-0 cursor-pointer'>
+                  <FormControl className="absolute inset-0 opacity-0 cursor-pointer">
                     <Input
-                      type='file'
-                      accept='image/*'
-                      placeholder='Add profile photo'
-                      className='account-form_image-input w-full h-full'
+                      type="file"
+                      accept="image/*"
+                      placeholder="Add profile photo"
+                      className="account-form_image-input w-full h-full"
                       onChange={(e) => handleImage(e, field.onChange)}
                     />
                   </FormControl>
@@ -243,18 +238,14 @@ const MemberProfile = ({ profile, btnTitle, dict }: Props) => {
 
         <FormField
           control={form.control}
-          name='accountname'
+          name="accountname"
           render={({ field }) => (
             <FormItem className='flex w-full flex-col gap-3'>
               <FormLabel className='text-base-semibold dark:text-light-2'>
                 {dict.userSettings.profile.accountname}
               </FormLabel>
               <FormControl>
-                <Input
-                  type='text'
-                  className='account-form_input'
-                  {...field}
-                />
+                <Input type="text" className="account-form_input" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -263,25 +254,21 @@ const MemberProfile = ({ profile, btnTitle, dict }: Props) => {
 
         <FormField
           control={form.control}
-          name='email'
+          name="email"
           render={({ field }) => (
             <FormItem className='flex w-full flex-col gap-3'>
               <FormLabel className='text-base-semibold dark:text-light-2'>
                 {dict.userSettings.profile.email}
               </FormLabel>
               <FormControl>
-                <Input
-                  type='email'
-                  className='account-form_input'
-                  {...field}
-                />
+                <Input type="email" className="account-form_input" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <FormField
+        {/* <FormField
           control={form.control}
           name='password'
           render={({ field }) => (
@@ -319,11 +306,11 @@ const MemberProfile = ({ profile, btnTitle, dict }: Props) => {
               <FormMessage />
             </FormItem>
           )}
-        />
+        /> */}
 
         <FormField
           control={form.control}
-          name='phone'
+          name="phone"
           render={({ field }) => (
             <FormItem className='flex w-full flex-col gap-3'>
               <FormLabel className='text-base-semibold dark:text-light-2'>
@@ -331,8 +318,8 @@ const MemberProfile = ({ profile, btnTitle, dict }: Props) => {
               </FormLabel>
               <FormControl>
                 <Input
-                  type='phone'
-                  className='account-form_input no-focus'
+                  type="phone"
+                  className="account-form_input no-focus"
                   {...field}
                 />
               </FormControl>
@@ -343,18 +330,14 @@ const MemberProfile = ({ profile, btnTitle, dict }: Props) => {
 
         <FormField
           control={form.control}
-          name='shortdescription'
+          name="shortdescription"
           render={({ field }) => (
             <FormItem className='flex w-full flex-col gap-3'>
               <FormLabel className='text-base-semibold dark:ext-light-2'>
                 {dict.userSettings.profile.shortDescription}
               </FormLabel>
               <FormControl>
-                <Textarea
-                  rows={6}
-                  className='account-form_input'
-                  {...field}
-                />
+                <Textarea rows={6} className="account-form_input" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

@@ -6,7 +6,11 @@ import RootSetting from "./component/page";
 import { fetchMemberWithProfiles } from "@/lib/actions/user.actions";
 import { getDictionary } from "../../dictionaries";
 
-export default async function SettingsPage({ params }: { params: { lang: string } }) {
+export default async function SettingsPage({
+  params,
+}: {
+  params: { lang: string };
+}) {
   const session = await getServerSession(authOptions);
   const user = session?.user;
   const dict = await getDictionary(params.lang);
@@ -17,7 +21,7 @@ export default async function SettingsPage({ params }: { params: { lang: string 
   }
 
   const authUserId = user.id.toString();
-  
+
   const member = await fetchMemberWithProfiles(authUserId);
 
   if (!member) {
@@ -28,7 +32,9 @@ export default async function SettingsPage({ params }: { params: { lang: string 
   const profiles = member.profiles || [];
 
   const activeProfileId = profiles[member.activeProfile]?._id;
-  const activeProfile = profiles.find(profile => profile._id.toString() === activeProfileId?.toString());
+  const activeProfile = profiles.find(
+    (profile) => profile._id.toString() === activeProfileId?.toString()
+  );
 
   if (!activeProfile?.onboarded) {
     redirect("/onboarding");
@@ -44,5 +50,13 @@ export default async function SettingsPage({ params }: { params: { lang: string 
     shortdescription: activeProfile?.shortdescription || "",
   };
 
-  return <RootSetting authUserId={authUserId} authActiveProfileId={activeProfileId} profileData={profileData} profiles={profiles} dict={dict} />;
+  return (
+    <RootSetting
+      authUserId={authUserId}
+      authActiveProfileId={activeProfileId}
+      profileData={profileData}
+      profiles={profiles}
+      dict={dict}
+    />
+  );
 }

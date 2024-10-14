@@ -35,8 +35,6 @@ export default async function Page() {
     // filter all the unadded user
     if (allUsers.success) {
       unAddedUser = allUsers.users;
-      // console.log("unAddedUser");
-      // console.log(unAddedUser);
     } else {
       console.error("Failed to fetch users:", allUsers.message);
     }
