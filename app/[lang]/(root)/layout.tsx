@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter as FontSans } from "next/font/google";
 import "../globals.css";
 import { cn } from "@/lib/utils";
-import AuthSessionProvider from "../../(auth)/auth-session-provider";
+import AuthSessionProvider from "../(auth)/auth-session-provider";
 import Favicon from "/public/favicon.ico";
 import { Toaster as SonnarToaster } from "@/components/ui/sonner";
 import Header from "@/components/shared/header";

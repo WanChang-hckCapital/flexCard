@@ -144,6 +144,18 @@ async function Header({ session, userInfoImage, dict }: HeaderProps) {
                   <DropdownMenuItem className="justify-center">
                     <Link
                       className="font-bold text-gray-800 dark:text-white"
+                      href={"/contact-us"}
+                    >
+                      contact us
+                    </Link>
+                  </DropdownMenuItem>
+                </>
+              }
+              {
+                <>
+                  <DropdownMenuItem className="justify-center">
+                    <Link
+                      className="font-bold text-gray-800 dark:text-white"
                       // href={`${session ? '/profile/66511403ce0e911348378718' : 'api/auth/signin'}`} >
                       // href={'/profile/6651901f2dc11fd640957e8a'} >
                       href={"/profile/66b41db4e2c63bb042600381"}
@@ -220,7 +232,7 @@ async function Header({ session, userInfoImage, dict }: HeaderProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <SignInButton />
+              <SignInButton dict={dict} />
             )}
           </div>
         </div>

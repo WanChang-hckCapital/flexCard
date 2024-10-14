@@ -81,7 +81,7 @@ const CardDetails = async ({ params }: Props) => {
           <h2 className="mt-8 mb-[8px] ml-[5px] text-2xl font-bold">
             Suggested Cards
           </h2>
-          <ResponsiveGrid result={suggestedCards} session={session} />
+          <ResponsiveGrid result={suggestedCards} />
         </div>
       ) : null}
     </>

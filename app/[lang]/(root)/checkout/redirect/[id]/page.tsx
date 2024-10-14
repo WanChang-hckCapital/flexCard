@@ -26,7 +26,7 @@ const RedirectPage = async ({ params, searchParams }: Props) => {
       {paymentStatus.success === true ? (
         <div className="p-8 rounded-lg shadow-md text-center max-w-md w-full">
           <div className="flex justify-center mb-4">
-            <Image src="/payment-success.png" alt="Success" className="h-48 w-48" />
+            <Image src="/assests/payment-success.png" width={48} height={48} alt="Success" className="h-48 w-48" />
           </div>
           <h2 className="text-2xl font-bold mb-2">
             {paymentStatus.status === true ? 'Thank you for subscribing!' : 'Payment Failed'}
@@ -36,7 +36,7 @@ const RedirectPage = async ({ params, searchParams }: Props) => {
           </p>
           <div className="flex justify-center space-x-4">
             <Link href="/workspace/create-card" className="bg-blue-500 text-white px-4 py-2 rounded-lg">
-              flexCard Now
+              flxBubble Now
             </Link>
             <Link href="/" className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg">
               Back to Home
@@ -46,7 +46,7 @@ const RedirectPage = async ({ params, searchParams }: Props) => {
       ) : (
         <div className="p-8 rounded-lg shadow-md text-center max-w-md w-full">
           <div className="flex justify-center mb-4">
-            <Image src="/payment-failed.png" alt="Failed" className="h-48 w-48" />
+            <Image src="/assets/payment-failed.png" width={48} height={48} alt="Failed" className="h-48 w-48" />
           </div>
           <p className="text-gray-600 mb-4">
             {paymentStatus.message}

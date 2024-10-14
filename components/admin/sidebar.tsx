@@ -30,9 +30,10 @@ import { Usertype } from "@/types"
 
 interface UserTypeProps {
     usertype: Usertype;
+    dict: any;
 }
 
-function SideBar({ usertype }: UserTypeProps) {
+function SideBar({ usertype, dict }: UserTypeProps) {
     const pathname = usePathname();
     const userAllowedRoutes = NormalUserAllowedRoutes[usertype];
 
@@ -41,11 +42,11 @@ function SideBar({ usertype }: UserTypeProps) {
     );
 
     return (
-        <div className="hidden h-full border-r border-neutral-600 bg-muted/40 md:block">
+        <div className="hidden h-full border-r border-neutral-600 dark:bg-dark-1 bg-stone-400 md:block">
             <div className="flex h-[80%] flex-col gap-2">
                 <div className="flex h-14 items-center border-b border-neutral-600 px-4 lg:h-[60px] lg:px-6">
                     <Link href="/dashboard">
-                        <span className='head-text font-bold'>flexCard</span>
+                        <span className='head-text font-bold'>flxBubble</span>
                     </Link>
                 </div>
                 <div className="flex-1 overflow-y-auto">
@@ -59,19 +60,19 @@ function SideBar({ usertype }: UserTypeProps) {
                                 <Link
                                     href={link.route}
                                     key={link.label}
-                                    className={`leftsidebar_link ${isActive && "bg-primary-500 "}`}
+                                    className={`leftsidebar_link ${isActive && "dark:bg-primary-500 bg-stone-600"}`}
                                 >
-                                    {link.icon === "Home" && <Home className="h-5 w-5" />}
+                                    {link.icon === "Home" && <Home className="h-5 w-5 text-white" />}
                                     {link.icon === "ShoppingCart" && (
                                         <ShoppingCart className="h-5 w-5" />
                                     )}
-                                    {link.icon === "Package" && <Package className="h-5 w-5" />}
-                                    {link.icon === "Ticket" && <Ticket className="h-5 w-5" />}
-                                    {link.icon === "Users" && <Users className="h-5 w-5" />}
-                                    {link.icon === "LineChart" && <LineChart className="h-5 w-5" />}
-                                    {link.icon === "PiggyBank" && <PiggyBank className="h-5 w-5" />}
-                                    {link.icon === "MailCheck" && <MailCheck className="h-5 w-5" />}
-                                    {link.icon === "Settings" && <Settings className="h-5 w-5" />}
+                                    {link.icon === "Package" && <Package className="h-5 w-5 text-white" />}
+                                    {link.icon === "Ticket" && <Ticket className="h-5 w-5 text-white" />}
+                                    {link.icon === "Users" && <Users className="h-5 w-5 text-white" />}
+                                    {link.icon === "LineChart" && <LineChart className="h-5 w-5 text-white" />}
+                                    {link.icon === "PiggyBank" && <PiggyBank className="h-5 w-5 text-white" />}
+                                    {link.icon === "MailCheck" && <MailCheck className="h-5 w-5 text-white" />}
+                                    {link.icon === "Settings" && <Settings className="h-5 w-5 text-white" />}
                                     <p className="text-light-1">{link.label}</p>
                                 </Link>
                             );

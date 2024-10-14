@@ -5,6 +5,7 @@ import { formatCurrency } from '@/lib/utils';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { startOfDay } from 'date-fns';
 import { fetchCardViewDetails } from '@/lib/actions/user.actions';
+import { useTheme } from '@/app/context/theme-context';
 
 
 type TotalViewCardsByCardIdProps = {
@@ -16,6 +17,7 @@ type TotalViewCardsByCardIdProps = {
 export function TotalViewCardsByCardIdChart({ cardId, startDate, endDate }: TotalViewCardsByCardIdProps) {
 
     const [chartData, setChartData] = useState<any[]>([]);
+    const { theme } = useTheme();
 
     useEffect(() => {
 
@@ -47,7 +49,11 @@ export function TotalViewCardsByCardIdChart({ cardId, startDate, endDate }: Tota
                         tickFormatter={tick => tick.toString()}
                     />
                     <Tooltip 
-                        contentStyle={{ background: "#151c2c", border: "none", borderRadius: "15px" }} 
+                        contentStyle={{
+                            background: theme === 'dark' ? "#151c2c" : "#ffffff",
+                            border: "none",
+                            borderRadius: "15px",
+                        }}
                         formatter={(value, name, props) => [
                             `${value} views`,
                             `Date: ${props.payload.date}`

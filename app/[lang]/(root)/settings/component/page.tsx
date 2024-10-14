@@ -27,7 +27,7 @@ interface Props {
 }
 
 function RootSetting({ authUserId, authActiveProfileId, profileData, profiles, dict }: Props) {
-    const [activeSection, setActiveSection] = useState("edit-profile");
+    const [activeSection, setActiveSection] = useState("manage-account");
     const [lineOAFollowers, setLineOAFollowers] = useState<string[]>([]);
     const [isPrivate, setIsPrivate] = useState(profileData.accountType === "PRIVATE");
 
@@ -86,14 +86,14 @@ function RootSetting({ authUserId, authActiveProfileId, profileData, profiles, d
                         {dict.userSettingsLeftBar.theme}
                     </a>
                     <p className="dark:text-slate-400 text-[12px]">{dict.userSettingsLeftBar.accountSection}</p>
-                    <a
+                    {/* <a
                         onClick={() => handleNavClick("edit-profile")}
                         className={`flex p-3 rounded-lg items-center cursor-pointer ${activeSection === "edit-profile" ? "dark:bg-light-3 dark:text-primary bg-stone-400 text-white" : ""
                             }`}
                     >
                         <User2 className="mr-2 w-5 h-5" />
                         {dict.userSettingsLeftBar.profile}
-                    </a>
+                    </a> */}
                     <a
                         onClick={() => handleNavClick("manage-account")}
                         className={`flex p-3 rounded-lg items-center cursor-pointer ${activeSection === "manage-account" ? "dark:bg-light-3 dark:text-primary bg-stone-400 text-white" : ""
@@ -160,7 +160,7 @@ function RootSetting({ authUserId, authActiveProfileId, profileData, profiles, d
                             </CardContent>
                         </Card>
                     )}
-                    {activeSection === "edit-profile" && (
+                    {/* {activeSection === "edit-profile" && (
                         <Card>
                             <CardHeader>
                                 <CardTitle>{dict.userSettings.profile.title}</CardTitle>
@@ -169,14 +169,14 @@ function RootSetting({ authUserId, authActiveProfileId, profileData, profiles, d
                                 <MemberProfile profile={profileData} btnTitle={dict.userSettings.profile.btnContinue} dict={dict} />
                             </CardContent>
                         </Card>
-                    )}
+                    )} */}
                     {activeSection === "manage-account" && (
                         <Card>
                             <CardHeader className="flex flex-row justify-between items-center">
                                 <CardTitle>{dict.userSettings.account.title}</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <ProfileList profiles={profiles} authActiveProfileId={authActiveProfileId} authUserId={authUserId} dict={dict} />
+                                <ProfileList profile={profileData} profiles={profiles} authActiveProfileId={authActiveProfileId} authUserId={authUserId} dict={dict} />
                             </CardContent>
                         </Card>
                     )}

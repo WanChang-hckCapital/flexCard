@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import {  Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { MemberType } from '@/types';
+import { useTheme } from '@/app/context/theme-context';
 
 
 type MembersCountryChartProps = {
@@ -38,6 +39,7 @@ async function getMembersCountry(members: MemberType[]) {
 export function MembersCountryTypeChart({ members }: MembersCountryChartProps) {
 
     const [chartData, setChartData] = useState<any[]>([]);
+    const { theme } = useTheme();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -68,7 +70,11 @@ export function MembersCountryTypeChart({ members }: MembersCountryChartProps) {
                     ))}
                 </Pie>
                 <Tooltip 
-                    contentStyle={{ background: "#151c2c", border: "none", borderRadius: "15px"}} 
+                    contentStyle={{
+                        background: theme === 'dark' ? "#151c2c" : "#ffffff",
+                        border: "none",
+                        borderRadius: "15px",
+                    }}
                     labelStyle={{display: "none"}}
                     itemStyle={{ color: "white" }}
                     formatter={(value, name) => {

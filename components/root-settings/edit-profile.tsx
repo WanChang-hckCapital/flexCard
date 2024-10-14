@@ -13,7 +13,7 @@ const EditProfile = ({ profileData }: any) => {
       </p>
 
       <section className="mt-9 bg-dark-2 pl-10 pr-10 pb-10 pt-6 rounded-xl">
-        <MemberProfile profile={profileData} btnTitle="Continue" />
+        <MemberProfile profile={profileData} btnTitle="Continue" dict={undefined} />
       </section>
     </main>
   );

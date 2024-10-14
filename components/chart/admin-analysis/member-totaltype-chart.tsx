@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { fetchTotalMemberProfileByDateRange } from '@/lib/actions/admin.actions';
+import { useTheme } from '@/app/context/theme-context';
 
 type MembersTotalByTypeChartProps = {
     startDate: Date | null;
@@ -12,6 +13,7 @@ type MembersTotalByTypeChartProps = {
 export function MembersTotalByTypeChart({ startDate, endDate }: MembersTotalByTypeChartProps) {
 
     const [chartData, setChartData] = useState<any[]>([]);
+    const { theme } = useTheme();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -30,7 +32,11 @@ export function MembersTotalByTypeChart({ startDate, endDate }: MembersTotalByTy
                     tickFormatter={tick => tick.toString()}
                 />
                 <Tooltip
-                    contentStyle={{ background: "#151c2c", border: "none", borderRadius: "15px" }}
+                    contentStyle={{
+                        background: theme === 'dark' ? "#151c2c" : "#ffffff",
+                        border: "none",
+                        borderRadius: "15px",
+                    }}
                     formatter={(value, name, props) => {
                         let label = name === 'totalPersonalProfile' ? 'Personal' : 'Organization';
                         return [

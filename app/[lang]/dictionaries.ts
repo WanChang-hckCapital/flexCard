@@ -9,8 +9,14 @@ export const getDictionary = async (locale: string): Promise<Record<string, any>
     const dictionaryLoader = dictionaries[locale];
 
     if (!dictionaryLoader) {
-        throw new Error(`No dictionary found for locale: ${locale}`);
+        console.warn(`No dictionary found for locale: ${locale}. Falling back to 'en'.`);
+        return dictionaries['en']();
     }
 
-    return dictionaryLoader();
+    try {
+        return await dictionaryLoader();
+    } catch (error) {
+        console.error(`Error loading dictionary for locale: ${locale}`, error);
+        return dictionaries['en']();
+    }
 };
