@@ -1,7 +1,6 @@
 import MaxWContainer from "@/components/max-w-container";
 import Link from "next/link";
-// import { authOptions } from "../api/utils/authOptions";
-import { authOptions } from "@/app/api/utils/authOptions";
+import { authOptions } from "../../api/utils/authOptions";
 import { getServerSession } from "next-auth";
 import {
   fetchAllCards,
@@ -114,7 +113,7 @@ async function Home() {
     // </div>
     <div className="flex flex-col min-h-screen dark:bg-black">
       <section className="lg:mt-7 space-y-2 mx-auto">
-        <ResponsiveGrid result={result} session={session} />
+        <ResponsiveGrid result={result} />
       </section>
     </div>
   );

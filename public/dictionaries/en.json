@@ -1,4 +1,32 @@
 {
+  "auth": {
+    "signUp": {
+      "title": "Let's Go!",
+      "btnSignUp": "SignUp!",
+      "alreadyHaveAccount": "Already have an account?",
+      "or": "or",
+      "signUpWith": "Sign Up with"
+    },
+    "signIn": {
+      "title": "Welcome Back!",
+      "btnSignIn": "Sign In",
+      "forgotPassword": "Forgot Password?",
+      "noAccount": "Don't have an account?",
+      "createAccount": "Create Account",
+      "google": "Sign in with Google",
+      "facebook": "Sign in with Facebook",
+      "line": "Sign in with Line",
+      "apple": "Sign in with AppleID"
+    },
+    "onboarding": {
+      "title": "Almost there!",
+      "subTitle": "Complete your profile now just a few steps to continue using flxBubble.",
+      "btnContinue": "Continue"
+    },
+    "signUpOrganization": {
+      "title": "Join as Organization"
+    }
+  },
   "header": {
     "subscription": "Subscription",
     "language": "Switch Language",
@@ -7,6 +35,27 @@
     "dashboard": "Dashboard",
     "signIn": "Sign In",
     "signOut": "Sign Out"
+  },
+  "contactUs": {
+    "title": "Contact Us",
+    "description": "Email, call, or complete the form to learn how we can help solve your messaging problem.",
+    "email": "service@flxbubble.com",
+    "customerSupport": "Customer Support",
+    "customerSupportDesc": "Our support team is available around the clock to address any concerns or queries you may have.",
+    "feedback": "Feedback and Suggestions",
+    "feedbackDesc": "We value your feedback and suggestions. Please share your thoughts with us.",
+    "mediaInquiries": "Media Inquiries",
+    "mediaInquiriesDesc": "For media inquiries, please contact our media team.",
+    "getInTouch": {
+      "title": "Get in Touch",
+      "reachUs": "You can reach us anytime",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Your email",
+      "phone": "Phone number",
+      "messagePlaceholder": "How can we help?",
+      "submitButton": "Submit"
+    }
   },
   "products": {
     "title": "Choose your right Plan!",
@@ -97,6 +146,10 @@
       "continue": "Continue",
       "edit": "Edit",
       "submit": "Agree and Submit"
+    },
+    "isEdit": {
+      "editTitle": "Edit your business information",
+      "newTitle": "Tell us about your business"
     }
   },
   "userSettings": {
@@ -122,9 +175,9 @@
       "subTitle": "Profiles",
       "waitingDesc": "Waiting to be activated",
       "usertype": {
-        "personalType": "Personal",
-        "organizationType": "Organization",
-        "enterpreneurType": "Enterpreneur"
+        "PERSONAL": "Personal",
+        "ORGANIZATION": "Organization",
+        "ENTREPRENEUR": "Enterpreneur"
       },
       "dialogTitle": {
         "PERSONAL": "Creating Personal Profile",
@@ -192,5 +245,55 @@
     "closeFriends": "Close Friends",
     "blockedUsers": "Blocked Accounts",
     "mutedUsers": "Muted Accounts"
+  },
+  "dashboard": {
+    "breadcrumb": {
+      "dashboard": "Dashboard",
+      "product": {
+        "title": "Product Plans",
+        "addProduct": "Add New Product",
+        "editProduct": "Editing"
+      },
+      "promotions": {
+        "title": "Promotions",
+        "addPromotion": "Add New Promotions",
+        "editPromotion": "Editing"
+      },
+      "transactions": "Transactions",
+      "analytics": "Analytics",
+      "subscription": "Subscriptions & Payments",
+      "settings": {
+        "title": "Settings",
+        "general": "General",
+        "newUser": "New User",
+        "report": "Report"
+      }
+    },
+    "sidebar": {
+      "dashboard": "Dashboard",
+      "members": "Member",
+      "products": "Products",
+      "promotions": "Promotions",
+      "transactions": "Transactions",
+      "analytics": "Analytics",
+      "subscription": "Subscription",
+      "settings": "Settings"
+    },
+    "chart": {
+      "newMembers": "New Members",
+      "totalMembers": "Total Members",
+      "totalProducts": "Total Products",
+      "totalPromotions": "Total Promotions",
+      "totalTransactions": "Total Transactions",
+      "totalRevenue": "Total Revenue",
+      "totalSubscriptions": "Total Subscriptions",
+      "analyticsCountry": "Analytics by Country",
+      "analytics": {
+        "thisWeek": "This Week",
+        "thisWeekDesc": "from last week",
+        "thisMonth": "This Month",
+        "thisMonthDesc": "from last month"
+      }
+    }
   }
 }

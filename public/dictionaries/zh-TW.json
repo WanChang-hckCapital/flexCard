@@ -1,4 +1,32 @@
 {
+  "auth": {
+    "signUp": {
+      "title": "讓我們開始吧！",
+      "btnSignUp": "註冊！",
+      "alreadyHaveAccount": "已經有帳號了嗎？",
+      "or": "或",
+      "signUpWith": "使用以下方式註冊"
+    },
+    "signIn": {
+      "title": "歡迎回來！",
+      "btnSignIn": "登入",
+      "forgotPassword": "忘記密碼？",
+      "noAccount": "還沒有帳號？",
+      "createAccount": "創建帳號",
+      "google": "使用 Google 登入",
+      "facebook": "使用 Facebook 登入",
+      "line": "使用 Line 登入",
+      "apple": "使用 AppleID 登入"
+    },
+    "onboarding": {
+      "title": "快完成了！",
+      "subTitle": "立即完成您的個人資料，僅需幾個步驟即可繼續使用 flxBubble。",
+      "btnContinue": "繼續"
+    },
+    "signUpOrganization": {
+      "title": "以組織身份加入"
+    }
+  },
   "header": {
     "subscription": "訂閱",
     "language": "切換語言",
@@ -7,6 +35,27 @@
     "dashboard": "儀表板",
     "login": "登入",
     "logout": "登出"
+  },
+  "contactUs": {
+    "title": "聯繫我們",
+    "description": "通過電子郵件、電話或填寫表單，了解我們如何幫助解決您的消息問題。",
+    "email": "service@flxbubble.com",
+    "customerSupport": "客戶支持",
+    "customerSupportDesc": "我們的支持團隊隨時可用，解決您可能有的任何疑慮或問題。",
+    "feedback": "反饋和建議",
+    "feedbackDesc": "我們重視您的反饋和建議，請與我們分享您的想法。",
+    "mediaInquiries": "媒體查詢",
+    "mediaInquiriesDesc": "如有媒體查詢，請聯繫我們的媒體團隊。",
+    "getInTouch": {
+      "title": "聯繫我們",
+      "reachUs": "隨時聯繫我們",
+      "firstName": "名字",
+      "lastName": "姓氏",
+      "email": "您的電子郵件",
+      "phone": "電話號碼",
+      "messagePlaceholder": "我們如何幫助您？",
+      "submitButton": "提交"
+    }
   },
   "products": {
     "title": "選擇您需要的產品!",
@@ -97,6 +146,10 @@
       "continue": "繼續",
       "edit": "編輯",
       "submit": "同意並提交"
+    },
+    "isEdit": {
+      "editTitle": "編輯您的業務信息",
+      "newTitle": "告訴我們您的業務"
     }
   },
   "userSettings": {
@@ -122,9 +175,9 @@
       "subTitle": "個人檔案",
       "waitingDesc": "等待啟用",
       "usertype": {
-        "personalType": "個人",
-        "organizationType": "組織",
-        "enterpreneurType": "企業家"
+        "PERSONAL": "個人",
+        "ORGANIZATION": "組織",
+        "ENTREPRENEUR": "企業家"
       },
       "dialogTitle": {
         "PERSONAL": "創建個人檔案",
@@ -185,5 +238,55 @@
     "closeFriends": "親密朋友",
     "blockedUsers": "封鎖的帳戶",
     "mutedUsers": "靜音的帳戶"
+  },
+  "dashboard": {
+    "breadcrumb": {
+      "dashboard": "儀表板",
+      "product": {
+        "title": "產品方案",
+        "addProduct": "新增產品",
+        "editProduct": "編輯產品"
+      },
+      "promotions": {
+        "title": "促銷",
+        "addPromotion": "新增促銷",
+        "editPromotion": "編輯促銷"
+      },
+      "transactions": "交易",
+      "analytics": "分析",
+      "subscription": "訂閱與付款",
+      "settings": {
+        "title": "設定",
+        "general": "一般",
+        "newUser": "新增使用者",
+        "report": "報告"
+      }
+    },
+    "sidebar": {
+      "dashboard": "儀表板",
+      "members": "會員",
+      "products": "產品",
+      "promotions": "促銷",
+      "transactions": "交易",
+      "analytics": "分析",
+      "subscription": "訂閱",
+      "settings": "設置"
+    },
+    "chart": {
+      "newMembers": "新會員",
+      "totalMembers": "總會員",
+      "totalProducts": "總產品",
+      "totalPromotions": "總促銷",
+      "totalTransactions": "總交易",
+      "totalRevenue": "總收入",
+      "totalSubscriptions": "總訂閱",
+      "analyticsCountry": "分析國家",
+      "analytics": {
+        "thisWeek": "本週",
+        "thisWeekDesc": "從上週",
+        "thisMonth": "本月",
+        "thisMonthDesc": "從上個月"
+      }
+    }
   }
 }

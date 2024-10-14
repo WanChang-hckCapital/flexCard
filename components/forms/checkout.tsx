@@ -38,12 +38,12 @@ const CheckoutComponent: React.FC<CheckoutComponentProps> = ({ product, productI
         <Elements stripe={stripePromise}>
             <div className='sm:w-[95%] md:w-[80%] lg:w-[70%] m-auto'>
                 <h1 className="text-[28px] font-bold mb-6">Checkout</h1>
-                <div className="flex flex-col lg:flex-row lg:justify-between p-8 bg-neutral-900 rounded-lg shadow-lg text-black">
+                <div className="flex flex-col lg:flex-row lg:justify-between p-8 dark:bg-neutral-900 bg-stone-400 rounded-lg shadow-lg text-black">
                     <div className="lg:w-3/5">
                         <Card>
                             <CardHeader className="pb-2 mb-4">
-                                <CardDescription className="text-slate-300 font-semibold">Payment Option</CardDescription>
-                                <CardDescription className="text-slate-300 mb-4">Select your preferred payment method. Kindly note that paid licenses are not refundable.</CardDescription>
+                                <CardDescription className="dark:text-slate-300 font-semibold">Payment Option</CardDescription>
+                                <CardDescription className="dark:text-slate-300 mb-4">Select your preferred payment method. Kindly note that paid licenses are not refundable.</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <Tabs className="w-full" defaultValue="card">
@@ -55,9 +55,9 @@ const CheckoutComponent: React.FC<CheckoutComponentProps> = ({ product, productI
                                         <TabsTrigger value="linepay">Line Pay</TabsTrigger>
                                     </TabsList>
                                     <div className="mb-6 mt-4">
-                                        <label htmlFor="paidTerms" className="block mb-2 text-white">Select Paid Terms:</label>
+                                        <label htmlFor="paidTerms" className="block mb-2 dark:text-white">Select Paid Terms:</label>
                                         <Select value={paidTerms} onValueChange={value => setPaidTerms(value)}>
-                                            <SelectTrigger className="w-full p-2 border rounded text-white">
+                                            <SelectTrigger className="w-full p-2 border rounded dark:text-white">
                                                 <SelectValue placeholder="Select terms" />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -81,7 +81,7 @@ const CheckoutComponent: React.FC<CheckoutComponentProps> = ({ product, productI
                                             productId={productId}
                                             authActiveProfileId={authActiveProfileId}
                                             totalAmount={total}
-                                        // paidTerms={paidTerms}
+                                            paidTerms={paidTerms}
                                         />
                                         {/* <TestForm /> */}
                                     </TabsContent>
@@ -100,10 +100,10 @@ const CheckoutComponent: React.FC<CheckoutComponentProps> = ({ product, productI
                     <div className="lg:w-2/5 lg:ml-8 mt-8 lg:mt-0">
                         <Card>
                             <CardHeader className="pb-2 font-semibold mb-4">
-                                <CardDescription className="text-slate-300">Order Summary</CardDescription>
+                                <CardDescription className="dark:text-slate-300">Order Summary</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-slate-300 mb-4">
+                                <div className="dark:text-slate-300 mb-4">
                                     <div className="flex justify-between">
                                         <div>{product.name}</div>
                                         <div>${product.price}</div>
@@ -117,13 +117,13 @@ const CheckoutComponent: React.FC<CheckoutComponentProps> = ({ product, productI
                                         <div>${product.price * Number(paidTerms)}</div>
                                     </div>
                                 </div>
-                                <div className="flex justify-between text-sm text-slate-300 mb-4">
+                                <div className="flex justify-between text-sm dark:text-slate-300 mb-4">
                                     <div>Discount ({discountRate}%)</div>
                                     <div>${discount.toFixed(2)}</div>
                                 </div>
                             </CardContent>
                             <CardFooter>
-                                <div className="flex w-full justify-between text-slate-300 font-semibold">
+                                <div className="flex w-full justify-between dark:text-slate-300 font-semibold">
                                     <div>Total</div>
                                     <div>${total.toFixed(2)}</div>
                                 </div>

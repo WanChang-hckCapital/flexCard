@@ -7,6 +7,7 @@ import { Product } from '@/types';
 import axios from 'axios';
 import { storeSubscription } from '@/lib/actions/admin.actions';
 import LoadingModal from '../modal/loading-modal';
+import { useTheme } from '@/app/context/theme-context';
 
 interface CheckoutFormProps {
     product: Product;
@@ -23,6 +24,24 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ product, productId, authAct
     const [error, setError] = useState<string | null>(null);
     const [termsCondition, setTermsCondition] = useState(false);
     const [loading, setLoading] = useState(false);
+    const { theme } = useTheme();
+
+    const isDarkMode = theme === "dark" || (theme === "system" && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+    const stripeElementOptions = {
+        style: {
+            base: {
+                color: isDarkMode ? '#ffffff' : '#000000',
+                '::placeholder': {
+                    color: isDarkMode ? '#aab7c4' : '#666666',
+                },
+            },
+            invalid: {
+                color: '#fa755a',
+                iconColor: '#fa755a',
+            },
+        },
+    };
 
     const handlePayment = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -42,16 +61,12 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ product, productId, authAct
                 totalAmount,
             });
 
-            console.log("subscription: " + JSON.stringify(subscription));
-            console.log("authActiveProfileId: " + authActiveProfileId);
-            console.log("stripeProductId: " + product.stripeProductId);
-
             if (subscription.success) {
                 const { data } = isSubscription
                     ? await axios.post('/api/stripe/createSubscription', {
                         profileId: authActiveProfileId,
                         stripeProductId: product.stripeProductId,
-                        interval: paidTerms === "1" ? 'month' : 'year', 
+                        interval: paidTerms === "1" ? 'month' : 'year',
                     })
                     : await axios.post('/api/stripe/createPayment', {
                         amount: totalAmount,
@@ -91,60 +106,21 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ product, productId, authAct
             <LoadingModal isOpen={loading} />
             <form onSubmit={handlePayment}>
                 <div className="mb-4">
-                    <label htmlFor="cardNumber" className="block mb-2 text-white">Card Number</label>
-                    <CardNumberElement id="cardNumber" className="p-2 border rounded w-full" options={{
-                        style: {
-                            base: {
-                                color: '#ffffff',
-                                '::placeholder': {
-                                    color: '#aab7c4',
-                                },
-                            },
-                            invalid: {
-                                color: '#fa755a',
-                                iconColor: '#fa755a',
-                            },
-                        },
-                    }} />
+                    <label htmlFor="cardNumber" className={`block mb-2 ${isDarkMode ? 'text-white' : 'text-black'}`}>Card Number</label>
+                    <CardNumberElement id="cardNumber" className="p-2 border border-white rounded w-full" options={stripeElementOptions} />
                 </div>
                 <div className='flex flex-row gap-8 w-full'>
                     <div className="mb-4 w-full">
-                        <label htmlFor="cardExpiry" className="block mb-2 text-white">Expiration Date</label>
-                        <CardExpiryElement id="cardExpiry" className="p-2 border rounded w-full" options={{
-                        style: {
-                            base: {
-                                color: '#ffffff',
-                                '::placeholder': {
-                                    color: '#aab7c4',
-                                },
-                            },
-                            invalid: {
-                                color: '#fa755a',
-                                iconColor: '#fa755a',
-                            },
-                        },
-                    }}/>
+                        <label htmlFor="cardExpiry" className={`block mb-2 ${isDarkMode ? 'text-white' : 'text-black'}`}>Expiration Date</label>
+                        <CardExpiryElement id="cardExpiry" className="p-2 border border-white rounded w-full" options={stripeElementOptions} />
                     </div>
                     <div className="mb-4 w-full">
-                        <label htmlFor="cardCvc" className="block mb-2 text-white">CVC</label>
-                        <CardCvcElement id="cardCvc" className="p-2 border rounded w-full" options={{
-                        style: {
-                            base: {
-                                color: '#ffffff',
-                                '::placeholder': {
-                                    color: '#aab7c4',
-                                },
-                            },
-                            invalid: {
-                                color: '#fa755a',
-                                iconColor: '#fa755a',
-                            },
-                        },
-                    }}/>
+                        <label htmlFor="cardCvc" className={`block mb-2 ${isDarkMode ? 'text-white' : 'text-black'}`}>CVC</label>
+                        <CardCvcElement id="cardCvc" className="p-2 border border-white rounded w-full" options={stripeElementOptions} />
                     </div>
                 </div>
                 <div className="mb-[48px]">
-                    <label className="flex items-center text-white mb-4">
+                    <label className={`flex items-center ${isDarkMode ? 'text-white' : 'text-black'} mb-4`}>
                         <input
                             type="checkbox"
                             checked={termsCondition}

@@ -84,7 +84,7 @@ export function ChartCard({
   }
 
   return (
-    <Card>
+    <Card className="bg-stone-300">
       <CardHeader>
         <div className="flex gap-4 justify-between items-center">
           <CardTitle>{title}</CardTitle>

@@ -18,12 +18,13 @@ const buttonVariants = cva(
         sky:
           "bg-sky-800 text-slate-50 hover:bg-sky-500/90 dark:bg-sky-900 dark:text-sky-50 dark:hover:bg-sky-900/90",
         outline:
-          "border border-slate-200 bg-slate-300 text-black hover:bg-transparent hover:text-white dark:border-slate-800 dark:bg-slate-950 dark:hover:bg-slate-800 dark:hover:text-slate-50",
+          "border dark:border-slate-200 dark:bg-slate-300 dark:text-black border-white bg-stone-400 text-white hover:bg-transparent hover:text-stone-700 dark:hover:text-white dark:hover:bg-slate-800 dark:hover:text-slate-50",
         secondary:
           "bg-slate-100 text-slate-900 hover:bg-slate-100/80 dark:bg-slate-800 dark:text-slate-50 dark:hover:bg-slate-800/80",
         ghost: "hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-50",
         link: "text-slate-900 underline-offset-4 hover:underline dark:text-slate-50",
-        purple: "bg-purple-800 text-slate-50 hover:bg-purple-500/90 dark:bg-purple-900 dark:text-purple-50 dark:hover:bg-purple-900/90",
+        purple: "bg-stone-700 dark:bg-purple-800 text-slate-50 hover:bg-stone-500/90 dark:bg-purple-900 dark:text-purple-50 dark:hover:bg-purple-900/90",
+        stone: "border bg-stone-400 dark:bg-slate-800 text-slate-50 hover:bg-stone-600/90 hover:border-white hover:text-white dark:bg-purple-900 dark:text-purple-50 dark:hover:bg-purple-900/90",
         none_bg: "",
       },
       size: {

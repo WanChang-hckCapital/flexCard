@@ -40,15 +40,22 @@ export const authOptions: AuthOptions = {
   callbacks: {
     async session({ session, user }) {
       if (user && user.id) {
-        const userId = user.id;
-        const userEmail = user.email;
-        await createMember(userId, userEmail);
-        session.user.id = user.id;
+        try {
+          const userId = user.id;
+          const userEmail = user.email;
+          await createMember(userId, userEmail);
+          session.user.id = user.id;
+        } catch (error) {
+          console.error("Error creating member:", error);
+        }
       }
       return session;
     },
     async redirect({ url, baseUrl }) {
+      if (url === `${baseUrl}/api/auth/session`) {
+        return baseUrl;
+      }
       return url.startsWith(baseUrl) ? url : baseUrl;
-    },
+    }
   },
 };

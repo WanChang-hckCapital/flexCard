@@ -25,7 +25,7 @@ export async function POST(
 
   try {
     const updatedCard = await updateCardLikes({
-      authUserId: authUserId,
+      authActiveProfileId: authUserId,
       cardId: cardId,
     });
     if (updatedCard.success === false) {

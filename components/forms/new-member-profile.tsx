@@ -35,9 +35,10 @@ interface Props {
     shortdescription: string;
   };
   btnTitle: string;
+  dict: any;
 }
 
-const NewMemberProfile = ({ profile, btnTitle }: Props) => {
+const NewMemberProfile = ({ profile, btnTitle, dict }: Props) => {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -145,7 +146,7 @@ const NewMemberProfile = ({ profile, btnTitle }: Props) => {
       };
     }
 
-  }, [isFormDirty]);
+  }, [isFormDirty, pathname]);
 
   return (
     <Form {...form}>
@@ -200,7 +201,7 @@ const NewMemberProfile = ({ profile, btnTitle }: Props) => {
           render={({ field }) => (
             <FormItem className='flex w-full flex-col gap-3'>
               <FormLabel className='text-base-semibold text-light-2'>
-                Account Nickname
+                {dict.userSettings.profile.accountname}
               </FormLabel>
               <FormControl>
                 <Input
@@ -220,7 +221,7 @@ const NewMemberProfile = ({ profile, btnTitle }: Props) => {
           render={({ field }) => (
             <FormItem className='flex w-full flex-col gap-3'>
               <FormLabel className='text-base-semibold text-light-2'>
-                Email
+                {dict.userSettings.profile.email}
               </FormLabel>
               <FormControl>
                 <Input
@@ -240,7 +241,7 @@ const NewMemberProfile = ({ profile, btnTitle }: Props) => {
           render={({ field }) => (
             <FormItem className='flex w-full flex-col gap-3'>
               <FormLabel className='text-base-semibold text-light-2'>
-                Phone No
+                {dict.userSettings.profile.phone}
               </FormLabel>
               <FormControl>
                 <Input
@@ -260,7 +261,7 @@ const NewMemberProfile = ({ profile, btnTitle }: Props) => {
           render={({ field }) => (
             <FormItem className='flex w-full flex-col gap-3'>
               <FormLabel className='text-base-semibold text-light-2'>
-                Short Description
+                {dict.userSettings.profile.shortDescription}
               </FormLabel>
               <FormControl>
                 <Textarea

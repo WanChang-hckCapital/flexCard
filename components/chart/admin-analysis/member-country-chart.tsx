@@ -2,14 +2,15 @@
 
 import React, { useEffect, useState } from 'react';
 import {  Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Member } from '@/types';
+import { MemberType } from '@/types';
+import { useTheme } from '@/app/context/theme-context';
 
 
 type MembersCountryChartProps = {
-    members: Member[];
+    members: MemberType[];
 }
 
-async function getMembersCountry(members: Member[]) {
+async function getMembersCountry(members: MemberType[]) {
     try {
         const countryCount: any = {};
 
@@ -17,7 +18,7 @@ async function getMembersCountry(members: Member[]) {
             return [];
         }
 
-        members.forEach((member: Member) => {
+        members.forEach((member: MemberType) => {
             const country = member.country || 'Unknown';
             countryCount[country] = (countryCount[country] || 0) + 1;
         });
@@ -38,6 +39,7 @@ async function getMembersCountry(members: Member[]) {
 export function MembersCountryTypeChart({ members }: MembersCountryChartProps) {
 
     const [chartData, setChartData] = useState<any[]>([]);
+    const { theme } = useTheme();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -68,7 +70,11 @@ export function MembersCountryTypeChart({ members }: MembersCountryChartProps) {
                     ))}
                 </Pie>
                 <Tooltip 
-                    contentStyle={{ background: "#151c2c", border: "none", borderRadius: "15px"}} 
+                    contentStyle={{
+                        background: theme === 'dark' ? "#151c2c" : "#ffffff",
+                        border: "none",
+                        borderRadius: "15px",
+                    }}
                     labelStyle={{display: "none"}}
                     itemStyle={{ color: "white" }}
                     formatter={(value, name) => {

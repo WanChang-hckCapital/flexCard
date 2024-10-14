@@ -5,6 +5,7 @@ import { formatCurrency } from '@/lib/utils';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { startOfDay } from 'date-fns';
 import { fetchSubscriptionByDateRange } from '@/lib/actions/admin.actions';
+import { useTheme } from '@/app/context/theme-context';
 
 
 type SubscriptionsByDayChartProps = {
@@ -51,6 +52,7 @@ async function getSubscriptionSalesData(startDate: Date | null, endDate: Date | 
 export function SubscriptionsByDayChart({ startDate, endDate }: SubscriptionsByDayChartProps) {
 
     const [chartData, setChartData] = useState<any[]>([]);
+    const { theme } = useTheme();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -62,11 +64,11 @@ export function SubscriptionsByDayChart({ startDate, endDate }: SubscriptionsByD
         fetchData();
     }, [startDate, endDate]);
 
-    if(chartData.length === 0) {
+    if (chartData.length === 0) {
         return (
             <div className="text-center text-gray-500 min-h-[300px] content-center">No data available</div>
         )
-    }else{
+    } else {
         return (
             <ResponsiveContainer width="100%" minHeight={300}>
                 <LineChart data={chartData}>
@@ -74,7 +76,13 @@ export function SubscriptionsByDayChart({ startDate, endDate }: SubscriptionsByD
                     <YAxis
                         tickFormatter={tick => formatCurrency(tick)}
                     />
-                    <Tooltip contentStyle={{ background: "#151c2c", border: "none", borderRadius: "15px" }} formatter={value => formatCurrency(value as number)} />
+                    <Tooltip
+                        contentStyle={{
+                            background: theme === 'dark' ? "#151c2c" : "#ffffff",
+                            border: "none",
+                            borderRadius: "15px",
+                        }}
+                        formatter={value => formatCurrency(value as number)} />
                     <Line
                         dot={false}
                         dataKey="totalSales"

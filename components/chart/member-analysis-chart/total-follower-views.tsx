@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { fetchFollowersByDateRange } from '@/lib/actions/user.actions';
+import { useTheme } from '@/app/context/theme-context';
 
 
 type TotalFollowersByDateProps = {
@@ -14,6 +15,7 @@ type TotalFollowersByDateProps = {
 export function TotalFollowersByDate({ profileId, startDate, endDate }: TotalFollowersByDateProps) {
 
     const [chartData, setChartData] = useState<any[]>([]);
+    const { theme } = useTheme();
 
     useEffect(() => {
 
@@ -30,7 +32,7 @@ export function TotalFollowersByDate({ profileId, startDate, endDate }: TotalFol
         }
 
         fetchData();
-    }, [profileId]);
+    }, [profileId, startDate, endDate]);
 
     if(chartData.length === 0) {
         return (
@@ -45,7 +47,11 @@ export function TotalFollowersByDate({ profileId, startDate, endDate }: TotalFol
                         tickFormatter={tick => tick.toString()}
                     />
                     <Tooltip 
-                        contentStyle={{ background: "#151c2c", border: "none", borderRadius: "15px" }} 
+                        contentStyle={{
+                            background: theme === 'dark' ? "#151c2c" : "#ffffff",
+                            border: "none",
+                            borderRadius: "15px",
+                        }}
                         formatter={(value, name, props) => [
                             `${value} followers`,
                             `Date: ${props.payload.date}`

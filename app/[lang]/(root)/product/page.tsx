@@ -1,51 +1,73 @@
-import { fetchAllProduct } from '@/lib/actions/admin.actions';
+import { fetchAllProduct } from "@/lib/actions/admin.actions";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { fetchCurrentActiveProfileId, fetchProfleRole } from '@/lib/actions/user.actions';
-import ProductList from '@/components/product-list';
-import { authOptions } from '@/app/api/utils/authOptions';
+import {
+  fetchCurrentActiveProfileId,
+  fetchProfleRole,
+} from "@/lib/actions/user.actions";
+import ProductList from "@/components/product-list";
+import { authOptions } from "@/app/api/utils/authOptions";
+import { getDictionary } from "../../dictionaries";
 
-const ProductPage = async () => {
-    const session = await getServerSession(authOptions);
-    const user = session?.user;
+interface ProductPageProps {
+  params: {
+    lang: string;
+  };
+}
 
-    if (!user) {
-        redirect("/sign-in");
-    }
+const ProductPage = async ({ params: { lang } }: ProductPageProps) => {
+  const session = await getServerSession(authOptions);
+  const user = session?.user;
 
-    const authenticatedUserId = user.id;
-    const authActiveProfileId = await fetchCurrentActiveProfileId(authenticatedUserId);
-    let products = await fetchAllProduct();
+  if (!user) {
+    redirect("/sign-in");
+  }
 
-    let isOrganization = false;
-    const currentProfileRole = await fetchProfleRole(authActiveProfileId);
-    if (currentProfileRole.success) {
-        isOrganization = currentProfileRole.data?.toUpperCase() === "ORGANIZATION";
-    }
+  const authenticatedUserId = user.id;
+  const authActiveProfileId = await fetchCurrentActiveProfileId(
+    authenticatedUserId
+  );
+  let products = await fetchAllProduct();
 
-    if (products) {
-        products = products.map((product: any) => {
-            return {
-                ...product.toObject(),
-                _id: product._id.toString(),
-                createdAt: product.createdAt.toISOString(),
-                updatedAt: product.updatedAt.toISOString(),
-            };
-        });
-    }
+  let isOrganization = false;
+  const currentProfileRole = await fetchProfleRole(authActiveProfileId);
+  if (currentProfileRole.success) {
+    isOrganization = currentProfileRole.data?.toUpperCase() === "ORGANIZATION";
+  }
 
-    return (
-        <div className="bg-black text-white py-16 px-4 min-h-screen">
-            <div className="text-center mb-8">
-                <h1 className="text-[32px] font-bold">Choose your right Plan!</h1>
-                <span className="text-gray-400">No hidden fees, cancel anytime.</span>
-            </div>
-            <ProductList products={products} isOrganization={isOrganization} />
-            <div className="text-center mt-12">
-                <a href="#" className="text-purple-400">Payment terms</a>
-            </div>
-        </div>
-    );
+  if (products) {
+    products = products.map((product: any) => {
+      return {
+        ...product.toObject(),
+        _id: product._id.toString(),
+        createdAt: product.createdAt.toISOString(),
+        updatedAt: product.updatedAt.toISOString(),
+      };
+    });
+  }
+
+  const dict = await getDictionary(lang);
+
+  return (
+    <div className="dark:bg-black dark:text-white text-slate-700 py-16 px-4 min-h-screen">
+      <div className="text-center mb-8">
+        <h1 className="text-[32px] font-bold">{dict.products.title}</h1>
+        <span className="dark:text-gray-400 text-slate-400">
+          {dict.products.subtitle}
+        </span>
+      </div>
+      <ProductList
+        products={products}
+        isOrganization={isOrganization}
+        dict={dict}
+      />
+      <div className="text-center mt-12">
+        <a href="#" className="dark:text-purple-400 text-stone-700">
+          {dict.products.paymentTerms}
+        </a>
+      </div>
+    </div>
+  );
 };
 
 export default ProductPage;

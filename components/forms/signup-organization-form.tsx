@@ -38,9 +38,10 @@ interface Props {
     authActiveProfileId: string;
     organization?: any;
     isEditMode?: boolean;
+    dict: any;
 }
 
-const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode = false }: Props) => {
+const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode = false, dict }: Props) => {
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState<Partial<FormData>>({});
     const [errors, setErrors] = useState<{ message: string, step: number }[]>([]);
@@ -188,17 +189,17 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
                     <form onSubmit={handleSubmit(onSubmit)}>
                         {step === 1 && (
                             <div>
-                                <h1 className="text-[28px] font-bold mb-4">{isEditMode ? "Edit your business information" : "Tell us about your business"}</h1>
+                                <h1 className="text-[28px] font-bold mb-4">{isEditMode ? dict.organization.isEdit.editTitle : dict.organization.isEdit.newTitle}</h1>
                                 <FormField
                                     control={control}
                                     name="businessLocation"
                                     render={({ field }) => (
                                         <FormItem className="mb-4">
-                                            <FormLabel>Business Location</FormLabel>
+                                            <FormLabel>{dict.organization.business.businessLocation}</FormLabel>
                                             <FormControl>
                                                 <Select onValueChange={field.onChange} value={field.value}>
                                                     <SelectTrigger>
-                                                        <SelectValue placeholder="Select Business Location" />
+                                                        <SelectValue placeholder={dict.organization.business.selectBusinessLocation} />
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         {businessLocations.map(location => (
@@ -216,11 +217,11 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
                                     name="businessType"
                                     render={({ field }) => (
                                         <FormItem className="mb-4">
-                                            <FormLabel>Type of Business</FormLabel>
+                                            <FormLabel>{dict.organization.business.businessType}</FormLabel>
                                             <FormControl>
                                                 <Select onValueChange={field.onChange} value={field.value}>
                                                     <SelectTrigger>
-                                                        <SelectValue placeholder="Select Business Type" />
+                                                        <SelectValue placeholder={dict.organization.business.selectBusinessType} />
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         {businessTypes.map(type => (
@@ -238,7 +239,7 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
                                     name="legalBusinessName"
                                     render={({ field }) => (
                                         <FormItem className="mb-4">
-                                            <FormLabel>Legal Business Name</FormLabel>
+                                            <FormLabel>{dict.organization.business.legalBusinessName}</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     className='account-form_input'
@@ -255,7 +256,7 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
                                     name="businessRegistrationNumber"
                                     render={({ field }) => (
                                         <FormItem className="mb-4">
-                                            <FormLabel>Company Registration Number</FormLabel>
+                                            <FormLabel>{dict.organization.business.businessRegistrationNumber}</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     className='account-form_input'
@@ -272,7 +273,7 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
                                     name="businessName"
                                     render={({ field }) => (
                                         <FormItem className="mb-4">
-                                            <FormLabel>Business Name</FormLabel>
+                                            <FormLabel>{dict.organization.business.businessName}</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     className='account-form_input'
@@ -288,19 +289,19 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
                                     name="address1"
                                     render={({ field }) => (
                                         <FormItem className="mb-4">
-                                            <FormLabel>Business Address</FormLabel>
+                                            <FormLabel>{dict.organization.business.businessAddressTitle}</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     className='account-form_input'
                                                     {...field}
-                                                    placeholder="Address 1"
+                                                    placeholder={dict.organization.business.businessAddress1}
                                                 />
                                             </FormControl>
                                             <FormMessage>{formErrors.address1?.message}</FormMessage>
                                             <Input
                                                 className='account-form_input mt-2'
                                                 {...register("address2")}
-                                                placeholder="Address 2"
+                                                placeholder={dict.organization.business.businessAddress2}
                                             />
                                         </FormItem>
                                     )}
@@ -310,7 +311,7 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
                                     name="businessPhone"
                                     render={({ field }) => (
                                         <FormItem className="mb-4">
-                                            <FormLabel>Business Phone Number</FormLabel>
+                                            <FormLabel>{dict.organization.business.businessPhone}</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     className='account-form_input'
@@ -326,11 +327,11 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
                                     name="industry"
                                     render={({ field }) => (
                                         <FormItem className="mb-4">
-                                            <FormLabel>Industry</FormLabel>
+                                            <FormLabel></FormLabel>
                                             <FormControl>
                                                 <Select onValueChange={field.onChange} value={field.value}>
                                                     <SelectTrigger>
-                                                        <SelectValue placeholder="Select Industry" />
+                                                        <SelectValue placeholder={dict.organization.business.selectIndustry} />
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         {industries.map(industry => (
@@ -348,7 +349,7 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
                                     name="businessWebsite"
                                     render={({ field }) => (
                                         <FormItem className="mb-4">
-                                            <FormLabel>Business Website</FormLabel>
+                                            <FormLabel>{dict.organization.business.businessWebsite}</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     className='account-form_input'
@@ -364,7 +365,7 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
                                     name="productDescription"
                                     render={({ field }) => (
                                         <FormItem className="mb-4">
-                                            <FormLabel>Product Description</FormLabel>
+                                            <FormLabel>{dict.organization.business.businessProductDescription}</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     className='account-form_input'
@@ -382,14 +383,14 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
                         )}
                         {step === 2 && (
                             <div>
-                                <h1 className="text-[28px] font-bold mb-4">Add your bank to verify company details</h1>
-                                <h2 className="text-xl text-slate-400 font-bold mb-4">We will verify your company details base on your bank details.</h2>
+                                <h1 className="text-[28px] font-bold mb-4">{dict.organization.bank.title}</h1>
+                                <h2 className="text-xl text-slate-400 font-bold mb-4">{dict.organization.bank.subTitle}</h2>
                                 <FormField
                                     control={control}
                                     name="accountHolderName"
                                     render={({ field }) => (
                                         <FormItem className="mb-4">
-                                            <FormLabel>Account Holder Name</FormLabel>
+                                            <FormLabel>{dict.organization.bank.bankAccountHolder}</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     className='account-form_input'
@@ -405,11 +406,11 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
                                     name="bank"
                                     render={({ field }) => (
                                         <FormItem className="mb-4">
-                                            <FormLabel>Choose Your Bank</FormLabel>
+                                            <FormLabel>{dict.organization.bank.bankName}</FormLabel>
                                             <FormControl>
                                                 <Select onValueChange={field.onChange} value={field.value}>
                                                     <SelectTrigger>
-                                                        <SelectValue placeholder="Select Bank" />
+                                                        <SelectValue placeholder={dict.organization.bank.bankName} />
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         {banks.map(bank => (
@@ -427,7 +428,7 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
                                     name="accountNumber"
                                     render={({ field }) => (
                                         <FormItem className="mb-4">
-                                            <FormLabel>Account Number</FormLabel>
+                                            <FormLabel>{dict.organization.bank.bankAccountNumber}</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     className='account-form_input'
@@ -443,7 +444,7 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
                                     name="confirmAccountNumber"
                                     render={({ field }) => (
                                         <FormItem className="mb-4">
-                                            <FormLabel>Re-confirm Account Number</FormLabel>
+                                            <FormLabel>{dict.organization.bank.reBankAccountNumber}</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     className='account-form_input'
@@ -461,9 +462,9 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
                         )}
                         {step === 3 && (
                             <div>
-                                <h1 className="text-[28px] font-bold mb-4">Review and finish up</h1>
+                                <h1 className="text-[28px] font-bold mb-4">{dict.organization.review.title}</h1>
                                 <h2 className="text-xl text-slate-400 font-bold mb-4">
-                                    You&apos;re almost ready to get started with flexCard. Take a moment to review and confirm your information.
+                                    {dict.organization.review.subTitle}
                                 </h2>
                                 {errors.length > 0 && (
                                     <div className="bg-red-500 text-white p-3 mb-4 rounded">
@@ -474,7 +475,7 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
                                                     variant="link"
                                                     onClick={() => setStep(error.step)}
                                                     className="text-white underline">
-                                                    Edit
+                                                    {dict.organization.btn.edit}
                                                 </Button>
                                             </div>
                                         ))}
@@ -482,12 +483,12 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
                                 )}
                                 <div className="mb-4">
                                     <div className="flex flex-row justify-between">
-                                        <h3 className="self-center font-bold">Business Information</h3>
+                                        <h3 className="self-center font-bold">{dict.organization.business.info}</h3>
                                         <Button
                                             variant="link"
                                             onClick={() => setStep(1)}
                                             className="text-white underline">
-                                            Edit
+                                            {dict.organization.btn.edit}
                                         </Button>
                                     </div>
                                     <Card className="p-4 bg-neutral-800 text-white mb-4 mt-2">
@@ -505,12 +506,12 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
                                 </div>
                                 <div className="mb-4">
                                     <div className="flex flex-row justify-between">
-                                        <h3 className="self-center font-bold">Bank Information</h3>
+                                        <h3 className="self-center font-bold">{dict.organization.bank.info}</h3>
                                         <Button
                                             variant="link"
                                             onClick={() => setStep(2)}
                                             className="text-white underline">
-                                            Edit
+                                            {dict.organization.btn.edit}
                                         </Button>
                                     </div>
                                     <Card className="p-4 bg-neutral-800 text-white mb-4 mt-2">
@@ -519,10 +520,10 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
                                         <p>{formData.accountNumber}</p>
                                     </Card>
                                 </div>
-                                <p className="text-[14px] text-slate-600 my-8">By submitting this form, you agree to the flexCard Services Agreement, to receiving text messages from flexCard, and you certify that the information provided is complete and correct.</p>
+                                <p className="text-[14px] text-slate-600 my-8">{dict.organization.review.terms}</p>
                                 <div className="flex justify-between">
                                     <Button variant="purple" type="submit" className="mt-4 w-full">
-                                        Agree and Submit
+                                        {dict.organization.btn.submit}
                                     </Button>
                                 </div>
                             </div>

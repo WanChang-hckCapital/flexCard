@@ -4,7 +4,7 @@ import React from 'react'
 import { Button } from '../ui/button'
 import { signOut } from 'next-auth/react'
 
-function SignOutButton() {
+function SignOutButton({ dict }: any) {
 
   const handleSignOut = async () => {
     await signOut({ redirect: false });
@@ -13,10 +13,12 @@ function SignOutButton() {
 
   return (
     <Button
-    className='px-0 w-full'
-    variant='ghost'
-    onClick={handleSignOut}
-    >Sign out</Button>
+      className='px-0 w-full'
+      variant='ghost'
+      onClick={handleSignOut}
+    >
+      {dict.header.signOut}
+    </Button>
   )
 }
 

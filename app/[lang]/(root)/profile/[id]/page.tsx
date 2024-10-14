@@ -14,9 +14,12 @@ import { authOptions } from "@/app/api/utils/authOptions";
 import ProfileHeader from "@/components/shared/ProfileHeader";
 import CardsTab from "@/components/shared/CardsTab";
 import { fetchMember, fetchProfile } from "@/lib/actions/admin.actions";
+import { Grip } from "lucide-react";
+import { getDictionary } from "@/app/[lang]/dictionaries";
 
-async function Page({ params }: { params: { id: string } }) {
+async function Page({ params }: { params: { id: string; lang: string } }) {
   const session = await getServerSession(authOptions);
+  const dict = await getDictionary(params.lang);
 
   let authActiveProfileId = "";
   let profileIdFromParams = "";
@@ -68,6 +71,10 @@ async function Page({ params }: { params: { id: string } }) {
   )
     redirect("/onboarding");
 
+  const styles: React.CSSProperties = {
+    textAlign: "-webkit-center" as "center",
+  };
+
   return (
     <section>
       <ProfileHeader
@@ -83,21 +90,22 @@ async function Page({ params }: { params: { id: string } }) {
         // webUrl={userInfo.organization.webUrl}
         webUrl={tempUrl}
         initialFollowingStatus={isFollowing}
+        dict={dict}
       />
 
-      <div className="">
+      <div style={styles}>
         <Tabs defaultValue="flexCard" className="w-full">
           <TabsList className="tab mx-36">
             {personalTabs.map((tab) => (
               <TabsTrigger key={tab.label} value={tab.value} className="tab">
-                <Image
-                  src={tab.icon}
-                  alt={tab.label}
-                  width={24}
-                  height={24}
-                  className="object-contain"
+                <Grip
+                  size={24}
+                  className="mr-2"
+                  fill="currentColor"
+                  stroke="currentColor"
+                  strokeWidth={1}
                 />
-                <p className="max-sm:hidden">{tab.label}</p>
+                <p className="max-sm:hidden">{dict.profileTab[tab.label]}</p>
 
                 {tab.label === "CARDS" && (
                   <p className="ml-1 rounded-sm bg-light-4 px-2 py-1 !text-tiny-medium text-light-2">

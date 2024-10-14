@@ -12,9 +12,10 @@ import { Button } from "@/components/ui/button";
 
 interface Props {
     authActiveProfileId: string;
+    dict: any;
 }
 
-function Blocked({ authActiveProfileId }: Props) {
+function Blocked({ authActiveProfileId, dict }: Props) {
     const [blockedAccounts, setBlockedAccounts] = useState<any[]>([]);
     const [selectedAccount, setSelectedAccount] = useState<any | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
@@ -57,24 +58,24 @@ function Blocked({ authActiveProfileId }: Props) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Blocked Accounts</CardTitle>
+                <CardTitle>{dict.userSettings.blockedUsers.title}</CardTitle>
             </CardHeader>
             <CardContent>
                 {loading ? (
                     <div className="flex justify-center items-center py-6">
-                        <Loader2 className="animate-spin h-8 w-8 text-light-2" />
+                        <Loader2 className="animate-spin h-8 w-8 dark:text-light-2 text-slate-700" />
                     </div>
                 ) : (
                     <>
                         {filteredBlockedAccounts.length === 0 ? (
                             <div className="flex justify-center items-center py-6">
-                                <p className="text-light-2">No blocked accounts</p>
+                                <p className="dark:text-light-2 text-slate-700">{dict.userSettings.blockedUsers.noBlockedUsers}</p>
                             </div>
                         ) : (
                             <>
                                 <div className="mb-4">
                                     <Input
-                                        className="bg-black text-light-2"
+                                        className="dark:bg-black dark:text-light-2"
                                         placeholder="Search"
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -91,7 +92,7 @@ function Blocked({ authActiveProfileId }: Props) {
                                                     height={24}
                                                     className="rounded-full h-8 w-8" />
                                                 <div>
-                                                    <p className="text-light-2">{blockedAccount.accountname}</p>
+                                                    <p className="dark:text-light-2">{blockedAccount.accountname}</p>
                                                 </div>
                                             </div>
                                             <Button
