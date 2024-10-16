@@ -22,12 +22,14 @@ interface ReplyListProps {
   replies: Reply[];
   currentUserProfileId: string;
   isAdmin: boolean;
+  dict: any;
 }
 
 const ReplyList: React.FC<ReplyListProps> = ({
   replies,
   currentUserProfileId,
   isAdmin,
+  dict,
 }) => {
   const [replyList, setReplyList] = useState<Reply[]>([]);
 
@@ -97,6 +99,7 @@ const ReplyList: React.FC<ReplyListProps> = ({
             reply={reply}
             onDelete={() => handleDeleteCommentReply(reply._id, reply?.image)}
             isAdmin={isAdmin}
+            dict={dict}
           />
         ))}
     </div>

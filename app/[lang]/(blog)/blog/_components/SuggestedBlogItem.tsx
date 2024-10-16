@@ -92,7 +92,7 @@ export default function SuggestedBlogItem({ post }: { post: Blog }) {
 
   return (
     <Link href={`/blog/${post.slug}`} className="block">
-      <div className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow h-[400px] flex flex-col">
+      <div className="border rounded-lg overflow-hidden shadow-xl hover:shadow-2xl transition-shadow h-[400px] flex flex-col">
         <div className="h-48 overflow-hidden">
           <Image
             src={imageSrc}
@@ -104,7 +104,7 @@ export default function SuggestedBlogItem({ post }: { post: Blog }) {
           />
         </div>
         <div className="p-4 flex flex-col justify-between flex-grow">
-          <h3 className="text-xl font-semibold mb-2">
+          <h3 className="text-xl font-semibold dark:text-white text-black mb-2">
             {truncateText(post.title, 50)}
           </h3>
 
@@ -112,7 +112,7 @@ export default function SuggestedBlogItem({ post }: { post: Blog }) {
             dangerouslySetInnerHTML={{
               __html: truncateText(post.excerpt, 100),
             }}
-            className="text-gray-600 mb-4"
+            className="dark:text-slate-700 text-gray-600  mb-4"
           ></div>
           <div className="flex items-center mt-auto">
             {creatorImg && (
@@ -124,7 +124,9 @@ export default function SuggestedBlogItem({ post }: { post: Blog }) {
                 className="w-10 h-10 rounded-full mr-3"
               />
             )}
-            <span className="text-sm text-gray-500">{creatorName}</span>
+            <span className="text-sm dark:text-white text-gray-600">
+              {creatorName}
+            </span>
           </div>
         </div>
       </div>

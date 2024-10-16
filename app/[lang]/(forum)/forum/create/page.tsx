@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Header from "@/components/blog/header";
+import Header from "@/components/forum/header";
 import Image from "next/image";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { useSession } from "next-auth/react";
@@ -11,10 +11,12 @@ import {
 } from "@/lib/actions/user.actions";
 import { useRouter } from "next/navigation";
 import ForumCreator from "./_components/ForumCreator";
+import { useDict } from "@/app/context/dictionary-context";
 
 export default function ForumCreate() {
   const { data: clientSession, status } = useSession();
   const router = useRouter();
+  const dict = useDict();
 
   const [authActiveProfileId, setAuthActiveProfileId] = useState<string | null>(
     null
@@ -61,13 +63,13 @@ export default function ForumCreate() {
     return null;
   }
   return (
-    <div className="bg-black">
-      <Header />
+    <div className="dark:bg-black text-white bg-white text-black">
+      <Header dict={dict} />
       <div className="container mx-auto px-6 py-6 max-w-4xl">
         <Card>
           <CardHeader>
             {accountName && (
-              <div className="flex justify-center mb-4 text-white">
+              <div className="flex justify-center mb-4 dark:text-white text-black">
                 <span className="text-lg font-bold">{accountName}</span>
               </div>
             )}
@@ -84,7 +86,10 @@ export default function ForumCreate() {
             )}
           </CardHeader>
           <CardContent>
-            <ForumCreator authActiveProfileId={authActiveProfileId} />
+            <ForumCreator
+              authActiveProfileId={authActiveProfileId}
+              dict={dict}
+            />
           </CardContent>
         </Card>
       </div>

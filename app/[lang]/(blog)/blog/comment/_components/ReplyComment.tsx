@@ -12,6 +12,7 @@ interface ReplyCommentProps {
   currentUserProfileId: string;
   onReplySubmit: (content: string, imageFile?: File) => Promise<void>;
   onClose: () => void;
+  dict: any;
 }
 
 const ReplyComment: React.FC<ReplyCommentProps> = ({
@@ -19,6 +20,7 @@ const ReplyComment: React.FC<ReplyCommentProps> = ({
   currentUserProfileId,
   onReplySubmit,
   onClose,
+  dict,
 }) => {
   const [replyContent, setReplyContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -53,7 +55,7 @@ const ReplyComment: React.FC<ReplyCommentProps> = ({
   };
 
   return (
-    <div className="relative mt-4 p-4 bg-gray-100 rounded-md">
+    <div className="relative mt-4 p-4 dark:text-white text-black dark:bg-black bg-gray-100 rounded-md">
       <X
         className="absolute top-2 right-2 cursor-pointer text-gray-500 hover:text-black"
         size={20}
@@ -63,11 +65,11 @@ const ReplyComment: React.FC<ReplyCommentProps> = ({
       />
 
       <Textarea
-        placeholder="Write your reply..."
+        placeholder={dict.blog.commentreply.replycommentplaceholder}
         value={replyContent}
         onChange={(e) => setReplyContent(e.target.value)}
         rows={3}
-        className="w-full text-black"
+        className="w-full dark:text-white text-black dark:bg-black bg-white"
       />
 
       {imagePreview && (
@@ -97,7 +99,9 @@ const ReplyComment: React.FC<ReplyCommentProps> = ({
           onClick={handleSubmit}
           disabled={isSubmitting || !replyContent.trim()}
         >
-          {isSubmitting ? "Submitting..." : "Submit Reply"}
+          {isSubmitting
+            ? dict.blog.commentreply.submittingcomment
+            : dict.blog.commentreply.submitcomment}
         </Button>
       </div>
     </div>

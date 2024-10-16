@@ -26,12 +26,14 @@ interface ForumReplyListProps {
   replies: ForumReply[];
   currentUserProfileId: string;
   isAdmin: boolean;
+  dict: any;
 }
 
 const ForumReplyList: React.FC<ForumReplyListProps> = ({
   replies,
   currentUserProfileId,
   isAdmin,
+  dict,
 }) => {
   const [replyList, setReplyList] = useState<ForumReply[]>([]);
 
@@ -101,6 +103,7 @@ const ForumReplyList: React.FC<ForumReplyListProps> = ({
             reply={reply}
             onDelete={() => handleDeleteCommentReply(reply._id, reply?.image)}
             isAdmin={isAdmin}
+            dict={dict}
           />
         ))}
     </div>

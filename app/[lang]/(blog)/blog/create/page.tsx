@@ -13,10 +13,12 @@ import {
 } from "@/lib/actions/user.actions";
 import { useRouter } from "next/navigation";
 import BlogCreator from "./_components/BlogCreator";
+import { useDict } from "@/app/context/dictionary-context";
 
 export default function BlogCreate() {
   const { data: clientSession } = useSession();
   const router = useRouter();
+  const dict = useDict();
 
   const [authActiveProfileId, setAuthActiveProfileId] = useState<string | null>(
     null
@@ -75,8 +77,8 @@ export default function BlogCreate() {
 
   return (
     <>
-      <Header />
-      <div className="container mx-auto px-6 py-6 max-w-4xl">
+      <Header dict={dict} />
+      <div className="container mx-auto px-6 py-6 max-w-4xl dark:text-white text-black">
         <Card>
           <CardHeader>
             {accountName && (

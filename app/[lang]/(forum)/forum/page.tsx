@@ -9,6 +9,7 @@ import {
 } from "@/lib/actions/user.actions";
 import Header from "@/components/forum/header";
 import ForumContainer from "./_components/FormContainer";
+import { getDictionary } from "../../dictionaries";
 
 interface ForumType {
   _id: string;
@@ -36,7 +37,7 @@ interface forumResponse {
   error?: string;
 }
 
-async function Forum() {
+async function Forum({ params }: { params: { lang: string } }) {
   const session = await getServerSession(authOptions);
   const user = session?.user;
 
@@ -45,6 +46,8 @@ async function Forum() {
   let forums: Forum[] = [];
   let isAdmin = false;
   let forumTypes = [];
+
+  const dict = await getDictionary(params.lang);
 
   if (isLogin) {
     const authUserId = user!.id.toString();
@@ -65,14 +68,16 @@ async function Forum() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-black text-white">
-      <Header />
+    <div className="min-h-screen w-full dark:bg-black dark:text-white bg-white text-black">
+      <Header dict={dict} />
       <ForumContainer
         isLogin={isLogin}
         isAdmin={isAdmin}
         authActiveProfileId={authActiveProfileId}
         initialForums={forums}
         initialForumTypes={forumTypes}
+        dict={dict}
+        lang={params.lang}
       />
     </div>
   );

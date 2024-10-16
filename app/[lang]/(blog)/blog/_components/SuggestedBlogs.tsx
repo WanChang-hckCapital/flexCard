@@ -12,10 +12,18 @@ interface Blog {
   author: string;
 }
 
-export default function SuggestedBlogs({ blogs }: { blogs: Blog[] }) {
+export default function SuggestedBlogs({
+  blogs,
+  dict,
+}: {
+  blogs: Blog[];
+  dict: any;
+}) {
   return (
     <section>
-      <h2 className="text-2xl font-semibold mb-6">Suggested Posts</h2>
+      <h2 className="text-2xl font-semibold mb-6">
+        {dict.blog.suggestedblog.suggestedblog}
+      </h2>
       <div className="grid md:grid-cols-3 gap-8">
         {blogs.map((post, index) => (
           <SuggestedBlogItem key={index} post={post} />

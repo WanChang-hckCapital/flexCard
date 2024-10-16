@@ -93,7 +93,7 @@ export default function PersonalInfoSheet({
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent
         side="right"
-        className="flex flex-col justify-between h-full z-[1000]"
+        className="flex flex-col dark:bg-black bg-white justify-between h-full z-[1000]"
       >
         <SheetHeader>
           <div className="w-full flex flex-col items-center relative">

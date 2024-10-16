@@ -1,299 +1,456 @@
 {
-    "auth": {
-        "signUp": {
-            "title": "Let's Go!",
-            "btnSignUp": "SignUp!",
-            "alreadyHaveAccount": "Already have an account?",
-            "or": "or",
-            "signUpWith": "Sign Up with"
-        },
-        "signIn": {
-            "title": "Welcome Back!",
-            "btnSignIn": "Sign In",
-            "forgotPassword": "Forgot Password?",
-            "noAccount": "Don't have an account?",
-            "createAccount": "Create Account",
-            "google": "Sign in with Google",
-            "facebook": "Sign in with Facebook",
-            "line": "Sign in with Line",
-            "apple": "Sign in with AppleID"
-        },
-        "onboarding": {
-            "title": "Almost there!",
-            "subTitle": "Complete your profile now just a few steps to continue using flxBubble.",
-            "btnContinue": "Continue"
-        },
-        "signUpOrganization": {
-            "title": "Join as Organization"
-        }
+  "auth": {
+    "signUp": {
+      "title": "Let's Go!",
+      "btnSignUp": "SignUp!",
+      "alreadyHaveAccount": "Already have an account?",
+      "or": "or",
+      "signUpWith": "Sign Up with"
     },
-    "header": {
-        "subscription": "Subscription",
-        "language": "Switch Language",
-        "myCard": "My Card",
-        "setting": "Settings",
-        "dashboard": "Dashboard",
-        "signIn": "Sign In",
-        "signOut": "Sign Out"
+    "signIn": {
+      "title": "Welcome Back!",
+      "btnSignIn": "Sign In",
+      "forgotPassword": "Forgot Password?",
+      "noAccount": "Don't have an account?",
+      "createAccount": "Create Account",
+      "google": "Sign in with Google",
+      "facebook": "Sign in with Facebook",
+      "line": "Sign in with Line",
+      "apple": "Sign in with AppleID"
     },
-    "contactUs": {
-        "title": "Contact Us",
-        "description": "Email, call, or complete the form to learn how we can help solve your messaging problem.",
-        "email": "service@flxbubble.com",
-        "customerSupport": "Customer Support",
-        "customerSupportDesc": "Our support team is available around the clock to address any concerns or queries you may have.",
-        "feedback": "Feedback and Suggestions",
-        "feedbackDesc": "We value your feedback and suggestions. Please share your thoughts with us.",
-        "mediaInquiries": "Media Inquiries",
-        "mediaInquiriesDesc": "For media inquiries, please contact our media team.",
-        "getInTouch": {
-            "title": "Get in Touch",
-            "reachUs": "You can reach us anytime",
-            "firstName": "First name",
-            "lastName": "Last name",
-            "email": "Your email",
-            "phone": "Phone number",
-            "messagePlaceholder": "How can we help?",
-            "submitButton": "Submit"
-        }
+    "onboarding": {
+      "title": "Almost there!",
+      "subTitle": "Complete your profile now just a few steps to continue using flxBubble.",
+      "btnContinue": "Continue"
     },
-    "products": {
-        "title": "Choose your right Plan!",
-        "subtitle": "No hidden fees, cancel anytime.",
-        "paymentTerms": "Payment terms"
+    "signUpOrganization": {
+      "title": "Join as Organization"
+    }
+  },
+  "header": {
+    "subscription": "Subscription",
+    "language": "Switch Language",
+    "myCard": "My Card",
+    "setting": "Settings",
+    "dashboard": "Dashboard",
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "forum": "Forum",
+    "blog": "Blog"
+  },
+  "contactUs": {
+    "title": "Contact Us",
+    "description": "Email, call, or complete the form to learn how we can help solve your messaging problem.",
+    "email": "service@flxbubble.com",
+    "customerSupport": "Customer Support",
+    "customerSupportDesc": "Our support team is available around the clock to address any concerns or queries you may have.",
+    "feedback": "Feedback and Suggestions",
+    "feedbackDesc": "We value your feedback and suggestions. Please share your thoughts with us.",
+    "mediaInquiries": "Media Inquiries",
+    "mediaInquiriesDesc": "For media inquiries, please contact our media team.",
+    "getInTouch": {
+      "title": "Get in Touch",
+      "reachUs": "You can reach us anytime",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Your email",
+      "phone": "Phone number",
+      "messagePlaceholder": "How can we help?",
+      "submitButton": "Submit"
+    }
+  },
+  "products": {
+    "title": "Choose your right Plan!",
+    "subtitle": "No hidden fees, cancel anytime.",
+    "paymentTerms": "Payment terms"
+  },
+  "productList": {
+    "mostPopular": "MOST POPULAR",
+    "month": "month",
+    "choosePlan": "Choose Plan",
+    "personal": "Personal Plans",
+    "organization": "Organization Plans"
+  },
+  "sidebar": {
+    "Home": "Home",
+    "Search": "Search",
+    "Notification": "Notification",
+    "Create Card": "Create Card",
+    "Profile": "Profile"
+  },
+  "profile": {
+    "card": "Card",
+    "followers": "Followers",
+    "following": "Following",
+    "follow": "Follow",
+    "unfollow": "Unfollow",
+    "shortDescription": "Short Description",
+    "close": "Close",
+    "cancel": "Cancel",
+    "confirmUnfollow": "Confirm Unfollow",
+    "noFollowersDesc": "You don't have any followers yet.",
+    "confirmUnfollowDesc": "Are you sure you want to unfollow this user? This action cannot be undone."
+  },
+  "newProfile": {
+    "title": {
+      "edit": "Edit Profile",
+      "add": "Add Profile",
+      "update": "Update Profile"
+    }
+  },
+  "profileTab": {
+    "CARDS": "CARDS",
+    "SAVED": "SAVED"
+  },
+  "organization": {
+    "profile": {
+      "title": "Profile Information",
+      "accountname": "Account Nickname",
+      "email": "Email",
+      "phone": "Phone No",
+      "shortdescription": "Short Description"
     },
-    "productList": {
-        "mostPopular": "MOST POPULAR",
-        "month": "month",
-        "choosePlan": "Choose Plan",
-        "personal": "Personal Plans",
-        "organization": "Organization Plans"
+    "business": {
+      "title": "Tell us about your business",
+      "subTitle": "flxBubble gathers this information to better support your business and fulfill the obligations of regulators, financial partners, and our Services Agreement.",
+      "info": "Business Information",
+      "businessType": "Type of Business",
+      "selectBusinessType": "Select Business Type",
+      "businessLocation": "Business Location",
+      "selectBusinessLocation": "Select Business Location",
+      "legalBusinessName": "Legal Business Name",
+      "businessRegistrationNumber": "Company Registration Number",
+      "businessName": "Business Name",
+      "businessAddressTitle": "Business Address",
+      "businessAddress1": "Address 1",
+      "businessAddress2": "Address 2",
+      "businessPhone": "Business Phone Number",
+      "industry": "Industry",
+      "selectIndustry": "Select Industry",
+      "businessWebsite": "Business Website",
+      "businessProductDescription": "Product Description"
     },
-    "sidebar": {
-        "Home": "Home",
-        "Search": "Search",
-        "Notification": "Notification",
-        "Create Card": "Create Card",
-        "Profile": "Profile"
+    "bank": {
+      "title": "Add your bank to verify company details",
+      "subTitle": "We will verify your company details base on your bank details.",
+      "info": "Bank Information",
+      "bankAccountHolder": "Bank Account Holder",
+      "bankName": "Choose Your Bank",
+      "bankAccountNumber": "Account Number",
+      "reBankAccountNumber": "Re-confirm Account Number"
+    },
+    "review": {
+      "title": "Review and finish up",
+      "subTitle": "You're almost ready to get started with flxBubble. Take a moment to review and confirm your information.",
+      "terms": "By submitting this form, you agree to the flxBubble Services Agreement, to receiving text messages from flxBubble, and you certify that the information provided is complete and correct."
+    },
+    "btn": {
+      "continue": "Continue",
+      "edit": "Edit",
+      "submit": "Agree and Submit"
+    },
+    "isEdit": {
+      "editTitle": "Edit your business information",
+      "newTitle": "Tell us about your business"
+    }
+  },
+  "userSettings": {
+    "theme": {
+      "title": "Edit Theme",
+      "choice": "Select Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
     },
     "profile": {
-        "card": "Card",
-        "followers": "Followers",
-        "following": "Following",
-        "follow": "Follow",
-        "unfollow": "Unfollow",
-        "shortDescription": "Short Description",
-        "close": "Close",
-        "cancel": "Cancel",
-        "confirmUnfollow": "Confirm Unfollow",
-        "noFollowersDesc": "You don't have any followers yet.",
-        "confirmUnfollowDesc": "Are you sure you want to unfollow this user? This action cannot be undone."
+      "title": "Edit Profile",
+      "accountname": "Account Nickname",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "phone": "Phone No",
+      "shortDescription": "Short Description",
+      "btnContinue": "Continue"
     },
-    "newProfile": {
-        "title": {
-            "edit": "Edit Profile",
-            "add": "Add Profile",
-            "update": "Update Profile"
-        }
+    "account": {
+      "title": "Manage Account",
+      "subTitle": "Profiles",
+      "waitingDesc": "Waiting to be activated",
+      "usertype": {
+        "PERSONAL": "Personal",
+        "ORGANIZATION": "Organization",
+        "ENTREPRENEUR": "Enterpreneur"
+      },
+      "dialogTitle": {
+        "PERSONAL": "Creating Personal Profile",
+        "ORGANIZATION": "Creating Organization Profile",
+        "ENTREPRENEUR": "Creating Entrepreneur Profile"
+      },
+      "editDialogTitle": {
+        "PERSONAL": "Edit Personal Profile",
+        "ORGANIZATION": "Edit Organization Profile",
+        "ENTREPRENEUR": "Edit Entrepreneur Profile"
+      },
+      "dialog": {
+        "confirmDeleteTitle": "Confirm Delete",
+        "confirmDeleteDesc": "Are you sure you want to delete this account? This action cannot be undone.",
+        "btnCancel": "Cancel"
+      },
+      "btnActive": "Active",
+      "activating": "Activating",
+      "activated": "Activated",
+      "btnEdit": "Edit",
+      "btnDelete": "Delete"
     },
-    "profileTab": {
-        "CARDS": "CARDS",
-        "SAVED": "SAVED"
+    "notification": {
+      "title": "Notifications",
+      "subTitle": "Notificatios Settings",
+      "description": "Get notified when someone follows you, likes your card, comments on your card, and more."
     },
-    "organization": {
-        "profile": {
-            "title": "Profile Information",
-            "accountname": "Account Nickname",
-            "email": "Email",
-            "phone": "Phone No",
-            "shortdescription": "Short Description"
-        },
-        "business": {
-            "title": "Tell us about your business",
-            "subTitle": "flxBubble gathers this information to better support your business and fulfill the obligations of regulators, financial partners, and our Services Agreement.",
-            "info": "Business Information",
-            "businessType": "Type of Business",
-            "selectBusinessType": "Select Business Type",
-            "businessLocation": "Business Location",
-            "selectBusinessLocation": "Select Business Location",
-            "legalBusinessName": "Legal Business Name",
-            "businessRegistrationNumber": "Company Registration Number",
-            "businessName": "Business Name",
-            "businessAddressTitle": "Business Address",
-            "businessAddress1": "Address 1",
-            "businessAddress2": "Address 2",
-            "businessPhone": "Business Phone Number",
-            "industry": "Industry",
-            "selectIndustry": "Select Industry",
-            "businessWebsite": "Business Website",
-            "businessProductDescription": "Product Description"
-        },
-        "bank": {
-            "title": "Add your bank to verify company details",
-            "subTitle": "We will verify your company details base on your bank details.",
-            "info": "Bank Information",
-            "bankAccountHolder": "Bank Account Holder",
-            "bankName": "Choose Your Bank",
-            "bankAccountNumber": "Account Number",
-            "reBankAccountNumber": "Re-confirm Account Number"
-        },
-        "review": {
-            "title": "Review and finish up",
-            "subTitle": "You're almost ready to get started with flxBubble. Take a moment to review and confirm your information.",
-            "terms": "By submitting this form, you agree to the flxBubble Services Agreement, to receiving text messages from flxBubble, and you certify that the information provided is complete and correct."
-        },
-        "btn": {
-            "continue": "Continue",
-            "edit": "Edit",
-            "submit": "Agree and Submit"
-        },
-        "isEdit": {
-            "editTitle": "Edit your business information",
-            "newTitle": "Tell us about your business"
-        }
+    "privacy": {
+      "title": "Accounts Privacy",
+      "public": "Public Account",
+      "private": "Private Account",
+      "description": "When your account is public, your profile and bubbles can be seen by anyone, on or off flxBubble, even if they don't have an flxBubble account.",
+      "description2": "When your account is private, only the followers you approve can see what you share, and your followers and following lists."
     },
-    "userSettings": {
-        "theme": {
-            "title": "Edit Theme",
-            "choice": "Select Theme",
-            "light": "Light",
-            "dark": "Dark",
-            "system": "System"
-        },
-        "profile": {
-            "title": "Edit Profile",
-            "accountname": "Account Nickname",
-            "email": "Email",
-            "password": "Password",
-            "confirmPassword": "Confirm Password",
-            "phone": "Phone No",
-            "shortDescription": "Short Description",
-            "btnContinue": "Continue"
-        },
-        "account": {
-            "title": "Manage Account",
-            "subTitle": "Profiles",
-            "waitingDesc": "Waiting to be activated",
-            "usertype": {
-                "PERSONAL": "Personal",
-                "ORGANIZATION": "Organization",
-                "ENTREPRENEUR": "Enterpreneur"
-            },
-            "dialogTitle": {
-                "PERSONAL": "Creating Personal Profile",
-                "ORGANIZATION": "Creating Organization Profile",
-                "ENTREPRENEUR": "Creating Entrepreneur Profile"
-            },
-            "editDialogTitle": {
-                "PERSONAL": "Edit Personal Profile",
-                "ORGANIZATION": "Edit Organization Profile",
-                "ENTREPRENEUR": "Edit Entrepreneur Profile"
-            },
-            "dialog": {
-                "confirmDeleteTitle": "Confirm Delete",
-                "confirmDeleteDesc": "Are you sure you want to delete this account? This action cannot be undone.",
-                "btnCancel": "Cancel"
-            },
-            "btnActive": "Active",
-            "activating": "Activating",
-            "activated": "Activated",
-            "btnEdit": "Edit",
-            "btnDelete": "Delete"
-        },
-        "notification": {
-            "title": "Notifications",
-            "subTitle": "Notificatios Settings",
-            "description": "Get notified when someone follows you, likes your card, comments on your card, and more."
-        },
-        "privacy": {
-            "title": "Accounts Privacy",
-            "public": "Public Account",
-            "private": "Private Account",
-            "description": "When your account is public, your profile and bubbles can be seen by anyone, on or off flxBubble, even if they don't have an flxBubble account.",
-            "description2": "When your account is private, only the followers you approve can see what you share, and your followers and following lists."
-        },
-        "closeFriends": {
-            "title": "Close Friends"
-        },
-        "blockedUsers": {
-            "title": "Blocked Accounts",
-            "noBlockedUsers": "You don't have any blocked accounts."
-        },
-        "mutedUsers": {
-            "title": "Muted Accounts",
-            "noMutedUsers": "You don't have any muted accounts.",
-            "btnUnmuted": "Unmuted",
-            "dialog": {
-                "title": "Confirm Unmute",
-                "confirmUnmuted": "Confirm",
-                "cancelUnmuted": "Cancel",
-                "confirmUnmutedDesc": "Are you sure you want to unmute this user? This action cannot be undone."
-            }
-        }
+    "closeFriends": {
+      "title": "Close Friends"
     },
-    "userSettingsLeftBar": {
-        "title": "Settings",
-        "themeSection": "Theme",
-        "accountSection": "Account",
-        "privacySection": "Who can view your bubble",
-        "notificationSection": "Who's bubble you wanted to view",
-        "theme": "Theme",
-        "profile": "Edit Profile",
-        "account": "Manage Account",
-        "notification": "Notifications",
-        "privacy": "Accounts Privacy",
-        "closeFriends": "Close Friends",
-        "blockedUsers": "Blocked Accounts",
-        "mutedUsers": "Muted Accounts"
+    "blockedUsers": {
+      "title": "Blocked Accounts",
+      "noBlockedUsers": "You don't have any blocked accounts."
     },
-    "dashboard": {
-        "breadcrumb": {
-            "dashboard": "Dashboard",
-            "product": {
-                "title": "Product Plans",
-                "addProduct": "Add New Product",
-                "editProduct": "Editing"
-            },
-            "promotions": {
-                "title": "Promotions",
-                "addPromotion": "Add New Promotions",
-                "editPromotion": "Editing"  
-            },
-            "transactions": "Transactions",
-            "analytics": "Analytics",
-            "subscription": "Subscriptions & Payments",
-            "settings": {
-                "title": "Settings",
-                "general": "General",
-                "newUser": "New User",
-                "report": "Report"
-            }
-        },
-        "sidebar": {
-            "dashboard": "Dashboard",
-            "members": "Member",
-            "products": "Products",
-            "promotions": "Promotions",
-            "transactions": "Transactions",
-            "analytics": "Analytics",
-            "subscription": "Subscription",
-            "settings": "Settings"
-        },
-        "chart": {
-            "newMembers": "New Members",
-            "totalMembers": "Total Members",
-            "totalProducts": "Total Products",
-            "totalPromotions": "Total Promotions",
-            "totalTransactions": "Total Transactions",
-            "totalRevenue": "Total Revenue",
-            "totalSubscriptions": "Total Subscriptions",
-            "analyticsCountry": "Analytics by Country",
-            "analytics": {
-                "thisWeek": "This Week",
-                "thisWeekDesc": "from last week",
-                "thisMonth": "This Month",
-                "thisMonthDesc": "from last month"
-            }
-        }
+    "mutedUsers": {
+      "title": "Muted Accounts",
+      "noMutedUsers": "You don't have any muted accounts.",
+      "btnUnmuted": "Unmuted",
+      "dialog": {
+        "title": "Confirm Unmute",
+        "confirmUnmuted": "Confirm",
+        "cancelUnmuted": "Cancel",
+        "confirmUnmutedDesc": "Are you sure you want to unmute this user? This action cannot be undone."
+      }
     }
+  },
+  "userSettingsLeftBar": {
+    "title": "Settings",
+    "themeSection": "Theme",
+    "accountSection": "Account",
+    "privacySection": "Who can view your bubble",
+    "notificationSection": "Who's bubble you wanted to view",
+    "theme": "Theme",
+    "profile": "Edit Profile",
+    "account": "Manage Account",
+    "notification": "Notifications",
+    "privacy": "Accounts Privacy",
+    "closeFriends": "Close Friends",
+    "blockedUsers": "Blocked Accounts",
+    "mutedUsers": "Muted Accounts"
+  },
+  "dashboard": {
+    "breadcrumb": {
+      "dashboard": "Dashboard",
+      "product": {
+        "title": "Product Plans",
+        "addProduct": "Add New Product",
+        "editProduct": "Editing"
+      },
+      "promotions": {
+        "title": "Promotions",
+        "addPromotion": "Add New Promotions",
+        "editPromotion": "Editing"
+      },
+      "transactions": "Transactions",
+      "analytics": "Analytics",
+      "subscription": "Subscriptions & Payments",
+      "settings": {
+        "title": "Settings",
+        "general": "General",
+        "newUser": "New User",
+        "report": "Report"
+      }
+    },
+    "sidebar": {
+      "dashboard": "Dashboard",
+      "members": "Member",
+      "products": "Products",
+      "promotions": "Promotions",
+      "transactions": "Transactions",
+      "analytics": "Analytics",
+      "subscription": "Subscription",
+      "settings": "Settings"
+    },
+    "chart": {
+      "newMembers": "New Members",
+      "totalMembers": "Total Members",
+      "totalProducts": "Total Products",
+      "totalPromotions": "Total Promotions",
+      "totalTransactions": "Total Transactions",
+      "totalRevenue": "Total Revenue",
+      "totalSubscriptions": "Total Subscriptions",
+      "analyticsCountry": "Analytics by Country",
+      "analytics": {
+        "thisWeek": "This Week",
+        "thisWeekDesc": "from last week",
+        "thisMonth": "This Month",
+        "thisMonthDesc": "from last month"
+      }
+    }
+  },
+  "blog": {
+    "adminOrInviteCreator": {
+      "invitecreator": "Invite creator",
+      "create": "Create",
+      "invitecreatormodeltitle": "Invite Creator to Write a Blog",
+      "invitebutton": "Invite",
+      "invitationmodalclose": "Close",
+      "invitationconfirmationtitle": "Confirm Invitation",
+      "invitationmessage_1": "Are you sure you want to invite",
+      "invitationmessage_2": "to be a creator?",
+      "invitationconfirmationbutton": "Confirm",
+      "invitationconfirmationclose": "Cancel"
+    },
+    "blog": {
+      "navtitle": "FlxBubble Blog"
+    },
+    "create": {
+      "blogtitle": "Blog Title",
+      "titleplaceholder": "Enter the blog title",
+      "blogthumbnail": "Blog Thumbnail",
+      "blogcontent": "Content",
+      "submitblog": "Submit Blog",
+      "submittingblog": "Submit Blog"
+    },
+    "suggestedblog": {
+      "suggestedblog": "Suggested Blogs"
+    },
+    "blogcontent": {
+      "createdat": "Created At",
+      "comments": "Comments",
+      "commentsplaceholder": "Add a comment...",
+      "submittingcomment": "Submitting...",
+      "submitcomment": "Submit Comment"
+    },
+    "edit": {
+      "edit": "Edit",
+      "title": "Title",
+      "content": "Content",
+      "thumbnail": "Current Thumbnail:",
+      "uploadthumbnailcheck": "Do you want to upload a new thumbnail?",
+      "uploadnewthumbnail": "Upload New Thumbnail",
+      "updatingblog": "Updating...",
+      "updateblog": "Update Blog"
+    },
+    "delete": {
+      "delete": "Delete",
+      "title": "Confirm Deletion",
+      "deleteconfirmmessage": "Are you sure you want to delete this blog? This action cannot be undone.",
+      "deletecancel": "Cancel",
+      "deleteconfirm": "Confirm"
+    },
+    "comment": {
+      "like": "Like",
+      "reply": "Reply",
+      "title": "Confirm Deletion",
+      "deleteconfirmmessage": "Are you sure you want to delete this comment? This action cannot be undone.",
+      "deletecancel": "Cancel",
+      "deleteconfirm": "Confirm"
+    },
+    "commentreply": {
+      "like": "Like",
+      "title": "Confirm Deletion",
+      "deleteconfirmmessage": "Are you sure you want to delete this comment? This action cannot be undone.",
+      "deletecancel": "Cancel",
+      "deleteconfirm": "Confirm",
+      "replycommentplaceholder": "Write your reply...",
+      "submittingcomment": "Submitting...",
+      "submitcomment": "Submit Comment"
+    }
+  },
+  "forum": {
+    "frontenddisplay": {
+      "views": "Views",
+      "comments": "Comments"
+    },
+    "forum": {
+      "navtitle": "FlxBubble Forum"
+    },
+    "create": {
+      "create": "Create",
+      "createnewforumtype": "Create New Forum Type",
+      "forumtype_en": "Forum Type(English)",
+      "forumtype_zhtw": "Forum Type(Traditional Chinese)",
+      "activestatustitle": "Active Status",
+      "forumtypeplaceholder": "Enter forum type...",
+      "active": "Active",
+      "inactve": "Inactive",
+      "cancel": "Cancel",
+      "forumtype": "Forum Type",
+      "forumtitle": "Forum Title",
+      "forumthumbnail": "Forum Thumbnail",
+      "forumcontent": "Forum Content",
+      "submitforum": "Submit Forum",
+      "submittingforum": "Submitting...",
+      "forumtitleplaceholer": "Enter The Forum Title",
+      "selectforumtype": "Select Forum Type"
+    },
+    "forumtype": {
+      "System Performance": "System Performance",
+      "Bubble Issue": "FlxBubble Issue",
+      "Account Issue": "Account Issue",
+      "Comment Issue": "Comment Issue",
+      "Chat Issue": "Chat Issue",
+      "Chatroom Issue": "Chatroom Issue",
+      "Forum Issue": "Forum Issue",
+      "Request Function": "Request Function",
+      "Report Error": "Report Error"
+    },
+    "edit": {
+      "edit": "Edit",
+      "title": "Title",
+      "content": "Content",
+      "thumbnail": "Current Thumbnail:",
+      "uploadthumbnailcheck": "Do you want to upload a new thumbnail?",
+      "uploadnewthumbnail": "Upload New Thumbnail",
+      "updatingforum": "Updating...",
+      "updateforum": "Update Forum"
+    },
+    "delete": {
+      "delete": "Delete",
+      "title": "Confirm Deletion",
+      "deleteconfirmmessage": "Are you sure you want to delete this forum? This action cannot be undone.",
+      "deletecancel": "Cancel",
+      "deleteconfirm": "Confirm"
+    },
+    "forumcontent": {
+      "createdat": "Created At",
+      "comments": "Comments",
+      "commentsplaceholder": "Add a comment...",
+      "submittingcomment": "Submitting...",
+      "submitcomment": "Submit Comment"
+    },
+    "forumcontentnofound": {
+      "forumcontentnofound_1": "No forums available for",
+      "forumcontentnofound_2": "!"
+    },
+    "comment": {
+      "like": "Like",
+      "reply": "Reply",
+      "title": "Confirm Deletion",
+      "deleteconfirmmessage": "Are you sure you want to delete this comment? This action cannot be undone.",
+      "deletecancel": "Cancel",
+      "deleteconfirm": "Confirm"
+    },
+    "commentreply": {
+      "like": "Like",
+      "title": "Confirm Deletion",
+      "deleteconfirmmessage": "Are you sure you want to delete this comment? This action cannot be undone.",
+      "deletecancel": "Cancel",
+      "deleteconfirm": "Confirm",
+      "replycommentplaceholder": "Write your reply...",
+      "submittingcomment": "Submitting...",
+      "submitcomment": "Submit Comment"
+    }
+  }
 }

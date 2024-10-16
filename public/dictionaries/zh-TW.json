@@ -1,292 +1,449 @@
 {
-    "auth": {
-        "signUp": {
-            "title": "讓我們開始吧！",
-            "btnSignUp": "註冊！",
-            "alreadyHaveAccount": "已經有帳號了嗎？",
-            "or": "或",
-            "signUpWith": "使用以下方式註冊"
-        },
-        "signIn": {
-            "title": "歡迎回來！",
-            "btnSignIn": "登入",
-            "forgotPassword": "忘記密碼？",
-            "noAccount": "還沒有帳號？",
-            "createAccount": "創建帳號",
-            "google": "使用 Google 登入",
-            "facebook": "使用 Facebook 登入",
-            "line": "使用 Line 登入",
-            "apple": "使用 AppleID 登入"
-        },
-        "onboarding": {
-            "title": "快完成了！",
-            "subTitle": "立即完成您的個人資料，僅需幾個步驟即可繼續使用 flxBubble。",
-            "btnContinue": "繼續"
-        },
-        "signUpOrganization": {
-            "title": "以組織身份加入"
-        }
+  "auth": {
+    "signUp": {
+      "title": "讓我們開始吧！",
+      "btnSignUp": "註冊！",
+      "alreadyHaveAccount": "已經有帳號了嗎？",
+      "or": "或",
+      "signUpWith": "使用以下方式註冊"
     },
-    "header": {
-        "subscription": "訂閱",
-        "language": "切換語言",
-        "myCard": "我的卡片",
-        "setting": "設置",
-        "dashboard": "儀表板",
-        "login": "登入",
-        "logout": "登出"
+    "signIn": {
+      "title": "歡迎回來！",
+      "btnSignIn": "登入",
+      "forgotPassword": "忘記密碼？",
+      "noAccount": "還沒有帳號？",
+      "createAccount": "創建帳號",
+      "google": "使用 Google 登入",
+      "facebook": "使用 Facebook 登入",
+      "line": "使用 Line 登入",
+      "apple": "使用 AppleID 登入"
     },
-    "contactUs": {
-        "title": "聯繫我們",
-        "description": "通過電子郵件、電話或填寫表單，了解我們如何幫助解決您的消息問題。",
-        "email": "service@flxbubble.com",
-        "customerSupport": "客戶支持",
-        "customerSupportDesc": "我們的支持團隊隨時可用，解決您可能有的任何疑慮或問題。",
-        "feedback": "反饋和建議",
-        "feedbackDesc": "我們重視您的反饋和建議，請與我們分享您的想法。",
-        "mediaInquiries": "媒體查詢",
-        "mediaInquiriesDesc": "如有媒體查詢，請聯繫我們的媒體團隊。",
-        "getInTouch": {
-            "title": "聯繫我們",
-            "reachUs": "隨時聯繫我們",
-            "firstName": "名字",
-            "lastName": "姓氏",
-            "email": "您的電子郵件",
-            "phone": "電話號碼",
-            "messagePlaceholder": "我們如何幫助您？",
-            "submitButton": "提交"
-        }
+    "onboarding": {
+      "title": "快完成了！",
+      "subTitle": "立即完成您的個人資料，僅需幾個步驟即可繼續使用 flxBubble。",
+      "btnContinue": "繼續"
     },
-    "products": {
-        "title": "選擇您需要的產品!",
-        "subtitle": "隨時隨地取消，無任何隱藏費用。",
-        "paymentTerms": "訂閱條規"
+    "signUpOrganization": {
+      "title": "以組織身份加入"
+    }
+  },
+  "header": {
+    "subscription": "訂閱",
+    "language": "切換語言",
+    "myCard": "我的卡片",
+    "setting": "設置",
+    "dashboard": "儀表板",
+    "login": "登入",
+    "logout": "登出",
+    "forum": "論壇",
+    "blog": "部落格"
+  },
+  "contactUs": {
+    "title": "聯繫我們",
+    "description": "通過電子郵件、電話或填寫表單，了解我們如何幫助解決您的消息問題。",
+    "email": "service@flxbubble.com",
+    "customerSupport": "客戶支持",
+    "customerSupportDesc": "我們的支持團隊隨時可用，解決您可能有的任何疑慮或問題。",
+    "feedback": "反饋和建議",
+    "feedbackDesc": "我們重視您的反饋和建議，請與我們分享您的想法。",
+    "mediaInquiries": "媒體查詢",
+    "mediaInquiriesDesc": "如有媒體查詢，請聯繫我們的媒體團隊。",
+    "getInTouch": {
+      "title": "聯繫我們",
+      "reachUs": "隨時聯繫我們",
+      "firstName": "名字",
+      "lastName": "姓氏",
+      "email": "您的電子郵件",
+      "phone": "電話號碼",
+      "messagePlaceholder": "我們如何幫助您？",
+      "submitButton": "提交"
+    }
+  },
+  "products": {
+    "title": "選擇您需要的產品!",
+    "subtitle": "隨時隨地取消，無任何隱藏費用。",
+    "paymentTerms": "訂閱條規"
+  },
+  "productList": {
+    "mostPopular": "最暢銷",
+    "month": "月",
+    "choosePlan": "選擇配套",
+    "personal": "個人配套",
+    "organization": "商業配套"
+  },
+  "sidebar": {
+    "Home": "首頁",
+    "Search": "搜索",
+    "Notification": "通知",
+    "Create Card": "創建卡片",
+    "Profile": "個人資料"
+  },
+  "profile": {
+    "card": "卡片",
+    "followers": "追隨者",
+    "following": "正在追蹤",
+    "follow": "追蹤",
+    "unfollow": "取消追蹤",
+    "shortDescription": "簡介",
+    "close": "關閉",
+    "cancel": "取消",
+    "confirmUnfollow": "確認取消追蹤",
+    "noFollowersDesc": "您目前沒有任何追隨者。",
+    "confirmUnfollowDesc": "您確定要取消追蹤此用戶嗎？此操作無法撤銷。"
+  },
+  "newProfile": {
+    "btn": {
+      "edit": "編輯個人檔案",
+      "add": "新增個人檔案",
+      "update": "更新個人檔案"
+    }
+  },
+  "profileTab": {
+    "CARDS": "卡片",
+    "SAVED": "已儲存"
+  },
+  "organization": {
+    "profile": {
+      "title": "個人資料信息",
+      "accountname": "帳戶暱稱",
+      "email": "電子郵件",
+      "phone": "電話號碼",
+      "shortdescription": "簡介"
     },
-    "productList": {
-        "mostPopular": "最暢銷",
-        "month": "月",
-        "choosePlan": "選擇配套",
-        "personal": "個人配套",
-        "organization": "商業配套"
+    "business": {
+      "title": "告訴我們您的業務",
+      "subTitle": "flxBubble 收集這些信息以更好地支持您的業務，並履行監管機構、金融合作夥伴和我們服務協議的義務。",
+      "info": "業務信息",
+      "businessType": "業務類型",
+      "selectBusinessType": "選擇業務類型",
+      "businessLocation": "業務地點",
+      "selectBusinessLocation": "選擇業務地點",
+      "legalBusinessName": "法定業務名稱",
+      "businessRegistrationNumber": "公司註冊號碼",
+      "businessName": "業務名稱",
+      "businessAddressTitle": "業務地址",
+      "businessAddress1": "地址 1",
+      "businessAddress2": "地址 2",
+      "businessPhone": "業務電話號碼",
+      "industry": "行業",
+      "selectIndustry": "選擇行業",
+      "businessWebsite": "業務網站",
+      "businessProductDescription": "產品描述"
     },
-    "sidebar": {
-        "Home": "首頁",
-        "Search": "搜索",
-        "Notification": "通知",
-        "Create Card": "創建卡片",
-        "Profile": "個人資料"
+    "bank": {
+      "title": "添加您的銀行以驗證公司詳情",
+      "subTitle": "我們將根據您的銀行詳情驗證公司信息。",
+      "info": "銀行信息",
+      "bankAccountHolder": "銀行帳戶持有人",
+      "bankName": "選擇您的銀行",
+      "bankAccountNumber": "帳號",
+      "reBankAccountNumber": "重新確認帳號"
+    },
+    "review": {
+      "title": "審查並完成",
+      "subTitle": "您幾乎可以開始使用 flxBubble 了。請花點時間審查並確認您的信息。",
+      "terms": "提交此表格即表示您同意 flxBubble 服務協議，接收來自 flxBubble 的短信，並保證所提供的信息是完整且正確的。"
+    },
+    "btn": {
+      "continue": "繼續",
+      "edit": "編輯",
+      "submit": "同意並提交"
+    },
+    "isEdit": {
+      "editTitle": "編輯您的業務信息",
+      "newTitle": "告訴我們您的業務"
+    }
+  },
+  "userSettings": {
+    "theme": {
+      "title": "主題",
+      "choice": "選擇主題",
+      "light": "淺色",
+      "dark": "深色",
+      "system": "系統"
     },
     "profile": {
-        "card": "卡片",
-        "followers": "追隨者",
-        "following": "正在追蹤",
-        "follow": "追蹤",
-        "unfollow": "取消追蹤",
-        "shortDescription": "簡介",
-        "close": "關閉",
-        "cancel": "取消",
-        "confirmUnfollow": "確認取消追蹤",
-        "noFollowersDesc": "您目前沒有任何追隨者。",
-        "confirmUnfollowDesc": "您確定要取消追蹤此用戶嗎？此操作無法撤銷。"
+      "title": "編輯個人資料",
+      "accountname": "帳戶暱稱",
+      "email": "電子郵件",
+      "password": "密碼",
+      "confirmPassword": "確認密碼",
+      "phone": "電話號碼",
+      "shortDescription": "簡介",
+      "btnContinue": "繼續"
     },
-    "newProfile": {
-        "btn": {
-            "edit": "編輯個人檔案",
-            "add": "新增個人檔案",
-            "update": "更新個人檔案"
-        }
+    "account": {
+      "title": "管理帳戶",
+      "subTitle": "個人檔案",
+      "waitingDesc": "等待啟用",
+      "usertype": {
+        "PERSONAL": "個人",
+        "ORGANIZATION": "組織",
+        "ENTREPRENEUR": "企業家"
+      },
+      "dialogTitle": {
+        "PERSONAL": "創建個人檔案",
+        "ORGANIZATION": "創建組織檔案",
+        "ENTREPRENEUR": "創建企業家檔案"
+      },
+      "editDialogTitle": {
+        "PERSONAL": "編輯個人檔案",
+        "ORGANIZATION": "編輯組織檔案",
+        "ENTREPRENEUR": "編輯企業家檔案"
+      },
+      "dialog": {
+        "confirmDeleteTitle": "確認刪除",
+        "confirmDeleteDesc": "您確定要刪除此帳戶嗎？此操作無法撤銷。",
+        "btnCancel": "取消"
+      },
+      "btnActive": "啟用",
+      "activating": "啟用中",
+      "activated": "已啟用",
+      "btnEdit": "編輯",
+      "btnDelete": "刪除"
     },
-    "profileTab": {
-        "CARDS": "卡片",
-        "SAVED": "已儲存"
+    "notification": {
+      "title": "通知",
+      "subTitle": "通知設定",
+      "description": "當有人關注您、點贊您的卡片、評論您的卡片等時，會收到通知。"
     },
-    "organization": {
-        "profile": {
-            "title": "個人資料信息",
-            "accountname": "帳戶暱稱",
-            "email": "電子郵件",
-            "phone": "電話號碼",
-            "shortdescription": "簡介"
-        },
-        "business": {
-            "title": "告訴我們您的業務",
-            "subTitle": "flxBubble 收集這些信息以更好地支持您的業務，並履行監管機構、金融合作夥伴和我們服務協議的義務。",
-            "info": "業務信息",
-            "businessType": "業務類型",
-            "selectBusinessType": "選擇業務類型",
-            "businessLocation": "業務地點",
-            "selectBusinessLocation": "選擇業務地點",
-            "legalBusinessName": "法定業務名稱",
-            "businessRegistrationNumber": "公司註冊號碼",
-            "businessName": "業務名稱",
-            "businessAddressTitle": "業務地址",
-            "businessAddress1": "地址 1",
-            "businessAddress2": "地址 2",
-            "businessPhone": "業務電話號碼",
-            "industry": "行業",
-            "selectIndustry": "選擇行業",
-            "businessWebsite": "業務網站",
-            "businessProductDescription": "產品描述"
-        },
-        "bank": {
-            "title": "添加您的銀行以驗證公司詳情",
-            "subTitle": "我們將根據您的銀行詳情驗證公司信息。",
-            "info": "銀行信息",
-            "bankAccountHolder": "銀行帳戶持有人",
-            "bankName": "選擇您的銀行",
-            "bankAccountNumber": "帳號",
-            "reBankAccountNumber": "重新確認帳號"
-        },
-        "review": {
-            "title": "審查並完成",
-            "subTitle": "您幾乎可以開始使用 flxBubble 了。請花點時間審查並確認您的信息。",
-            "terms": "提交此表格即表示您同意 flxBubble 服務協議，接收來自 flxBubble 的短信，並保證所提供的信息是完整且正確的。"
-        },
-        "btn": {
-            "continue": "繼續",
-            "edit": "編輯",
-            "submit": "同意並提交"
-        },
-        "isEdit": {
-            "editTitle": "編輯您的業務信息",
-            "newTitle": "告訴我們您的業務"
-        }
+    "privacy": {
+      "title": "帳戶隱私",
+      "public": "公開帳戶",
+      "private": "私密帳戶",
+      "description": "當您的帳戶是公開的時候，任何人都可以看到您的個人資料和氣泡，即使他們沒有 flxBubble 帳戶。",
+      "description2": "當您的帳戶是私密的時候，只有您批准的追隨者可以看到您分享的內容以及您的追隨者和正在追隨的列表。"
     },
-    "userSettings": {
-        "theme": {
-            "title": "主題",
-            "choice": "選擇主題",
-            "light": "淺色",
-            "dark": "深色",
-            "system": "系統"
-        },
-        "profile": {
-            "title": "編輯個人資料",
-            "accountname": "帳戶暱稱",
-            "email": "電子郵件",
-            "password": "密碼",
-            "confirmPassword": "確認密碼",
-            "phone": "電話號碼",
-            "shortDescription": "簡介",
-            "btnContinue": "繼續"
-        },
-        "account": {
-            "title": "管理帳戶",
-            "subTitle": "個人檔案",
-            "waitingDesc": "等待啟用",
-            "usertype": {
-                "PERSONAL": "個人",
-                "ORGANIZATION": "組織",
-                "ENTREPRENEUR": "企業家"
-            },
-            "dialogTitle": {
-                "PERSONAL": "創建個人檔案",
-                "ORGANIZATION": "創建組織檔案",
-                "ENTREPRENEUR": "創建企業家檔案"
-            },
-            "editDialogTitle": {
-                "PERSONAL": "編輯個人檔案",
-                "ORGANIZATION": "編輯組織檔案",
-                "ENTREPRENEUR": "編輯企業家檔案"
-            },
-            "dialog": {
-                "confirmDeleteTitle": "確認刪除",
-                "confirmDeleteDesc": "您確定要刪除此帳戶嗎？此操作無法撤銷。",
-                "btnCancel": "取消"
-            },
-            "btnActive": "啟用",
-            "activating": "啟用中",
-            "activated": "已啟用",
-            "btnEdit": "編輯",
-            "btnDelete": "刪除"
-        },
-        "notification": {
-            "title": "通知",
-            "subTitle": "通知設定",
-            "description": "當有人關注您、點贊您的卡片、評論您的卡片等時，會收到通知。"
-        },
-        "privacy": {
-            "title": "帳戶隱私",
-            "public": "公開帳戶",
-            "private": "私密帳戶",
-            "description": "當您的帳戶是公開的時候，任何人都可以看到您的個人資料和氣泡，即使他們沒有 flxBubble 帳戶。",
-            "description2": "當您的帳戶是私密的時候，只有您批准的追隨者可以看到您分享的內容以及您的追隨者和正在追隨的列表。"
-        },
-        "closeFriends": {
-            "title": "親密朋友"
-        },
-        "blockedUsers": {
-            "title": "封鎖的帳戶",
-            "noBlockedUsers": "您目前沒有封鎖任何帳戶。"
-        },
-        "mutedUsers": {
-            "title": "靜音的帳戶",
-            "noMutedUsers": "您目前沒有靜音任何帳戶。"
-        }
+    "closeFriends": {
+      "title": "親密朋友"
     },
-    "userSettingsLeftBar": {
-        "title": "設置",
-        "themeSection": "主題",
-        "accountSection": "帳戶",
-        "privacySection": "誰可以查看您的氣泡",
-        "notificationSection": "誰的氣泡您想查看",
-        "theme": "主題",
-        "profile": "編輯個人資料",
-        "account": "管理帳戶",
-        "notification": "通知",
-        "privacy": "帳戶隱私",
-        "closeFriends": "親密朋友",
-        "blockedUsers": "封鎖的帳戶",
-        "mutedUsers": "靜音的帳戶"
+    "blockedUsers": {
+      "title": "封鎖的帳戶",
+      "noBlockedUsers": "您目前沒有封鎖任何帳戶。"
     },
-    "dashboard": {
-        "breadcrumb": {
-            "dashboard": "儀表板",
-            "product": {
-                "title": "產品方案",
-                "addProduct": "新增產品",
-                "editProduct": "編輯產品"
-            },
-            "promotions": {
-                "title": "促銷",
-                "addPromotion": "新增促銷",
-                "editPromotion": "編輯促銷"
-            },
-            "transactions": "交易",
-            "analytics": "分析",
-            "subscription": "訂閱與付款",
-            "settings": {
-                "title": "設定",
-                "general": "一般",
-                "newUser": "新增使用者",
-                "report": "報告"
-            }
-        },
-        "sidebar": {
-            "dashboard": "儀表板",
-            "members": "會員",
-            "products": "產品",
-            "promotions": "促銷",
-            "transactions": "交易",
-            "analytics": "分析",
-            "subscription": "訂閱",
-            "settings": "設置"
-        },
-        "chart": {
-            "newMembers": "新會員",
-            "totalMembers": "總會員",
-            "totalProducts": "總產品",
-            "totalPromotions": "總促銷",
-            "totalTransactions": "總交易",
-            "totalRevenue": "總收入",
-            "totalSubscriptions": "總訂閱",
-            "analyticsCountry": "分析國家",
-            "analytics": {
-                "thisWeek": "本週",
-                "thisWeekDesc": "從上週",
-                "thisMonth": "本月",
-                "thisMonthDesc": "從上個月"
-            }
-        }
+    "mutedUsers": {
+      "title": "靜音的帳戶",
+      "noMutedUsers": "您目前沒有靜音任何帳戶。"
     }
+  },
+  "userSettingsLeftBar": {
+    "title": "設置",
+    "themeSection": "主題",
+    "accountSection": "帳戶",
+    "privacySection": "誰可以查看您的氣泡",
+    "notificationSection": "誰的氣泡您想查看",
+    "theme": "主題",
+    "profile": "編輯個人資料",
+    "account": "管理帳戶",
+    "notification": "通知",
+    "privacy": "帳戶隱私",
+    "closeFriends": "親密朋友",
+    "blockedUsers": "封鎖的帳戶",
+    "mutedUsers": "靜音的帳戶"
+  },
+  "dashboard": {
+    "breadcrumb": {
+      "dashboard": "儀表板",
+      "product": {
+        "title": "產品方案",
+        "addProduct": "新增產品",
+        "editProduct": "編輯產品"
+      },
+      "promotions": {
+        "title": "促銷",
+        "addPromotion": "新增促銷",
+        "editPromotion": "編輯促銷"
+      },
+      "transactions": "交易",
+      "analytics": "分析",
+      "subscription": "訂閱與付款",
+      "settings": {
+        "title": "設定",
+        "general": "一般",
+        "newUser": "新增使用者",
+        "report": "報告"
+      }
+    },
+    "sidebar": {
+      "dashboard": "儀表板",
+      "members": "會員",
+      "products": "產品",
+      "promotions": "促銷",
+      "transactions": "交易",
+      "analytics": "分析",
+      "subscription": "訂閱",
+      "settings": "設置"
+    },
+    "chart": {
+      "newMembers": "新會員",
+      "totalMembers": "總會員",
+      "totalProducts": "總產品",
+      "totalPromotions": "總促銷",
+      "totalTransactions": "總交易",
+      "totalRevenue": "總收入",
+      "totalSubscriptions": "總訂閱",
+      "analyticsCountry": "分析國家",
+      "analytics": {
+        "thisWeek": "本週",
+        "thisWeekDesc": "從上週",
+        "thisMonth": "本月",
+        "thisMonthDesc": "從上個月"
+      }
+    }
+  },
+  "blog": {
+    "adminOrInviteCreator": {
+      "invitecreator": "邀請創作者",
+      "create": "創建",
+      "invitecreatormodeltitle": "邀請創作者",
+      "invitebutton": "邀請",
+      "invitationmodalclose": "取消",
+      "invitationconfirmationtitle": "確認邀請",
+      "invitationmessage_1": "您確定要邀請",
+      "invitationmessage_2": "成為創作者嗎？",
+      "invitationconfirmationbutton": "邀請",
+      "invitationconfirmationclose": "取消"
+    },
+    "blog": {
+      "navtitle": "FlxBubble 部落格"
+    },
+    "create": {
+      "blogtitle": "部落格標題",
+      "titleplaceholder": "輸入部落格標題",
+      "blogthumbnail": "部落格縮圖",
+      "blogcontent": "內容",
+      "submitblog": "提交",
+      "submittingblog": "正在提交..."
+    },
+    "suggestedblog": {
+      "suggestedblog": "推薦"
+    },
+    "blogcontent": {
+      "createdat": "創建于",
+      "comments": "評論",
+      "commentsplaceholder": "新增評論...",
+      "submittingcomment": "正在提交...",
+      "submitcomment": "提交評論"
+    },
+    "edit": {
+      "edit": "編輯",
+      "title": "部落格標題",
+      "content": "部落格內容",
+      "thumbnail": "當前縮圖:",
+      "uploadthumbnailcheck": "你想上傳新的縮圖嗎？",
+      "uploadnewthumbnail": "上傳新縮圖",
+      "updatingblog": "正在更新部落格...",
+      "updateblog": "更新部落格"
+    },
+    "delete": {
+      "delete": "刪除",
+      "title": "確認刪除",
+      "deleteconfirmmessage": "您確定要刪除此部落格嗎？此動作不能撤消。",
+      "deletecancel": "取消刪除",
+      "deleteconfirm": "確定刪除"
+    },
+    "comment": {
+      "like": "點讚",
+      "reply": "回復",
+      "title": "確認刪除",
+      "deleteconfirmmessage": "您確定要刪除此評論嗎？此動作不能撤消。",
+      "deletecancel": "取消刪除",
+      "deleteconfirm": "確定刪除"
+    },
+    "commentreply": {
+      "like": "點讚",
+      "title": "確認刪除",
+      "deleteconfirmmessage": "您確定要刪除此評論嗎？此動作不能撤消。",
+      "deletecancel": "取消刪除",
+      "deleteconfirm": "確定刪除",
+      "replycommentplaceholder": "新增評論...",
+      "submittingcomment": "正在提交...",
+      "submitcomment": "提交評論"
+    }
+  },
+  "forum": {
+    "frontenddisplay": {
+      "views": "觀看",
+      "comments": "評論"
+    },
+    "forum": {
+      "navtitle": "FlxBubble 論壇"
+    },
+    "create": {
+      "create": "創建",
+      "createnewforumtype": "創建新論壇類型",
+      "forumtype_en": "論壇類型（英文）",
+      "forumtype_zhtw": "論壇類型（繁体）",
+      "activestatustitle": "狀態",
+      "forumtypeplaceholder": "請輸入論壇類型...",
+      "active": "活躍",
+      "inactve": "待用",
+      "cancel": "取消",
+      "forumtype": "論壇類型",
+      "forumtitle": "論壇標題",
+      "forumthumbnail": "縮圖",
+      "forumcontent": "論壇內容",
+      "submitforum": "提交",
+      "submittingforum": "正在提交...",
+      "forumtitleplaceholer": "輸入論壇標題",
+      "selectforumtype": "請選擇論壇類型"
+    },
+    "forumtype": {
+      "System Performance": "系統效能問題",
+      "Bubble Issue": "FlxBubble 問題",
+      "Account Issue": "帳號問題",
+      "Comment Issue": "留言問題",
+      "Chat Issue": "聊天問題",
+      "Chatroom Issue": "聊天室問題",
+      "Forum Issue": "論壇問題",
+      "Request Function": "功能請求",
+      "Report Error": "錯誤回報"
+    },
+    "edit": {
+      "edit": "編輯",
+      "title": "論壇標題",
+      "content": "論壇內容",
+      "thumbnail": "當前縮圖:",
+      "uploadthumbnailcheck": "你想上傳新的縮圖嗎？",
+      "uploadnewthumbnail": "上傳新縮圖",
+      "updatingforum": "正在更新論壇...",
+      "updateforum": "更新論壇"
+    },
+    "delete": {
+      "delete": "刪除",
+      "title": "確認刪除",
+      "deleteconfirmmessage": "您確定要刪除此部落格嗎？此動作不能撤消。",
+      "deletecancel": "取消刪除",
+      "deleteconfirm": "確定刪除"
+    },
+    "forumcontent": {
+      "createdat": "創建于",
+      "comments": "評論",
+      "commentsplaceholder": "新增評論...",
+      "submittingcomment": "正在提交...",
+      "submitcomment": "提交評論"
+    },
+    "forumcontentnofound": {
+      "forumcontentnofound_1": "找不到關於",
+      "forumcontentnofound_2": "的論壇喔!"
+    },
+    "comment": {
+      "like": "點讚",
+      "reply": "回復",
+      "title": "確認刪除",
+      "deleteconfirmmessage": "您確定要刪除此評論嗎？此動作不能撤消。",
+      "deletecancel": "取消刪除",
+      "deleteconfirm": "確定刪除"
+    },
+    "commentreply": {
+      "like": "點讚",
+      "title": "確認刪除",
+      "deleteconfirmmessage": "您確定要刪除此評論嗎？此動作不能撤消。",
+      "deletecancel": "取消刪除",
+      "deleteconfirm": "確定刪除",
+      "replycommentplaceholder": "新增評論...",
+      "submittingcomment": "正在提交...",
+      "submitcomment": "提交評論"
+    }
+  }
 }

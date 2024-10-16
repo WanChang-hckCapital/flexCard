@@ -17,7 +17,8 @@ import {
 import { useRouter, useParams } from "next/navigation";
 import ForumEditor from "../_component/ForumEditor";
 import { toast } from "sonner";
-import LoadingSpinner from "@/app/(workspace)/workspace/chatroom/_components/LoadingSpinner";
+import LoadingSpinner from "@/app/[lang]/(workspace)/workspace/chatroom/_components/LoadingSpinner";
+import { useDict } from "@/app/context/dictionary-context";
 
 interface Forum {
   _id: string;
@@ -34,6 +35,7 @@ export default function BlogEdit() {
   const { data: clientSession } = useSession();
   const router = useRouter();
   const { forumId } = useParams();
+  const dict = useDict();
 
   const parsedForumId = Array.isArray(forumId) ? forumId[0] : forumId;
 
@@ -198,14 +200,16 @@ export default function BlogEdit() {
   }
 
   return (
-    <div className="bg-black">
-      <Header />
+    <div className="dark:bg-black bg-white dark:text-white text-black">
+      <Header dict={dict} />
       <div className="container mx-auto px-6 py-6 max-w-4xl">
         <Card>
           <CardHeader>
             {accountName && (
               <div className="flex justify-center mb-4">
-                <span className="text-lg font-bold">{accountName}</span>
+                <span className="text-lg dark:text-white text-black font-bold">
+                  {accountName}
+                </span>
               </div>
             )}
             {imageUrl && (
@@ -225,6 +229,7 @@ export default function BlogEdit() {
               initialData={forum}
               onSubmit={handleSubmit}
               message={message}
+              dict={dict}
             />
           </CardContent>
         </Card>

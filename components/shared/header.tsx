@@ -46,13 +46,6 @@ async function Header({ session, userInfoImage, dict }: HeaderProps) {
     userImage = user?.image;
   }
 
-  // const [isSidebarVisible, setIsSidebarVisible] = useState(false);
-
-  // const toggleSidebar = () => {
-  //   console.log
-  //   setIsSidebarVisible(!isSidebarVisible);
-  // };
-
   return (
     <header className="fixed w-full z-50">
       <nav className="topbar shadow-xl dark:text-gray-300 dark:bg-black bg-white">
@@ -162,7 +155,7 @@ async function Header({ session, userInfoImage, dict }: HeaderProps) {
                 <>
                   <DropdownMenuItem className="justify-center">
                     <Link className="font-bold" href={"/forum"}>
-                      Forum
+                      {dict.header.forum}
                     </Link>
                   </DropdownMenuItem>
                 </>
@@ -171,7 +164,7 @@ async function Header({ session, userInfoImage, dict }: HeaderProps) {
                 <>
                   <DropdownMenuItem className="justify-center">
                     <Link className="font-bold" href={"/blog"}>
-                      Blog
+                      {dict.header.blog}
                     </Link>
                   </DropdownMenuItem>
                 </>

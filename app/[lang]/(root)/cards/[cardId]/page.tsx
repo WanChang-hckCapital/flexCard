@@ -28,15 +28,21 @@ const CardDetails = async ({ params }: Props) => {
 
   const session = await getServerSession(authOptions);
   const user = session?.user;
-  
+
   if (user) {
     const authUserId = user?.id.toString();
     const authActiveProfileId = await fetchCurrentActiveProfileId(authUserId);
-    
-    await updateCardViewData({ authActiveProfileId: authActiveProfileId, cardId: params.cardId });
-  }else{
+
+    await updateCardViewData({
+      authActiveProfileId: authActiveProfileId,
+      cardId: params.cardId,
+    });
+  } else {
     const geoInfo = await getIPCountryInfo();
-    await updateCardViewData({ authActiveProfileId: geoInfo.ip, cardId: params.cardId });
+    await updateCardViewData({
+      authActiveProfileId: geoInfo.ip,
+      cardId: params.cardId,
+    });
   }
 
   const suggestedCards = await fetchSuggestedCards(params.cardId);

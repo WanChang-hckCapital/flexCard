@@ -10,7 +10,10 @@ import Footer from "@/components/shared/footer";
 import LeftSidebar from "@/components/shared/LeftSidebar";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../api/utils/authOptions";
-import { fetchCurrentActiveProfileId, fetchMemberImage } from "@/lib/actions/user.actions";
+import {
+  fetchCurrentActiveProfileId,
+  fetchMemberImage,
+} from "@/lib/actions/user.actions";
 import { fetchMember, fetchProfile } from "@/lib/actions/admin.actions";
 import RightSidebarWrapper from "@/components/shared/RightSideWrapper";
 import { ThemeProvider } from "../../context/theme-context";
@@ -44,7 +47,6 @@ export default async function RootLayout({
   let profileInfo = null;
   let profileImage = null;
   if (user) {
-
     const authUserId = user.id.toString();
     const authActiveProfileId = await fetchCurrentActiveProfileId(authUserId);
 
@@ -72,8 +74,16 @@ export default async function RootLayout({
             )}
           >
             <main className="flex flex-row w-full">
-              <Header session={session} userInfoImage={profileImage} dict={dict} />
-              <LeftSidebar session={session} userInfoImage={profileImage} dict={dict} />
+              <Header
+                session={session}
+                userInfoImage={profileImage}
+                dict={dict}
+              />
+              <LeftSidebar
+                session={session}
+                userInfoImage={profileImage}
+                dict={dict}
+              />
               <section className="main-container">
                 <div id="modal-root"></div>
                 <div className="w-full">{children}</div>

@@ -369,6 +369,7 @@ export default function ChatRoomSideBar({
                 {chatroom.type == "GROUP" && (
                   <Avatar className="h-10 w-10 border">
                     <AvatarImage
+                      className="dark:text-black bg-black text-white"
                       src={
                         groupImages[chatroom?.groupImage?.toString()] ||
                         "/assets/users.svg"

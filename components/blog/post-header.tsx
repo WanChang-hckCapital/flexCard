@@ -12,6 +12,7 @@ type Props = {
   date: string;
   author: string;
   authorImg: string;
+  dict: any;
 };
 
 export function PostHeader({
@@ -20,6 +21,7 @@ export function PostHeader({
   date,
   author,
   authorImg,
+  dict,
 }: Props) {
   const [blogImg, setBlogImg] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -84,9 +86,12 @@ export function PostHeader({
       </div>
       <div className="mx-auto">
         <div className="mb-12 text-lg">
-          <DateFormatter dateString={new Date(date).toISOString()} />
+          <DateFormatter
+            dateString={new Date(date).toISOString()}
+            dict={dict}
+          />
         </div>
-        <div className="hidden md:block md:mb-12">
+        <div className="hidden md:block dark:text-white text-black md:mb-12">
           <Avatar name={author} picture={authorImg} />
         </div>
       </div>

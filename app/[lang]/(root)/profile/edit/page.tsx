@@ -1,5 +1,9 @@
 import { redirect } from "next/navigation";
-import { fetchCurrentActiveProfileId, fetchMemberImage, fetchUser } from "@/lib/actions/user.actions";
+import {
+  fetchCurrentActiveProfileId,
+  fetchMemberImage,
+  fetchUser,
+} from "@/lib/actions/user.actions";
 import MemberProfile from "@/components/forms/member-profile";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/utils/authOptions";
@@ -49,7 +53,11 @@ async function Page({ params }: { params: { lang: string } }) {
       </p>
 
       <section className="mt-9 bg-dark-2 pl-10 pr-10 pb-10 pt-6 rounded-xl">
-        <MemberProfile profile={profileData} btnTitle={dict.userSettings.profile.btnContinue} dict={dict} />
+        <MemberProfile
+          profile={profileData}
+          btnTitle={dict.userSettings.profile.btnContinue}
+          dict={dict}
+        />
       </section>
     </main>
   );

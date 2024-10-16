@@ -98,11 +98,11 @@ async function Page({ params }: { params: { id: string; lang: string } }) {
           <TabsList className="tab mx-36">
             {personalTabs.map((tab) => (
               <TabsTrigger key={tab.label} value={tab.value} className="tab">
-                <Grip 
-                  size={24} 
-                  className="mr-2" 
-                  fill="currentColor" 
-                  stroke="currentColor" 
+                <Grip
+                  size={24}
+                  className="mr-2"
+                  fill="currentColor"
+                  stroke="currentColor"
                   strokeWidth={1}
                 />
                 <p className="max-sm:hidden">{dict.profileTab[tab.label]}</p>

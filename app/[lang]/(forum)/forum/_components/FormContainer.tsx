@@ -31,6 +31,8 @@ interface ForumContainerProps {
   authActiveProfileId: string | null;
   initialForums: Forum[];
   initialForumTypes: any[];
+  dict: any;
+  lang: any;
 }
 
 export default function ForumContainer({
@@ -39,6 +41,8 @@ export default function ForumContainer({
   authActiveProfileId,
   initialForums,
   initialForumTypes,
+  dict,
+  lang,
 }: ForumContainerProps) {
   const [forums, setForums] = useState<Forum[]>(initialForums);
   const [forumTypes, setForumTypes] = useState(initialForumTypes);
@@ -72,7 +76,7 @@ export default function ForumContainer({
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   return (
-    <div className="min-h-screen w-full bg-black text-white">
+    <div className="min-h-screen w-full dark:bg-black dark:text-white bg-white text-black">
       <div className="container flex justify-end mx-auto px-6 sm:px-8 lg:px-12 py-4">
         <ForumActionBar
           isLogin={isLogin}
@@ -80,22 +84,32 @@ export default function ForumContainer({
           authActiveProfileId={authActiveProfileId}
           initialForumTypes={forumTypes}
           onForumTypeClick={handleForumTypeClick}
+          dict={dict}
+          lang={lang}
         />
       </div>
 
       <div className="container mx-auto px-6 sm:px-8 lg:px-12 py-10">
         {currentForums.length > 0 ? (
           <section>
-            <ForumList forums={currentForums} />
+            <ForumList forums={currentForums} dict={dict} lang={lang} />
             <Pagination
               forumsPerPage={forumsPerPage}
               totalForums={forums.length}
               paginate={paginate}
               currentPage={currentPage}
+              dict={dict}
             />
           </section>
         ) : (
-          <p>No forums available for {selectedForumTypeName || "this type"}.</p>
+          <p>
+            {dict.forum.forumcontentnofound.forumcontentnofound_1}{" "}
+            {selectedForumTypeName
+              ? dict.forum.forumtype[selectedForumTypeName] ||
+                selectedForumTypeName
+              : "this type"}{" "}
+            {dict.forum.forumcontentnofound.forumcontentnofound_2}{" "}
+          </p>
         )}
       </div>
     </div>

@@ -19,9 +19,10 @@ import { isFlexAdmin } from "@/lib/actions/user.actions";
 import DeleteBlogModal from "../delete/DeleteBlogModal";
 import BlogCommentList from "../comment/_components/BlogCommentList";
 import { redirect } from "next/navigation";
+import { getDictionary } from "@/app/[lang]/dictionaries";
 
 interface BlogProps {
-  params: { slug: string };
+  params: { slug: string; lang: string };
 }
 
 interface UserImage {
@@ -89,7 +90,9 @@ export async function generateMetadata({ params }: BlogProps) {
 }
 
 export default async function BlogPostPage({ params }: BlogProps) {
-  const { slug } = params;
+  const { slug, lang } = params;
+
+  const dict = await getDictionary(lang);
 
   const blogResponse = await getBlogBySlug(slug);
   if (!blogResponse.success) {
@@ -149,17 +152,17 @@ export default async function BlogPostPage({ params }: BlogProps) {
 
   return (
     <>
-      <Header />
+      <Header dict={dict} />
 
       <div className="flex justify-end gap-4 px-6 sm:px-8 lg:px-12 py-4">
         {/* Show the Edit button if the user is the creator or admin */}
         {(isAdmin || isCreator) && (
-          <Button variant="outline" className="text-black">
+          <Button>
             <Link
               href={`/blog/edit/${blog._id}`}
               className="flex items-center gap-2"
             >
-              Edit
+              {dict.blog.edit.edit}
               <Pen />
             </Link>
           </Button>
@@ -171,6 +174,7 @@ export default async function BlogPostPage({ params }: BlogProps) {
             blogId={blog._id}
             coverImage={blog.image}
             currentUserProfileId={currentUserProfileId}
+            dict={dict}
           />
         )}
       </div>
@@ -184,6 +188,7 @@ export default async function BlogPostPage({ params }: BlogProps) {
               date={blog.createdAt}
               author={creatorInfo.accountname}
               authorImg={creatorInfo.imageUrl}
+              dict={dict}
             />
             <PostBody content={blog.excerpt} />
           </article>
@@ -199,6 +204,7 @@ export default async function BlogPostPage({ params }: BlogProps) {
               currentUserImg={currentUserImg.image || ""}
               currentUserName={currentUserProfileName.accountname || ""}
               isAdmin={isAdmin}
+              dict={dict}
             />
           </article>
         </Container>

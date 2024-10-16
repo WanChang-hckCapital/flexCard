@@ -16,16 +16,16 @@ interface DeleteBlogModalProps {
   blogId: string;
   coverImage: string; // thumbnail
   currentUserProfileId: string;
+  dict: any;
 }
 
 export default function DeleteBlogModal({
   blogId,
   coverImage,
   currentUserProfileId,
+  dict,
 }: DeleteBlogModalProps) {
   const handleDelete = async () => {
-    console.log("delete id", blogId);
-    console.log(coverImage);
     try {
       const blogDeleteRes = await deleteBlog(currentUserProfileId, blogId);
 
@@ -52,27 +52,21 @@ export default function DeleteBlogModal({
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button
-          variant="outline"
-          className="text-black flex items-center gap-2"
-        >
-          Delete
+        <Button>
+          {dict.blog.delete.delete}
           <Pen />
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent className="bg-black">
-        <h2 className="text-lg font-semibold">Confirm Deletion</h2>
-        <p>
-          Are you sure you want to delete this blog? This action cannot be
-          undone.
-        </p>
+        <h2 className="text-lg font-semibold">{dict.blog.delete.title}</h2>
+        <p>{dict.blog.delete.deleteconfirmmessage}</p>
         <div className="flex justify-end gap-4 mt-4">
           <AlertDialogCancel asChild>
-            <Button variant="outline">Cancel</Button>
+            <Button> {dict.blog.delete.deletecancel}</Button>
           </AlertDialogCancel>
           <AlertDialogAction asChild>
-            <Button variant="destructive" onClick={handleDelete}>
-              Confirm
+            <Button onClick={handleDelete}>
+              {dict.blog.delete.deleteconfirm}
             </Button>
           </AlertDialogAction>
         </div>

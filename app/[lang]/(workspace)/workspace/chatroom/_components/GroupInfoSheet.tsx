@@ -195,12 +195,12 @@ export default function GroupInfoSheet({
     <Sheet open={isGroupInfoSheetOpen} onOpenChange={setGroupInfoSheetOpen}>
       <SheetContent
         side="right"
-        className="flex flex-col justify-between h-full z-[1000]"
+        className="flex flex-col bg-white dark:bg-black justify-between h-full z-[1000]"
       >
         <SheetHeader>
           <div className="w-full flex flex-col items-center relative">
             <div className="relative group w-24 h-24">
-              <Avatar className="w-full h-full">
+              <Avatar className="w-full h-full bg-black dark:text-black">
                 <AvatarImage
                   src={
                     groupImagePreview || groupImageUrl || "/assets/users.svg"
@@ -239,7 +239,7 @@ export default function GroupInfoSheet({
               <SheetTitle className="text-base font-bold">
                 {selectedChatroomData?.name || "Group Info"}
               </SheetTitle>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm dark:text-gray-500 text-black">
                 Created At:{" "}
                 {selectedChatroomData?.createdAt
                   ? new Date(
@@ -271,7 +271,7 @@ export default function GroupInfoSheet({
           </div>
         )}
 
-        <div className="p-4 flex-grow">
+        <div className="p-4 dark:text-white text-black flex-grow">
           <div className="flex justify-between items-center mb-4 ml-1">
             <p className="font-bold text-base mb-4 ml-1">
               {selectedChatroomData?.participants.length} Members
@@ -281,7 +281,7 @@ export default function GroupInfoSheet({
                 <button>
                   <UserPlus
                     onClick={loadInvitorList}
-                    className="h-6 w-6 cursor-pointer text-gray-400 hover:text-white"
+                    className="h-6 w-6 cursor-pointer dark:text-gray-400 hover:text-gray-600"
                   />
                 </button>
               </AlertDialogTrigger>

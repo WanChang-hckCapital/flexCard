@@ -112,7 +112,7 @@ const FriendItem: React.FC<FriendItemProps> = ({ user, senderId }) => {
       </Avatar>
       <div className="flex-1 truncate">
         <div className="font-medium">{user.name}</div>
-        <div className="font-medium">{user.accountType}</div>
+        {/* <div className="font-medium">{user.accountType}</div> */}
       </div>
       {isFollowing ? (
         <Button variant="green">Following</Button>
