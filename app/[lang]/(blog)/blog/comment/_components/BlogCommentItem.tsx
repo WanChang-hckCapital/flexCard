@@ -47,6 +47,7 @@ interface BlogCommentItemProps {
   currentUserProfileId: string;
   onDelete: () => void;
   isAdmin: boolean;
+  dict: any;
 }
 
 const BlogCommentItem: React.FC<BlogCommentItemProps> = ({
@@ -54,6 +55,7 @@ const BlogCommentItem: React.FC<BlogCommentItemProps> = ({
   currentUserProfileId,
   onDelete,
   isAdmin,
+  dict,
 }) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [commentImage, setCommentImage] = useState<string | null>(null);
@@ -261,21 +263,23 @@ const BlogCommentItem: React.FC<BlogCommentItemProps> = ({
           </AlertDialogTrigger>
           <AlertDialogContent className="bg-black">
             <AlertDialogHeader>
-              <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+              <AlertDialogTitle> {dict.blog.comment.title}</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete this comment? This action cannot
-                be undone.
+                {dict.blog.comment.deleteconfirmmessage}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>
+                {" "}
+                {dict.blog.comment.deletecancel}
+              </AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => {
                   onDelete();
                   setOpenDialog(false);
                 }}
               >
-                Delete
+                {dict.blog.comment.deleteconfirm}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -338,13 +342,14 @@ const BlogCommentItem: React.FC<BlogCommentItemProps> = ({
             />
           )}
           <span className="text-xs dark:text-neutral-400 text-black">
-            {likes} {likes <= 1 ? "like" : "likes"}
+            {likes}{" "}
+            {likes <= 1 ? dict.blog.comment.like : dict.blog.comment.like}
           </span>
           <span
             className="text-xs dark:text-neutral-400 text-black cursor-pointer"
             onClick={() => setReplyMode(!replyMode)}
           >
-            Reply
+            {dict.blog.comment.reply}
           </span>
         </div>
       </div>
@@ -356,6 +361,7 @@ const BlogCommentItem: React.FC<BlogCommentItemProps> = ({
             currentUserProfileId={currentUserProfileId}
             onReplySubmit={handleReplySubmit}
             onClose={() => setReplyMode(false)}
+            dict={dict}
           />
         </>
       )}
@@ -364,6 +370,7 @@ const BlogCommentItem: React.FC<BlogCommentItemProps> = ({
         currentUserProfileId={currentUserProfileId}
         replies={replies}
         isAdmin={isAdmin}
+        dict={dict}
       />
     </div>
   );

@@ -34,7 +34,9 @@
     "setting": "設置",
     "dashboard": "儀表板",
     "login": "登入",
-    "logout": "登出"
+    "logout": "登出",
+    "forum": "論壇",
+    "blog": "部落格"
   },
   "contactUs": {
     "title": "聯繫我們",
@@ -287,6 +289,161 @@
         "thisMonth": "本月",
         "thisMonthDesc": "從上個月"
       }
+    }
+  },
+  "blog": {
+    "adminOrInviteCreator": {
+      "invitecreator": "邀請創作者",
+      "create": "創建",
+      "invitecreatormodeltitle": "邀請創作者",
+      "invitebutton": "邀請",
+      "invitationmodalclose": "取消",
+      "invitationconfirmationtitle": "確認邀請",
+      "invitationmessage_1": "您確定要邀請",
+      "invitationmessage_2": "成為創作者嗎？",
+      "invitationconfirmationbutton": "邀請",
+      "invitationconfirmationclose": "取消"
+    },
+    "blog": {
+      "navtitle": "FlxBubble 部落格"
+    },
+    "create": {
+      "blogtitle": "部落格標題",
+      "titleplaceholder": "輸入部落格標題",
+      "blogthumbnail": "部落格縮圖",
+      "blogcontent": "內容",
+      "submitblog": "提交",
+      "submittingblog": "正在提交..."
+    },
+    "suggestedblog": {
+      "suggestedblog": "推薦"
+    },
+    "blogcontent": {
+      "createdat": "創建于",
+      "comments": "評論",
+      "commentsplaceholder": "新增評論...",
+      "submittingcomment": "正在提交...",
+      "submitcomment": "提交評論"
+    },
+    "edit": {
+      "edit": "編輯",
+      "title": "部落格標題",
+      "content": "部落格內容",
+      "thumbnail": "當前縮圖:",
+      "uploadthumbnailcheck": "你想上傳新的縮圖嗎？",
+      "uploadnewthumbnail": "上傳新縮圖",
+      "updatingblog": "正在更新部落格...",
+      "updateblog": "更新部落格"
+    },
+    "delete": {
+      "delete": "刪除",
+      "title": "確認刪除",
+      "deleteconfirmmessage": "您確定要刪除此部落格嗎？此動作不能撤消。",
+      "deletecancel": "取消刪除",
+      "deleteconfirm": "確定刪除"
+    },
+    "comment": {
+      "like": "點讚",
+      "reply": "回復",
+      "title": "確認刪除",
+      "deleteconfirmmessage": "您確定要刪除此評論嗎？此動作不能撤消。",
+      "deletecancel": "取消刪除",
+      "deleteconfirm": "確定刪除"
+    },
+    "commentreply": {
+      "like": "點讚",
+      "title": "確認刪除",
+      "deleteconfirmmessage": "您確定要刪除此評論嗎？此動作不能撤消。",
+      "deletecancel": "取消刪除",
+      "deleteconfirm": "確定刪除",
+      "replycommentplaceholder": "新增評論...",
+      "submittingcomment": "正在提交...",
+      "submitcomment": "提交評論"
+    }
+  },
+  "forum": {
+    "frontenddisplay": {
+      "views": "觀看",
+      "comments": "評論"
+    },
+    "forum": {
+      "navtitle": "FlxBubble 論壇"
+    },
+    "create": {
+      "create": "創建",
+      "createnewforumtype": "創建新論壇類型",
+      "forumtype_en": "論壇類型（英文）",
+      "forumtype_zhtw": "論壇類型（繁体）",
+      "activestatustitle": "狀態",
+      "forumtypeplaceholder": "請輸入論壇類型...",
+      "active": "活躍",
+      "inactve": "待用",
+      "cancel": "取消",
+      "forumtype": "論壇類型",
+      "forumtitle": "論壇標題",
+      "forumthumbnail": "縮圖",
+      "forumcontent": "論壇內容",
+      "submitforum": "提交",
+      "submittingforum": "正在提交...",
+      "forumtitleplaceholer": "輸入論壇標題",
+      "selectforumtype": "請選擇論壇類型"
+    },
+    "forumtype": {
+      "System Performance": "系統效能問題",
+      "Bubble Issue": "FlxBubble 問題",
+      "Account Issue": "帳號問題",
+      "Comment Issue": "留言問題",
+      "Chat Issue": "聊天問題",
+      "Chatroom Issue": "聊天室問題",
+      "Forum Issue": "論壇問題",
+      "Request Function": "功能請求",
+      "Report Error": "錯誤回報"
+    },
+    "edit": {
+      "edit": "編輯",
+      "title": "論壇標題",
+      "content": "論壇內容",
+      "thumbnail": "當前縮圖:",
+      "uploadthumbnailcheck": "你想上傳新的縮圖嗎？",
+      "uploadnewthumbnail": "上傳新縮圖",
+      "updatingforum": "正在更新論壇...",
+      "updateforum": "更新論壇"
+    },
+    "delete": {
+      "delete": "刪除",
+      "title": "確認刪除",
+      "deleteconfirmmessage": "您確定要刪除此部落格嗎？此動作不能撤消。",
+      "deletecancel": "取消刪除",
+      "deleteconfirm": "確定刪除"
+    },
+    "forumcontent": {
+      "createdat": "創建于",
+      "comments": "評論",
+      "commentsplaceholder": "新增評論...",
+      "submittingcomment": "正在提交...",
+      "submitcomment": "提交評論"
+    },
+    "forumcontentnofound": {
+      "forumcontentnofound_1": "找不到關於",
+      "forumcontentnofound_2": "的論壇喔!"
+    },
+    "comment": {
+      "like": "點讚",
+      "reply": "回復",
+      "title": "確認刪除",
+      "deleteconfirmmessage": "您確定要刪除此評論嗎？此動作不能撤消。",
+      "deletecancel": "取消刪除",
+      "deleteconfirm": "確定刪除"
+    },
+    "commentreply": {
+      "like": "點讚",
+      "title": "確認刪除",
+      "deleteconfirmmessage": "您確定要刪除此評論嗎？此動作不能撤消。",
+      "deletecancel": "取消刪除",
+      "deleteconfirm": "確定刪除",
+      "replycommentplaceholder": "新增評論...",
+      "submittingcomment": "正在提交...",
+      "submitcomment": "提交評論"
     }
   }
 }

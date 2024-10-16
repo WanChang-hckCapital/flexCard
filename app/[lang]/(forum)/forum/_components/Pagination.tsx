@@ -9,6 +9,7 @@ interface PaginationProps {
   totalForums: number;
   paginate: (pageNumber: number) => void;
   currentPage: number;
+  dict: any;
 }
 
 export default function Pagination({
@@ -16,6 +17,7 @@ export default function Pagination({
   totalForums,
   paginate,
   currentPage,
+  dict,
 }: PaginationProps) {
   const pageNumbers: number[] = [];
 
@@ -33,7 +35,8 @@ export default function Pagination({
               onClick={() => paginate(number)}
               className={cn(
                 "px-3 py-1 rounded-md",
-                currentPage === number && "bg-blue-600 text-white"
+                currentPage === number &&
+                  "dark:bg-blue-600 dark:text-black bg-white text-black"
               )}
             >
               {number}

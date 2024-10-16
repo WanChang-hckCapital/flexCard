@@ -12,6 +12,7 @@ interface ReplyCommentProps {
   currentUserProfileId: string;
   onReplySubmit: (content: string, imageFile?: File) => Promise<void>;
   onClose: () => void;
+  dict: any;
 }
 
 const ReplyComment: React.FC<ReplyCommentProps> = ({
@@ -19,6 +20,7 @@ const ReplyComment: React.FC<ReplyCommentProps> = ({
   currentUserProfileId,
   onReplySubmit,
   onClose,
+  dict,
 }) => {
   const [replyContent, setReplyContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,7 +65,7 @@ const ReplyComment: React.FC<ReplyCommentProps> = ({
       />
 
       <Textarea
-        placeholder="Write your reply..."
+        placeholder={dict.blog.commentreply.replycommentplaceholder}
         value={replyContent}
         onChange={(e) => setReplyContent(e.target.value)}
         rows={3}
@@ -97,7 +99,9 @@ const ReplyComment: React.FC<ReplyCommentProps> = ({
           onClick={handleSubmit}
           disabled={isSubmitting || !replyContent.trim()}
         >
-          {isSubmitting ? "Submitting..." : "Submit Reply"}
+          {isSubmitting
+            ? dict.blog.commentreply.submittingcomment
+            : dict.blog.commentreply.submitcomment}
         </Button>
       </div>
     </div>

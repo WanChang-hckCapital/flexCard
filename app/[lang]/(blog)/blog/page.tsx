@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import Image from "next/image";
 import Header from "@/components/blog/header";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import Avatar from "@/components/blog/avatar";
 import InviteUserModal from "./_components/InviteUserModal";
 import InvitationModal from "./_components/InvitationModal";
 import { toast } from "sonner";
+import { useDict } from "@/app/context/dictionary-context";
 
 interface Blog {
   id: string;
@@ -51,6 +53,14 @@ interface invitationResponse {
 
 export default function BlogPage() {
   const { data: clientSession } = useSession();
+
+  // const { lang } = useParams();
+
+  const dict = useDict();
+
+  if (!dict || !dict.auth || !dict.auth.signUp) {
+    return <p className="dark:text-white text-black text-center">Loading...</p>;
+  }
 
   const [authActiveProfileId, setAuthActiveProfileId] = useState<string | null>(
     null
@@ -192,7 +202,7 @@ export default function BlogPage() {
 
   return (
     <div>
-      <Header />
+      <Header dict={dict} />
       {hasPendingInvitation && (
         <span
           className="container flex items-center px-6 sm:px-8 lg:px-12 text-red-500 cursor-pointer"
@@ -214,23 +224,16 @@ export default function BlogPage() {
         <div className="flex justify-end mx-auto px-6 sm:px-8 lg:px-12 py-4">
           {/* show invite creator only if the user is admin */}
           {isAdmin && (
-            <Button
-              // variant="outline"
-              className="mr-2"
-              onClick={() => setIsInviteModalOpen(true)}
-            >
-              Invite Creator
+            <Button className="mr-2" onClick={() => setIsInviteModalOpen(true)}>
+              {dict.blog.adminOrInviteCreator.invitecreator}
               <UserPlusIcon />
             </Button>
           )}
           {/* show create button when the user is a creator or admin */}
           {(isAdmin || isInvitedCreator) && (
-            <Button
-            // variant="outline"
-            // className="text-slate:700"
-            >
-              <Link href="/blog/create" className="flex items-center gap-2">
-                Create
+            <Button>
+              <Link href={`/blog/create`} className="flex items-center gap-2">
+                {dict.blog.adminOrInviteCreator.create}
                 <Pen />
               </Link>
             </Button>
@@ -239,13 +242,13 @@ export default function BlogPage() {
             <InviteUserModal
               currentProfileId={authActiveProfileId || ""}
               onClose={() => setIsInviteModalOpen(false)}
+              dict={dict}
             />
           )}
         </div>
       )}
 
       <div className="container mx-auto px-6 sm:px-8 lg:px-12 py-10">
-        {/* <main> */}
         {loading ? (
           <SkeletonCard />
         ) : mainPost ? (
@@ -273,11 +276,10 @@ export default function BlogPage() {
         ) : (
           <p>No main post available.</p>
         )}
-        {/* </main> */}
 
         {suggestedBlogs.length > 0 && (
           <section>
-            <SuggestedBlogs blogs={suggestedBlogs} />
+            <SuggestedBlogs blogs={suggestedBlogs} dict={dict} />
           </section>
         )}
       </div>

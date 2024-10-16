@@ -6,12 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
-  // submitBlogComment,
-  // deleteBlogComment,
   submitForumComment,
   deleteForumComment,
 } from "@/lib/actions/user.actions";
-// import BlogCommentItem from "./BlogCommentItem";
 import ForumCommentItem from "./ForumCommentItem";
 import { Paperclip } from "lucide-react";
 import Image from "next/image";
@@ -38,6 +35,7 @@ interface ForumCommentListProps {
   currentUserImg: string;
   currentUserName: string;
   isAdmin: boolean;
+  dict: any;
 }
 
 const ForumCommentList: React.FC<ForumCommentListProps> = ({
@@ -47,6 +45,7 @@ const ForumCommentList: React.FC<ForumCommentListProps> = ({
   currentUserImg,
   currentUserName,
   isAdmin,
+  dict,
 }) => {
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -199,7 +198,9 @@ const ForumCommentList: React.FC<ForumCommentListProps> = ({
 
   return (
     <div className="mt-8">
-      <h3 className="text-xl font-semibold mb-4">Comments</h3>
+      <h3 className="text-xl font-semibold mb-4">
+        {dict.forum.forumcontent.comments}
+      </h3>
 
       <div className="space-y-4">
         {commentList.map((comment, index) => (
@@ -209,6 +210,7 @@ const ForumCommentList: React.FC<ForumCommentListProps> = ({
             currentUserProfileId={currentUserProfileId}
             onDelete={() => handleDeleteComment(comment._id, comment.image)}
             isAdmin={isAdmin}
+            dict={dict}
           />
         ))}
       </div>
@@ -226,11 +228,11 @@ const ForumCommentList: React.FC<ForumCommentListProps> = ({
           </div>
         )}
         <Textarea
-          placeholder="Add a comment..."
+          placeholder={dict.forum.forumcontent.commentsplaceholder}
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           rows={4}
-          className="w-full text-black"
+          className="w-full dark:text-black"
         />
         {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
 
@@ -252,7 +254,9 @@ const ForumCommentList: React.FC<ForumCommentListProps> = ({
             onClick={handleCommentSubmit}
             disabled={isSubmitting || !newComment.trim()}
           >
-            {isSubmitting ? "Submitting..." : "Submit Comment"}
+            {isSubmitting
+              ? dict.forum.forumcontent.submittingcomment
+              : dict.forum.forumcontent.submitcomment}
           </Button>
         </div>
       </div>

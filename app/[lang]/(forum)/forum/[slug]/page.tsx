@@ -20,9 +20,10 @@ import { isFlexAdmin } from "@/lib/actions/user.actions";
 import DeleteForumModal from "../delete/_component/DeleteForumModal";
 import ForumCommentList from "../comment/_component/ForumCommentList";
 import { redirect } from "next/navigation";
+import { getDictionary } from "@/app/[lang]/dictionaries";
 
 interface ForumProps {
-  params: { slug: string };
+  params: { slug: string; lang: string };
 }
 
 interface UserImage {
@@ -90,7 +91,11 @@ export async function generateMetadata({ params }: ForumProps) {
 }
 
 export default async function ForumPostPage({ params }: ForumProps) {
-  const { slug } = params;
+  const { slug, lang } = params;
+
+  console.log("lang", lang);
+
+  const dict = await getDictionary(lang);
 
   const forumResponse = await getForumBySlug(slug);
   if (!forumResponse.success) {
@@ -146,18 +151,18 @@ export default async function ForumPostPage({ params }: ForumProps) {
   }
 
   return (
-    <div className="min-h-screen w-full bg-black text-white">
-      <Header />
+    <div className="min-h-screen w-full dark:bg-black bg-white dark:text-white text-black">
+      <Header dict={dict} />
 
-      <div className="flex justify-end gap-4 px-6 sm:px-8 lg:px-12 py-4 bg-black">
+      <div className="flex justify-end gap-4 px-6 sm:px-8 lg:px-12 py-4 dark:bg-black bg-white">
         {/* Show the Edit button if the user is the creator or admin */}
         {(isAdmin || isCreator) && (
-          <Button variant="outline" className="text-black">
+          <Button>
             <Link
               href={`/forum/edit/${forum._id}`}
               className="flex items-center gap-2"
             >
-              Edit
+              {dict.forum.edit.edit}
               <Pen />
             </Link>
           </Button>
@@ -169,11 +174,12 @@ export default async function ForumPostPage({ params }: ForumProps) {
             forumId={forum._id}
             coverImage={forum.image}
             currentUserProfileId={currentUserProfileId}
+            dict={dict}
           />
         )}
       </div>
 
-      <div className="mx-auto px-12 bg-black text-white">
+      <div className="mx-auto px-12 dark:bg-black dark:text-white bg-white text-black">
         <Container>
           <article className="px-6">
             <PostHeader
@@ -182,6 +188,7 @@ export default async function ForumPostPage({ params }: ForumProps) {
               date={forum.createdAt}
               author={creatorInfo.accountname}
               authorImg={creatorInfo.imageUrl}
+              dict={dict}
             />
             <PostBody content={forum.content} />
           </article>
@@ -197,6 +204,7 @@ export default async function ForumPostPage({ params }: ForumProps) {
               currentUserImg={currentUserImg.image || ""}
               currentUserName={currentUserProfileName.accountname || ""}
               isAdmin={isAdmin}
+              dict={dict}
             />
           </article>
         </Container>

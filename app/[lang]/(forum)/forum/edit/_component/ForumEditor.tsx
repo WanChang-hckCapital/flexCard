@@ -18,6 +18,7 @@ interface ForumEditorProps {
     imageFile: File | null;
   }) => void;
   message: string;
+  dict: any;
 }
 
 const modules = {
@@ -33,6 +34,7 @@ export default function ForumEditor({
   initialData,
   onSubmit,
   message,
+  dict,
 }: ForumEditorProps) {
   const [title, setTitle] = useState(initialData.title || "");
   const [content, setContent] = useState(initialData.content || "");
@@ -100,14 +102,14 @@ export default function ForumEditor({
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <Label htmlFor="title" className="block text-sm font-medium">
-            Title
+            {dict.forum.edit.title}
           </Label>
           <Input
             type="text"
             id="title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="mt-1 block w-full text-black"
+            className="mt-1 block w-full dark:text-black text-white"
             placeholder="Enter the blog title"
           />
         </div>
@@ -121,15 +123,18 @@ export default function ForumEditor({
               onChange={(e) => setUploadNewThumbnail(e.target.checked)}
               className="form-checkbox h-5 w-5 text-blue-600 transition duration-150 ease-in-out rounded"
             />
-            <Label htmlFor="uploadNewThumbnail" className="text-sm">
-              Do you want to upload a new thumbnail?
+            <Label
+              htmlFor="uploadNewThumbnail"
+              className="text-sm dark:text-white text-black"
+            >
+              {dict.forum.edit.uploadthumbnailcheck}
             </Label>
           </div>
 
           {imagePreview && !uploadNewThumbnail && (
-            <div className="mt-4 flex flex-col justify-center items-center text-white">
+            <div className="mt-4 flex flex-col justify-center items-center dark:text-white text-black">
               <span className="block text-sm font-medium mb-2">
-                Current Thumbnail:
+                {dict.forum.edit.thumbnail}
               </span>
               <Image
                 src={imagePreview}
@@ -144,7 +149,7 @@ export default function ForumEditor({
           {uploadNewThumbnail && (
             <div className="mt-4">
               <Label htmlFor="image" className="block text-sm font-medium">
-                Upload New Thumbnail
+                {dict.forum.edit.uploadnewthumbnail}
               </Label>
               <Input
                 type="file"
@@ -170,14 +175,14 @@ export default function ForumEditor({
 
         <div>
           <Label htmlFor="content" className="block text-sm font-medium mb-2">
-            Content
+            {dict.forum.edit.content}
           </Label>
           <ReactQuill
             theme="snow"
             value={content}
             onChange={handleContentChange}
             modules={modules}
-            className="w-full border border-gray-300 text-white rounded-lg overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 dark:text-white text-black rounded-lg overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Write the blog content here..."
             style={{ height: "400px" }}
           />
@@ -185,11 +190,13 @@ export default function ForumEditor({
 
         <Button
           type="submit"
-          variant="outline"
+          // variant="outline"
           className="w-full"
           disabled={isLoading}
         >
-          {isLoading ? "Updating..." : "Update Forum"}
+          {isLoading
+            ? dict.forum.edit.updatingforum
+            : dict.forum.edit.updateforum}
         </Button>
 
         {message && (

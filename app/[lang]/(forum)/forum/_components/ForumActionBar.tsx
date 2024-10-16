@@ -46,6 +46,8 @@ interface ForumActionBarProps {
   authActiveProfileId: string | null;
   initialForumTypes: any[];
   onForumTypeClick: (forumTypeId: string) => void;
+  dict: any;
+  lang: any;
 }
 
 export default function ForumActionBar({
@@ -54,12 +56,16 @@ export default function ForumActionBar({
   authActiveProfileId,
   initialForumTypes,
   onForumTypeClick,
+  dict,
+  lang,
 }: ForumActionBarProps) {
   const [searchKeyword, setSearchKeyword] = useState("");
   const [searchResults, setSearchResults] = useState<Forum[]>([]);
   const [searchMessage, setSearchMessage] = useState<string | null>(null);
 
+  // english
   const [newForumType, setNewForumType] = useState("");
+
   const [isActive, setIsActive] = useState(true);
   const [forumTypes, setForumTypes] = useState<any[]>(initialForumTypes);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -149,7 +155,6 @@ export default function ForumActionBar({
 
     try {
       await addNewForumType(authActiveProfileId, newForumType, isActive);
-      // toast.success("Forum type created successfully!");
 
       const updatedForumTypes = await loadForumType();
 
@@ -158,6 +163,7 @@ export default function ForumActionBar({
       }
 
       setNewForumType("");
+      // setNewForumTypezhtw("");
       setIsActive(true);
       setDialogOpen(false);
     } catch (error) {
@@ -178,65 +184,71 @@ export default function ForumActionBar({
   };
 
   return (
-    <div className="flex flex-col space-y-4 w-full">
+    <div className="flex flex-col space-y-4 w-full dark:bg-black dark:text-white bg-white text-black">
       <div className="flex justify-end items-center space-x-2">
         {isAdmin && (
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="text-black">
+              <Button>
                 <div className="flex items-center gap-2">
-                  Create New Forum Type
+                  {dict.forum.create.createnewforumtype}
                   <Pen />
                 </div>
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="dark:bg-black dark:text-white text-black bg-white">
               <DialogHeader>
-                <DialogTitle className="text-white">
-                  Create New Forum Type
+                <DialogTitle>
+                  {dict.forum.create.createnewforumtype}
                 </DialogTitle>
               </DialogHeader>
-              <div className="space-y-4">
+              <div className="space-y-4 dark:bg-black dark:text-white text-black bg-white">
                 <div className="space-y-2">
-                  <Label className="text-white" htmlFor="forumType">
-                    Forum Type
+                  <Label htmlFor="forumType_en">
+                    {dict.forum.create.forumtype_en}
                   </Label>
                   <Input
-                    id="forumType"
+                    id="forumType_en"
                     type="text"
                     value={newForumType}
                     onChange={(e) => setNewForumType(e.target.value)}
-                    placeholder="Enter forum type"
+                    placeholder={dict.forum.create.forumtype_en}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-white" htmlFor="activeStatus">
-                    Active Status
+                  <Label
+                    className="dark:text-white text-black"
+                    htmlFor="activeStatus"
+                  >
+                    {dict.forum.create.activestatustitle}
                   </Label>
                   <select
                     id="activeStatus"
                     value={isActive ? "Active" : "Inactive"}
                     onChange={(e) => setIsActive(e.target.value === "Active")}
-                    className="w-full border border-gray-300 rounded p-2"
+                    className="w-full border border-gray-300 rounded p-2 text-black"
                   >
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
+                    <option value="Active">{dict.forum.create.active}</option>
+                    <option value="Inactive">
+                      {dict.forum.create.inactve}
+                    </option>
                   </select>
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="ghost">Cancel</Button>
-                <Button variant="outline" onClick={handleCreateForumType}>
-                  Create
+                <Button> {dict.forum.create.cancel}</Button>
+                <Button onClick={handleCreateForumType}>
+                  {" "}
+                  {dict.forum.create.create}
                 </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
         )}
         {isLogin && (
-          <Button variant="outline" className="text-black">
+          <Button>
             <Link href="/forum/create" className="flex items-center gap-2">
-              Create
+              {dict.forum.create.create}
               <Pen />
             </Link>
           </Button>
@@ -271,11 +283,11 @@ export default function ForumActionBar({
               onClick={() => handleForumTypeClick(type._id)}
               className={`px-4 py-2 rounded-lg border focus:outline-none ${
                 selectedTypeId === type._id
-                  ? "bg-blue-600 text-white border-blue-600"
-                  : "bg-gray-100 text-black"
+                  ? "dark:bg-blue-600 dark:text-slate-600 text-black bg-gray-100 border-blue-600"
+                  : "dark:bg-gray-100 dark:text-black text-white"
               }`}
             >
-              {type.name}
+              {dict.forum.forumtype[type.name] || type.name}
             </Button>
           ))}
         </div>

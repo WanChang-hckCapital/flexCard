@@ -22,12 +22,20 @@ interface Forum {
   createdAt: Date;
 }
 
-export default function ForumList({ forums }: { forums: Forum[] }) {
+export default function ForumList({
+  forums,
+  dict,
+  lang,
+}: {
+  forums: Forum[];
+  dict: any;
+  lang: any;
+}) {
   return (
     <section>
       <div className="grid gap-8">
         {forums.map((forum, index) => (
-          <ForumItem key={index} forum={forum} />
+          <ForumItem key={index} forum={forum} dict={dict} lang={lang} />
         ))}
       </div>
     </section>

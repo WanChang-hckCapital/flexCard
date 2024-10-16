@@ -18,11 +18,13 @@ import { toast } from "sonner";
 interface InviteUserModalProps {
   currentProfileId: string;
   onClose: () => void;
+  dict: any;
 }
 
 const InviteUserModal: React.FC<InviteUserModalProps> = ({
   currentProfileId,
   onClose,
+  dict,
 }) => {
   const [profiles, setProfiles] = useState<
     { accountname: string; email: string; _id: string; image: string }[]
@@ -106,7 +108,9 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({
       <Dialog open onOpenChange={onClose}>
         <DialogContent className="dark:bg-black dark:text-white bg-white text-black max-w-lg">
           <DialogHeader>
-            <DialogTitle>Invite Creator to Write a Blog</DialogTitle>
+            <DialogTitle>
+              {dict.blog.adminOrInviteCreator.invitecreatormodeltitle}
+            </DialogTitle>
           </DialogHeader>
           {isLoading ? (
             <p>Loading users...</p>
@@ -131,7 +135,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({
                       size="sm"
                       onClick={() => handleInviteClick(profile)}
                     >
-                      Invite
+                      {dict.blog.adminOrInviteCreator.invitebutton}
                     </Button>
                   </li>
                 ))
@@ -141,11 +145,8 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({
             </ul>
           )}
           <div className="mt-4 flex justify-end">
-            <Button
-              // variant="outline"
-              onClick={onClose}
-            >
-              Close
+            <Button onClick={onClose}>
+              {dict.blog.adminOrInviteCreator.invitationmodalclose}
             </Button>
           </div>
         </DialogContent>
@@ -155,25 +156,22 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({
         <Dialog open={isConfirmModalOpen} onOpenChange={setIsConfirmModalOpen}>
           <DialogContent className="dark:bg-black dark:text-white bg-white text-black max-w-lg">
             <DialogHeader>
-              <DialogTitle>Confirm Invitation</DialogTitle>
+              <DialogTitle>
+                {" "}
+                {dict.blog.adminOrInviteCreator.invitationconfirmationtitle}
+              </DialogTitle>
             </DialogHeader>
             <p>
-              Are you sure you want to invite{" "}
-              <strong>{selectedProfile.accountname}</strong> to be a creator?
+              {dict.blog.adminOrInviteCreator.invitationmessage_1}{" "}
+              <strong>{selectedProfile.accountname}</strong>{" "}
+              {dict.blog.adminOrInviteCreator.invitationmessage_2}
             </p>
             <div className="mt-4 flex justify-end">
-              <Button
-                // variant="destructive"
-                onClick={() => setIsConfirmModalOpen(false)}
-              >
-                Cancel
+              <Button onClick={() => setIsConfirmModalOpen(false)}>
+                {dict.blog.adminOrInviteCreator.invitationconfirmationclose}
               </Button>
-              <Button
-                // variant="outline"
-                className="ml-2"
-                onClick={handleConfirmInvite}
-              >
-                Confirm
+              <Button className="ml-2" onClick={handleConfirmInvite}>
+                {dict.blog.adminOrInviteCreator.invitationconfirmationbutton}
               </Button>
             </div>
           </DialogContent>

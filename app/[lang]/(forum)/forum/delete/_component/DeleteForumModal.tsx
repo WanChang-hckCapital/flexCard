@@ -16,12 +16,14 @@ interface DeleteForumModalProps {
   forumId: string;
   coverImage: string; // thumbnail
   currentUserProfileId: string;
+  dict: any;
 }
 
 export default function DeleteForumModal({
   forumId,
   coverImage,
   currentUserProfileId,
+  dict,
 }: DeleteForumModalProps) {
   const handleDelete = async () => {
     try {
@@ -49,26 +51,27 @@ export default function DeleteForumModal({
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button
-          variant="outline"
-          className="text-black flex items-center gap-2"
+          // variant="outline"
+          className="dark:text-black text-white flex items-center gap-2"
         >
-          Delete
+          {dict.forum.delete.delete}
           <Pen />
         </Button>
       </AlertDialogTrigger>
-      <AlertDialogContent className="bg-black">
-        <h2 className="text-lg text-white font-semibold">Confirm Deletion</h2>
-        <p className="text-white">
-          Are you sure you want to delete this forum? This action cannot be
-          undone.
+      <AlertDialogContent className="dark:bg-black bg-white dark:text-white text-black">
+        <h2 className="text-lg dark:text-white text-black font-semibold">
+          {dict.forum.delete.title}
+        </h2>
+        <p className="dark:text-white text-black">
+          {dict.forum.delete.deleteconfirmmessage}
         </p>
         <div className="flex justify-end gap-4 mt-4">
           <AlertDialogCancel asChild>
-            <Button variant="outline">Cancel</Button>
+            <Button>{dict.forum.delete.deletecancel}</Button>
           </AlertDialogCancel>
           <AlertDialogAction asChild>
-            <Button variant="destructive" onClick={handleDelete}>
-              Confirm
+            <Button onClick={handleDelete}>
+              {dict.forum.delete.deleteconfirm}
             </Button>
           </AlertDialogAction>
         </div>

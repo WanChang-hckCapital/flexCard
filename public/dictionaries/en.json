@@ -34,7 +34,9 @@
     "setting": "Settings",
     "dashboard": "Dashboard",
     "signIn": "Sign In",
-    "signOut": "Sign Out"
+    "signOut": "Sign Out",
+    "forum": "Forum",
+    "blog": "Blog"
   },
   "contactUs": {
     "title": "Contact Us",
@@ -294,6 +296,161 @@
         "thisMonth": "This Month",
         "thisMonthDesc": "from last month"
       }
+    }
+  },
+  "blog": {
+    "adminOrInviteCreator": {
+      "invitecreator": "Invite creator",
+      "create": "Create",
+      "invitecreatormodeltitle": "Invite Creator to Write a Blog",
+      "invitebutton": "Invite",
+      "invitationmodalclose": "Close",
+      "invitationconfirmationtitle": "Confirm Invitation",
+      "invitationmessage_1": "Are you sure you want to invite",
+      "invitationmessage_2": "to be a creator?",
+      "invitationconfirmationbutton": "Confirm",
+      "invitationconfirmationclose": "Cancel"
+    },
+    "blog": {
+      "navtitle": "FlxBubble Blog"
+    },
+    "create": {
+      "blogtitle": "Blog Title",
+      "titleplaceholder": "Enter the blog title",
+      "blogthumbnail": "Blog Thumbnail",
+      "blogcontent": "Content",
+      "submitblog": "Submit Blog",
+      "submittingblog": "Submit Blog"
+    },
+    "suggestedblog": {
+      "suggestedblog": "Suggested Blogs"
+    },
+    "blogcontent": {
+      "createdat": "Created At",
+      "comments": "Comments",
+      "commentsplaceholder": "Add a comment...",
+      "submittingcomment": "Submitting...",
+      "submitcomment": "Submit Comment"
+    },
+    "edit": {
+      "edit": "Edit",
+      "title": "Title",
+      "content": "Content",
+      "thumbnail": "Current Thumbnail:",
+      "uploadthumbnailcheck": "Do you want to upload a new thumbnail?",
+      "uploadnewthumbnail": "Upload New Thumbnail",
+      "updatingblog": "Updating...",
+      "updateblog": "Update Blog"
+    },
+    "delete": {
+      "delete": "Delete",
+      "title": "Confirm Deletion",
+      "deleteconfirmmessage": "Are you sure you want to delete this blog? This action cannot be undone.",
+      "deletecancel": "Cancel",
+      "deleteconfirm": "Confirm"
+    },
+    "comment": {
+      "like": "Like",
+      "reply": "Reply",
+      "title": "Confirm Deletion",
+      "deleteconfirmmessage": "Are you sure you want to delete this comment? This action cannot be undone.",
+      "deletecancel": "Cancel",
+      "deleteconfirm": "Confirm"
+    },
+    "commentreply": {
+      "like": "Like",
+      "title": "Confirm Deletion",
+      "deleteconfirmmessage": "Are you sure you want to delete this comment? This action cannot be undone.",
+      "deletecancel": "Cancel",
+      "deleteconfirm": "Confirm",
+      "replycommentplaceholder": "Write your reply...",
+      "submittingcomment": "Submitting...",
+      "submitcomment": "Submit Comment"
+    }
+  },
+  "forum": {
+    "frontenddisplay": {
+      "views": "Views",
+      "comments": "Comments"
+    },
+    "forum": {
+      "navtitle": "FlxBubble Forum"
+    },
+    "create": {
+      "create": "Create",
+      "createnewforumtype": "Create New Forum Type",
+      "forumtype_en": "Forum Type(English)",
+      "forumtype_zhtw": "Forum Type(Traditional Chinese)",
+      "activestatustitle": "Active Status",
+      "forumtypeplaceholder": "Enter forum type...",
+      "active": "Active",
+      "inactve": "Inactive",
+      "cancel": "Cancel",
+      "forumtype": "Forum Type",
+      "forumtitle": "Forum Title",
+      "forumthumbnail": "Forum Thumbnail",
+      "forumcontent": "Forum Content",
+      "submitforum": "Submit Forum",
+      "submittingforum": "Submitting...",
+      "forumtitleplaceholer": "Enter The Forum Title",
+      "selectforumtype": "Select Forum Type"
+    },
+    "forumtype": {
+      "System Performance": "System Performance",
+      "Bubble Issue": "FlxBubble Issue",
+      "Account Issue": "Account Issue",
+      "Comment Issue": "Comment Issue",
+      "Chat Issue": "Chat Issue",
+      "Chatroom Issue": "Chatroom Issue",
+      "Forum Issue": "Forum Issue",
+      "Request Function": "Request Function",
+      "Report Error": "Report Error"
+    },
+    "edit": {
+      "edit": "Edit",
+      "title": "Title",
+      "content": "Content",
+      "thumbnail": "Current Thumbnail:",
+      "uploadthumbnailcheck": "Do you want to upload a new thumbnail?",
+      "uploadnewthumbnail": "Upload New Thumbnail",
+      "updatingforum": "Updating...",
+      "updateforum": "Update Forum"
+    },
+    "delete": {
+      "delete": "Delete",
+      "title": "Confirm Deletion",
+      "deleteconfirmmessage": "Are you sure you want to delete this forum? This action cannot be undone.",
+      "deletecancel": "Cancel",
+      "deleteconfirm": "Confirm"
+    },
+    "forumcontent": {
+      "createdat": "Created At",
+      "comments": "Comments",
+      "commentsplaceholder": "Add a comment...",
+      "submittingcomment": "Submitting...",
+      "submitcomment": "Submit Comment"
+    },
+    "forumcontentnofound": {
+      "forumcontentnofound_1": "No forums available for",
+      "forumcontentnofound_2": "!"
+    },
+    "comment": {
+      "like": "Like",
+      "reply": "Reply",
+      "title": "Confirm Deletion",
+      "deleteconfirmmessage": "Are you sure you want to delete this comment? This action cannot be undone.",
+      "deletecancel": "Cancel",
+      "deleteconfirm": "Confirm"
+    },
+    "commentreply": {
+      "like": "Like",
+      "title": "Confirm Deletion",
+      "deleteconfirmmessage": "Are you sure you want to delete this comment? This action cannot be undone.",
+      "deletecancel": "Cancel",
+      "deleteconfirm": "Confirm",
+      "replycommentplaceholder": "Write your reply...",
+      "submittingcomment": "Submitting...",
+      "submitcomment": "Submit Comment"
     }
   }
 }

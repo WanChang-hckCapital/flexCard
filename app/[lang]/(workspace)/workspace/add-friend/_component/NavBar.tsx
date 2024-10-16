@@ -4,16 +4,16 @@ import { ArrowLeftCircle } from "lucide-react";
 
 const NavBar: React.FC = () => {
   return (
-    <nav className="fixed top-0 left-0 w-full bg-gray-800 p-4 z-50">
+    <nav className="fixed top-0 left-0 w-full dark:bg-gray-800 dark:text-white dark:bg-white text-black p-4 z-50 border-b">
       <div className="w-11/12 mx-auto flex justify-start items-center">
         <Link href="/">
           <ArrowLeftCircle
             width={24}
             height={24}
-            className="cursor-pointer text-white"
+            className="cursor-pointer dark:text-black text-black"
           />
         </Link>
-        <p className="ml-3">Friends</p>
+        <p className="ml-3 dark:text-black text-black">Friends</p>
       </div>
     </nav>
   );

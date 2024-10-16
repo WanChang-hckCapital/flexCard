@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { useDict } from "@/app/context/dictionary-context";
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
@@ -41,6 +42,8 @@ export default function BlogEditor({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploadNewThumbnail, setUploadNewThumbnail] = useState<boolean>(false);
+
+  const dict = useDict();
 
   // Fetch thumbnail image from server
   const fetchBlogImage = async (imageId: string) => {
@@ -100,7 +103,7 @@ export default function BlogEditor({
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <Label htmlFor="title" className="block text-sm font-medium">
-            Title
+            {dict.blog.edit.title}
           </Label>
           <Input
             type="text"
@@ -122,14 +125,14 @@ export default function BlogEditor({
               className="form-checkbox h-5 w-5 text-blue-600 transition duration-150 ease-in-out rounded"
             />
             <Label htmlFor="uploadNewThumbnail" className="text-sm">
-              Do you want to upload a new thumbnail?
+              {dict.blog.edit.uploadthumbnailcheck}
             </Label>
           </div>
 
           {imagePreview && !uploadNewThumbnail && (
             <div className="mt-4 flex flex-col justify-center items-center">
               <span className="block text-sm font-medium mb-2">
-                Current Thumbnail:
+                {dict.blog.edit.thumbnail}
               </span>
               <Image
                 src={imagePreview}
@@ -144,7 +147,7 @@ export default function BlogEditor({
           {uploadNewThumbnail && (
             <div className="mt-4">
               <Label htmlFor="image" className="block text-sm font-medium">
-                Upload New Thumbnail
+                {dict.blog.edit.uploadnewthumbnail}
               </Label>
               <Input
                 type="file"
@@ -170,7 +173,7 @@ export default function BlogEditor({
 
         <div>
           <Label htmlFor="content" className="block text-sm font-medium mb-2">
-            Content
+            {dict.blog.edit.content}
           </Label>
           <ReactQuill
             theme="snow"
@@ -183,13 +186,8 @@ export default function BlogEditor({
           />
         </div>
 
-        <Button
-          type="submit"
-          // variant="outline"
-          className="w-full"
-          disabled={isLoading}
-        >
-          {isLoading ? "Updating..." : "Update Blog"}
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? dict.blog.edit.updatingblog : dict.blog.edit.updateblog}
         </Button>
 
         {message && (

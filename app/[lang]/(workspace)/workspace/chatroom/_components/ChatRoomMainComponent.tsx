@@ -1843,7 +1843,7 @@ export default function ChatRoomMainBar({
             <div className="flex flex-col items-center">
               {selectedChatroomData && selectedChatroomData.type == "GROUP" && (
                 <>
-                  <Avatar className="h-[200px] w-[200px]  mb-4 border">
+                  <Avatar className="h-[200px] w-[200px] bg-black mb-4 border">
                     <AvatarImage
                       src={groupImage ? groupImage : "/assets/users.svg"}
                       alt={selectedChatroomData?.name || "Group Image"}
@@ -1947,7 +1947,7 @@ export default function ChatRoomMainBar({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
                     align="end"
-                    className="bg-black text-white border border-gray-100 rounded-lg shadow-md p-2 w-[200px] "
+                    className="dark:bg-black dark:text-white bg-white text-black border-2 border-gray-100 rounded-lg shadow-md p-2 w-[200px] "
                   >
                     <DropdownMenuItem
                       className="flex items-center text-2xl p-3"

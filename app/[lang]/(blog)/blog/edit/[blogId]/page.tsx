@@ -18,6 +18,7 @@ import { useRouter, useParams } from "next/navigation";
 import BlogEditor from "../_components/BlogEditor";
 import { toast } from "sonner";
 import LoadingSpinner from "@/app/[lang]/(workspace)/workspace/chatroom/_components/LoadingSpinner";
+import { useDict } from "@/app/context/dictionary-context";
 
 interface Blog {
   _id: string;
@@ -34,6 +35,8 @@ export default function BlogEdit() {
   const { data: clientSession } = useSession();
   const router = useRouter();
   const { blogId } = useParams();
+
+  const dict = useDict();
 
   const parsedBlogId = Array.isArray(blogId) ? blogId[0] : blogId;
 
@@ -196,7 +199,7 @@ export default function BlogEdit() {
 
   return (
     <>
-      <Header />
+      <Header dict={dict} />
       <div className="container mx-auto px-6 py-6 max-w-4xl">
         <Card>
           <CardHeader>

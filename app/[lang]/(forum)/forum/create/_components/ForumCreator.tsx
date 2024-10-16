@@ -17,6 +17,7 @@ import { toast } from "sonner";
 
 interface ForumCreatorProps {
   authActiveProfileId: string | null;
+  dict: any;
 }
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
@@ -47,6 +48,7 @@ const formats = [
 
 export default function ForumCreator({
   authActiveProfileId,
+  dict,
 }: ForumCreatorProps) {
   const router = useRouter();
 
@@ -167,20 +169,22 @@ export default function ForumCreator({
         <div>
           <Label
             htmlFor="forumType"
-            className="block text-base font-semibold text-white mb-2"
+            className="block text-base font-semibold dark:text-white text-black mb-2"
           >
-            Forum Type
+            {dict.forum.create.forumtype}
           </Label>
           <select
             id="forumType"
             value={selectedForumType}
             onChange={(e) => setSelectedForumType(e.target.value)}
-            className="w-full px-4 py-2 text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 dark:text-black text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
-            <option value="">Select Forum Type</option>
+            <option className="dark:text-white text-black" value="">
+              {dict.forum.create.selectforumtype}
+            </option>
             {forumTypes.map((type) => (
               <option key={type._id} value={type._id}>
-                {type.name}
+                {dict.forum.forumtype[type.name] || type.name}
               </option>
             ))}
           </select>
@@ -189,32 +193,32 @@ export default function ForumCreator({
         <div>
           <Label
             htmlFor="title"
-            className="block text-base font-semibold text-white mb-2"
+            className="block text-base font-semibold dark:text-white text-black mb-2"
           >
-            Forum Title
+            {dict.forum.create.forumtitle}
           </Label>
           <Input
             type="text"
             id="title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-4 py-2 text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Enter the forum title"
+            className="w-full px-4 py-2 dark:text-black text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder={dict.forum.create.forumtitleplaceholer}
           />
         </div>
 
         <div>
           <Label
             htmlFor="image"
-            className="block text-white font-semibold text-white mb-2"
+            className="block dark:text-white text-black font-semibold mb-2"
           >
-            Thumbnail
+            {dict.forum.create.forumthumbnail}
           </Label>
           <Input
             type="file"
             id="image"
             accept="image/*"
-            className="w-full text-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full dark:text-white text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             onChange={handleImageChange}
           />
         </div>
@@ -234,15 +238,15 @@ export default function ForumCreator({
         <div>
           <Label
             htmlFor="content"
-            className="block text-base font-semibold text-white mb-2"
+            className="block text-base font-semibold dark:text-white text-black mb-2"
           >
-            Forum Content
+            {dict.forum.create.forumcontent}
           </Label>
           <ReactQuill
             theme="snow"
             value={content}
             onChange={handleContentChange}
-            className="w-full border border-gray-300 text-white rounded-lg overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 dark:text-white text-black rounded-lg overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-500"
             modules={modules}
             formats={formats}
             placeholder="Write the forum content here..."
@@ -250,13 +254,10 @@ export default function ForumCreator({
           />
         </div>
 
-        <Button
-          type="submit"
-          variant="outline"
-          className="w-full"
-          disabled={isLoading}
-        >
-          {isLoading ? "Submitting..." : "Submit Blog"}
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading
+            ? dict.forum.create.submittingforum
+            : dict.forum.create.submitforum}
         </Button>
 
         {message && (

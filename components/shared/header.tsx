@@ -155,7 +155,7 @@ async function Header({ session, userInfoImage, dict }: HeaderProps) {
                 <>
                   <DropdownMenuItem className="justify-center">
                     <Link className="font-bold" href={"/forum"}>
-                      Forum
+                      {dict.header.forum}
                     </Link>
                   </DropdownMenuItem>
                 </>
@@ -164,7 +164,7 @@ async function Header({ session, userInfoImage, dict }: HeaderProps) {
                 <>
                   <DropdownMenuItem className="justify-center">
                     <Link className="font-bold" href={"/blog"}>
-                      Blog
+                      {dict.header.blog}
                     </Link>
                   </DropdownMenuItem>
                 </>

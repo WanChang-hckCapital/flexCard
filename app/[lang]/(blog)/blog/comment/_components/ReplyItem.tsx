@@ -39,6 +39,7 @@ interface ReplyItemProps {
   currentUserProfileId: string;
   onDelete: () => void;
   isAdmin: boolean;
+  dict: any;
 }
 
 const formatSentTime = (dateString: string): string => {
@@ -76,6 +77,7 @@ const ReplyItem: React.FC<ReplyItemProps> = ({
   currentUserProfileId,
   onDelete,
   isAdmin,
+  dict,
 }) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [replyImage, setReplyImage] = useState<string | null>(null);
@@ -184,21 +186,24 @@ const ReplyItem: React.FC<ReplyItemProps> = ({
               </AlertDialogTrigger>
               <AlertDialogContent className="bg-black">
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+                  <AlertDialogTitle>
+                    {dict.blog.commentreply.title}
+                  </AlertDialogTitle>
                   <AlertDialogDescription>
-                    Are you sure you want to delete this comment? This action
-                    cannot be undone.
+                    {dict.blog.commentreply.deleteconfirmmessage}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel>
+                    {dict.blog.commentreply.deletecancel}
+                  </AlertDialogCancel>
                   <AlertDialogAction
                     onClick={() => {
                       onDelete();
                       setOpenDialog(false);
                     }}
                   >
-                    Delete
+                    {dict.blog.commentreply.deleteconfirm}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -262,7 +267,10 @@ const ReplyItem: React.FC<ReplyItemProps> = ({
             />
           )}
           <span className="text-xs dark:text-neutral-400 text-black mt-1">
-            {likes} {likes === 1 ? "like" : "likes"}
+            {likes}{" "}
+            {likes === 1
+              ? dict.blog.commentreply.like
+              : dict.blog.commentreply.like}
           </span>
         </div>
       </div>

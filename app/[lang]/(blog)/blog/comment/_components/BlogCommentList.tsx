@@ -35,6 +35,7 @@ interface BlogCommentListProps {
   currentUserImg: string;
   currentUserName: string;
   isAdmin: boolean;
+  dict: any;
 }
 
 const BlogCommentList: React.FC<BlogCommentListProps> = ({
@@ -44,6 +45,7 @@ const BlogCommentList: React.FC<BlogCommentListProps> = ({
   currentUserImg,
   currentUserName,
   isAdmin,
+  dict,
 }) => {
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -191,7 +193,7 @@ const BlogCommentList: React.FC<BlogCommentListProps> = ({
   return (
     <div className="mt-8">
       <h3 className="text-xl dark:text-white text-black font-semibold mb-4">
-        Comments
+        {dict.blog.blogcontent.comments}
       </h3>
 
       <div className="space-y-4">
@@ -202,6 +204,7 @@ const BlogCommentList: React.FC<BlogCommentListProps> = ({
             currentUserProfileId={currentUserProfileId}
             onDelete={() => handleDeleteComment(comment._id, comment.image)}
             isAdmin={isAdmin}
+            dict={dict}
           />
         ))}
       </div>
@@ -219,7 +222,7 @@ const BlogCommentList: React.FC<BlogCommentListProps> = ({
           </div>
         )}
         <Textarea
-          placeholder="Add a comment..."
+          placeholder={dict.blog.blogcontent.commentsplaceholder}
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           rows={4}
@@ -245,7 +248,9 @@ const BlogCommentList: React.FC<BlogCommentListProps> = ({
             onClick={handleCommentSubmit}
             disabled={isSubmitting || !newComment.trim()}
           >
-            {isSubmitting ? "Submitting..." : "Submit Comment"}
+            {isSubmitting
+              ? dict.blog.blogcontent.submittingcomment
+              : dict.blog.blogcontent.submitcomment}
           </Button>
         </div>
       </div>

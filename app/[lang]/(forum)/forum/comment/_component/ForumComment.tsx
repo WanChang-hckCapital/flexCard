@@ -12,6 +12,7 @@ interface ForumCommentProps {
   currentUserProfileId: string;
   onReplySubmit: (content: string, imageFile?: File) => Promise<void>;
   onClose: () => void;
+  dict: any;
 }
 
 const ForumComment: React.FC<ForumCommentProps> = ({
@@ -19,6 +20,7 @@ const ForumComment: React.FC<ForumCommentProps> = ({
   currentUserProfileId,
   onReplySubmit,
   onClose,
+  dict,
 }) => {
   const [replyContent, setReplyContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,7 +65,7 @@ const ForumComment: React.FC<ForumCommentProps> = ({
       />
 
       <Textarea
-        placeholder="Write your reply..."
+        placeholder={dict.forum.commentreply.replycommentplaceholder}
         value={replyContent}
         onChange={(e) => setReplyContent(e.target.value)}
         rows={3}
@@ -97,7 +99,9 @@ const ForumComment: React.FC<ForumCommentProps> = ({
           onClick={handleSubmit}
           disabled={isSubmitting || !replyContent.trim()}
         >
-          {isSubmitting ? "Submitting..." : "Submit Reply"}
+          {isSubmitting
+            ? dict.forum.commentreply.submittingcomment
+            : dict.forum.commentreply.submitcomment}
         </Button>
       </div>
     </div>

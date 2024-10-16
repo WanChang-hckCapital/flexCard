@@ -45,6 +45,7 @@ interface ForumCommentItemProps {
   currentUserProfileId: string;
   onDelete: () => void;
   isAdmin: boolean;
+  dict: any;
 }
 
 const ForumCommentItem: React.FC<ForumCommentItemProps> = ({
@@ -52,6 +53,7 @@ const ForumCommentItem: React.FC<ForumCommentItemProps> = ({
   currentUserProfileId,
   onDelete,
   isAdmin,
+  dict,
 }) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [commentImage, setCommentImage] = useState<string | null>(null);
@@ -246,7 +248,7 @@ const ForumCommentItem: React.FC<ForumCommentItemProps> = ({
   };
 
   return (
-    <div className="relative p-5 bg-neutral-900 text-white border border-neutral-800 rounded-lg shadow-lg">
+    <div className="relative p-5 dark:bg-neutral-900 dark:text-white bg-white text-black border border-neutral-800 rounded-lg shadow-lg">
       {(isAdmin || isCreator) && (
         <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
           <AlertDialogTrigger asChild>
@@ -259,21 +261,22 @@ const ForumCommentItem: React.FC<ForumCommentItemProps> = ({
           </AlertDialogTrigger>
           <AlertDialogContent className="bg-black text-white">
             <AlertDialogHeader>
-              <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+              <AlertDialogTitle>{dict.forum.comment.title}</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete this comment? This action cannot
-                be undone.
+                {dict.forum.comment.deleteconfirmmessage}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>
+                {dict.forum.comment.deletecancel}
+              </AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => {
                   onDelete();
                   setOpenDialog(false);
                 }}
               >
-                Delete
+                {dict.forum.comment.deleteconfirm}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -292,16 +295,18 @@ const ForumCommentItem: React.FC<ForumCommentItemProps> = ({
           <div className="w-12 h-12 bg-gray-500 rounded-full mr-4"></div>
         )}
         <div>
-          <p className="text-sm font-semibold text-white">
+          <p className="text-sm font-semibold dark:text-white text-black">
             {comment.author.accountname}
           </p>
-          <p className="text-xs text-neutral-400">
+          <p className="text-xs dark:text-neutral-400 text-black">
             {formatSentTime(comment.created_at.toISOString())}
           </p>
         </div>
       </div>
 
-      <p className="text-base text-neutral-300 mb-2">{comment.content}</p>
+      <p className="text-base dark:text-neutral-300 text-black mb-2">
+        {comment.content}
+      </p>
 
       {commentImage && (
         <div className="mb-2">
@@ -337,10 +342,10 @@ const ForumCommentItem: React.FC<ForumCommentItemProps> = ({
             {likes} {likes <= 1 ? "like" : "likes"}
           </span> */}
           <span
-            className="text-xs text-neutral-400 cursor-pointer"
+            className="text-xs dark:text-neutral-400 text-black cursor-pointer"
             onClick={() => setReplyMode(!replyMode)}
           >
-            Reply
+            {dict.forum.comment.reply}
           </span>
         </div>
       </div>
@@ -352,6 +357,7 @@ const ForumCommentItem: React.FC<ForumCommentItemProps> = ({
             currentUserProfileId={currentUserProfileId}
             onReplySubmit={handleReplySubmit}
             onClose={() => setReplyMode(false)}
+            dict={dict}
           />
         </>
       )}
@@ -360,6 +366,7 @@ const ForumCommentItem: React.FC<ForumCommentItemProps> = ({
         currentUserProfileId={currentUserProfileId}
         replies={replies}
         isAdmin={isAdmin}
+        dict={dict}
       />
     </div>
   );

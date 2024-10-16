@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { createNewBlog, checkUniqueSlug } from "@/lib/actions/user.actions";
 import { toast } from "sonner";
+import { useDict } from "@/app/context/dictionary-context";
 
 interface BlogCreatorProps {
   authActiveProfileId: string | null;
@@ -42,6 +43,7 @@ const formats = [
 ];
 
 export default function BlogCreator({ authActiveProfileId }: BlogCreatorProps) {
+  const dict = useDict();
   const router = useRouter();
 
   const [title, setTitle] = useState("");
@@ -134,7 +136,7 @@ export default function BlogCreator({ authActiveProfileId }: BlogCreatorProps) {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <Label htmlFor="title" className="block text-base font-semibold mb-2">
-            Blog Title
+            {dict.blog.create.blogtitle}
           </Label>
           <Input
             type="text"
@@ -142,13 +144,13 @@ export default function BlogCreator({ authActiveProfileId }: BlogCreatorProps) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Enter the blog title"
+            placeholder={dict.blog.create.titleplaceholder}
           />
         </div>
 
         <div>
           <Label htmlFor="image" className="block font-semibold mb-2">
-            Thumbnail
+            {dict.blog.create.blogthumbnail}
           </Label>
           <Input
             type="file"
@@ -176,7 +178,7 @@ export default function BlogCreator({ authActiveProfileId }: BlogCreatorProps) {
             htmlFor="content"
             className="block text-base font-semibold mb-2"
           >
-            Blog Content
+            {dict.blog.create.blogcontent}
           </Label>
           <ReactQuill
             theme="snow"
@@ -196,7 +198,10 @@ export default function BlogCreator({ authActiveProfileId }: BlogCreatorProps) {
           className="w-full"
           disabled={isLoading}
         >
-          {isLoading ? "Submitting..." : "Submit Blog"}
+          {/* {isLoading ? "Submitting..." : "Submit Blog"} */}
+          {isLoading
+            ? dict.blog.create.submittingblog
+            : dict.blog.create.submitblog}
         </Button>
 
         {message && (

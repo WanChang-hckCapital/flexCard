@@ -39,6 +39,7 @@ interface ForumReplyItemProps {
   currentUserProfileId: string;
   onDelete: () => void;
   isAdmin: boolean;
+  dict: any;
 }
 
 const formatSentTime = (dateString: string): string => {
@@ -76,6 +77,7 @@ const ForumReplyItem: React.FC<ForumReplyItemProps> = ({
   currentUserProfileId,
   onDelete,
   isAdmin,
+  dict,
 }) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [replyImage, setReplyImage] = useState<string | null>(null);
@@ -187,21 +189,24 @@ const ForumReplyItem: React.FC<ForumReplyItemProps> = ({
               </AlertDialogTrigger>
               <AlertDialogContent className="bg-black text-white">
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+                  <AlertDialogTitle>
+                    {dict.forum.commentreply.title}
+                  </AlertDialogTitle>
                   <AlertDialogDescription>
-                    Are you sure you want to delete this comment? This action
-                    cannot be undone.
+                    {dict.forum.commentreply.deleteconfirmmessage}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel>
+                    {dict.forum.commentreply.deletecancel}
+                  </AlertDialogCancel>
                   <AlertDialogAction
                     onClick={() => {
                       onDelete();
                       setOpenDialog(false);
                     }}
                   >
-                    Delete
+                    {dict.forum.commentreply.deleteconfirm}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
