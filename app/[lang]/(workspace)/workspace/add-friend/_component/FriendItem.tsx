@@ -20,9 +20,10 @@ interface FriendItemProps {
     accountType: string;
   };
   senderId: string; // current user id
+  dict: any;
 }
 
-const FriendItem: React.FC<FriendItemProps> = ({ user, senderId }) => {
+const FriendItem: React.FC<FriendItemProps> = ({ user, senderId, dict }) => {
   const [statusChecked, setStatusChecked] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [requestSent, setRequestSent] = useState(false);
@@ -35,7 +36,7 @@ const FriendItem: React.FC<FriendItemProps> = ({ user, senderId }) => {
           receiverId: user.profileId,
         });
 
-        console.log("followStatusResponse", followStatusResponse);
+        // console.log("followStatusResponse", followStatusResponse);
 
         if (followStatusResponse.success) {
           if (followStatusResponse.followStatus) {
@@ -112,20 +113,19 @@ const FriendItem: React.FC<FriendItemProps> = ({ user, senderId }) => {
       </Avatar>
       <div className="flex-1 truncate">
         <div className="font-medium">{user.name}</div>
-        {/* <div className="font-medium">{user.accountType}</div> */}
       </div>
       {isFollowing ? (
-        <Button variant="green">Following</Button>
+        <Button variant="green">{dict.addfriend.followstatus.following}</Button>
       ) : requestSent ? (
         <Button variant="outline" disabled>
-          Follow Request Sent
+          {dict.addfriend.followstatus.followrequestsent}
         </Button>
       ) : (
         <Button
           variant="outline"
           onClick={() => handleFollowRequest(senderId, user.userId)}
         >
-          Follow
+          {dict.addfriend.followstatus.follow}
         </Button>
       )}
     </div>

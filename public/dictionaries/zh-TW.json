@@ -80,7 +80,7 @@
   },
   "profile": {
     "card": "卡片",
-    "followers": "追隨者",
+    "followers": "追蹤者",
     "following": "正在追蹤",
     "follow": "追蹤",
     "unfollow": "取消追蹤",
@@ -508,6 +508,19 @@
       "flxbubble": "FlxBubble",
       "flxbubbleclose": "取消",
       "noflxbubblefound": "未找到 FlxBubble"
+    }
+  },
+  "addfriend": {
+    "navbar": { "title": "追從" },
+    "followstatus": {
+      "follow": "追從",
+      "following": "正在追蹤",
+      "followrequestsent": "追從請求已發送"
+    },
+    "followrequest": {
+      "followrequest": "追蹤請求",
+      "accept": "接受追從請求",
+      "close": "關閉"
     }
   }
 }

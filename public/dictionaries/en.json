@@ -516,5 +516,18 @@
       "flxbubbleclose": "Cancel",
       "noflxbubblefound": "No FlxBubble available."
     }
+  },
+  "addfriend": {
+    "navbar": { "title": "Follow" },
+    "followstatus": {
+      "follow": "Follow",
+      "following": "Following",
+      "followrequestsent": "Follow Request Sent"
+    },
+    "followrequest": {
+      "followrequest": "Follow Request",
+      "accept": "Accept",
+      "close": "Close"
+    }
   }
 }

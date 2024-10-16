@@ -17,10 +17,12 @@ import { toast } from "sonner";
 
 interface FollowRequestModalProps {
   initialFollowRequests: any[];
+  dict: any;
 }
 
 const FollowRequestModal: React.FC<FollowRequestModalProps> = ({
   initialFollowRequests,
+  dict,
 }) => {
   const [followRequests, setFollowRequests] = useState(initialFollowRequests);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -54,7 +56,7 @@ const FollowRequestModal: React.FC<FollowRequestModalProps> = ({
     <>
       <div className="flex items-center gap-2">
         <>
-          <p>Follow Request: </p>
+          <p> {dict.addfriend.followrequest.followrequest} : </p>
           <Badge
             className="cursor-pointer"
             variant="bgRed"
@@ -68,7 +70,9 @@ const FollowRequestModal: React.FC<FollowRequestModalProps> = ({
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Follow Requests</DialogTitle>
+            <DialogTitle>
+              {dict.addfriend.followrequest.followrequest}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             {followRequests.length === 0 ? (
@@ -98,7 +102,7 @@ const FollowRequestModal: React.FC<FollowRequestModalProps> = ({
                       className="ml-auto"
                       onClick={() => handleAcceptClick(request._id)}
                     >
-                      Accept
+                      {dict.addfriend.followrequest.accept}
                     </Button>
                   </div>
                 </div>
@@ -107,7 +111,7 @@ const FollowRequestModal: React.FC<FollowRequestModalProps> = ({
           </div>
           <DialogClose asChild>
             <Button variant="ghost" className="mt-4">
-              Close
+              {dict.addfriend.followrequest.close}
             </Button>
           </DialogClose>
         </DialogContent>

@@ -10,8 +10,9 @@ import { redirect } from "next/navigation";
 import FriendItem from "./_component/FriendItem";
 import NavBar from "./_component/NavBar";
 import FollowRequestModal from "./_component/FollowRequestModal";
+import { getDictionary } from "@/app/[lang]/dictionaries";
 
-export default async function Page() {
+export default async function Page({ params }: { params: { lang: string } }) {
   const session = await getServerSession(authOptions);
 
   const user = session?.user;
@@ -19,6 +20,8 @@ export default async function Page() {
   if (!user) {
     redirect("/sign-in");
   }
+
+  const dict = await getDictionary(params.lang);
 
   const authenticatedUserId = user.id;
 
@@ -49,14 +52,12 @@ export default async function Page() {
     if (accountTypeResponse.success) {
       accountType = accountTypeResponse.accountType;
 
-      // console.log("accountType:" + accountType);
       if (accountType === "PRIVATE") {
         const followRequestResponse = await getFollowRequest(
           authenticatedUserId
         );
         if (followRequestResponse.success) {
           followRequests = followRequestResponse.followRequests;
-          // console.log("followRequests frontend:" + followRequests);
         } else {
           console.error(
             "Failed to fetch follow requests:",
@@ -76,23 +77,16 @@ export default async function Page() {
 
   return (
     <div className="flex flex-col min-h-screen w-full">
-      <NavBar />
+      <NavBar dict={dict} />
 
       <div className="flex flex-col flex-1 items-center justify-start p-4 pt-16">
         <div className="flex-1 mt-4 overflow-y-auto w-11/12">
           <div className="grid gap-2">
-            {/* <div className="text-sm font-medium text-muted-foreground">
-              Suggestion
-            </div> */}
-            {/* {accountType === "PRIVATE" && (
-              <div className="flex items-center gap-2">
-                <Badge className="cursor-pointer" variant="bgRed">
-                  Follow Request:{followRequests.length}
-                </Badge>
-              </div>
-            )} */}
             {accountType === "PRIVATE" && (
-              <FollowRequestModal initialFollowRequests={followRequests} />
+              <FollowRequestModal
+                initialFollowRequests={followRequests}
+                dict={dict}
+              />
             )}
             {unAddedUser.length === 0 ? (
               <p>No users found</p>
@@ -103,6 +97,7 @@ export default async function Page() {
                     key={user.userId}
                     user={user}
                     senderId={authenticatedUserId}
+                    dict={dict}
                   />
                 ))}
               </div>
