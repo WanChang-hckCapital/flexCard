@@ -10,7 +10,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
-import { getFollowers } from "@/lib/actions/admin.actions"
+import { broadcastMessage, getFollowers } from "@/lib/actions/admin.actions"
 import { toast } from "sonner"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -30,9 +30,22 @@ function Setting({ authActiveProfileId }: Props) {
         setActiveSection(section);
     };
 
+    const sendReport = async (message: string) => {
+        const response = await broadcastMessage(message);
+        console.log(response);
+
+        if (response.success === true) {
+            toast.success('Report sent successfully');
+        } else {
+            toast.error('Failed to send report');
+        }
+    }
+
     useEffect(() => {
         const fetchFollowers = async () => {
             const response = await getFollowers();
+            console.log(response);
+
             if (response.success === true && response.followers !== undefined) {
                 setLineOAFollowers(response.followers);
             }
@@ -129,6 +142,7 @@ function Setting({ authActiveProfileId }: Props) {
                                     <Button
                                         variant={"secondary"}
                                         className="w-full"
+                                        onClick={() => sendReport('Weekly Sales Report')}
                                     >
                                         Send
                                     </Button>

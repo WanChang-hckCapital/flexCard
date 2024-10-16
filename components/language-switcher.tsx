@@ -1,16 +1,22 @@
 "use client";
 
-import { useRouter } from 'next/navigation';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
-import { Button } from './ui/button';
+import { usePathname, useRouter } from "next/navigation";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { Button } from "./ui/button";
 
 const LanguageSwitcher = () => {
   const router = useRouter();
-  const availableLocales = ['en', 'zh-TW'];
+  const pathname = usePathname();
+  const availableLocales = ["en", "zh-TW"];
 
   const switchLocale = (newLocale: string) => {
-    const currentPath = window.location.pathname;
-    const pathWithoutLocale = currentPath.replace(/^\/(en|zh-TW)/, '');
+    const pathWithoutLocale = pathname.replace(/^\/(en|zh-TW)/, "");
+    document.cookie = `language=${newLocale}; path=/; max-age=31536000`;
     router.push(`/${newLocale}${pathWithoutLocale}`);
   };
 
@@ -22,7 +28,7 @@ const LanguageSwitcher = () => {
       <DropdownMenuContent>
         {availableLocales.map((loc) => (
           <DropdownMenuItem key={loc} onClick={() => switchLocale(loc)}>
-            {loc === 'en' ? 'English' : '中文'}
+            {loc === "en" ? "English" : "中文"}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

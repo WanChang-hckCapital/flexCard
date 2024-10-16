@@ -10,6 +10,7 @@ import Header from '@/components/shared/header'
 import { getDictionary } from '../dictionaries'
 import React, { ReactElement } from 'react'
 import { DictProvider } from '@/app/context/dictionary-context'
+import { cookies } from 'next/headers'
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -29,12 +30,14 @@ export default async function RootLayout({
   children: React.ReactNode;
   params: { lang: string };
 }) {
+  const cookiesStore = cookies();
+  const cookieLanguage = cookiesStore.get('language')?.value || lang;
   const dict = await getDictionary(lang);
 
   return (
     <AuthSessionProvider>
       <ThemeProvider>
-        <html lang="en">
+        <html lang={cookieLanguage}>
           <body
             className={cn(
               "min-h-screen flex flex-col dark:bg-dark-1 bg-stone-100 text-black justify-center text-white font-sans antialiased",

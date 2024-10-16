@@ -19,13 +19,12 @@ function Searchbar({ routeType }: Props) {
   //     if (search) {
   //       router.push(`/${routeType}?q=` + search);
   //     } else {
-  //       console.log("redirect happens");
-  //       // router.push(`/${routeType}`);
+  //       router.push(`/${routeType}`);
   //     }
   //   }, 300);
 
   //   return () => clearTimeout(delayDebounceFn);
-  // }, [search, routeType]);
+  // }, [search, routeType, router]);
 
   return (
     <div className="searchbar">
@@ -37,7 +36,7 @@ function Searchbar({ routeType }: Props) {
         className="object-contain"
       />
       <Input
-        id="text"
+        id='text'
         // value={search}
         // onChange={(e) => setSearch(e.target.value)}
         placeholder={`${

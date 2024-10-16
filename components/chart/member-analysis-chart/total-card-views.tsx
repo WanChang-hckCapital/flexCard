@@ -21,14 +21,14 @@ export function TotalViewCardsByCardIdChart({ cardId, startDate, endDate }: Tota
 
     useEffect(() => {
 
-        if(!cardId) return;
-        
+        if (!cardId) return;
+
         const fetchData = async () => {
             const response = await fetchCardViewDetails(cardId, startDate, endDate);
-            
-            if(response.success){
+
+            if (response.success) {
                 setChartData(response.data || []);
-            }else{ 
+            } else {
                 setChartData([]);
             }
         }
@@ -36,11 +36,11 @@ export function TotalViewCardsByCardIdChart({ cardId, startDate, endDate }: Tota
         fetchData();
     }, [cardId, startDate, endDate]);
 
-    if(chartData.length === 0) {
+    if (chartData.length === 0) {
         return (
             <div className="text-center text-gray-500 min-h-[300px] content-center">No data available</div>
         )
-    }else{
+    } else {
         return (
             <ResponsiveContainer width="100%" minHeight={300}>
                 <LineChart data={chartData}>
@@ -48,7 +48,7 @@ export function TotalViewCardsByCardIdChart({ cardId, startDate, endDate }: Tota
                     <YAxis
                         tickFormatter={tick => tick.toString()}
                     />
-                    <Tooltip 
+                    <Tooltip
                         contentStyle={{
                             background: theme === 'dark' ? "#151c2c" : "#ffffff",
                             border: "none",
