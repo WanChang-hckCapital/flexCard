@@ -15,6 +15,7 @@ import { redirect } from "next/navigation";
 import AuthSessionProvider from "../(auth)/auth-session-provider";
 import { ThemeProvider } from "../../context/theme-context";
 import { getDictionary } from "../dictionaries";
+import { cookies } from "next/headers";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -36,7 +37,9 @@ export default async function RootLayout({
 }) {
   const session = await getServerSession(authOptions);
   const user = session?.user;
-  const dict = await getDictionary(lang);
+  const cookiesStore = cookies();
+  const cookieLanguage = cookiesStore.get('language')?.value || lang;
+  const dict = await getDictionary(cookieLanguage);
 
   if (!user) return redirect("/sign-in");
 
@@ -62,7 +65,7 @@ export default async function RootLayout({
   return (
     <AuthSessionProvider>
       <ThemeProvider>
-        <html lang="en">
+        <html lang={cookieLanguage}>
           <body
             className={cn(
               "min-h-screen flex flex-col dark:bg-dark-1 bg-white justify-center dark:text-white text-black font-sans antialiased",
