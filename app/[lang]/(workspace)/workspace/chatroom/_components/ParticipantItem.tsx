@@ -34,6 +34,7 @@ interface ParticipantItemProps {
   handleSilentClick: (participantId: string) => void;
   unsilentHandler: (participantId: string) => void;
   handleRemoveMember: (participantId: string) => void;
+  dict: any;
 }
 
 const ParticipantItem: React.FC<ParticipantItemProps> = ({
@@ -50,6 +51,7 @@ const ParticipantItem: React.FC<ParticipantItemProps> = ({
   handleSilentClick,
   unsilentHandler,
   handleRemoveMember,
+  dict,
 }) => {
   const [isSilenced, setIsSilenced] = useState<boolean>(initialSilencedState);
   const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState<boolean>(false);
@@ -85,14 +87,18 @@ const ParticipantItem: React.FC<ParticipantItemProps> = ({
                 : participant.accountname}
             </p>
             {isSuperAdmin && (
-              <span className="text-xs text-blue-600">Owner</span>
+              <span className="text-xs text-blue-600">
+                {dict.chatroom.groupchat.manage.owner}
+              </span>
             )}
             {isAdmin && !isSuperAdmin && (
-              <span className="text-xs text-blue-600">Admin</span>
+              <span className="text-xs text-blue-600">
+                {dict.chatroom.groupchat.manage.admin}
+              </span>
             )}
             {isSilenced && (
               <span className="text-xs text-red-600">
-                Silent Until{" "}
+                {dict.chatroom.groupchat.manage.silentuntil}{" "}
                 {silentUntil
                   ? new Date(silentUntil).toLocaleString()
                   : "Indefinitely"}
@@ -119,10 +125,19 @@ const ParticipantItem: React.FC<ParticipantItemProps> = ({
                     </DialogTrigger>
                     <DialogContent className="z-[1100]">
                       <DialogHeader>
-                        <DialogTitle>Remove Participant</DialogTitle>
+                        <DialogTitle>
+                          {dict.chatroom.groupchat.manage.removeparticipant}
+                        </DialogTitle>
                         <DialogDescription>
-                          Are you sure you want to remove{" "}
-                          {participant.accountname} from the chatroom?
+                          {
+                            dict.chatroom.groupchat.manage
+                              .removeparticipantmessage_1
+                          }{" "}
+                          {participant.accountname}{" "}
+                          {
+                            dict.chatroom.groupchat.manage
+                              .removeparticipantmessage_2
+                          }
                         </DialogDescription>
                       </DialogHeader>
                       <DialogFooter>
@@ -130,13 +145,13 @@ const ParticipantItem: React.FC<ParticipantItemProps> = ({
                           variant="outline"
                           onClick={() => setIsRemoveDialogOpen(false)}
                         >
-                          Cancel
+                          {dict.chatroom.groupchat.manage.removecancel}
                         </Button>
                         <Button
                           variant="destructive"
                           onClick={handleConfirmRemove}
                         >
-                          Remove
+                          {dict.chatroom.groupchat.manage.removeconfirm}
                         </Button>
                       </DialogFooter>
                     </DialogContent>
@@ -169,10 +184,13 @@ const ParticipantItem: React.FC<ParticipantItemProps> = ({
                   </DialogTrigger>
                   <DialogContent className="z-[1100]">
                     <DialogHeader>
-                      <DialogTitle>Discharge Admin</DialogTitle>
+                      <DialogTitle>
+                        {dict.chatroom.groupchat.manage.dischargeadmin}
+                      </DialogTitle>
                       <DialogDescription>
-                        Are you sure you want to discharge{" "}
-                        {participant.accountname} from being an admin?
+                        {dict.chatroom.groupchat.manage.dischargeadminmessage_1}{" "}
+                        {participant.accountname}{" "}
+                        {dict.chatroom.groupchat.manage.dischargeadminmessage_2}
                       </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
@@ -180,13 +198,13 @@ const ParticipantItem: React.FC<ParticipantItemProps> = ({
                         variant="outline"
                         onClick={() => setIsDischargeDialogOpen(false)}
                       >
-                        Cancel
+                        {dict.chatroom.groupchat.manage.dischargecancel}
                       </Button>
                       <Button
                         variant="destructive"
                         onClick={handleConfirmDischarge}
                       >
-                        Discharge
+                        {dict.chatroom.groupchat.manage.dischargeconfirm}
                       </Button>
                     </DialogFooter>
                   </DialogContent>

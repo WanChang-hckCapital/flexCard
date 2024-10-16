@@ -64,6 +64,7 @@ interface GroupInfoProps {
   admins: string[];
   allSilentUser: { userId: string; silentUntil: string | null }[];
   handleRemoveMember: (participantId: string) => void;
+  dict: any;
 }
 
 export default function GroupInfoSheet({
@@ -85,6 +86,7 @@ export default function GroupInfoSheet({
   admins,
   allSilentUser,
   handleRemoveMember,
+  dict,
 }: GroupInfoProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [groupImageUrl, setGroupImageUrl] = useState<string | null>(null);
@@ -240,7 +242,7 @@ export default function GroupInfoSheet({
                 {selectedChatroomData?.name || "Group Info"}
               </SheetTitle>
               <p className="text-sm dark:text-gray-500 text-black">
-                Created At:{" "}
+                {dict.chatroom.groupchat.createdat}:{" "}
                 {selectedChatroomData?.createdAt
                   ? new Date(
                       selectedChatroomData.createdAt
@@ -274,7 +276,8 @@ export default function GroupInfoSheet({
         <div className="p-4 dark:text-white text-black flex-grow">
           <div className="flex justify-between items-center mb-4 ml-1">
             <p className="font-bold text-base mb-4 ml-1">
-              {selectedChatroomData?.participants.length} Members
+              {selectedChatroomData?.participants.length}{" "}
+              {dict.chatroom.groupchat.members}
             </p>
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -287,9 +290,11 @@ export default function GroupInfoSheet({
               </AlertDialogTrigger>
               <AlertDialogContent className="z-[1100] bg-black">
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Invite a User</AlertDialogTitle>
+                  <AlertDialogTitle>
+                    {dict.chatroom.groupchat.inviteuser}
+                  </AlertDialogTitle>
                   <AlertDialogDescription>
-                    Select a user to invite to the group.
+                    {dict.chatroom.groupchat.invitemessage}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <div className="p-4">
@@ -320,15 +325,17 @@ export default function GroupInfoSheet({
                           </li>
                         ))
                       ) : (
-                        <p>No users available to invite.</p>
+                        <p> {dict.chatroom.groupchat.nouserfound}</p>
                       )}
                     </ul>
                   )}
                 </div>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel>
+                    {dict.chatroom.groupchat.invitecancel}
+                  </AlertDialogCancel>
                   <AlertDialogAction onClick={inviteUserHandler}>
-                    Invite
+                    {dict.chatroom.groupchat.inviteconfirm}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -347,6 +354,7 @@ export default function GroupInfoSheet({
               handleSilentClick={handleSilentClick}
               unsilentHandler={unsilentHandler}
               handleRemoveMember={handleRemoveMember}
+              dict={dict}
             />
           </div>
         </div>
@@ -354,7 +362,9 @@ export default function GroupInfoSheet({
         <Dialog open={isSilentDialogOpen} onOpenChange={setSilentDialogOpen}>
           <DialogContent className="z-[1100]">
             <DialogHeader>
-              <DialogTitle>Choose Silence Duration</DialogTitle>
+              <DialogTitle>
+                {dict.chatroom.groupchat.manage.silentmodaltitle}
+              </DialogTitle>
             </DialogHeader>
             <div className="p-4">
               <ul className="space-y-2">
@@ -367,7 +377,7 @@ export default function GroupInfoSheet({
                       value={3}
                       onChange={() => setSilentDuration(3)}
                     />
-                    3 Days
+                    {dict.chatroom.groupchat.manage.threedays}
                   </label>
                 </li>
                 <li>
@@ -379,7 +389,7 @@ export default function GroupInfoSheet({
                       value={7}
                       onChange={() => setSilentDuration(7)}
                     />
-                    1 Week
+                    {dict.chatroom.groupchat.manage.oneweek}
                   </label>
                 </li>
                 <li>
@@ -391,7 +401,7 @@ export default function GroupInfoSheet({
                       value={30}
                       onChange={() => setSilentDuration(30)}
                     />
-                    1 Month
+                    {dict.chatroom.groupchat.manage.onemonth}
                   </label>
                 </li>
                 <li>
@@ -403,7 +413,7 @@ export default function GroupInfoSheet({
                       value=""
                       onChange={() => setSilentDuration(null)} // Infinite until unsilenced
                     />
-                    Until Unsilenced
+                    {dict.chatroom.groupchat.manage.silenceforever}
                   </label>
                 </li>
               </ul>
@@ -413,9 +423,11 @@ export default function GroupInfoSheet({
                 variant="secondary"
                 onClick={() => setSilentDialogOpen(false)}
               >
-                Cancel
+                {dict.chatroom.groupchat.manage.silentcancel}
               </Button>
-              <Button onClick={handleConfirmSilence}>Confirm</Button>
+              <Button onClick={handleConfirmSilence}>
+                {dict.chatroom.groupchat.manage.silentconfirm}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -424,7 +436,7 @@ export default function GroupInfoSheet({
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button className="w-full" variant="destructive">
-                Leave Group
+                {dict.chatroom.groupchat.leavegroup}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent className="z-[1200]">

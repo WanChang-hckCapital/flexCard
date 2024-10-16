@@ -445,5 +445,69 @@
       "submittingcomment": "正在提交...",
       "submitcomment": "提交評論"
     }
+  },
+  "chatroom": {
+    "welcomingword": "請選擇一個聊天室開始聊天",
+    "messages": "訊息",
+    "newgroup": {
+      "personalgrpchat": "建立新聊天",
+      "grpchat": "建立新群組聊天",
+      "personalgrpchatmessage": "關注更多人來和他們聊天",
+      "grpchatmessage": "新增參與者或開始新的聊天",
+      "entergroupchatname": "輸入群組聊天名稱",
+      "creategrpbutton": "建立群組聊天"
+    },
+    "personalchat": {
+      "menu": { "contact": "資訊", "search": "搜尋" },
+      "blockuser": "封鎖",
+      "unblockuser": "解除封鎖",
+      "blockconfirm": "確認封鎖",
+      "blockconfirmmessage": "你確定要封鎖此使用者嗎？你將無法再收到他們的訊息",
+      "blockcancel": "取消"
+    },
+    "groupchat": {
+      "menu": { "contact": "群組資訊", "search": "搜尋" },
+      "members": "成員",
+      "leavegroup": "退出群組",
+      "inviteuser": "邀請",
+      "invitemessage": "選擇一位用戶邀請進入群組.",
+      "invitecancel": "取消",
+      "inviteconfirm": "確認邀請",
+      "nouserfound": "沒有可邀請的用戶",
+      "createdat": "群主成立於",
+      "joinsince": "加入此群組於",
+      "manage": {
+        "owner": "群主",
+        "admin": "管理員",
+        "removeparticipant": "移除此成員",
+        "removeparticipantmessage_1": "你確定要將",
+        "removeparticipantmessage_2": "從聊天室中移除嗎?",
+        "removecancel": "取消",
+        "removeconfirm": "移除",
+        "dischargeadmin": "解除管理員職務",
+        "dischargeadminmessage_1": "你確定要解除",
+        "dischargeadminmessage_2": "的管理員職務嗎",
+        "dischargecancel": "取消",
+        "dischargeconfirm": "確定解除",
+        "silentmodaltitle": "請選擇禁言時長",
+        "threedays": "3 天",
+        "oneweek": "1 星期",
+        "onemonth": "30 天",
+        "silenceforever": "禁言至解除禁言",
+        "silentcancel": "取消",
+        "silentconfirm": "確定禁言",
+        "silentuntil": "禁言至",
+        "silentuntilmessage": "你被禁言至",
+        "silentforevermessage": "你已被無限期禁言."
+      }
+    },
+    "message": {
+      "photo": "照片",
+      "file": "檔案",
+      "currentlocation": "當前位置",
+      "flxbubble": "FlxBubble",
+      "flxbubbleclose": "取消",
+      "noflxbubblefound": "未找到 FlxBubble"
+    }
   }
 }

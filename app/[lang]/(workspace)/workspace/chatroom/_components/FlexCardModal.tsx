@@ -8,6 +8,7 @@ interface FlexCardModalProps {
   onClose: () => void;
   cards: any[];
   onCardClick: (card: any) => void;
+  dict: any;
 }
 
 const FlexCardModal: React.FC<FlexCardModalProps> = ({
@@ -15,6 +16,7 @@ const FlexCardModal: React.FC<FlexCardModalProps> = ({
   onClose,
   cards,
   onCardClick,
+  dict,
 }) => {
   if (!isOpen) return null;
 
@@ -22,7 +24,9 @@ const FlexCardModal: React.FC<FlexCardModalProps> = ({
     <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex justify-center items-center z-50">
       <div className="bg-white rounded-lg overflow-hidden shadow-xl w-full max-w-lg">
         <div className="flex justify-between items-center p-4 border-b">
-          <h2 className="text-xl font-bold">FlexCards</h2>
+          <h2 className="text-xl dark:text-black font-bold">
+            {dict.chatroom.message.flxbubble}
+          </h2>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="w-5 h-5 text-gray-500" />
           </Button>
@@ -62,11 +66,16 @@ const FlexCardModal: React.FC<FlexCardModalProps> = ({
               </Card>
             ))
           ) : (
-            <p className="text-black">No cards available.</p>
+            <p className="text-black">
+              {dict.chatroom.message.noflxbubblefound}
+            </p>
           )}
         </div>
         <div className="p-4 border-t">
-          <Button onClick={onClose}>Close</Button>
+          <Button onClick={onClose}>
+            {" "}
+            {dict.chatroom.message.flxbubbleclose}
+          </Button>
         </div>
       </div>
     </div>

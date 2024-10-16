@@ -6,6 +6,7 @@ import ChatRoomMainBar from "./ChatRoomMainComponent";
 import Spinner from "./Spinner";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useDict } from "@/app/context/dictionary-context";
 
 interface Participant {
   _id: string;
@@ -118,6 +119,8 @@ export default function ChatRoomComponent({
     setSelectedChatroom(newChatroom.chatroomId);
     setSelectedChatroomData(newChatroom);
   };
+
+  const dict = useDict();
 
   useEffect(() => {
     const newWs = new WebSocket("ws://localhost:8080");
@@ -252,7 +255,7 @@ export default function ChatRoomComponent({
   }
 
   const handleSelectChatroom = async (chatroomId: string) => {
-    console.log("Selected Chatroom ID:", chatroomId);
+    // console.log("Selected Chatroom ID:", chatroomId);
     setIsSidebarOpen(false);
 
     setSelectedChatroom(chatroomId);
@@ -317,6 +320,7 @@ export default function ChatRoomComponent({
           }
           allFollowerAndFollowingForGroup={allFollowerAndFollowingForGroup}
           addNewChatroom={addNewChatroom}
+          dict={dict}
         />
       </div>
       {/* mobile */}
@@ -342,6 +346,7 @@ export default function ChatRoomComponent({
           }
           allFollowerAndFollowingForGroup={allFollowerAndFollowingForGroup}
           addNewChatroom={addNewChatroom}
+          dict={dict}
         />
       </div>
       <div className="md:hidden p-4 fixed top-0 left-0 z-40">

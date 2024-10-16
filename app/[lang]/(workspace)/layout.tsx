@@ -12,6 +12,8 @@ import Header from "@/components/shared/header";
 import { fetchMember } from "@/lib/actions/admin.actions";
 import Script from "next/script";
 import { ThemeProvider } from "../../context/theme-context";
+import { DictProvider } from "@/app/context/dictionary-context";
+import { getDictionary } from "../dictionaries";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -26,9 +28,12 @@ export const metadata: Metadata = {
 
 export default async function WorkspaceLayout({
   children,
+  params: { lang },
 }: {
   children: React.ReactNode;
+  params: { lang: string };
 }) {
+  const dict = await getDictionary(lang);
   // const session = await getServerSession(authOptions);
   // const user = session?.user;
 
@@ -61,10 +66,10 @@ export default async function WorkspaceLayout({
           >
             <main className="h-screen overflow-hidden">
               <section className="flex h-full flex-row">
-                {/* <Header session={session} userInfoImage={userImage} /> */}
-                {/* <LeftSidebar /> */}
                 <div className="z-99" id="modal-root"></div>
-                <div className="w-full">{children}</div>
+                <DictProvider dict={dict}>
+                  <div className="w-full">{children}</div>
+                </DictProvider>
               </section>
             </main>
             <SonnarToaster position="bottom-left" />

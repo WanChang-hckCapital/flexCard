@@ -31,6 +31,7 @@ interface PersonalInfoSheetProps {
   authenticatedUserId: string;
   blockUserHandler: (blockedUserId: string) => void;
   unblockUserHandler: (unblockUserId: string) => void;
+  dict: any;
 }
 
 export default function PersonalInfoSheet({
@@ -40,6 +41,7 @@ export default function PersonalInfoSheet({
   authenticatedUserId,
   blockUserHandler,
   unblockUserHandler,
+  dict,
 }: PersonalInfoSheetProps) {
   const [isUserBlocked, setIsUserBlocked] = useState(false);
 
@@ -131,27 +133,30 @@ export default function PersonalInfoSheet({
               variant="destructive"
               onClick={handleUnblockUser}
             >
-              Unblock User
+              {dict.chatroom.personalchat.unblockuser}
             </Button>
           ) : (
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button className="w-full" variant="destructive">
-                  Block User
+                  {dict.chatroom.personalchat.blockuser}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent className="z-[1100]">
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Confirm Block</AlertDialogTitle>
+                  <AlertDialogTitle>
+                    {dict.chatroom.personalchat.blockconfirm}
+                  </AlertDialogTitle>
                   <AlertDialogDescription>
-                    Are you sure you want to block this user? You will not be
-                    able to receive messages from them anymore.
+                    {dict.chatroom.personalchat.blockconfirmmessage}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel>
+                    {dict.chatroom.personalchat.blockcancel}
+                  </AlertDialogCancel>
                   <AlertDialogAction onClick={handleBlockUser}>
-                    Block User
+                    {dict.chatroom.personalchat.blockconfirm}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

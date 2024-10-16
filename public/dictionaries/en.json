@@ -452,5 +452,69 @@
       "submittingcomment": "Submitting...",
       "submitcomment": "Submit Comment"
     }
+  },
+  "chatroom": {
+    "welcomingword": "Select a chatroom to start chatting",
+    "messages": "Messages",
+    "newgroup": {
+      "personalgrpchat": "New Chat",
+      "grpchat": "New Group Chat",
+      "personalgrpchatmessage": "Follow more people to chat with them",
+      "grpchatmessage": "Here you can add participants or start a new chat.",
+      "entergroupchatname": "Enter group chat name.",
+      "creategrpbutton": "Create Group Chat"
+    },
+    "personalchat": {
+      "menu": { "contact": "Contact Info", "search": "Search In Chat" },
+      "blockuser": "Block User",
+      "unblockuser": "Unblock User",
+      "blockconfirm": "Confirm",
+      "blockconfirmmessage": "Are you sure you want to block this user? You will not be able to receive messages from them anymore",
+      "blockcancel": "Cancel"
+    },
+    "groupchat": {
+      "menu": { "contact": "Group Info", "search": "Search In Chat" },
+      "members": "Members",
+      "leavegroup": "Leave Group",
+      "inviteuser": "Invite a User",
+      "invitemessage": " Select a user to invite to the group.",
+      "invitecancel": "Cancel",
+      "inviteconfirm": "Confirm",
+      "nouserfound": "No users available to invite.",
+      "createdat": "Created At",
+      "joinsince": "Join since",
+      "manage": {
+        "owner": "Owner",
+        "admin": "Admin",
+        "removeparticipant": "Remove Participant",
+        "removeparticipantmessage_1": "Are you sure you want to remove",
+        "removeparticipantmessage_2": "from the chatroom?",
+        "removecancel": "Cancel",
+        "removeconfirm": "Confirm",
+        "dischargeadmin": "Discharge Admin",
+        "dischargeadminmessage_1": "Are you sure you want to discharge",
+        "dischargeadminmessage_2": "from being an admin?",
+        "dischargecancel": "Cancel",
+        "dischargeconfirm": "Discharge",
+        "silentmodaltitle": "Choose Silence Duration",
+        "threedays": "3 Days",
+        "oneweek": "1 week",
+        "onemonth": "1 Month",
+        "silenceforever": "Silence Until Unsilenced",
+        "silentcancel": "Cancel",
+        "silentconfirm": "Confirm",
+        "silentuntil": "Silent Until",
+        "silentuntilmessage": "You are silenced until.",
+        "silentforevermessage": "You are silenced indefinitely."
+      }
+    },
+    "message": {
+      "photo": "Photo",
+      "file": "File",
+      "currentlocation": "Current Location",
+      "flxbubble": "FlxBubble",
+      "flxbubbleclose": "Cancel",
+      "noflxbubblefound": "No FlxBubble available."
+    }
   }
 }

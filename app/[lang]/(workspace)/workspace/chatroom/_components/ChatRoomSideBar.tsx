@@ -64,6 +64,7 @@ interface ChatroomSideBarProps {
     merged: any[];
   };
   addNewChatroom: (newChatroom: Chatroom) => void;
+  dict: any;
 }
 
 export default function ChatRoomSideBar({
@@ -74,6 +75,7 @@ export default function ChatRoomSideBar({
   allFollowerAndFollowingForPersonal,
   allFollowerAndFollowingForGroup,
   addNewChatroom,
+  dict,
 }: ChatroomSideBarProps) {
   const [isPersonalModalOpen, setIsPersonalModalOpen] = useState(false);
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
@@ -207,12 +209,9 @@ export default function ChatRoomSideBar({
 
   return (
     <>
-      {/* <div className="flex justify-center p-4">
-        <ChatRoomSearchBar />
-      </div> */}
       <hr></hr>
       <div className="flex h-16 items-center border-b px-4">
-        <h3 className="text-lg font-semibold">Messages</h3>
+        <h3 className="text-lg font-semibold">{dict.chatroom.messages}</h3>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -226,11 +225,11 @@ export default function ChatRoomSideBar({
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={showNewPersonalChat}>
               <UserIcon className="mr-2 h-4 w-4" />
-              New Chat
+              {dict.chatroom.newgroup.personalgrpchat}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={createNewGroupChat}>
               <UsersIcon className="mr-2 h-4 w-4" />
-              New Group Chat
+              {dict.chatroom.newgroup.grpchat}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -249,7 +248,9 @@ export default function ChatRoomSideBar({
               >
                 <X className="h-5 w-5 text-gray-500" />
               </button>
-              <h3 className="text-lg font-semibold text-black">New Chat</h3>
+              <h3 className="text-lg font-semibold text-black">
+                {dict.chatroom.newgroup.personalgrpchat}
+              </h3>
               <div className="mt-4 max-h-64 overflow-y-auto">
                 {allFollowerAndFollowingForPersonal?.merged &&
                 allFollowerAndFollowingForPersonal.merged.length > 0 ? (
@@ -274,7 +275,7 @@ export default function ChatRoomSideBar({
                   ))
                 ) : (
                   <div className="text-center text-gray-500">
-                    Follow more people to chat with them.
+                    {dict.chatroom.newgroup.personalgrpchatmessage}
                   </div>
                 )}
               </div>
@@ -287,7 +288,7 @@ export default function ChatRoomSideBar({
         <Dialog open={isGroupModalOpen}>
           <DialogOverlay className="fixed inset-0 bg-black opacity-30 z-40" />
           <DialogContent className="fixed inset-0 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded shadow-lg relative">
+            <div className="bg-white p-6 rounded shadow-lg relative w-2/4">
               <button
                 className="absolute top-2 right-2"
                 onClick={closeGroupModal}
@@ -295,15 +296,15 @@ export default function ChatRoomSideBar({
                 <X className="h-5 w-5 text-gray-500" />
               </button>
               <h3 className="text-lg font-semibold text-black">
-                New Group Chat
+                {dict.chatroom.newgroup.grpchat}
               </h3>
               <p className="text-black">
-                Here you can add participants or start a new chat.
+                {dict.chatroom.newgroup.grpchatmessage}
               </p>
               <div className="mt-4">
                 <input
                   type="text"
-                  placeholder="Enter group chat name"
+                  placeholder={dict.chatroom.newgroup.entergroupchatname}
                   value={groupChatName}
                   onChange={(e) => setGroupChatName(e.target.value)}
                   className="w-full p-2 border border-gray-300 rounded-md text-black"
@@ -315,7 +316,6 @@ export default function ChatRoomSideBar({
                     key={merge.id}
                     className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer hover:bg-gray-200"
                   >
-                    {/* <div className="text-black">{merge.id}</div> */}
                     <input
                       type="checkbox"
                       onChange={() => handleCheckboxChange(merge.id)}
@@ -336,7 +336,7 @@ export default function ChatRoomSideBar({
                 ))}
               </div>
               <Button onClick={handleCreateGroupChat} className="mt-4 w-full">
-                Create Group Chat
+                {dict.chatroom.newgroup.creategrpbutton}
               </Button>
             </div>
           </DialogContent>

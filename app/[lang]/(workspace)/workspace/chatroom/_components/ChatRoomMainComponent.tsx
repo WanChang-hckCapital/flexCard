@@ -79,6 +79,7 @@ import { useRouter } from "next/navigation";
 import ChatRoomSearchBar from "./ChatRoomSearchBar";
 import FlexCardModal from "./FlexCardModal";
 import Image from "next/image";
+import { useDict } from "@/app/context/dictionary-context";
 
 interface Chatroom {
   _id: string;
@@ -195,6 +196,8 @@ export default function ChatRoomMainBar({
   const mapRef = useRef<HTMLDivElement>(null);
   const mapRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  const dict = useDict();
 
   const hasScrolled = useRef(false); // to prevent scrollto bottom for every messages is loaded
 
@@ -958,7 +961,6 @@ export default function ChatRoomMainBar({
       const response = await fetchAllCards();
 
       if (response) {
-        // console.log("All cards:", response);
         setFlexCards(response);
         setFlexCardModalOpen(true);
       } else {
@@ -1453,7 +1455,7 @@ export default function ChatRoomMainBar({
   if (!selectedChatroom) {
     return (
       <div className="flex justify-center items-center h-screen text-xl w-full rounded-lg shadow-md p-6 text-center">
-        Select a chatroom to start chatting.
+        {dict.chatroom.welcomingword}
       </div>
     );
   }
@@ -1536,17 +1538,14 @@ export default function ChatRoomMainBar({
                     }
                   >
                     {selectedChatroomData?.type === "GROUP"
-                      ? "Group Info"
-                      : "Contact Info"}
+                      ? dict.chatroom.groupchat.menu.contact
+                      : dict.chatroom.personalchat.menu.contact}
                   </DropdownMenuItem>
-                  {/* <DropdownMenuItem className="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 px-4 py-3 h-12 cursor-pointer text-black">
-                    Mute Motification
-                  </DropdownMenuItem> */}
                   <DropdownMenuItem
                     className="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 px-4 py-3 h-12 cursor-pointer text-black"
                     onClick={toggleSearchBar}
                   >
-                    Search In Chat
+                    {dict.chatroom.personalchat.menu.search}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -1645,7 +1644,6 @@ export default function ChatRoomMainBar({
                           size="sm"
                           className="flex items-center justify-start w-full text-left text-blue-600 hover:text-black"
                         >
-                          {/* <MapPin className="mr-2 h-5 w-5 text-red-500" /> */}
                           View Location
                         </Button>
                         <div
@@ -1852,7 +1850,7 @@ export default function ChatRoomMainBar({
                   </Avatar>
                   <p>{selectedChatroomData.name}</p>
                   <Button className="mt-2">
-                    You were added at{" "}
+                    {dict.chatroom.groupchat.joinsince}{" "}
                     {new Date(
                       selectedChatroomData.createdAt
                     ).toLocaleDateString()}
@@ -1902,6 +1900,7 @@ export default function ChatRoomMainBar({
           authenticatedUserId={authenticatedUserId}
           blockUserHandler={blockUserHandler}
           unblockUserHandler={unblockUserHandler}
+          dict={dict}
         />
 
         <GroupInfoSheet
@@ -1923,6 +1922,7 @@ export default function ChatRoomMainBar({
           admins={admins}
           allSilentUser={allSilentUser}
           handleRemoveMember={handleRemoveMember}
+          dict={dict}
         />
 
         <div className="border-t px-4 py-3 md:px-6 flex items-center">
@@ -1954,28 +1954,28 @@ export default function ChatRoomMainBar({
                       onClick={handlePhotoUploadClick}
                     >
                       <LucideImage className="mr-2 h-5 w-5" />
-                      Photo
+                      {dict.chatroom.message.photo}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="flex items-center text-2xl p-3"
                       onClick={handleFileUploadClick}
                     >
                       <File className="mr-2 h-5 w-5" />
-                      File
+                      {dict.chatroom.message.file}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="flex items-center text-2xl p-3"
                       onClick={handleLocationPreview}
                     >
                       <MapPin className="mr-2 h-5 w-5" />
-                      Current Location
+                      {dict.chatroom.message.currentlocation}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="flex items-center text-2xl p-3"
                       onClick={handleFetchAllCards}
                     >
                       <Menu className="mr-2 h-5 w-5" />
-                      FlexCard
+                      {dict.chatroom.message.flxbubble}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -2058,9 +2058,6 @@ export default function ChatRoomMainBar({
                       <div className="flex flex-col justify-center items-center my-2 w-1/2">
                         <h3 className="text-lg font-bold mb-2">
                           {selectedCard.title}
-                        </h3>
-                        <h3 className="text-lg font-bold mb-2">
-                          {selectedCard.cardId}
                         </h3>
                         <div
                           dangerouslySetInnerHTML={{
@@ -2243,12 +2240,12 @@ export default function ChatRoomMainBar({
                   </div>
                 ) : isUserSilenced.silentUntil === null ? (
                   <p className="text-red-500 text-sm">
-                    You are silenced indefinitely.
+                    {dict.chatroom.groupchat.manage.silentforevermessage}
                   </p>
                 ) : (
                   <div>
                     <p className="text-red-500 text-sm">
-                      You are silenced until{" "}
+                      {dict.chatroom.groupchat.manage.silentuntilmessage}{" "}
                       {new Date(isUserSilenced.silentUntil).toLocaleString()}.
                     </p>
                   </div>
@@ -2276,10 +2273,10 @@ export default function ChatRoomMainBar({
         onClose={() => setFlexCardModalOpen(false)}
         cards={flexCards}
         onCardClick={(card) => {
-          console.log("Card clicked:", card);
           setSelectedCard(card);
           setFlexCardModalOpen(false);
         }}
+        dict={dict}
       />
     </>
   );

@@ -14,6 +14,7 @@ interface ParticipantListProps {
   handleSilentClick: (participantId: string) => void;
   unsilentHandler: (participantId: string) => void;
   handleRemoveMember: (participantId: string) => void;
+  dict: any;
 }
 
 const ParticipantList: React.FC<ParticipantListProps> = ({
@@ -27,6 +28,7 @@ const ParticipantList: React.FC<ParticipantListProps> = ({
   handleSilentClick,
   unsilentHandler,
   handleRemoveMember,
+  dict,
 }) => {
   return (
     <ul className="space-y-4">
@@ -75,6 +77,7 @@ const ParticipantList: React.FC<ParticipantListProps> = ({
             handleSilentClick={handleSilentClick}
             unsilentHandler={unsilentHandler}
             handleRemoveMember={handleRemoveMember}
+            dict={dict}
           />
         );
       })}
