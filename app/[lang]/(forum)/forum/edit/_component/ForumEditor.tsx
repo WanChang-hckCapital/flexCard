@@ -109,7 +109,7 @@ export default function ForumEditor({
             id="title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="mt-1 block w-full dark:text-black text-white"
+            className="mt-1 block w-full text-black"
             placeholder="Enter the blog title"
           />
         </div>
@@ -188,12 +188,7 @@ export default function ForumEditor({
           />
         </div>
 
-        <Button
-          type="submit"
-          // variant="outline"
-          className="w-full"
-          disabled={isLoading}
-        >
+        <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading
             ? dict.forum.edit.updatingforum
             : dict.forum.edit.updateforum}

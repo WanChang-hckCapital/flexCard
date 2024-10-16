@@ -143,7 +143,7 @@ export default function BlogCreator({ authActiveProfileId }: BlogCreatorProps) {
             id="title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-black"
             placeholder={dict.blog.create.titleplaceholder}
           />
         </div>
@@ -192,13 +192,7 @@ export default function BlogCreator({ authActiveProfileId }: BlogCreatorProps) {
           />
         </div>
 
-        <Button
-          type="submit"
-          // variant="outline"
-          className="w-full"
-          disabled={isLoading}
-        >
-          {/* {isLoading ? "Submitting..." : "Submit Blog"} */}
+        <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading
             ? dict.blog.create.submittingblog
             : dict.blog.create.submitblog}

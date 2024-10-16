@@ -226,7 +226,7 @@ export default function BlogPage() {
           {isAdmin && (
             <Button className="mr-2" onClick={() => setIsInviteModalOpen(true)}>
               {dict.blog.adminOrInviteCreator.invitecreator}
-              <UserPlusIcon />
+              <UserPlusIcon className="ml-2" />
             </Button>
           )}
           {/* show create button when the user is a creator or admin */}

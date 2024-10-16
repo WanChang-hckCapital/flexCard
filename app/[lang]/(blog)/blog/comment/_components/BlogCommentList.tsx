@@ -226,7 +226,7 @@ const BlogCommentList: React.FC<BlogCommentListProps> = ({
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           rows={4}
-          className="w-full text-white dark:bg-black dark:bg-black text-black"
+          className="w-full dark:bg-black dark:text-white text-black"
         />
         {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
 
