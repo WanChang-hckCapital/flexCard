@@ -7,9 +7,14 @@ import { Input } from "@/components/ui/input";
 interface ChatRoomSearchBarProps {
   value: string;
   onSearchClick: (keyword: string) => void;
+  dict: any;
 }
 
-function ChatRoomSearchBar({ value, onSearchClick }: ChatRoomSearchBarProps) {
+function ChatRoomSearchBar({
+  value,
+  onSearchClick,
+  dict,
+}: ChatRoomSearchBarProps) {
   const [search, setSearch] = useState(value);
 
   return (
@@ -26,7 +31,7 @@ function ChatRoomSearchBar({ value, onSearchClick }: ChatRoomSearchBarProps) {
         id="text"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search..."
+        placeholder={dict.chatroom.messagesearch}
         className="pl-10 pr-4 py-2 w-full text-black rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
       />
     </div>

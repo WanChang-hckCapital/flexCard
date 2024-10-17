@@ -1471,6 +1471,7 @@ export default function ChatRoomMainBar({
                   <ChatRoomSearchBar
                     value={searchKeyword}
                     onSearchClick={handleSearchClick}
+                    dict={dict}
                   />
                 </div>
                 <Button
@@ -2208,7 +2209,7 @@ export default function ChatRoomMainBar({
                 {!isUserSilenced ? (
                   <div className="relative flex items-center">
                     <Textarea
-                      placeholder="Type your message..."
+                      placeholder={dict.chatroom.messageplaceholder}
                       className="min-h-[36px] h-[36px] line-height w-full rounded-2xl text-black resize-none pr-16 overflow-hidden leading-[15px]"
                       value={messageContent}
                       onChange={(e) => setMessageContent(e.target.value)}

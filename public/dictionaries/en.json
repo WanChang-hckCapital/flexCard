@@ -456,6 +456,8 @@
   "chatroom": {
     "welcomingword": "Select a chatroom to start chatting",
     "messages": "Messages",
+    "messageplaceholder": "Type your message...",
+    "messagesearch": "Search...",
     "newgroup": {
       "personalgrpchat": "New Chat",
       "grpchat": "New Group Chat",
