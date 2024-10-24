@@ -129,9 +129,14 @@ export async function fetchAllMemberProfile(authActiveProfileId: string) {
       throw new Error("Member has no authorization to fetch all members");
     }
 
-    const profiles = await ProfileModel.find();
+    const profiles = await ProfileModel.find().select("usertype accountname email image accountType usertype cards subscription onboarded totalViews");
 
-    return profiles;
+    const profilesWithStringId = profiles.map((profile: any) => ({
+      ...profile.toObject(),
+      _id: profile._id.toString(),
+    }));
+
+    return profilesWithStringId;
   } catch (error: any) {
     console.error(`Failed to fetch Profile: ${error.message}`);
     return null;
@@ -481,23 +486,12 @@ export async function fetchMemberProfileDetails(
   try {
     await connectToDB();
 
-    // neeed to fetch member details
-    // const member = await MemberModel.findOne({ user: userId })
-    //     .select("ip_address country profiles activeProfile")
-
-    // if (!member) {
-    //     return { success: false, message: "Member not found" };
-    // }
-
-    // const authActiveProfileId = member.profiles[member.activeProfile];
-
     const profile = await ProfileModel.findOne({ _id: profileId })
       .select("usertype organization")
       .populate({
         path: "organization",
         options: { lean: true },
       });
-    // .lean<ProfileModel>();
 
     console.log("Profile: ", profile);
 
@@ -526,8 +520,14 @@ export async function fetchMemberProfileDetails(
       : null;
 
     const structuredProfile = {
-      ...profile,
-      organization: restructureProfileOrganization,
+      ...profile.toObject(),
+      _id: profile._id.toString(),
+      organization: restructureProfileOrganization
+        ? {
+            ...restructureProfileOrganization,
+            _id: restructureProfileOrganization._id.toString(),
+          }
+        : null,
     };
 
     return { success: true, data: structuredProfile };
@@ -535,6 +535,7 @@ export async function fetchMemberProfileDetails(
     return { success: false, message: error.message };
   }
 }
+
 
 // done convert to Profile Model
 export async function verifyOrganizationStatus(

@@ -7,7 +7,10 @@ import { Toaster as SonnarToaster } from "@/components/ui/sonner";
 import Header from "@/components/admin/header";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../api/utils/authOptions";
-import { fetchCurrentActiveProfileId, fetchMemberImage } from "@/lib/actions/user.actions";
+import {
+  fetchCurrentActiveProfileId,
+  fetchMemberImage,
+} from "@/lib/actions/user.actions";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import SideBar from "@/components/admin/sidebar";
 import { fetchProfile } from "@/lib/actions/admin.actions";
@@ -38,7 +41,7 @@ export default async function RootLayout({
   const session = await getServerSession(authOptions);
   const user = session?.user;
   const cookiesStore = cookies();
-  const cookieLanguage = cookiesStore.get('language')?.value || lang;
+  const cookieLanguage = cookiesStore.get("language")?.value || lang;
   const dict = await getDictionary(cookieLanguage);
 
   if (!user) return redirect("/sign-in");
@@ -66,11 +69,24 @@ export default async function RootLayout({
     <AuthSessionProvider>
       <ThemeProvider>
         <html lang={cookieLanguage}>
+          <head>
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `
+                  (function() {
+                    const theme = document.cookie.match(/theme=([^;]+)/)?.[1] || 'light';
+                    document.documentElement.classList.add(theme);
+                  })();
+                `,
+              }}
+            />
+          </head>
           <body
             className={cn(
               "min-h-screen flex flex-col dark:bg-dark-1 bg-white justify-center dark:text-white text-black font-sans antialiased",
               fontSans.variable
-            )}>
+            )}
+          >
             <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
               <SideBar usertype={profileInfo.usertype} dict={dict} />
               <div className="flex flex-col">

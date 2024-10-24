@@ -270,7 +270,7 @@ function ProfileHeader({
               </h2>
             </div>
             <div className="flex flex-row gap-6 mt-2">
-              <p>{cards.toString()} {dict.profile.card}</p>
+              <p>{cards.toString()} {dict.profile.bubble}</p>
               <p
                 className="cursor-pointer"
                 onClick={() => openFollowerDialog(accountId)}

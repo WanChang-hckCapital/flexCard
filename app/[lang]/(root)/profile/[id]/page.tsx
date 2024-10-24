@@ -107,7 +107,7 @@ async function Page({ params }: { params: { id: string; lang: string } }) {
                 />
                 <p className="max-sm:hidden">{dict.profileTab[tab.label]}</p>
 
-                {tab.label === "CARDS" && (
+                {tab.label === "BUBBLES" && (
                   <p className="ml-1 rounded-sm bg-light-4 px-2 py-1 !text-tiny-medium text-light-2">
                     {profileInfo.cards.length}
                   </p>

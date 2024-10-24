@@ -21,6 +21,25 @@ const profileSchema = new Schema<Profile>(
         accountType: { type: String, default: "PUBLIC" },
         role: { type: String, default: Role.PERSONAL },
         onboarded: { type: Boolean, default: false },
+        preferences: {
+            theme: {
+                type: String,
+                default: "light",
+            },
+            language: {
+                type: String,
+                default: "en",
+            },
+            categories: [
+                {
+                    type: String,
+                },
+            ],
+            isSkip: {
+                type: Boolean,
+                default: false,
+            }
+        },
         cards: [
             {
                 type: mongoose.Schema.Types.ObjectId,

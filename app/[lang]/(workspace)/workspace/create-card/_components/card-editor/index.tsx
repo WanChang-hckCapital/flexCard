@@ -170,7 +170,7 @@ function CardEditor({ liveMode }: Props) {
           {(component.hero?.contents &&
             component.hero?.contents.length > 0) && (
               <div
-                className={clsx('component-container relative bg-white overflow-hidden', {
+                className={clsx('component-container relative bg-white', {
                   'p-4': (component.hero?.contents && component.hero?.contents[0]?.contents && component.hero?.contents[0].contents.length < 1),
                   'px-4 py-4': (component.hero?.contents && component.hero?.contents[0]?.contents && component.hero?.contents[0].contents[0]?.type === 'box'),
                   'p-0': (component.hero?.contents && component.hero?.contents[0].contents && component.hero?.contents[0].contents.length > 0 && component.hero?.contents[0].type !== 'box'),

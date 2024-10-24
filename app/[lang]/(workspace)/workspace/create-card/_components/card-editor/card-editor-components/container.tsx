@@ -439,8 +439,8 @@ const Container = ({ element, sectionId, bubble }: Props) => {
     height: element.height,
     maxWidth: element.maxWidth,
     maxHeight: element.maxHeight,
-    borderRadius: convertSizeToPixels(element.cornerRadius),
-    borderWidth: element.borderWidth ? convertSizeToPixels(element.borderWidth) : '0px',
+    borderRadius: element.cornerRadius ? convertSizeToPixels(element.cornerRadius) : '0.5rem',
+    borderWidth: element.borderWidth ? convertSizeToPixels(element.borderWidth) : '1px',
     borderColor: element.borderColor,
     top: convertSizeToPixels(element.offsetTop),
     left: convertSizeToPixels(element.offsetStart),
@@ -457,7 +457,7 @@ const Container = ({ element, sectionId, bubble }: Props) => {
         <div
           style={styles}
           // tried remove overflow-hidden
-          className={clsx('relative transition-all group border-0', {
+          className={clsx('relative transition-all group', {
             'px-2 py-2': bubble.hero?.id === sectionId && (bubble.hero?.contents[0].contents && bubble.hero?.contents[0].contents?.length < 1 ||
               (bubble.hero?.contents[0]?.contents && bubble.hero.contents[0].contents[0]?.type === 'box')),
             'p-0 border-0': bubble.hero?.id === sectionId && bubble.hero?.contents && bubble.hero?.contents.length > 1,
@@ -468,7 +468,9 @@ const Container = ({ element, sectionId, bubble }: Props) => {
             'overflow-scroll ': strElementType === 'initial',
             'flex flex-row': element.layout === 'horizontal' || element.layout === 'baseline',
             'items-baseline': element.layout === 'baseline',
+            'p-[8px]': element.id !== 'initial_box' && sectionId !== 'inital_hero' && strElementType === 'box',
             'p-[20px]': element.id === 'initial_box',
+            'border-[1px] border-dashed border-gray-300': strElementType === 'box',
             'p-[10px]': element.id === 'initial_footer_box',
           })}
           onDrop={handleOnDrop}

@@ -41,7 +41,8 @@ export default async function RootLayout({
   const session = await getServerSession(authOptions);
   const user = session?.user;
   const cookiesStore = cookies();
-  const cookieLanguage = cookiesStore.get('language')?.value || lang;
+  const cookieLanguage = cookiesStore.get("language")?.value || lang;
+  // const cookieTheme = cookiesStore.get("theme")?.value || "light";
   const dict = await getDictionary(cookieLanguage);
 
   let profileInfo = null;
@@ -67,6 +68,18 @@ export default async function RootLayout({
     <AuthSessionProvider>
       <ThemeProvider>
         <html lang={cookieLanguage}>
+          <head>
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `
+                  (function() {
+                    const theme = document.cookie.match(/theme=([^;]+)/)?.[1] || 'light';
+                    document.documentElement.classList.add(theme);
+                  })();
+                `,
+              }}
+            />
+          </head>
           <body
             className={cn(
               "min-h-screen flex flex-col dark:bg-dark-1 dark:text-white bg-white text-black justify-center font-sans antialiased",

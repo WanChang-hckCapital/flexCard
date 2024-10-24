@@ -117,36 +117,9 @@ async function Header({ session, userInfoImage, dict }: HeaderProps) {
                   <DropdownMenuItem className="justify-center">
                     <Link
                       className="font-bold text-gray-800 dark:text-white"
-                      // href={`${session ? '/cards/665124264a34e4d57fcc506e' : 'api/auth/signin'}`} >
-                      href={"/cards/6673eab3337c9a8447de531d"}
-                    >
-                      cards testing
-                    </Link>
-                  </DropdownMenuItem>
-                </>
-              }
-              {
-                <>
-                  <DropdownMenuItem className="justify-center">
-                    <Link
-                      className="font-bold text-gray-800 dark:text-white"
                       href={"/contact-us"}
                     >
-                      contact us
-                    </Link>
-                  </DropdownMenuItem>
-                </>
-              }
-              {
-                <>
-                  <DropdownMenuItem className="justify-center">
-                    <Link
-                      className="font-bold text-gray-800 dark:text-white"
-                      // href={`${session ? '/profile/66511403ce0e911348378718' : 'api/auth/signin'}`} >
-                      // href={'/profile/6651901f2dc11fd640957e8a'} >
-                      href={"/profile/66b41db4e2c63bb042600381"}
-                    >
-                      other user test
+                      {dict.header.contactUs}
                     </Link>
                   </DropdownMenuItem>
                 </>
@@ -169,7 +142,7 @@ async function Header({ session, userInfoImage, dict }: HeaderProps) {
                   </DropdownMenuItem>
                 </>
               }
-              {<LanguageSwitcher />}
+              {<LanguageSwitcher dict={dict} authActiveProfileId={authActiveProfileId} />}
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -205,7 +178,7 @@ async function Header({ session, userInfoImage, dict }: HeaderProps) {
                             : "api/auth/signin"
                         }`}
                       >
-                        {dict.header.myCard}
+                        {dict.header.myBubble}
                       </Link>
                     </DropdownMenuItem>
                   )}
