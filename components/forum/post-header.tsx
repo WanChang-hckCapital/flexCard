@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import Avatar from "./avatar";
 import DateFormatter from "./date.formatter";
 import { PostTitle } from "./post-title";
+import Image from "next/image";
 
 type Props = {
   title: string;
@@ -67,9 +68,11 @@ export function PostHeader({
             }`}
             onClick={handleImageClick}
           >
-            <img
+            <Image
               src={blogImg}
               alt={title}
+              width={24}
+              height={24}
               className={`object-contain w-full transition-all duration-300 ease-in-out ${
                 isExpanded ? "h-auto" : "h-64"
               }`}

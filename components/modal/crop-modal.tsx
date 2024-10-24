@@ -13,6 +13,30 @@ import {
   phonePattern,
   websitePattern,
 } from "@/lib/ocr-patterns";
+import { analyzeImage, autoCropEdgeImage, callChatGpt } from "@/lib/utils";
+import { generateCustomID } from "@/lib/utils";
+import { useEditor, EditorElement } from "@/lib/editor/editor-provider";
+import { toast } from "sonner";
+import { v4 as uuidv4 } from "uuid";
+
+interface NormalizedVertex {
+  x: number;
+  y: number;
+}
+
+interface BoundingPoly {
+  normalizedVertices: NormalizedVertex[];
+}
+
+interface ObjectAnnotation {
+  name?: string;
+  score?: number;
+  boundingPoly?: BoundingPoly;
+}
+
+interface CropEdgeImageResult {
+  objectAnnotations?: ObjectAnnotation[];
+}
 
 interface CropModalProps {
   updateImage: any;
@@ -23,69 +47,13 @@ interface CropModalProps {
   ) => void;
   closeModal: () => void;
   onImageUpload: (uploadedImageUrl: string) => void;
+  element: EditorElement; // from Props
+  sectionId: string; // from Props
+  bubbleId: string; //
 }
 
-// not working
-// const detectLogo = async (imageSrc: string): Promise<any> => {
-//     console.log("Starting logo detection...");
-//     await loadOpenCV();
-//     console.log("OpenCV loaded");
-
-//     return new Promise((resolve, reject) => {
-//         const image = new Image();
-//         image.src = imageSrc;
-//         console.log("Image source set to:", imageSrc);
-
-//         image.onload = () => {
-//             console.log("Image loaded for logo detection.");
-//             const src = window.cv.imread(image);
-//             const dst = new window.cv.Mat();
-
-//             window.cv.cvtColor(src, dst, window.cv.COLOR_RGBA2GRAY, 0);
-//             window.cv.threshold(dst, dst, 150, 255, window.cv.THRESH_BINARY_INV);
-
-//             const contours = new window.cv.MatVector();
-//             const hierarchy = new window.cv.Mat();
-//             window.cv.findContours(dst, contours, hierarchy, window.cv.RETR_EXTERNAL, window.cv.CHAIN_APPROX_SIMPLE);
-
-//             let logoContour = null;
-//             for (let i = 0; i < contours.size(); ++i) {
-//                 const contour = contours.get(i);
-//                 const area = window.cv.contourArea(contour);
-//                 if (area > 1000) {
-//                     logoContour = contour;
-//                     break;
-//                 }
-//             }
-
-//             if (logoContour) {
-//                 const boundingRect = window.cv.boundingRect(logoContour);
-//                 console.log("Logo detected:", boundingRect);
-//                 resolve({
-//                     x0: boundingRect.x,
-//                     y0: boundingRect.y,
-//                     x1: boundingRect.x + boundingRect.width,
-//                     y1: boundingRect.y + boundingRect.height
-//                 });
-//             } else {
-//                 console.log("No logo detected.");
-//                 resolve(null);
-//             }
-
-//             src.delete();
-//             dst.delete();
-//             contours.delete();
-//             hierarchy.delete();
-//         };
-
-//         image.onerror = () => {
-//             console.error("Failed to load image for logo detection.");
-//             reject(new Error("Failed to load image"));
-//         };
-//     });
-// };
-
 const extractInfo = async (words: any, imageSrc: string) => {
+  console.log("extract info called");
   console.log("Words: ", words);
 
   let extractedInfo: { type: string; text: string; position: any }[] = [];
@@ -198,8 +166,20 @@ const CropModal: React.FC<CropModalProps> = ({
   updateImage,
   onExtractedInfo,
   closeModal,
+  element, // new props from Props
+  sectionId, // new props from Props
+  bubbleId, // new props from Props
 }) => {
   const [imageSrc, setImageSrc] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [detectedLogos, setDetectedLogos] = useState<any[]>([]);
+  const [croppedLogos, setCroppedLogos] = useState<string[]>([]);
+  const [logoRotations, setLogoRotations] = useState<number[]>([]);
+  const [isGptDataLoading, setIsGptDataLoading] = useState(false);
+  const [gptData, setGptData] = useState<any>(null);
+  const [croppedGPTLogo, setCroppedGPTLogo] = useState<string>("");
+  const { dispatch, state } = useEditor();
+  const [elements, setElements] = useState<any[]>([]);
 
   let uploadedImageURL: string = "";
 
@@ -210,11 +190,416 @@ const CropModal: React.FC<CropModalProps> = ({
     }
 
     const extractedInfo = await extractInfo(ocrData, imageSrc);
+    console.log(extractedInfo);
     onExtractedInfo(extractedInfo, originalImageWidth, uploadedImageURL);
   };
 
   const handleImageUpload = (uploadedImageUrl: string) => {
     return (uploadedImageURL = uploadedImageUrl);
+  };
+
+  // from base 64 to a blob
+  function base64ToBlob(base64: string, contentType = "", sliceSize = 512) {
+    const byteCharacters = atob(base64.split(",")[1]); // Decode base64
+    const byteArrays = [];
+
+    for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+      const slice = byteCharacters.slice(offset, offset + sliceSize);
+
+      const byteNumbers = new Array(slice.length);
+      for (let i = 0; i < slice.length; i++) {
+        byteNumbers[i] = slice.charCodeAt(i);
+      }
+
+      const byteArray = new Uint8Array(byteNumbers);
+      byteArrays.push(byteArray);
+    }
+
+    return new Blob(byteArrays, { type: contentType });
+  }
+
+  async function uploadCroppedImage(base64Image: string) {
+    const contentType = "image/png";
+    const blob = base64ToBlob(base64Image, contentType);
+    const file = new File([blob], "cropped_image.png", { type: contentType });
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch("/api/uploadImage", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await response.json();
+    return data;
+  }
+
+  const cropLogos = async (image: File, coordinates: any[]): Promise<void> => {
+    const imageURL = URL.createObjectURL(image);
+    const croppedImages: string[] = [];
+    const rotations: number[] = [];
+
+    const img = new Image();
+    img.src = imageURL;
+
+    await new Promise<void>((resolve) => {
+      img.onload = () => {
+        coordinates.forEach((coords) => {
+          const [x0, y0] = [coords[0].x, coords[0].y];
+          const [x1, y1] = [coords[2].x, coords[2].y];
+          const width = x1 - x0;
+          const height = y1 - y0;
+
+          const canvas = document.createElement("canvas");
+          const context = canvas.getContext("2d");
+
+          if (context) {
+            canvas.width = width;
+            canvas.height = height;
+
+            context.drawImage(img, x0, y0, width, height, 0, 0, width, height);
+            croppedImages.push(canvas.toDataURL("image/png"));
+            // console.log("crop log");
+            // console.log(croppedImages);
+            rotations.push(0);
+          }
+        });
+        resolve();
+      };
+    });
+
+    setCroppedLogos(croppedImages);
+    setLogoRotations(rotations);
+  };
+
+  // const uploadCroppedImage = async (croppedImage: string): Promise<string> => {
+  //   const response = await fetch("/api/uploadImage", {
+  //     method: "POST",
+  //     body: JSON.stringify({ image: croppedImage }), // Adjust payload if necessary
+  //     headers: {
+  //       "Content-Type": "application/json",
+  //     },
+  //   });
+  //   const data = await response.json();
+  //   return data.url; // Return the uploaded image URL from the API response
+  // };
+
+  const handleImageAnalyze = async (
+    image: File,
+    originalWidth: number
+  ): Promise<{
+    logoAnnotations: any[];
+  }> => {
+    console.log("Image analyze:", image);
+    try {
+      setIsLoading(true);
+
+      const result = await analyzeImage(image);
+      console.log("Detected Logos:", result.logoAnnotations);
+      setDetectedLogos(result.logoAnnotations || []);
+      setIsLoading(false);
+
+      // Extract logo coordinates
+      if (result.logoAnnotations) {
+        const logoCoords = result.logoAnnotations.map(
+          (logo: any) => logo.boundingPoly.vertices
+        );
+        await cropLogos(image, logoCoords);
+      } else {
+        setCroppedLogos([]);
+      }
+
+      const calculateTextAlign = (
+        x0: number,
+        x1: number,
+        originalWidth: number
+      ) => {
+        const relativeX0Position = x0 / originalWidth;
+        const relativeX1Position = x1 / originalWidth;
+
+        console.log("Relative X0 Position:", relativeX0Position);
+        console.log("Relative X1 Position:", relativeX1Position);
+
+        if (relativeX1Position > 0.7 || relativeX0Position > 0.6) {
+          return "end";
+        } else if (relativeX0Position > 0.33) {
+          return "center";
+        } else {
+          return "start";
+        }
+      };
+
+      const MAX_WIDTH = 384;
+
+      const scalePosition = (position: any, originalWidth: number) => {
+        const scaleRatio = MAX_WIDTH / originalWidth;
+        return {
+          x0: position.x0 * scaleRatio,
+          y0: position.y0 * scaleRatio,
+          x1: position.x1 * scaleRatio,
+          y1: position.y1 * scaleRatio,
+        };
+      };
+
+      const createTextElement = (text: string, position: any): any => {
+        const scaledPosition = scalePosition(position, originalWidth);
+        const { x0, x1 } = scaledPosition;
+        const textAlign = calculateTextAlign(x0, x1, originalWidth);
+
+        return {
+          id: generateCustomID(),
+          type: "text",
+          text: text,
+          size: "sm",
+          align: textAlign,
+          description: "text description",
+        };
+      };
+
+      const createBoxElement = (field: any): any => {
+        const { text, position } = field;
+
+        console.log("Creating box element for:", text);
+        console.log("Position:", position);
+
+        return {
+          id: generateCustomID(),
+          type: "box",
+          layout: "vertical",
+          contents: [createTextElement(text, position)],
+          position: "absolute",
+          description: "box description",
+        };
+      };
+
+      const elements: any[] = [];
+
+      // console.log("Extracted Info above:", extractedInfo);
+
+      // Object.keys(extractedInfo).forEach((key) => {
+      //   const field = extractedInfo[key];
+      //   if (field.position) {
+      //     elements.push(createBoxElement(field));
+      //   } else {
+      //     console.log("Field without position:", field);
+      //   }
+      // });
+
+      // final json that need to be saved in the db
+      // Object.keys(elements).forEach((key: any) => {
+      //   console.log(
+      //     key + " elements: " + JSON.stringify(elements[key], null, 2)
+      //   );
+      // });
+      return result;
+    } catch (error) {
+      console.error("Error analyzing image:", error);
+      setIsLoading(false); // End loading state on error
+      throw error;
+    }
+  };
+
+  const handleCropEdgeImg = async (
+    image: File
+  ): Promise<CropEdgeImageResult> => {
+    try {
+      const result = await autoCropEdgeImage(image);
+
+      if (result.objectAnnotations) {
+        result.objectAnnotations.forEach((annotation: ObjectAnnotation) => {
+          if (
+            annotation.boundingPoly &&
+            annotation.boundingPoly.normalizedVertices
+          ) {
+            annotation.boundingPoly.normalizedVertices.forEach(
+              (vertex: NormalizedVertex) => {
+                console.log(`x: ${vertex.x}, y: ${vertex.y}`);
+              }
+            );
+          }
+        });
+      } else {
+        //setCroppedLogos([]);
+      }
+
+      return result;
+    } catch (error) {
+      console.error("Error Crop Image Edge:", error);
+      throw error;
+    }
+  };
+
+  const createTextElement = (textContent: any): any[] => {
+    return Object.keys(textContent).map((key: any) => {
+      return {
+        id: generateCustomID(),
+        type: "text",
+        text: textContent[key], // Access the value from the object
+        size: "sm",
+        align: "0",
+        description: "test description",
+      };
+    });
+  };
+
+  const createBoxElement = (gptReturnData: any): any => {
+    return {
+      id: generateCustomID(),
+      type: "box",
+      layout: "vertical",
+      contents: [createTextElement(gptReturnData)],
+      position: "absolute",
+      description: "box description",
+    };
+  };
+
+  // disable the logo detection since we do not need this
+  const handleChatGpt = async (image: File): Promise<any> => {
+    try {
+      setIsGptDataLoading(true);
+
+      const result = await callChatGpt(image);
+      const content = result.message.content.replace(/```json|```/g, "").trim();
+      const parsedContent = JSON.parse(content);
+      setGptData(parsedContent);
+
+      setIsGptDataLoading(false);
+      console.log("gpt", parsedContent);
+
+      const newElements: any[] = [];
+      newElements.push(createBoxElement(parsedContent));
+
+      console.log("elements");
+      console.log(newElements);
+      setElements(newElements);
+      setIsGptDataLoading(false);
+
+      return parsedContent;
+    } catch (error) {
+      console.log("Error analyzing image:", error);
+      setIsGptDataLoading(false);
+      throw error;
+    }
+  };
+
+  // dispatch({
+  //   type: 'ADD_ELEMENT',
+  //   payload: {
+  //     bubbleId: bubble.id,
+  //     sectionId: sectionId,
+  //     targetId: element.id,
+  //     elementDetails: {
+  //       id: uuidv4(),
+  //       type: elementType,
+  //       url: 'https://t4.ftcdn.net/jpg/02/74/09/93/240_F_274099332_K8UURabl8CcuKtJlqj0wtLo5g2KONmXY.jpg',
+  //       description: 'Image is the best way to render information!',
+  //     },
+  //   },
+  // });
+
+  // for ocr save handler
+  const saveCardHandler = async () => {
+    const currentImageUrl = state.editor.selectedElement.url; // ori pic
+    const url = new URL(currentImageUrl || "");
+    const currentDomain = url.origin;
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+    const newElements: any[] = [];
+
+    // add new text using the result returned by gpt
+    Object.keys(gptData).forEach((key: any) => {
+      dispatch({
+        type: "ADD_ELEMENT",
+        payload: {
+          bubbleId: state.editor.selectedElementBubbleId,
+          sectionId: state.editor.selectedElementSectionId || "initial_body",
+          targetId:
+            state.editor.component?.body?.contents[0].id || "initial_box",
+          elementDetails: {
+            id: uuidv4(),
+            type: "text",
+            text: gptData[key],
+            description: "Render your mind using me.",
+          },
+        },
+      });
+    });
+    // upload image by the logo detected by google vision api
+    try {
+      let uploadImageUrlWithHttp = "";
+      // Declare the uploadedUrls array to store the URLs after upload
+      const uploadedUrls: string[] = await Promise.all(
+        croppedLogos.map(async (croppedImage) => {
+          const data = await uploadCroppedImage(croppedImage);
+
+          console.log("Uploaded Image Data:", data);
+          const uploadedImageUrl = `/api/uploadImage/${data.fileId}`;
+          uploadImageUrlWithHttp = `${baseUrl}${uploadedImageUrl}`;
+
+          console.log("Uploaded Image URL:", uploadedImageUrl);
+          console.log("Full Image URL:", uploadImageUrlWithHttp);
+
+          return uploadImageUrlWithHttp;
+        })
+      );
+
+      console.log("pic", uploadImageUrlWithHttp);
+
+      const updatedElementDetails = {
+        ...state.editor.selectedElement,
+        url: uploadImageUrlWithHttp,
+      };
+
+      console.log("Updated Element Details:", updatedElementDetails);
+
+      dispatch({
+        type: "UPDATE_ELEMENT",
+        payload: {
+          bubbleId: bubbleId,
+          sectionId: sectionId,
+          elementDetails: updatedElementDetails,
+        },
+      });
+
+      toast.success(
+        "Images have been uploaded and the card has been updated successfully."
+      );
+    } catch (error) {
+      console.error("Error uploading images:", error);
+      toast.error("Failed to upload images. Please try again.");
+    }
+  };
+
+  const cropLogoFromCoordinates = async (
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    image: File
+  ): Promise<void> => {
+    console.log(x + "!" + y + "!" + width + "!" + height);
+    const imageURL = URL.createObjectURL(image);
+    let croppedImage = "";
+    console.log("cropLogoFromCoordinates" + imageURL);
+    const img = new Image();
+    img.src = imageURL;
+
+    await new Promise<void>((resolve) => {
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+
+        if (context) {
+          canvas.width = width;
+          canvas.height = height;
+
+          context.drawImage(img, x, y, width, height, 0, 0, width, height);
+          croppedImage = canvas.toDataURL("image/png");
+        }
+        resolve();
+      };
+    });
+    setCroppedGPTLogo(croppedImage);
   };
 
   return createPortal(
@@ -237,7 +622,7 @@ const CropModal: React.FC<CropModalProps> = ({
                 <span className="sr-only">Close menu</span>
                 <X />
               </button>
-              {/* <ImageCropper
+              <ImageCropper
                 updateImage={updateImage}
                 handleOCRText={handleOCRText}
                 setImageSrc={setImageSrc}
@@ -246,7 +631,12 @@ const CropModal: React.FC<CropModalProps> = ({
                 handleImageAnalyze={handleImageAnalyze}
                 handleCropEdgeImg={handleCropEdgeImg}
                 handleChatGpt={handleChatGpt}
-              /> */}
+                croppedImages={croppedLogos}
+                saveCard={saveCardHandler}
+                element={element} // new props from Props
+                sectionId={sectionId} // new props from Props
+                bubbleId={bubbleId}
+              />
             </div>
           </div>
         </div>

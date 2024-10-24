@@ -534,7 +534,7 @@ function ComponentsTab(props: Props) {
           /> */}
         </AccordionContent>
       </AccordionItem>
-      <AccordionItem value="ImageUpload" className="py-0 ">
+      {/* <AccordionItem value="ImageUpload" className="py-0 ">
         <AccordionTrigger className="!no-underline">
           Image Upload
         </AccordionTrigger>
@@ -617,7 +617,6 @@ function ComponentsTab(props: Props) {
                                         onClick={() => removeLogo(index, true)}
                                         className="absolute top-0 right-0 mt-2 mr-2 text-red-500 hover:text-red-700"
                                       >
-                                        {/* &times; */}
                                         <X />
                                       </Button>
                                       <CardFooter>
@@ -674,7 +673,7 @@ function ComponentsTab(props: Props) {
             </Card>
           )}
         </AccordionContent>
-      </AccordionItem>
+      </AccordionItem> */}
     </Accordion>
   );
 }

@@ -61,15 +61,6 @@ const Page = async ({ params }: Props) => {
   const session = await getServerSession(authOptions);
   const user = session?.user;
 
-  // const [isLoading, setIsLoading] = useState(false);
-  // const [detectedLogos, setDetectedLogos] = useState<any[]>([]);
-  // const [logoRotations, setLogoRotations] = useState<number[]>([]);
-  // const [croppedLogos, setCroppedLogos] = useState<string[]>([]);
-  // const [regexMatches, setRegexMatches] = useState<Match[]>([]);
-  // const [gptData, setGptData] = useState<any>(null);
-  // const [croppedGPTLogo, setCroppedGPTLogo] = useState<string>("");
-  // const [isGptDataLoading, setIsGptDataLoading] = useState(false);
-
   //modify later
   if (!user) {
     redirect("/sign-in");
@@ -97,16 +88,8 @@ const Page = async ({ params }: Props) => {
     totalViews: 0,
     viewDetails: [],
     updateHistory: [],
-    comments: []
+    comments: [],
   };
-
-  // const cardEditorHtml = renderComponentToString(
-  //   <EditorProvider authaccountId={authaccountId} cardId={newCardData.cardID} cardDetails={newCardData}>
-  //     <CardEditor />
-  //   </EditorProvider>
-  // );
-
-  // console.log("cardhtml: " + cardEditorHtml);
 
   return (
     <div className="fixed top-0 bottom-0 left-0 right-0 z-[20] bg-background overflow-hidden">

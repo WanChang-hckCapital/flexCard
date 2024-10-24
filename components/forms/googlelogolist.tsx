@@ -19,7 +19,10 @@ const GoogleLogoList: React.FC<GoogleLogoListProps> = ({
   return (
     <div>
       {croppedLogos.map((croppedImage, index) => (
-        <div key={index} className="flex flex-col items-center mb-4 relative">
+        <div
+          key={index}
+          className="flex flex-col items-center mb-4 relative border-4"
+        >
           <Image
             src={croppedImage}
             alt={`Cropped logo ${index}`}

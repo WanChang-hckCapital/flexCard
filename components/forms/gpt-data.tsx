@@ -50,7 +50,7 @@ const GptData: React.FC<any> = ({ gptData, isGptDataLoading }) => {
           const displayKey = labelMapping[key] || key.replace(/_/g, " ");
           return (
             <div key={key} className="flex w-full items-start mt-3 mb-2">
-              <div className="flex-grow">
+              <div className="flex-grow border rounded-lg">
                 <Label className="block text-white mb-4">{displayKey}:</Label>
                 <Input
                   defaultValue={

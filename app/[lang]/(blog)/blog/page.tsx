@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
 import Image from "next/image";
 import Header from "@/components/blog/header";
 import { Button } from "@/components/ui/button";
@@ -54,13 +53,7 @@ interface invitationResponse {
 export default function BlogPage() {
   const { data: clientSession } = useSession();
 
-  // const { lang } = useParams();
-
   const dict = useDict();
-
-  if (!dict || !dict.auth || !dict.auth.signUp) {
-    return <p className="dark:text-white text-black text-center">Loading...</p>;
-  }
 
   const [authActiveProfileId, setAuthActiveProfileId] = useState<string | null>(
     null
@@ -191,6 +184,10 @@ export default function BlogPage() {
     setHasPendingInvitation(false); // hide the invitation notification
     setIsInvitedCreator(true); // show the create button
   };
+
+  if (!dict || !dict.auth || !dict.auth.signUp) {
+    return <p className="dark:text-white text-black text-center">Loading...</p>;
+  }
 
   if (error) {
     return <p>{error}</p>;
