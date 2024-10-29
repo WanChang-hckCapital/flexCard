@@ -40,8 +40,7 @@ function CardEditorSidebar() {
             <TabsContent value="Components">
               {state.editor.selectedElement &&
               state.editor.selectedElement.type !== null ? (
-                (console.log("entire", state),
-                console.log("selectedElement", state.editor.selectedElement),
+                (console.log("selectedElement", state.editor.selectedElement),
                 console.log(
                   "selectedElementBubbleId",
                   state.editor.selectedElementBubbleId

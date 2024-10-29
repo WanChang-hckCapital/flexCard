@@ -176,10 +176,18 @@ const CropModal: React.FC<CropModalProps> = ({
   const [croppedLogos, setCroppedLogos] = useState<string[]>([]);
   const [logoRotations, setLogoRotations] = useState<number[]>([]);
   const [isGptDataLoading, setIsGptDataLoading] = useState(false);
+
   const [gptData, setGptData] = useState<any>(null);
+  const [gptDataLayout, setGptDataLayout] = useState<any>("horizontal");
+  const [gptDataQuadrant, setGptDataQuadrant] = useState<any>(null);
+
   const [croppedGPTLogo, setCroppedGPTLogo] = useState<string>("");
   const { dispatch, state } = useEditor();
   const [elements, setElements] = useState<any[]>([]);
+
+  const [imageAlign, setImageAlign] = useState<string>("start");
+
+  const [bubbleAlign, setBubbleAlign] = useState<string>("vertical");
 
   let uploadedImageURL: string = "";
 
@@ -273,18 +281,6 @@ const CropModal: React.FC<CropModalProps> = ({
     setLogoRotations(rotations);
   };
 
-  // const uploadCroppedImage = async (croppedImage: string): Promise<string> => {
-  //   const response = await fetch("/api/uploadImage", {
-  //     method: "POST",
-  //     body: JSON.stringify({ image: croppedImage }), // Adjust payload if necessary
-  //     headers: {
-  //       "Content-Type": "application/json",
-  //     },
-  //   });
-  //   const data = await response.json();
-  //   return data.url; // Return the uploaded image URL from the API response
-  // };
-
   const handleImageAnalyze = async (
     image: File,
     originalWidth: number
@@ -300,8 +296,24 @@ const CropModal: React.FC<CropModalProps> = ({
       setDetectedLogos(result.logoAnnotations || []);
       setIsLoading(false);
 
-      // Extract logo coordinates
       if (result.logoAnnotations) {
+        result.logoAnnotations.forEach((logo: any) => {
+          if (logo.boundingPoly && logo.boundingPoly.vertices) {
+            const vertices = logo.boundingPoly.vertices;
+            console.log("Vertices for logo:", vertices);
+
+            // detect the image detection position
+            const align = calculateImageAlign(
+              vertices[0].x,
+              vertices[1].x,
+              originalWidth
+            );
+
+            setImageAlign(align);
+          }
+        });
+
+        // Proceed with cropping logos based on the vertices
         const logoCoords = result.logoAnnotations.map(
           (logo: any) => logo.boundingPoly.vertices
         );
@@ -373,30 +385,31 @@ const CropModal: React.FC<CropModalProps> = ({
         };
       };
 
-      const elements: any[] = [];
-
-      // console.log("Extracted Info above:", extractedInfo);
-
-      // Object.keys(extractedInfo).forEach((key) => {
-      //   const field = extractedInfo[key];
-      //   if (field.position) {
-      //     elements.push(createBoxElement(field));
-      //   } else {
-      //     console.log("Field without position:", field);
-      //   }
-      // });
-
-      // final json that need to be saved in the db
-      // Object.keys(elements).forEach((key: any) => {
-      //   console.log(
-      //     key + " elements: " + JSON.stringify(elements[key], null, 2)
-      //   );
-      // });
       return result;
     } catch (error) {
       console.error("Error analyzing image:", error);
       setIsLoading(false); // End loading state on error
       throw error;
+    }
+  };
+
+  const calculateImageAlign = (
+    x0: number,
+    x1: number,
+    originalWidth: number
+  ) => {
+    const relativeX0Position = x0 / originalWidth;
+    const relativeX1Position = x1 / originalWidth;
+
+    console.log("Relative X0 Position:", relativeX0Position);
+    console.log("Relative X1 Position:", relativeX1Position);
+
+    if (relativeX1Position > 0.7 || relativeX0Position > 0.6) {
+      return "end";
+    } else if (relativeX0Position > 0.33) {
+      return "center";
+    } else {
+      return "start";
     }
   };
 
@@ -460,15 +473,28 @@ const CropModal: React.FC<CropModalProps> = ({
       setIsGptDataLoading(true);
 
       const result = await callChatGpt(image);
+
       const content = result.message.content.replace(/```json|```/g, "").trim();
-      const parsedContent = JSON.parse(content);
-      setGptData(parsedContent);
+
+      let parsedContent;
+      try {
+        parsedContent = JSON.parse(content);
+        setGptData(parsedContent.labels);
+        setGptDataLayout(parsedContent.layout);
+        setGptDataQuadrant(parsedContent.quadrants);
+      } catch (parseError) {
+        console.log("Received non-JSON response from ChatGPT:", content);
+        setGptData([]);
+        setGptDataLayout("horizontal");
+        // throw new Error("ChatGPT returned a non-JSON response");
+        parsedContent = { labels: [], layout: "horizontal" };
+      }
 
       setIsGptDataLoading(false);
       console.log("gpt", parsedContent);
 
       const newElements: any[] = [];
-      newElements.push(createBoxElement(parsedContent));
+      newElements.push(createBoxElement(parsedContent.labels));
 
       console.log("elements");
       console.log(newElements);
@@ -477,97 +503,482 @@ const CropModal: React.FC<CropModalProps> = ({
 
       return parsedContent;
     } catch (error) {
-      console.log("Error analyzing image:", error);
+      setGptData([]);
+      setGptDataLayout("horizontal");
       setIsGptDataLoading(false);
-      throw error;
+      console.log("Error analyzing image:", error);
+      // throw error;
     }
   };
 
-  // dispatch({
-  //   type: 'ADD_ELEMENT',
-  //   payload: {
-  //     bubbleId: bubble.id,
-  //     sectionId: sectionId,
-  //     targetId: element.id,
-  //     elementDetails: {
-  //       id: uuidv4(),
-  //       type: elementType,
-  //       url: 'https://t4.ftcdn.net/jpg/02/74/09/93/240_F_274099332_K8UURabl8CcuKtJlqj0wtLo5g2KONmXY.jpg',
-  //       description: 'Image is the best way to render information!',
-  //     },
-  //   },
-  // });
+  // for generate the text align using width
+  const calculateTextAlignInWidth = (
+    x0: number,
+    x1: number,
+    originalWidth: number
+  ) => {
+    if (!x0 || !x1) return "start";
+
+    const relativeX0Position = x0 / originalWidth;
+    const relativeX1Position = x1 / originalWidth;
+
+    console.log("Relative X0 Position:", relativeX0Position);
+    console.log("Relative X1 Position:", relativeX1Position);
+
+    if (relativeX1Position > 0.7 || relativeX0Position > 0.6) {
+      return "end";
+    } else if (relativeX0Position > 0.33) {
+      return "center";
+    } else {
+      return "start";
+    }
+  };
 
   // for ocr save handler
-  const saveCardHandler = async () => {
+  const saveCardHandler = async (
+    croppedImageWidth: number,
+    croppedImageHeight: number
+  ) => {
     const currentImageUrl = state.editor.selectedElement.url; // ori pic
     const url = new URL(currentImageUrl || "");
     const currentDomain = url.origin;
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
     const newElements: any[] = [];
 
-    // add new text using the result returned by gpt
-    Object.keys(gptData).forEach((key: any) => {
-      dispatch({
-        type: "ADD_ELEMENT",
-        payload: {
-          bubbleId: state.editor.selectedElementBubbleId,
-          sectionId: state.editor.selectedElementSectionId || "initial_body",
-          targetId:
-            state.editor.component?.body?.contents[0].id || "initial_box",
-          elementDetails: {
-            id: uuidv4(),
-            type: "text",
-            text: gptData[key],
-            description: "Render your mind using me.",
+    if (croppedImageWidth >= croppedImageHeight) {
+      setBubbleAlign("horizontal");
+      console.log("horizontal");
+
+      if (croppedLogos.length > 0 && !gptData) {
+        try {
+          let uploadImageUrlWithHttp = "";
+          // Declare the uploadedUrls array to store the URLs after upload
+          const uploadedUrls: string[] = await Promise.all(
+            croppedLogos.map(async (croppedImage) => {
+              const data = await uploadCroppedImage(croppedImage);
+
+              console.log("Uploaded Image Data:", data);
+              const uploadedImageUrl = `/api/uploadImage/${data.fileId}`;
+              uploadImageUrlWithHttp = `${baseUrl}${uploadedImageUrl}`;
+
+              console.log("Uploaded Image URL:", uploadedImageUrl);
+              console.log("Full Image URL:", uploadImageUrlWithHttp);
+
+              return uploadImageUrlWithHttp;
+            })
+          );
+
+          const updatedElementDetails = {
+            ...state.editor.selectedElement,
+            url: uploadImageUrlWithHttp,
+            align: imageAlign,
+          };
+
+          console.log("Updated Element Details:", updatedElementDetails);
+
+          dispatch({
+            type: "UPDATE_ELEMENT",
+            payload: {
+              bubbleId: bubbleId,
+              sectionId: sectionId,
+              elementDetails: updatedElementDetails,
+            },
+          });
+
+          toast.success(
+            "Images have been uploaded and the card has been updated successfully."
+          );
+        } catch (error) {
+          console.error("Error uploading images:", error);
+          toast.error("Failed to upload images. Please try again.");
+        }
+      } else if (croppedLogos.length == 0 && Object.keys(gptData).length > 0) {
+        dispatch({
+          type: "DELETE_ELEMENT",
+          payload: {
+            bubbleId: bubbleId,
+            sectionId: sectionId,
+            elementId: element.id,
           },
-        },
-      });
-    });
-    // upload image by the logo detected by google vision api
-    try {
-      let uploadImageUrlWithHttp = "";
-      // Declare the uploadedUrls array to store the URLs after upload
-      const uploadedUrls: string[] = await Promise.all(
-        croppedLogos.map(async (croppedImage) => {
-          const data = await uploadCroppedImage(croppedImage);
+        });
 
-          console.log("Uploaded Image Data:", data);
-          const uploadedImageUrl = `/api/uploadImage/${data.fileId}`;
-          uploadImageUrlWithHttp = `${baseUrl}${uploadedImageUrl}`;
+        Object.keys(gptData).forEach((key: any) => {
+          const textAlign = calculateTextAlignInWidth(
+            gptData[key].vertices[0]?.x,
+            gptData[key].vertices[1]?.x,
+            croppedImageWidth
+          );
+          dispatch({
+            type: "ADD_ELEMENT",
+            payload: {
+              bubbleId: state.editor.selectedElementBubbleId,
+              sectionId:
+                state.editor.selectedElementSectionId || "initial_body",
+              targetId:
+                state.editor.component?.body?.contents[0].id || "initial_box",
+              elementDetails: {
+                id: uuidv4(),
+                type: "text",
+                text: gptData[key].text,
+                description: "Render your mind using me.",
+                align: textAlign,
+              },
+            },
+          });
+        });
+      } else if (Object.keys(gptData).length > 0 && croppedLogos.length > 0) {
+        // delete the previous image element
+        dispatch({
+          type: "DELETE_ELEMENT",
+          payload: {
+            bubbleId: bubbleId,
+            sectionId: sectionId,
+            elementId: element.id,
+          },
+        });
 
-          console.log("Uploaded Image URL:", uploadedImageUrl);
-          console.log("Full Image URL:", uploadImageUrlWithHttp);
+        const boxId = uuidv4();
+        // new parent box to contain both image and text
+        dispatch({
+          type: "ADD_ELEMENT",
+          payload: {
+            bubbleId: state.editor.selectedElementBubbleId,
+            sectionId: state.editor.selectedElementSectionId || "initial_body",
+            targetId:
+              state.editor.component?.body?.contents[0].id || "initial_box",
+            elementDetails: {
+              id: boxId,
+              type: "box",
+              layout: "baseline", // in the same row
+              contents: [],
+              description: "Expand your creativity by using me!",
+            },
+          },
+        });
 
-          return uploadImageUrlWithHttp;
-        })
-      );
+        // make it giga if horizontal
+        let elementDetails = {
+          ...state.editor.selectedElement,
+          ["size"]: "giga",
+        };
 
-      console.log("pic", uploadImageUrlWithHttp);
+        dispatch({
+          type: "UPDATE_ELEMENT",
+          payload: {
+            bubbleId: "initial",
+            sectionId: "",
+            elementDetails: elementDetails,
+          },
+        });
 
-      const updatedElementDetails = {
-        ...state.editor.selectedElement,
-        url: uploadImageUrlWithHttp,
-      };
+        if (imageAlign === "end") {
+          // new box for text detection
+          const textBoxId = uuidv4();
 
-      console.log("Updated Element Details:", updatedElementDetails);
+          dispatch({
+            type: "ADD_ELEMENT",
+            payload: {
+              bubbleId: state.editor.selectedElementBubbleId,
+              sectionId:
+                state.editor.selectedElementSectionId || "initial_body",
+              targetId: boxId,
+              elementDetails: {
+                id: textBoxId,
+                type: "box",
+                layout: "vertical",
+                contents: [],
+                description: "Expand your creativity by using me!",
+              },
+            },
+          });
 
-      dispatch({
-        type: "UPDATE_ELEMENT",
-        payload: {
-          bubbleId: bubbleId,
-          sectionId: sectionId,
-          elementDetails: updatedElementDetails,
-        },
-      });
+          Object.keys(gptData).forEach((key: any) => {
+            const textAlign = calculateTextAlignInWidth(
+              gptData[key].vertices[0]?.x,
+              gptData[key].vertices[1]?.x,
+              croppedImageWidth
+            );
 
-      toast.success(
-        "Images have been uploaded and the card has been updated successfully."
-      );
-    } catch (error) {
-      console.error("Error uploading images:", error);
-      toast.error("Failed to upload images. Please try again.");
+            // add the text inside the text box
+            dispatch({
+              type: "ADD_ELEMENT",
+              payload: {
+                bubbleId: state.editor.selectedElementBubbleId,
+                sectionId:
+                  state.editor.selectedElementSectionId || "initial_body",
+                targetId: textBoxId,
+                elementDetails: {
+                  id: uuidv4(),
+                  type: "text",
+                  text: gptData[key].text,
+                  description: "Render your mind using me.",
+                  align: textAlign,
+                  size: "xxs",
+                },
+              },
+            });
+          });
+
+          const imageBoxId = uuidv4();
+
+          // new box for image
+          dispatch({
+            type: "ADD_ELEMENT",
+            payload: {
+              bubbleId: state.editor.selectedElementBubbleId,
+              sectionId:
+                state.editor.selectedElementSectionId || "initial_body",
+              targetId: boxId,
+              elementDetails: {
+                id: imageBoxId,
+                type: "box",
+                layout: "vertical",
+                contents: [],
+                description: "Expand your creativity by using me!",
+              },
+            },
+          });
+
+          try {
+            let uploadImageUrlWithHttp = "";
+            const uploadedUrls: string[] = await Promise.all(
+              croppedLogos.map(async (croppedImage) => {
+                const data = await uploadCroppedImage(croppedImage);
+
+                console.log("Uploaded Image Data:", data);
+                const uploadedImageUrl = `/api/uploadImage/${data.fileId}`;
+                uploadImageUrlWithHttp = `${baseUrl}${uploadedImageUrl}`;
+
+                console.log("Uploaded Image URL:", uploadedImageUrl);
+                console.log("Full Image URL:", uploadImageUrlWithHttp);
+
+                return uploadImageUrlWithHttp;
+              })
+            );
+
+            const imageId = uuidv4();
+
+            // add the image into the image box
+            dispatch({
+              type: "ADD_ELEMENT",
+              payload: {
+                bubbleId: state.editor.selectedElementBubbleId,
+                sectionId:
+                  state.editor.selectedElementSectionId || "initial_body",
+                targetId: imageBoxId, // into the boxId
+                elementDetails: {
+                  id: imageId,
+                  type: "image",
+                  url: uploadImageUrlWithHttp,
+                  description: "Image is the best way to render information!",
+                  align: imageAlign,
+                },
+              },
+            });
+
+            toast.success(
+              "Images have been uploaded and the card has been updated successfully."
+            );
+          } catch (error) {
+            console.error("Error uploading images:", error);
+            toast.error("Failed to upload images. Please try again.");
+          }
+        } else {
+          // center or start
+          const imageBoxId = uuidv4();
+
+          // new box for image
+          dispatch({
+            type: "ADD_ELEMENT",
+            payload: {
+              bubbleId: state.editor.selectedElementBubbleId,
+              sectionId:
+                state.editor.selectedElementSectionId || "initial_body",
+              targetId: boxId,
+              elementDetails: {
+                id: imageBoxId,
+                type: "box",
+                layout: "vertical",
+                contents: [],
+                description: "Expand your creativity by using me!",
+              },
+            },
+          });
+
+          try {
+            let uploadImageUrlWithHttp = "";
+            const uploadedUrls: string[] = await Promise.all(
+              croppedLogos.map(async (croppedImage) => {
+                const data = await uploadCroppedImage(croppedImage);
+
+                console.log("Uploaded Image Data:", data);
+                const uploadedImageUrl = `/api/uploadImage/${data.fileId}`;
+                uploadImageUrlWithHttp = `${baseUrl}${uploadedImageUrl}`;
+
+                console.log("Uploaded Image URL:", uploadedImageUrl);
+                console.log("Full Image URL:", uploadImageUrlWithHttp);
+
+                return uploadImageUrlWithHttp;
+              })
+            );
+
+            const imageId = uuidv4();
+
+            // add the image into the image box
+            dispatch({
+              type: "ADD_ELEMENT",
+              payload: {
+                bubbleId: state.editor.selectedElementBubbleId,
+                sectionId:
+                  state.editor.selectedElementSectionId || "initial_body",
+                targetId: imageBoxId, // into the boxId
+                elementDetails: {
+                  id: imageId,
+                  type: "image",
+                  url: uploadImageUrlWithHttp,
+                  description: "Image is the best way to render information!",
+                  align: imageAlign,
+                },
+              },
+            });
+
+            toast.success(
+              "Images have been uploaded and the card has been updated successfully."
+            );
+          } catch (error) {
+            console.error("Error uploading images:", error);
+            toast.error("Failed to upload images. Please try again.");
+          }
+
+          // new box for text detection
+          const textBoxId = uuidv4();
+
+          dispatch({
+            type: "ADD_ELEMENT",
+            payload: {
+              bubbleId: state.editor.selectedElementBubbleId,
+              sectionId:
+                state.editor.selectedElementSectionId || "initial_body",
+              targetId: boxId,
+              elementDetails: {
+                id: textBoxId,
+                type: "box",
+                layout: "vertical",
+                contents: [],
+                description: "Expand your creativity by using me!",
+              },
+            },
+          });
+
+          Object.keys(gptData).forEach((key: any) => {
+            const textAlign = calculateTextAlignInWidth(
+              gptData[key].vertices[0]?.x,
+              gptData[key].vertices[1]?.x,
+              croppedImageWidth
+            );
+
+            // add the text inside the text box
+            dispatch({
+              type: "ADD_ELEMENT",
+              payload: {
+                bubbleId: state.editor.selectedElementBubbleId,
+                sectionId:
+                  state.editor.selectedElementSectionId || "initial_body",
+                targetId: textBoxId,
+                elementDetails: {
+                  id: uuidv4(),
+                  type: "text",
+                  text: gptData[key].text,
+                  description: "Render your mind using me.",
+                  align: textAlign,
+                  size: "xxs",
+                },
+              },
+            });
+          });
+        }
+      }
+    } else {
+      setBubbleAlign("vertical"); // need to delete
+      console.log("vertical");
     }
+
+    // add new text using the result returned by gpt
+    // if (Object.keys(gptData).length > 0) {
+    //   Object.keys(gptData).forEach((key: any) => {
+    //     const textAlign = calculateTextAlignInWidth(
+    //       gptData[key].vertices[0]?.x,
+    //       gptData[key].vertices[1]?.x,
+    //       croppedImageWidth
+    //     );
+    //     dispatch({
+    //       type: "ADD_ELEMENT",
+    //       payload: {
+    //         bubbleId: state.editor.selectedElementBubbleId,
+    //         sectionId: state.editor.selectedElementSectionId || "initial_body",
+    //         targetId:
+    //           state.editor.component?.body?.contents[0].id || "initial_box",
+    //         elementDetails: {
+    //           id: uuidv4(),
+    //           type: "text",
+    //           text: gptData[key].text,
+    //           description: "Render your mind using me.",
+    //           align: textAlign,
+    //         },
+    //       },
+    //     });
+    //   });
+    // }
+
+    // upload image by the logo detected by google vision api
+    // if (croppedLogos.length > 0) {
+    //   try {
+    //     let uploadImageUrlWithHttp = "";
+    //     // Declare the uploadedUrls array to store the URLs after upload
+    //     const uploadedUrls: string[] = await Promise.all(
+    //       croppedLogos.map(async (croppedImage) => {
+    //         const data = await uploadCroppedImage(croppedImage);
+
+    //         console.log("Uploaded Image Data:", data);
+    //         const uploadedImageUrl = `/api/uploadImage/${data.fileId}`;
+    //         uploadImageUrlWithHttp = `${baseUrl}${uploadedImageUrl}`;
+
+    //         console.log("Uploaded Image URL:", uploadedImageUrl);
+    //         console.log("Full Image URL:", uploadImageUrlWithHttp);
+
+    //         return uploadImageUrlWithHttp;
+    //       })
+    //     );
+
+    //     console.log("pic", uploadImageUrlWithHttp);
+
+    //     const updatedElementDetails = {
+    //       ...state.editor.selectedElement,
+    //       url: uploadImageUrlWithHttp,
+    //       align: imageAlign,
+    //     };
+
+    //     console.log("Updated Element Details:", updatedElementDetails);
+    //     console.log(bubbleId);
+    //     console.log(sectionId);
+
+    //     dispatch({
+    //       type: "UPDATE_ELEMENT",
+    //       payload: {
+    //         bubbleId: bubbleId,
+    //         sectionId: sectionId,
+    //         elementDetails: updatedElementDetails,
+    //       },
+    //     });
+
+    //     toast.success(
+    //       "Images have been uploaded and the card has been updated successfully."
+    //     );
+    //   } catch (error) {
+    //     console.error("Error uploading images:", error);
+    //     toast.error("Failed to upload images. Please try again.");
+    //   }
+    // }
   };
 
   const cropLogoFromCoordinates = async (
