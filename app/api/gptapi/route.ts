@@ -10,6 +10,7 @@ export async function POST(req: NextRequest) {
     // text extraction and text recognition
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
+      // model: "o1-preview",
       messages: [
         {
           role: "user",

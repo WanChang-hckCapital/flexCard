@@ -110,7 +110,8 @@ interface ImageCropperProps {
   onImageUpload: (uploadedImageUrl: string) => void;
   handleImageAnalyze: (
     image: File,
-    originalWidth: number
+    originalWidth: number,
+    originalHeight: number
   ) => Promise<{
     logoAnnotations: any[];
   }>;
@@ -222,8 +223,8 @@ const ImageCropper: React.FC<ImageCropperProps> = ({
           setOriginalImageWidth(naturalWidth);
           //setOriginalImageHeight(naturalHeight);
 
-          console.log("Image width" + naturalWidth);
-          console.log("Image height" + naturalHeight);
+          // console.log("Image width" + naturalWidth);
+          // console.log("Image height" + naturalHeight);
 
           setUploadImgWidth(naturalWidth);
           setUploadImgHeight(naturalHeight);
@@ -340,9 +341,9 @@ const ImageCropper: React.FC<ImageCropperProps> = ({
       setCroppedImgWidth(croppedWidth);
       setCroppedImgHeight(croppedHeight);
 
-      console.log(
-        `Cropped image dimensions: ${croppedWidth}x${croppedHeight}px`
-      );
+      // console.log(
+      //   `Cropped image dimensions: ${croppedWidth}x${croppedHeight}px`
+      // );
 
       previewCanvasRef.current.toBlob(async (blob) => {
         if (blob) {
@@ -352,11 +353,13 @@ const ImageCropper: React.FC<ImageCropperProps> = ({
 
           setCroppedFile(croppedFile);
 
-          console.log("Cropped File:", croppedFile);
+          // console.log("Cropped File:", croppedFile);
 
           const googleApiLabels = await handleImageAnalyze(
             croppedFile,
-            originalImageWidth
+            // originalImageWidth
+            croppedWidth,
+            croppedHeight
           );
           console.log("Google API return:", googleApiLabels);
 
