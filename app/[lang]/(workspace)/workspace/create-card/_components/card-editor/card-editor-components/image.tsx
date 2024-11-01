@@ -339,10 +339,9 @@ const ImageElement = (props: Props) => {
       className={clsx(
         "w-full relative text-[16px] overflow-hidden transition-all flex items-center justify-center",
         {
-          "!border-blue-500":
-            state.editor.selectedElement.id === props.element.id,
-          "!border-solid": state.editor.selectedElement.id === props.element.id,
-          "border-dashed border-[1px] border-slate-300": !state.editor.liveMode,
+          '!border-blue-500': state.editor.selectedElement.id === props.element.id,
+          '!border-solid': state.editor.selectedElement.id === props.element.id,
+          'border-dashed border-[1px] border-slate-300 rounded-md': !state.editor.liveMode,
         }
       )}
     >

@@ -218,34 +218,31 @@ function CardEditor({ liveMode }: Props) {
             )}
           {component.hero?.contents && component.hero?.contents.length > 0 && (
             <div
-              className={clsx(
-                "component-container relative bg-white overflow-hidden",
-                {
-                  "p-4":
-                    component.hero?.contents &&
-                    component.hero?.contents[0]?.contents &&
-                    component.hero?.contents[0].contents.length < 1,
-                  "px-4 py-4":
-                    component.hero?.contents &&
-                    component.hero?.contents[0]?.contents &&
-                    component.hero?.contents[0].contents[0]?.type === "box",
-                  "p-0":
-                    component.hero?.contents &&
-                    component.hero?.contents[0].contents &&
-                    component.hero?.contents[0].contents.length > 0 &&
-                    component.hero?.contents[0].type !== "box",
-                  "mt-2":
-                    component.header?.contents &&
-                    component.header?.contents.length < 1,
-                  "border-x border-t":
-                    component.header?.contents &&
-                    component.header?.contents.length < 1 &&
-                    !component.hero?.contents,
-                  "rounded-t-lg":
-                    component.header?.contents &&
-                    component.header?.contents.length < 1,
-                }
-              )}
+              className={clsx("component-container relative bg-white", {
+                "p-4":
+                  component.hero?.contents &&
+                  component.hero?.contents[0]?.contents &&
+                  component.hero?.contents[0].contents.length < 1,
+                "px-4 py-4":
+                  component.hero?.contents &&
+                  component.hero?.contents[0]?.contents &&
+                  component.hero?.contents[0].contents[0]?.type === "box",
+                "p-0":
+                  component.hero?.contents &&
+                  component.hero?.contents[0].contents &&
+                  component.hero?.contents[0].contents.length > 0 &&
+                  component.hero?.contents[0].type !== "box",
+                "mt-2":
+                  component.header?.contents &&
+                  component.header?.contents.length < 1,
+                "border-x border-t":
+                  component.header?.contents &&
+                  component.header?.contents.length < 1 &&
+                  !component.hero?.contents,
+                "rounded-t-lg":
+                  component.header?.contents &&
+                  component.header?.contents.length < 1,
+              })}
             >
               {component.hero && renderSection(component.hero, component)}
             </div>

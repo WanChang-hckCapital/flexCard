@@ -36,6 +36,12 @@ export type Profile = {
   accountType: string;
   role: string;
   onboarded: boolean;
+  preferences: {
+    theme: string;
+    language: string;
+    categories: string[];
+    isSkip: boolean;
+  };
   cards: Card[];
   followers: Profile[];
   following: Profile[];
@@ -50,6 +56,13 @@ export type Profile = {
   viewDetails: ViewDetail[];
   updateHistory: [];
 };
+
+export type LineUser = {
+  userId: string;
+  name: string;
+  email: string;
+  image: string;
+}
 
 export type Organization = {
   document: [];

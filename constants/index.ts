@@ -29,7 +29,7 @@ export const sidebarLinks = [
 ];
 
 export const personalTabs = [
-  { value: "flexCard", label: "CARDS", icon: "/assets/grid-dark.svg" },
+  { value: "flexCard", label: "BUBBLES", icon: "/assets/grid-dark.svg" },
   { value: "saved", label: "SAVED", icon: "/assets/saved-dark.svg" },
 ];
 

@@ -30,13 +30,14 @@
   "header": {
     "subscription": "Subscription",
     "language": "Switch Language",
-    "myCard": "My Card",
+    "myBubble": "My Bubble",
     "setting": "Settings",
     "dashboard": "Dashboard",
     "signIn": "Sign In",
     "signOut": "Sign Out",
     "forum": "Forum",
-    "blog": "Blog"
+    "blog": "Blog",
+    "contactUs": "Contact Us"
   },
   "contactUs": {
     "title": "Contact Us",
@@ -59,6 +60,23 @@
       "submitButton": "Submit"
     }
   },
+  "cardDetails": {
+    "followBtn": "Follow",
+    "unfollowBtn": "Unfollow",
+    "suggestedCard": "Suggested Card",
+    "followers": "Followers",
+    "comments": "Comments",
+    "addComment": "Add a comment...",
+    "reply": "Reply",
+    "toast": {
+      "beforeLogin": "You need to login first before actions.",
+      "beforeLoginComment": "You need to login first before comment.",
+      "commentSuccess": "Comment successfully.",
+      "boforeLoginLike": "You need to login first before like.",
+      "likeSuccess": "Like successfully.",
+      "somethingWrong": "Something went wrong. Please try again later."
+    }
+  },
   "products": {
     "title": "Choose your right Plan!",
     "subtitle": "No hidden fees, cancel anytime.",
@@ -79,7 +97,7 @@
     "Profile": "Profile"
   },
   "profile": {
-    "card": "Card",
+    "bubble": "Card",
     "followers": "Followers",
     "following": "Following",
     "follow": "Follow",
@@ -99,7 +117,7 @@
     }
   },
   "profileTab": {
-    "CARDS": "CARDS",
+    "BUBBLES": "BUBBLES",
     "SAVED": "SAVED"
   },
   "organization": {
@@ -176,10 +194,19 @@
       "title": "Manage Account",
       "subTitle": "Profiles",
       "waitingDesc": "Waiting to be activated",
+      "unnamedProfile": "Unnamed Profile",
       "usertype": {
         "PERSONAL": "Personal",
         "ORGANIZATION": "Organization",
         "ENTREPRENEUR": "Enterpreneur"
+      },
+      "toast": {
+        "activeSuccess": "Profile activated successfully!",
+        "activeFailed": "Failed to activate profile: ",
+        "deleteSuccess": "Profile deleted successfully!",
+        "deleteFailed": "Failed to delete profile: ",
+        "deleting": "Deleting...",
+        "delete": "Delete"
       },
       "dialogTitle": {
         "PERSONAL": "Creating Personal Profile",
@@ -239,14 +266,17 @@
     "accountSection": "Account",
     "privacySection": "Who can view your bubble",
     "notificationSection": "Who's bubble you wanted to view",
+    "termsConditionSection": "Terms & Conditions",
     "theme": "Theme",
     "profile": "Edit Profile",
+    "preferences": "Preferences",
     "account": "Manage Account",
     "notification": "Notifications",
     "privacy": "Accounts Privacy",
     "closeFriends": "Close Friends",
     "blockedUsers": "Blocked Accounts",
-    "mutedUsers": "Muted Accounts"
+    "mutedUsers": "Muted Accounts",
+    "termsCondition": "Terms & Conditions"
   },
   "dashboard": {
     "breadcrumb": {

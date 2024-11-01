@@ -223,6 +223,86 @@ export async function fetchMemberImage(imageId: string) {
   }
 }
 
+export async function updateProfileThemePreference(profileId: string, theme: "light" | "dark" | "system") {
+  try {
+    await connectToDB();
+
+    const profile = await ProfileModel.findOne({ _id: profileId }).select("preferences");
+    if (!profile) {
+      throw new Error("Profile not found.");
+    }
+
+    profile.preferences.theme = theme;
+    await profile.save();
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Failed to update theme:", error);
+    return { success: false, message: error.message };
+  }
+}
+
+export async function updateUserLanguagePreference(profileId: string, language: string) {
+  try {
+    await connectToDB();
+
+    const profile = await ProfileModel.findOne({ _id: profileId }).select("preferences");
+    if (!profile) {
+      throw new Error("Profile not found.");
+    }
+
+    profile.preferences.language = language;
+    await profile.save();
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Failed to update language:", error);
+    return { success: false, message: error.message };
+  }
+}
+
+export async function fetchProfilePreferences(profileId: string) {
+  try {
+    await connectToDB();
+
+    const profile = await ProfileModel.findOne({ _id: profileId }).select("preferences");
+    if (!profile) {
+      throw new Error("Profile not found.");
+    }
+
+    return profile.preferences;
+  } catch (error: any) {
+    console.error("Failed to fetch preferences:", error);
+    return { success: false, message: error.message };
+  }
+}
+
+interface ParamsSaveProfilePreferences {
+  profileId: string;
+  categories?: string[];
+  isSkip?: boolean;
+}
+
+export async function saveProfilePreferences({ profileId, categories, isSkip }: ParamsSaveProfilePreferences) {
+  try {
+    await connectToDB();
+
+    const profile = await ProfileModel.findOne({ _id: profileId }).select("preferences");
+    if (!profile) {
+      throw new Error("Profile not found.");
+    }
+
+    profile.preferences.categories = categories;
+    profile.preferences.isSkip = isSkip;
+    await profile.save();
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Failed to save preferences:", error);
+    return { success: false, message: error.message };
+  }
+}
+
 export async function fetchCurrentActiveProfile(userId: string) {
   try {
     await connectToDB();
@@ -2385,6 +2465,58 @@ export async function sendFlexMessageLiff(flexContent: string) {
   }
 }
 
+export async function saveLineUserDetails(
+  userId: string,
+  name: string,
+  imageURL?: string,
+  email?: string
+) {
+  try {
+    await connectToDB();
+
+    const lineUser = await LineUserModel.findOne({ userId: userId });
+
+    if (!lineUser) {
+      const newLineUser = new LineUserModel({
+        userId: userId,
+        name: name,
+        imageURL: imageURL,
+        email: email,
+      });
+
+      await newLineUser.save();
+
+      return { success: true, message: "Line user details saved sucessfully." };
+    }else{
+      return { success: false, message: "Line user details already existed." };
+    }
+  } catch (error: any) {
+    console.error("Error saving line user details:", error);
+    return { success: false, message: error.message };
+  }
+}
+
+export async function fetchLineUserDetails(userId: string) {
+  try {
+    await connectToDB();
+
+    const lineUser = await LineUserModel.findOne({ userId: userId });
+
+    if (!lineUser) {
+      return { success: false, message: "Line user details not found." };
+    }
+
+    return {
+      success: true,
+      data: lineUser,
+    };
+  }
+  catch (error: any) {
+    console.error("Error fetching line user details:", error);
+    return { success: false, message: error.message };
+  }
+}
+
 import { MongoClient } from "mongodb";
 import { Friend, User } from "@/types";
 import ProfileModel from "../models/profile";
@@ -2395,6 +2527,7 @@ import InvitationModal from "@/app/[lang]/(blog)/blog/_components/InvitationModa
 import ForumModel from "../models/forum";
 import ForumCommentModel from "../models/forumcomment";
 import ForumCommentReplyModel from "../models/forumcommentreply";
+import LineUserModel from "../models/lineuser";
 
 // get all possible member // need to remove this
 export async function fetchAllMembers() {
@@ -3255,9 +3388,6 @@ export async function sendFollowRequest(
     const currentActiveTargetProfile = await ProfileModel.findOne({
       _id: targetMember.profiles[targetMember.activeProfile],
     });
-
-    console.log(currentActiveAuthProfile);
-    console.log(currentActiveTargetProfile);
 
     if (!currentActiveAuthProfile || !currentActiveTargetProfile) {
       return {

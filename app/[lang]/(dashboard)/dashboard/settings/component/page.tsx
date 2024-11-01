@@ -16,6 +16,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 import AddNewUser from "@/components/forms/new-user"
+import liff from "@line/liff"
 
 interface Props {
     authActiveProfileId: string;
@@ -40,6 +41,50 @@ function Setting({ authActiveProfileId }: Props) {
             toast.error('Failed to send report');
         }
     }
+
+    const handleShareLine = async () => {
+        try {
+            await liff.init({ liffId: process.env.NEXT_PUBLIC_LINE_LIFF_ID! });
+            if (liff.isLoggedIn()) {
+                const result = await liff.shareTargetPicker([
+                    // {
+                    //     type: 'flex',
+                    //     altText: 'This is a Flex Message',
+                    //     contents: JSON.parse(lineComponents || ''),
+                    // },
+                    {
+                        type: 'text',
+                        text: 'Weekly Sales Report',
+                    }
+                ]);
+                if (result) {
+                    toast.info("Card has been shared successfully, Please check your LINE.");
+                } else {
+                    const [majorVer, minorVer, patchVer] = (liff.getLineVersion() || "").split('.');
+
+                    if (minorVer === undefined) {
+                        toast.error('ShareTargetPicker was canceled in external browser')
+                        return
+                    }
+
+                    if (parseInt(majorVer) >= 10 && parseInt(minorVer) >= 10 && parseInt(patchVer) > 0) {
+                        toast.info('ShareTargetPicker was canceled in LINE app')
+                    }
+                }
+
+                // if (liff.isInClient()) {
+                //     liff.logout();
+                //     window.location.reload()
+                // } else {
+                //     toast.error("Failed to share card to LINE, Please open in Line app.");
+                // }
+            } else {
+                liff.login();
+            }
+        } catch (error: any) {
+            toast.error("Failed to share card to LINE, Please try again later.");
+        }
+    };
 
     useEffect(() => {
         const fetchFollowers = async () => {
@@ -142,7 +187,8 @@ function Setting({ authActiveProfileId }: Props) {
                                     <Button
                                         variant={"secondary"}
                                         className="w-full"
-                                        onClick={() => sendReport('Weekly Sales Report')}
+                                        // onClick={() => sendReport('Weekly Sales Report')}
+                                        onClick={handleShareLine}
                                     >
                                         Send
                                     </Button>

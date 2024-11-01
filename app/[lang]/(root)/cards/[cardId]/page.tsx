@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import React from "react";
 import {
   fetchCardDetails,
@@ -16,9 +15,10 @@ import CardComponent from "@/components/card-details/card-component";
 import CardInfo from "@/components/card-details/card-info";
 import ResponsiveGrid from "@/components/responsive-grid";
 import Link from "next/link";
+import { getDictionary } from "@/app/[lang]/dictionaries";
 
 type Props = {
-  params: { cardId: string };
+  params: { cardId: string, lang: string };
 };
 
 const CardDetails = async ({ params }: Props) => {
@@ -50,6 +50,8 @@ const CardDetails = async ({ params }: Props) => {
   const lineComponentsContent = JSON.parse(cardDetails.lineComponents.content);
   const bubbleSize = lineComponentsContent.size;
 
+  const dict = await getDictionary(params.lang);
+
   return (
     <>
       {cardDetails ? (
@@ -78,6 +80,7 @@ const CardDetails = async ({ params }: Props) => {
               likes={cardDetails.likes}
               lineComponents={cardDetails.lineComponents.content}
               shareUrl={shareUrl}
+              dict={dict}
             />
           </div>
         </div>
@@ -85,7 +88,7 @@ const CardDetails = async ({ params }: Props) => {
       {suggestedCards && suggestedCards.length > 0 ? (
         <div className="w-[95%] m-auto">
           <h2 className="mt-8 mb-[8px] ml-[5px] text-2xl font-bold">
-            Suggested Cards
+            {dict.cardDetails.suggestedCard}
           </h2>
           <ResponsiveGrid result={suggestedCards} />
         </div>

@@ -60,9 +60,9 @@ const ProfileList: React.FC<ProfileListProps> = ({
     try {
       setIsLoading(true);
       await setCurrentActiveProfileById(authUserId, profileId);
-      toast.success("Profile activated successfully!");
+      toast.success(dict.userSettings.account.toast.activeSuccess);
     } catch (error: any) {
-      toast.error(`Failed to activate profile: ${error.message}`);
+      toast.error(`${dict.userSettings.account.toast.activeFailed} ${error.message}`);
     } finally {
       setIsLoading(false);
       window.location.reload();
@@ -87,10 +87,10 @@ const ProfileList: React.FC<ProfileListProps> = ({
       setIsLoading(true);
       const response = await deleteProfileById(profileToDelete._id, authUserId);
       if (response.success) {
-        toast.success("Profile deleted successfully!");
+        toast.success(dict.userSettings.account.toast.deleteSuccess);
         window.location.reload();
       } else {
-        toast.error(`Failed to delete profile: ${response.message}`);
+        toast.error(`${dict.userSettings.account.toast.deleteFailed} ${response.message}`);
       }
     } catch (error: any) {
       toast.error(`Error: ${error.message}`);
@@ -162,10 +162,10 @@ const ProfileList: React.FC<ProfileListProps> = ({
                   ) : (
                     <CircleUser className="w-24 h-24 text-neutral-500" />
                   )}
-                  <CardTitle className="!mt-5">
+                  <CardTitle className="!mt-5 text-center">
                     {profile
-                      ? profile.accountname || "Unnamed Profile"
-                      : "Waiting to be activated"}
+                      ? profile.accountname || dict.userSettings.account.unnamedProfile
+                      : dict.userSettings.account.waitingDesc}
                     <p className="text-[12px] text-neutral-500 mt-2">
                       {userType}
                     </p>
@@ -306,7 +306,7 @@ const ProfileList: React.FC<ProfileListProps> = ({
                 onClick={confirmDeleteProfile}
                 disabled={isLoading}
               >
-                {isLoading ? "Deleting..." : "Delete"}
+                {isLoading ? dict.userSettings.account.toast.deleting : dict.userSettings.account.toast.delete}
               </Button>
             </div>
           </CardContent>

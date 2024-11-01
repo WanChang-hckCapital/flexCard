@@ -122,53 +122,24 @@ async function Dashboard() {
 
   const authUserId = user.id.toString();
   const authActiveProfileId = await fetchCurrentActiveProfileId(authUserId);
+  const strAuthActiveProfileId = authActiveProfileId.toString();
 
   let profiles = await fetchAllMemberProfile(authActiveProfileId);
   if (!profiles) return null;
 
   const memberProfileStats = await fetchMemberProfileStats();
 
-  console.log("memberProfileStats: ", memberProfileStats);
-
   profiles = profiles.map((profile) => {
     let plainProfile = profile.toJSON ? profile.toJSON() : profile;
   
-    plainProfile = Object.fromEntries(
-      Object.entries(plainProfile).filter(([key, value]) => typeof value !== 'symbol')
-    );
+    // plainProfile = Object.fromEntries(
+    //   Object.entries(plainProfile).filter(([key, value]) => typeof value !== 'symbol')
+    // );
   
     return plainProfile;
   });
 
-  console.log("profiles: ", profiles);
-
   const membersWithSubscriptions = await fetchAllSubscriptions(profiles);
-
-  const cusmember: any = {
-    _id: "shab",
-    accountname: null,
-    image: [],
-    shortdescription: null,
-    usertype: "PERSONAL",
-    accountType: "PUBLIC",
-    role: "PERSONAL",
-    onboarded: false,
-    cards: [],
-    following: [],
-    closeFriends: [],
-    blockedAccounts: [],
-    mutedAccounts: [],
-    organization: null,
-    offers: [],
-    stripeCustomerId: null,
-    subscription: [],
-    totalViews: 0,
-    followers: [],
-    viewDetails: [],
-    updateHistory: [],
-  }
-
-  console.log("membersWithSubscriptions: ", membersWithSubscriptions);
 
   for (let member of membersWithSubscriptions) {
     for (let key in member) {
@@ -188,6 +159,10 @@ async function Dashboard() {
     (profile.usertype === "ORGANIZATION" || profile.usertype === "BUSINESS" || profile.usertype === "ENTERPRISE"));
   const membersAdmin = membersWithSubscriptions.filter(profile => profile.usertype === "FLEXADMIN");
   const membersSuperUser = membersWithSubscriptions.filter(profile => profile.usertype === "SUPERUSER");
+
+  console.log("authActiveProfileId", authActiveProfileId);
+  console.log("str", strAuthActiveProfileId);
+  console.log("membersWithFreeVersion", membersWithFreeVersion);
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-neutral-900 gap-4 p-4 lg:gap-6 lg:p-6">
@@ -322,20 +297,20 @@ async function Dashboard() {
                     <MemberDataTable
                       filterValue="accountname"
                       columns={columns}
-                      data={cusmember}
-                      authActiveProfileId={authActiveProfileId}
+                      data={membersWithSubscriptions}
+                      authActiveProfileId={strAuthActiveProfileId}
                     />
                   </CardContent>
                 </Card>
               </TabsContent>
-              {/* <TabsContent value="general">
+              <TabsContent value="general">
                 <Card>
                   <CardContent>
                     <MemberDataTable
                       filterValue="accountname"
                       columns={columns}
                       data={membersWithFreeVersion}
-                      authActiveProfileId={authActiveProfileId}
+                      authActiveProfileId={strAuthActiveProfileId}
                     />
                   </CardContent>
                 </Card>
@@ -347,7 +322,7 @@ async function Dashboard() {
                       filterValue="accountname"
                       columns={columns}
                       data={membersWithProfessional}
-                      authActiveProfileId={authActiveProfileId}
+                      authActiveProfileId={strAuthActiveProfileId}
                     />
                   </CardContent>
                 </Card>
@@ -359,7 +334,7 @@ async function Dashboard() {
                       filterValue="accountname"
                       columns={columns}
                       data={membersOrganization}
-                      authActiveProfileId={authActiveProfileId}
+                      authActiveProfileId={strAuthActiveProfileId}
                     />
                   </CardContent>
                 </Card>
@@ -371,7 +346,7 @@ async function Dashboard() {
                       filterValue="accountname"
                       columns={columns}
                       data={membersAdmin}
-                      authActiveProfileId={authActiveProfileId}
+                      authActiveProfileId={strAuthActiveProfileId}
                     />
                   </CardContent>
                 </Card>
@@ -383,11 +358,11 @@ async function Dashboard() {
                       filterValue="accountname"
                       columns={columns}
                       data={membersSuperUser}
-                      authActiveProfileId={authActiveProfileId}
+                      authActiveProfileId={strAuthActiveProfileId}
                     />
                   </CardContent>
                 </Card>
-              </TabsContent> */}
+              </TabsContent>
             </Tabs>
           </div>
         </main>

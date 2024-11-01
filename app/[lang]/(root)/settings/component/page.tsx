@@ -5,9 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import MemberProfile from "@/components/forms/member-profile";
 import { getFollowers } from "@/lib/actions/admin.actions";
 import {
+  Activity,
   Ban,
   Bell,
   BellOff,
+  HeartHandshake,
   Lock,
   Palette,
   Star,
@@ -36,6 +38,8 @@ import {
 } from "@/components/ui/dialog";
 import ThemeToggle from "@/components/theme-toogle";
 import LanguageSwitcher from "@/components/language-switcher";
+import PreferencesComponent from "@/components/root-settings/preferences";
+import TermsConditions from "@/components/root-settings/terms-conditions";
 
 interface Props {
   authUserId: string;
@@ -44,6 +48,104 @@ interface Props {
   profiles: any[];
   dict: any;
 }
+
+const categories = [
+  {
+    label: "Entertainment",
+    imageUrl:
+      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
+  },
+  {
+    label: "Daily Life",
+    imageUrl:
+      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
+  },
+  {
+    label: "Comedy",
+    imageUrl:
+      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
+  },
+  {
+    label: "Pets",
+    imageUrl:
+      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
+  },
+  {
+    label: "Learning",
+    imageUrl:
+      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
+  },
+  {
+    label: "Foods",
+    imageUrl:
+      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
+  },
+  {
+    label: "Sports",
+    imageUrl:
+      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
+  },
+  {
+    label: "Telent Show",
+    imageUrl:
+      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
+  },
+  {
+    label: "Fashion",
+    imageUrl:
+      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
+  },
+  {
+    label: "Car",
+    imageUrl:
+      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
+  },
+  {
+    label: "Drama",
+    imageUrl:
+      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
+  },
+  {
+    label: "DIY Life Tricks",
+    imageUrl:
+      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
+  },
+  {
+    label: "Family",
+    imageUrl:
+      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
+  },
+  {
+    label: "Healthcare",
+    imageUrl:
+      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
+  },
+  {
+    label: "Art & Design",
+    imageUrl:
+      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
+  },
+  {
+    label: "Dance",
+    imageUrl:
+      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
+  },
+  {
+    label: "Stress Relif",
+    imageUrl:
+      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
+  },
+  {
+    label: "Outdoor Sports",
+    imageUrl:
+      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
+  },
+  {
+    label: "Furniture & Garden",
+    imageUrl:
+      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
+  },
+];
 
 function RootSetting({
   authUserId,
@@ -100,8 +202,8 @@ function RootSetting({
   }, []);
 
   return (
-    <div className="flex min-h-screen dark:bg-neutral-900 w-full">
-      <aside className="w-64 dark:bg-black border-r-2 p-6">
+    <div className="flex h-[94vh] dark:bg-neutral-900 w-full overflow-hidden">
+      <aside className="w-64 dark:bg-black border-r-2 p-6 overflow-y-auto">
         <div className="dark:text-light-2 mb-10">
           <h2 className="text-xl font-semibold">
             {dict.userSettingsLeftBar.title}
@@ -109,30 +211,8 @@ function RootSetting({
         </div>
         <nav className="space-y-4">
           <p className="dark:text-slate-400 text-[12px]">
-            {dict.userSettingsLeftBar.themeSection}
-          </p>
-          <a
-            onClick={() => handleNavClick("theme")}
-            className={`flex p-3 rounded-lg items-center cursor-pointer ${
-              activeSection === "theme"
-                ? "dark:bg-light-3 dark:text-primary bg-stone-400 text-white"
-                : ""
-            }`}
-          >
-            <Palette className="mr-2 w-5 h-5" />
-            {dict.userSettingsLeftBar.theme}
-          </a>
-          <p className="dark:text-slate-400 text-[12px]">
             {dict.userSettingsLeftBar.accountSection}
           </p>
-          {/* <a
-                        onClick={() => handleNavClick("edit-profile")}
-                        className={`flex p-3 rounded-lg items-center cursor-pointer ${activeSection === "edit-profile" ? "dark:bg-light-3 dark:text-primary bg-stone-400 text-white" : ""
-                            }`}
-                    >
-                        <User2 className="mr-2 w-5 h-5" />
-                        {dict.userSettingsLeftBar.profile}
-                    </a> */}
           <a
             onClick={() => handleNavClick("manage-account")}
             className={`flex p-3 rounded-lg items-center cursor-pointer ${
@@ -205,32 +285,53 @@ function RootSetting({
             <BellOff className="mr-2 w-5 h-5" />
             {dict.userSettingsLeftBar.mutedUsers}
           </a>
+          <p className="dark:text-slate-400 text-[12px]">
+            {dict.userSettingsLeftBar.themeSection}
+          </p>
+          <a
+            onClick={() => handleNavClick("theme")}
+            className={`flex p-3 rounded-lg items-center cursor-pointer ${
+              activeSection === "theme"
+                ? "dark:bg-light-3 dark:text-primary bg-stone-400 text-white"
+                : ""
+            }`}
+          >
+            <Palette className="mr-2 w-5 h-5" />
+            {dict.userSettingsLeftBar.theme}
+          </a>
+          <a
+            onClick={() => handleNavClick("preferences")}
+            className={`flex p-3 rounded-lg items-center cursor-pointer ${
+              activeSection === "preferences"
+                ? "dark:bg-light-3 dark:text-primary bg-stone-400 text-white"
+                : ""
+            }`}
+          >
+            <Activity className="mr-2 w-5 h-5" />
+            {dict.userSettingsLeftBar.preferences}
+          </a>
+          <p className="dark:text-slate-400 text-[12px]">
+            {dict.userSettingsLeftBar.termsConditionSection}
+          </p>
+          <a
+            onClick={() => handleNavClick("terms")}
+            className={`flex p-3 rounded-lg items-center cursor-pointer ${
+              activeSection === "terms"
+                ? "dark:bg-light-3 dark:text-primary bg-stone-400 text-white"
+                : ""
+            }`}
+          >
+            <HeartHandshake className="mr-2 w-5 h-5" />
+            {dict.userSettingsLeftBar.termsCondition}
+          </a>
         </nav>
       </aside>
 
-      <main className="py-6 w-[60%] mx-auto">
+      <main
+        className={`py-6 mx-auto transition-all duration-300`}
+        style={{ width: activeSection === "terms" ? "70%" : "60%" }}
+      >
         <div className="grid gap-6">
-          {activeSection === "theme" && (
-            <Card>
-              <CardHeader>
-                <CardTitle>{dict.userSettings.theme.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ThemeToggle dict={dict} />
-                {/* <LanguageSwitcher /> */}
-              </CardContent>
-            </Card>
-          )}
-          {/* {activeSection === "edit-profile" && (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>{dict.userSettings.profile.title}</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <MemberProfile profile={profileData} btnTitle={dict.userSettings.profile.btnContinue} dict={dict} />
-                            </CardContent>
-                        </Card>
-                    )} */}
           {activeSection === "manage-account" && (
             <Card>
               <CardHeader className="flex flex-row justify-between items-center">
@@ -306,6 +407,33 @@ function RootSetting({
               dict={dict}
             />
           )}
+          {activeSection === "theme" && (
+            <Card>
+              <CardHeader>
+                <CardTitle>{dict.userSettings.theme.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ThemeToggle
+                  dict={dict}
+                  authActiveProfileId={authActiveProfileId}
+                />
+              </CardContent>
+            </Card>
+          )}
+          {activeSection === "preferences" && (
+            <Card>
+              <CardHeader>
+                <CardTitle>{dict.userSettingsLeftBar.preferences}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <PreferencesComponent
+                  categories={categories}
+                  profileId={authActiveProfileId}
+                />
+              </CardContent>
+            </Card>
+          )}
+          {activeSection === "terms" && <TermsConditions />}
         </div>
       </main>
     </div>

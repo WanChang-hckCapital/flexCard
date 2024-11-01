@@ -58,6 +58,18 @@ export default async function WorkspaceLayout({
       <ThemeProvider>
         <html lang="en">
           {/* <Script src="/opencv.js" strategy="beforeInteractive" />{" "} */}
+          <head>
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `
+                  (function() {
+                    const theme = document.cookie.match(/theme=([^;]+)/)?.[1] || 'light';
+                    document.documentElement.classList.add(theme);
+                  })();
+                `,
+              }}
+            />
+          </head>
           <body
             className={cn(
               "min-h-screen flex flex-col dark:bg-dark-1 justify-center dark:text-white font-sans antialiased",

@@ -8,14 +8,24 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Button } from "./ui/button";
+import { updateUserLanguagePreference } from "@/lib/actions/user.actions";
 
-const LanguageSwitcher = () => {
+const LanguageSwitcher = ({dict, authActiveProfileId}: any) => {
   const router = useRouter();
   const pathname = usePathname();
   const availableLocales = ["en", "zh-TW"];
 
-  const switchLocale = (newLocale: string) => {
+  const switchLocale = async (newLocale: string) => {
     const pathWithoutLocale = pathname.replace(/^\/(en|zh-TW)/, "");
+    
+    if (authActiveProfileId) {
+      try {
+        await updateUserLanguagePreference(authActiveProfileId, newLocale);
+      } catch (error) {
+        console.error("Failed to update language preference", error);
+      }
+    }
+
     document.cookie = `language=${newLocale}; path=/; max-age=31536000`;
     router.push(`/${newLocale}${pathWithoutLocale}`);
   };
@@ -23,7 +33,7 @@ const LanguageSwitcher = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button>Switch Language</Button>
+        <Button className="w-full">{dict.header.language}</Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         {availableLocales.map((loc) => (

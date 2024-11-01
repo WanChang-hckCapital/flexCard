@@ -21,7 +21,18 @@ export default function RootLayout({
   return (
     <AuthSessionProvider>
       <html lang="en">
-        {/* <head></head> */}
+        <head>
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                  (function() {
+                    const theme = document.cookie.match(/theme=([^;]+)/)?.[1] || 'light';
+                    document.documentElement.classList.add(theme);
+                  })();
+                `,
+            }}
+          />
+        </head>
         <body>
           <main>
             <section>

@@ -23,6 +23,7 @@ type CardInfoProps = {
     likes: any[];
     lineComponents: string;
     shareUrl: string;
+    dict: any;
 }
 
 export default function CardInfo({
@@ -36,7 +37,8 @@ export default function CardInfo({
     session,
     likes,
     lineComponents,
-    shareUrl
+    shareUrl,
+    dict
 }: CardInfoProps) {
     const [authActiveProfileId, setAuthActiveProfileId] = useState<string | null>(null);
     const [isFollowing, setIsFollowing] = useState(false);
@@ -115,7 +117,7 @@ export default function CardInfo({
 
     const handleUpdateLikeButtonClick = async () => {
         if (!clientSession) {
-            toast.error("You need to login first before actions.");
+            toast.error(dict.cardDetails.toast.beforeLogin);
             return;
         }
 
@@ -147,13 +149,13 @@ export default function CardInfo({
         } catch (error) {
             setLikeCount(initialLikeCount);
             setIsLiked(initialIsLiked);
-            toast.error("Something went wrong. Please try again later.");
+            toast.error(dict.cardDetails.toast.somethingWrong);
         }
     };
 
     const handleAddComment = async () => {
         if (!clientSession) {
-            toast.error("You need to login first before commenting.");
+            toast.error(dict.cardDetails.toast.beforeLoginComment);
             return;
         }
 
@@ -179,9 +181,9 @@ export default function CardInfo({
                 }
             }
             setNewComment("");
-            toast.success("Commented successfully!");
+            toast.success(dict.cardDetails.toast.commentSuccess);
         } catch (error) {
-            toast.error("Something went wrong. Please try again later.");
+            toast.error(dict.cardDetails.toast.somethingWrong);
         }
     };
 
@@ -215,7 +217,7 @@ export default function CardInfo({
 
     const handleLikeComment = async (commentId: string) => {
         if (!clientSession) {
-            toast.error("You need to login first before liking.");
+            toast.error(dict.cardDetails.toast.beforeLoginLike);
             return;
         }
 
@@ -228,12 +230,12 @@ export default function CardInfo({
 
             if (response.success && response.data) {
                 setComments(comments.map(comment => updateLikes(comment, commentId, response.data.likes || [])));
-                toast.success("Comment liked successfully!");
+                toast.success(dict.cardDetails.toast.likeSucess);
             } else {
                 toast.error(response.message);
             }
         } catch (error) {
-            toast.error("Something went wrong. Please try again later.");
+            toast.error(dict.cardDetails.toast.somethingWrong);
         }
     };
 
@@ -289,7 +291,7 @@ export default function CardInfo({
                                                 onClick={(e) => { e.stopPropagation(); handleReplyClick(reply.commentBy.accountname, reply._id); }}
                                                 className="text-blue px-0 h-5 text-[14px]"
                                             >
-                                                Reply
+                                                {dict.cardDetails.reply}
                                             </Button>
                                         )}
                                     </div>
@@ -331,7 +333,7 @@ export default function CardInfo({
                         />
                         <div className="ml-4">
                             <p className="text-lg">{creatorInfo.accountname}</p>
-                            <p className="text-sm text-gray-500">{creatorInfo.followers} followers</p>
+                            <p className="text-sm text-gray-500">{creatorInfo.followers} {dict.cardDetails.followers}</p>
                         </div>
                     </div>
                     {clientSession && isDifferentUser && (
@@ -340,20 +342,20 @@ export default function CardInfo({
                             onClick={handleFollowToggle}
                             className={"py-2 px-4 h-8 rounded"}
                         >
-                            {isFollowing ? 'Unfollow' : 'Follow'}
+                            {isFollowing ? dict.cardDetails.unfollowBtn :  dict.cardDetails.followBtn}
                         </Button>
                     )}
                 </div>
             </div>
             {cardDescription !== "" && (
                 <div className="pt-4 mb-4">
-                    <p className="text-sm font-medium">Description:</p>
+                    <p className="text-sm font-medium">{dict.cardDetails.description}:</p>
                     <div className="pt-4" dangerouslySetInnerHTML={{ __html: cardDescription }} />
                 </div>
             )}
             <div className="my-4">
                 <div className="flex justify-between items-center cursor-pointer" onClick={() => setCommentsCollapsed(!commentsCollapsed)}>
-                    <h2 className="text-lg font-bold">Comments</h2>
+                    <h2 className="text-lg font-bold">{dict.cardDetails.comments}</h2>
                     {commentsCollapsed ? <ChevronDown /> : <ChevronUp />}
                 </div>
                 {!commentsCollapsed && (
@@ -394,7 +396,7 @@ export default function CardInfo({
                                                     onClick={(e) => { e.stopPropagation(); handleReplyClick(comment.commentBy.accountname, comment._id); }}
                                                     className="text-blue px-0 h-5 text-[14px]"
                                                 >
-                                                    Reply
+                                                    {dict.cardDetails.reply}
                                                 </Button>
                                             )}
                                         </div>
@@ -413,7 +415,7 @@ export default function CardInfo({
                             type="text"
                             value={newComment}
                             onChange={handleCommentInputChange}
-                            placeholder="Add a comment..."
+                            placeholder={dict.cardDetails.addComment}
                             className="border p-2 rounded w-full bg-black text-white"
                             onBlur={handleCommentInputBlur}
                             onFocus={() => setActiveCommentId(null)}
