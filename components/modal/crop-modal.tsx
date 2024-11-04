@@ -176,10 +176,18 @@ const CropModal: React.FC<CropModalProps> = ({
   const [croppedLogos, setCroppedLogos] = useState<string[]>([]);
   const [logoRotations, setLogoRotations] = useState<number[]>([]);
   const [isGptDataLoading, setIsGptDataLoading] = useState(false);
+
   const [gptData, setGptData] = useState<any>(null);
+  const [gptDataLayout, setGptDataLayout] = useState<any>("horizontal");
+  const [gptDataQuadrant, setGptDataQuadrant] = useState<any>(null);
+
   const [croppedGPTLogo, setCroppedGPTLogo] = useState<string>("");
   const { dispatch, state } = useEditor();
   const [elements, setElements] = useState<any[]>([]);
+
+  const [bubbleAlign, setBubbleAlign] = useState<string>("vertical");
+
+  const [imageQuadrant, setImageQuadrant] = useState<string>("top-left");
 
   let uploadedImageURL: string = "";
 
@@ -273,21 +281,10 @@ const CropModal: React.FC<CropModalProps> = ({
     setLogoRotations(rotations);
   };
 
-  // const uploadCroppedImage = async (croppedImage: string): Promise<string> => {
-  //   const response = await fetch("/api/uploadImage", {
-  //     method: "POST",
-  //     body: JSON.stringify({ image: croppedImage }), // Adjust payload if necessary
-  //     headers: {
-  //       "Content-Type": "application/json",
-  //     },
-  //   });
-  //   const data = await response.json();
-  //   return data.url; // Return the uploaded image URL from the API response
-  // };
-
   const handleImageAnalyze = async (
     image: File,
-    originalWidth: number
+    originalWidth: number,
+    originalHeight: number
   ): Promise<{
     logoAnnotations: any[];
   }> => {
@@ -300,8 +297,22 @@ const CropModal: React.FC<CropModalProps> = ({
       setDetectedLogos(result.logoAnnotations || []);
       setIsLoading(false);
 
-      // Extract logo coordinates
       if (result.logoAnnotations) {
+        result.logoAnnotations.forEach((logo: any) => {
+          if (logo.boundingPoly && logo.boundingPoly.vertices) {
+            const quadrant = imageQuadrantHandler(
+              originalWidth,
+              originalHeight,
+              logo.boundingPoly.vertices
+            );
+            // todo -- resize the logo detected
+            setImageQuadrant(quadrant);
+            // const vertices = logo.boundingPoly.vertices;
+            // console.log("Vertices for logo:", vertices);
+          }
+        });
+
+        // Proceed with cropping logos based on the vertices
         const logoCoords = result.logoAnnotations.map(
           (logo: any) => logo.boundingPoly.vertices
         );
@@ -373,25 +384,6 @@ const CropModal: React.FC<CropModalProps> = ({
         };
       };
 
-      const elements: any[] = [];
-
-      // console.log("Extracted Info above:", extractedInfo);
-
-      // Object.keys(extractedInfo).forEach((key) => {
-      //   const field = extractedInfo[key];
-      //   if (field.position) {
-      //     elements.push(createBoxElement(field));
-      //   } else {
-      //     console.log("Field without position:", field);
-      //   }
-      // });
-
-      // final json that need to be saved in the db
-      // Object.keys(elements).forEach((key: any) => {
-      //   console.log(
-      //     key + " elements: " + JSON.stringify(elements[key], null, 2)
-      //   );
-      // });
       return result;
     } catch (error) {
       console.error("Error analyzing image:", error);
@@ -454,119 +446,322 @@ const CropModal: React.FC<CropModalProps> = ({
     };
   };
 
+  const addImageElement = (targetId: string, imageUrl: string) => {
+    dispatch({
+      type: "ADD_ELEMENT",
+      payload: {
+        bubbleId: bubbleId,
+        sectionId: sectionId,
+        targetId: targetId,
+        elementDetails: {
+          id: uuidv4(),
+          type: "image",
+          url: imageUrl,
+          description: "Image is the best way to render information!",
+        },
+      },
+    });
+  };
+
   // disable the logo detection since we do not need this
   const handleChatGpt = async (image: File): Promise<any> => {
     try {
       setIsGptDataLoading(true);
 
       const result = await callChatGpt(image);
+
       const content = result.message.content.replace(/```json|```/g, "").trim();
-      const parsedContent = JSON.parse(content);
-      setGptData(parsedContent);
+
+      let parsedContent;
+      try {
+        parsedContent = JSON.parse(content);
+        setGptData(parsedContent.labels);
+        setGptDataLayout(parsedContent.layout);
+        setGptDataQuadrant(parsedContent.quadrants);
+      } catch (parseError) {
+        console.log("Received non-JSON response from ChatGPT:", content);
+        setGptData([]);
+        setGptDataLayout("horizontal");
+        // throw new Error("ChatGPT returned a non-JSON response");
+        parsedContent = { labels: [], layout: "horizontal" };
+      }
 
       setIsGptDataLoading(false);
       console.log("gpt", parsedContent);
 
       const newElements: any[] = [];
-      newElements.push(createBoxElement(parsedContent));
+      newElements.push(createBoxElement(parsedContent.labels));
 
-      console.log("elements");
-      console.log(newElements);
       setElements(newElements);
       setIsGptDataLoading(false);
 
       return parsedContent;
     } catch (error) {
-      console.log("Error analyzing image:", error);
+      setGptData([]);
+      setGptDataLayout("horizontal");
       setIsGptDataLoading(false);
-      throw error;
+      console.log("Error analyzing image:", error);
+      // throw error;
     }
   };
 
-  // dispatch({
-  //   type: 'ADD_ELEMENT',
-  //   payload: {
-  //     bubbleId: bubble.id,
-  //     sectionId: sectionId,
-  //     targetId: element.id,
-  //     elementDetails: {
-  //       id: uuidv4(),
-  //       type: elementType,
-  //       url: 'https://t4.ftcdn.net/jpg/02/74/09/93/240_F_274099332_K8UURabl8CcuKtJlqj0wtLo5g2KONmXY.jpg',
-  //       description: 'Image is the best way to render information!',
-  //     },
-  //   },
-  // });
+  // use to detect the image stay in which quadrant
+  const imageQuadrantHandler = (
+    croppedImageWidth: number,
+    croppedImageHeight: number,
+    logoBoundingBox: any
+  ) => {
+    const midWidth = croppedImageWidth / 2;
+    const midHeight = croppedImageHeight / 2;
 
-  // for ocr save handler
-  const saveCardHandler = async () => {
-    const currentImageUrl = state.editor.selectedElement.url; // ori pic
-    const url = new URL(currentImageUrl || "");
-    const currentDomain = url.origin;
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-    const newElements: any[] = [];
+    const logoCenterX = (logoBoundingBox[0].x + logoBoundingBox[1].x) / 2;
+    const logoCenterY = (logoBoundingBox[0].y + logoBoundingBox[2].y) / 2;
 
-    // add new text using the result returned by gpt
-    Object.keys(gptData).forEach((key: any) => {
-      dispatch({
-        type: "ADD_ELEMENT",
-        payload: {
-          bubbleId: state.editor.selectedElementBubbleId,
-          sectionId: state.editor.selectedElementSectionId || "initial_body",
-          targetId:
-            state.editor.component?.body?.contents[0].id || "initial_box",
-          elementDetails: {
-            id: uuidv4(),
-            type: "text",
-            text: gptData[key],
-            description: "Render your mind using me.",
-          },
+    let quadrant = "";
+    if (logoCenterX < midWidth && logoCenterY < midHeight) {
+      quadrant = "top-left";
+    } else if (logoCenterX >= midWidth && logoCenterY < midHeight) {
+      quadrant = "top-right";
+    } else if (logoCenterX < midWidth && logoCenterY >= midHeight) {
+      quadrant = "bottom-left";
+    } else if (logoCenterX >= midWidth && logoCenterY >= midHeight) {
+      quadrant = "bottom-right";
+    }
+
+    console.log("Logo detected in quadrant:", quadrant);
+
+    return quadrant;
+  };
+
+  const addBoxElement = (
+    targetId: string,
+    elementDetailsId: string,
+    layout: string,
+    margin: string = "0px"
+  ) => {
+    dispatch({
+      type: "ADD_ELEMENT",
+      payload: {
+        bubbleId: state.editor.selectedElementBubbleId,
+        sectionId: state.editor.selectedElementSectionId || "initial_body",
+        targetId: targetId, // 1
+        elementDetails: {
+          id: elementDetailsId, // 2
+          type: "box",
+          layout: layout, // possible value will be baseline, vertical, horizontal
+          contents: [],
+          description: "Expand your creativity by using me!",
+          margin: margin,
         },
-      });
+      },
     });
-    // upload image by the logo detected by google vision api
-    try {
-      let uploadImageUrlWithHttp = "";
-      // Declare the uploadedUrls array to store the URLs after upload
-      const uploadedUrls: string[] = await Promise.all(
-        croppedLogos.map(async (croppedImage) => {
-          const data = await uploadCroppedImage(croppedImage);
+  };
 
-          console.log("Uploaded Image Data:", data);
-          const uploadedImageUrl = `/api/uploadImage/${data.fileId}`;
-          uploadImageUrlWithHttp = `${baseUrl}${uploadedImageUrl}`;
-
-          console.log("Uploaded Image URL:", uploadedImageUrl);
-          console.log("Full Image URL:", uploadImageUrlWithHttp);
-
-          return uploadImageUrlWithHttp;
-        })
-      );
-
-      console.log("pic", uploadImageUrlWithHttp);
-
-      const updatedElementDetails = {
-        ...state.editor.selectedElement,
-        url: uploadImageUrlWithHttp,
-      };
-
-      console.log("Updated Element Details:", updatedElementDetails);
-
-      dispatch({
-        type: "UPDATE_ELEMENT",
-        payload: {
-          bubbleId: bubbleId,
-          sectionId: sectionId,
-          elementDetails: updatedElementDetails,
+  const addTextElement = (targetId: string, text: string) => {
+    dispatch({
+      type: "ADD_ELEMENT",
+      payload: {
+        bubbleId: state.editor.selectedElementBubbleId,
+        sectionId: state.editor.selectedElementSectionId || "initial_body",
+        targetId: targetId,
+        elementDetails: {
+          id: uuidv4(),
+          type: "text",
+          text: text,
+          description: "Render your mind using me.",
+          align: "start",
+          size: "xxs",
         },
-      });
+      },
+    });
+  };
 
-      toast.success(
-        "Images have been uploaded and the card has been updated successfully."
-      );
-    } catch (error) {
-      console.error("Error uploading images:", error);
-      toast.error("Failed to upload images. Please try again.");
+  // create box for left side, a parent box contains two box, topleftbox and bottomleftbox
+  // will add the image to the box first if a logo detected
+  const createLeftQuadrantBoxes = (
+    parentId: string,
+    gptData: any,
+    gptDataQuadrant: any,
+    uploadedUrls: string[]
+  ) => {
+    const leftVerticalBoxId = uuidv4();
+    addBoxElement(parentId, leftVerticalBoxId, "vertical");
+
+    const topLeftBoxId = uuidv4();
+    addBoxElement(leftVerticalBoxId, topLeftBoxId, "vertical");
+
+    // add the image to the quadrant respectively first if a image is detected, only if the image is at the top-left
+    if (imageQuadrant == "top-left" && uploadedUrls.length > 0) {
+      const imageUrl = uploadedUrls.shift();
+      if (imageUrl) {
+        addImageElement(topLeftBoxId, imageUrl);
+      }
+    }
+
+    if (gptDataQuadrant["top-left"]) {
+      for (let i = 0; i < gptDataQuadrant["top-left"].length; i++) {
+        addTextElement(
+          topLeftBoxId,
+          gptData[gptDataQuadrant["top-left"][i]].text
+        );
+      }
+    }
+
+    const bottomLeftBoxId = uuidv4();
+    addBoxElement(leftVerticalBoxId, bottomLeftBoxId, "vertical", "30px");
+
+    if (gptDataQuadrant["bottom-left"]) {
+      for (let i = 0; i < gptDataQuadrant["bottom-left"].length; i++) {
+        addTextElement(
+          bottomLeftBoxId,
+          gptData[gptDataQuadrant["bottom-left"][i]].text
+        );
+      }
+    }
+
+    return { topLeftBoxId, bottomLeftBoxId };
+  };
+
+  // create box for right side, a parent box contains two box, toprightbox and bottomrightbox
+  // will add the image to the box first if a logo detected
+  const createRightQuadrantBoxes = (
+    parentId: string,
+    gptData: any,
+    gptDataQuadrant: any,
+    uploadedUrls: string[]
+  ) => {
+    const rightVerticalBoxId = uuidv4();
+    addBoxElement(parentId, rightVerticalBoxId, "vertical");
+
+    const topRightBoxId = uuidv4();
+    addBoxElement(rightVerticalBoxId, topRightBoxId, "vertical");
+
+    // add the image to the quadrant respectively first if a image is detected, only if the image is at the top-right
+    if (imageQuadrant == "top-right" && uploadedUrls.length > 0) {
+      const imageUrl = uploadedUrls.shift();
+      if (imageUrl) {
+        addImageElement(topRightBoxId, imageUrl);
+      }
+    }
+
+    if (gptDataQuadrant["top-right"]) {
+      for (let i = 0; i < gptDataQuadrant["top-right"].length; i++) {
+        addTextElement(
+          topRightBoxId,
+          gptData[gptDataQuadrant["top-right"][i]].text
+        );
+      }
+    }
+
+    const bottomRightBoxId = uuidv4();
+    addBoxElement(rightVerticalBoxId, bottomRightBoxId, "vertical", "30px");
+
+    if (gptDataQuadrant["bottom-right"]) {
+      for (let i = 0; i < gptDataQuadrant["bottom-right"].length; i++) {
+        addTextElement(
+          bottomRightBoxId,
+          gptData[gptDataQuadrant["bottom-right"][i]].text
+        );
+      }
+    }
+
+    return { topRightBoxId, bottomRightBoxId };
+  };
+
+  const saveCardHandler = async (
+    croppedImageWidth: number,
+    croppedImageHeight: number
+  ) => {
+    const currentImageUrl = state.editor.selectedElement.url;
+    const url = new URL(currentImageUrl || "");
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+
+    if (croppedImageWidth >= croppedImageHeight) {
+      setBubbleAlign("horizontal");
+
+      if (Object.keys(gptData).length > 0 && croppedLogos.length > 0) {
+        dispatch({
+          type: "DELETE_ELEMENT",
+          payload: {
+            bubbleId: bubbleId,
+            sectionId: sectionId,
+            elementId: element.id,
+          },
+        });
+
+        const parentBoxId = uuidv4();
+        addBoxElement(
+          state.editor.component?.body?.contents[0].id || "initial_box",
+          parentBoxId,
+          "baseline"
+        );
+
+        let topLeftBoxId = "";
+        let bottomLeftBoxId = "";
+        let topRightBoxId = "";
+        let bottomRightBoxId = "";
+
+        if (gptDataLayout === "horizontal") {
+          try {
+            const uploadedUrls: string[] = await Promise.all(
+              croppedLogos.map(async (croppedImage) => {
+                const data = await uploadCroppedImage(croppedImage);
+                const uploadedImageUrl = `${baseUrl}/api/uploadImage/${data.fileId}`;
+                return uploadedImageUrl;
+              })
+            );
+
+            if (
+              (gptDataQuadrant["top-left"] || gptDataQuadrant["bottom-left"]) &&
+              (gptDataQuadrant["top-right"] || gptDataQuadrant["bottom-right"])
+            ) {
+              ({ topLeftBoxId, bottomLeftBoxId } = createLeftQuadrantBoxes(
+                parentBoxId,
+                gptData,
+                gptDataQuadrant,
+                uploadedUrls
+              ));
+              ({ topRightBoxId, bottomRightBoxId } = createRightQuadrantBoxes(
+                parentBoxId,
+                gptData,
+                gptDataQuadrant,
+                uploadedUrls
+              ));
+            } else if (
+              !(
+                gptDataQuadrant["top-left"] || gptDataQuadrant["bottom-left"]
+              ) &&
+              (gptDataQuadrant["top-right"] || gptDataQuadrant["bottom-right"])
+            ) {
+              ({ topRightBoxId, bottomRightBoxId } = createRightQuadrantBoxes(
+                parentBoxId,
+                gptData,
+                gptDataQuadrant,
+                uploadedUrls
+              ));
+            } else if (
+              (gptDataQuadrant["top-left"] || gptDataQuadrant["bottom-left"]) &&
+              !(gptDataQuadrant["top-right"] || gptDataQuadrant["bottom-right"])
+            ) {
+              ({ topLeftBoxId, bottomLeftBoxId } = createLeftQuadrantBoxes(
+                parentBoxId,
+                gptData,
+                gptDataQuadrant,
+                uploadedUrls
+              ));
+            }
+
+            toast.success(
+              "Images have been uploaded and the card has been updated successfully."
+            );
+          } catch (error) {
+            console.error("Error uploading images:", error);
+            toast.error("Failed to upload images. Please try again.");
+          }
+        }
+      }
+    } else {
+      setBubbleAlign("vertical");
     }
   };
 

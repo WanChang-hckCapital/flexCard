@@ -42,7 +42,7 @@ const GptData: React.FC<GptDataProps> = ({ gptData, isGptDataLoading }) => {
             <GptDateItem
               key={key}
               label={displayKey}
-              value={value}
+              value={value.text} // only text is pass in
               onDelete={() => console.log(`Deleting ${displayKey}`)}
             />
           );

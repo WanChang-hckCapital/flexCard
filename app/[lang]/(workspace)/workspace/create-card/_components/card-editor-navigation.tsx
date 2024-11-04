@@ -35,6 +35,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { FocusEventHandler, useEffect, useState } from "react";
 import { toast } from "sonner";
+// import { stringify as safeStringify } from "flatted";
 
 type Props = {
   cardDetails: Card;
@@ -51,6 +52,18 @@ function CardEditorNavigation({ cardDetails, authActiveProfileId }: Props) {
     htmlFormat: "",
   });
 
+  const [showTitleModal, setShowTitleModal] = useState(
+    cardDetails.title === "Temp Card"
+  );
+
+  const [cardTitle, setCardTitle] = useState(cardDetails.title);
+
+  const [titleEntered, setTitleEntered] = useState(false);
+
+  useEffect(() => {
+    cardDetails.title = cardTitle;
+  }, [cardTitle, cardDetails]);
+
   const handleOnBlurTitleChange: FocusEventHandler<HTMLInputElement> = (
     event
   ) => {
@@ -65,6 +78,20 @@ function CardEditorNavigation({ cardDetails, authActiveProfileId }: Props) {
       event.target.value = cardDetails.title;
     }
   };
+
+  // const handleOnBlurTitleChange: FocusEventHandler<HTMLInputElement> = (
+  //   event
+  // ) => {
+  //   const value = event.target.value.trim();
+  //   if (value && value !== cardTitle) {
+  //     setCardTitle(value);
+  //     setTitleEntered(true);
+  //     toast.success("Card title updated successfully.");
+  //   } else if (!value) {
+  //     toast.error("Please enter a valid title.");
+  //     event.target.value = cardTitle;
+  //   }
+  // };
 
   const handlePreviewClick = () => {
     dispatch({ type: "TOGGLE_PREVIEW_MODE" });
@@ -113,7 +140,7 @@ function CardEditorNavigation({ cardDetails, authActiveProfileId }: Props) {
     backgroundColor: "#DCDCDC",
   };
 
-  const handleOnSave = async () => {
+  const saveContent = async (redirect = false) => {
     const workspaceFormat = state.editor.component;
     const initialWorkspaceFormat = JSON.parse(JSON.stringify(workspaceFormat));
 
@@ -169,11 +196,16 @@ function CardEditorNavigation({ cardDetails, authActiveProfileId }: Props) {
       // toast.success("Card saved successfully.");
       // }
 
-      // router.push(`/profile/${authActiveProfileId}`);
+      // if (redirect) {
+      //   router.push(`/profile/${authActiveProfileId}`);
+      // }
     } catch (error) {
       toast.error("Oppse! Something went wrong, Please try again later.");
     }
   };
+
+  const handleOnSave = () => saveContent(true);
+  // const autoSave = () => saveContent(false);
 
   const removeIdsAndDescriptions = (element: any) => {
     if (element) {
@@ -269,6 +301,16 @@ function CardEditorNavigation({ cardDetails, authActiveProfileId }: Props) {
 
   return (
     <TooltipProvider>
+      {showTitleModal && (
+        <TitleModal
+          initialTitle={cardDetails.title}
+          onClose={(newTitle) => {
+            setCardTitle(newTitle);
+            setShowTitleModal(false);
+            setTitleEntered(true);
+          }}
+        />
+      )}
       <nav
         className={clsx(
           "border-b-[1px] flex items-center justify-between p-6 gap-2 transition-all bg-stone-400 dark:bg-black",
@@ -281,9 +323,10 @@ function CardEditorNavigation({ cardDetails, authActiveProfileId }: Props) {
           </Link>
           <div className="flex flex-col w-full ">
             <Input
-              defaultValue={cardDetails.title}
+              value={cardTitle}
               className="border-none h-5 m-0 p-[5px] text-lg text-black"
               onBlur={handleOnBlurTitleChange}
+              onChange={(e) => setCardTitle(e.target.value)}
             />
             <span className="text-sm text-muted-foreground">
               Status: {cardDetails.status}
@@ -401,3 +444,39 @@ function CardEditorNavigation({ cardDetails, authActiveProfileId }: Props) {
 }
 
 export default CardEditorNavigation;
+
+type TitleModalProps = {
+  initialTitle: string;
+  onClose: (title: string) => void;
+};
+
+const TitleModal = ({ initialTitle, onClose }: TitleModalProps) => {
+  const [title, setTitle] = useState(initialTitle);
+
+  const handleSubmit = () => {
+    if (title.trim()) {
+      onClose(title);
+    } else {
+      toast.error("Please enter a valid title.");
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-75 z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-96">
+        <h2 className="text-lg font-semibold text-center mb-4">
+          Enter Card Title
+        </h2>
+        <Input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Enter your card title"
+          className="mb-4 text-black"
+        />
+        <Button variant="purple" onClick={handleSubmit} className="w-full">
+          Save Title
+        </Button>
+      </div>
+    </div>
+  );
+};

@@ -175,7 +175,7 @@ const MemberProfile = ({ profile, btnTitle, dict }: Props) => {
         window.removeEventListener("beforeunload", handleBeforeUnload);
       };
     }
-  }, [isFormDirty]);
+  }, [isFormDirty, pathname]);
 
   useEffect(() => {
     const watchedValues = form.watch();
@@ -187,7 +187,6 @@ const MemberProfile = ({ profile, btnTitle, dict }: Props) => {
     );
     setIsFormDirty(isDirty);
   }, [defaultValues, form]);
-
 
   return (
     <Form {...form}>
@@ -240,8 +239,8 @@ const MemberProfile = ({ profile, btnTitle, dict }: Props) => {
           control={form.control}
           name="accountname"
           render={({ field }) => (
-            <FormItem className='flex w-full flex-col gap-3'>
-              <FormLabel className='text-base-semibold dark:text-light-2'>
+            <FormItem className="flex w-full flex-col gap-3">
+              <FormLabel className="text-base-semibold dark:text-light-2">
                 {dict.userSettings.profile.accountname}
               </FormLabel>
               <FormControl>
@@ -256,8 +255,8 @@ const MemberProfile = ({ profile, btnTitle, dict }: Props) => {
           control={form.control}
           name="email"
           render={({ field }) => (
-            <FormItem className='flex w-full flex-col gap-3'>
-              <FormLabel className='text-base-semibold dark:text-light-2'>
+            <FormItem className="flex w-full flex-col gap-3">
+              <FormLabel className="text-base-semibold dark:text-light-2">
                 {dict.userSettings.profile.email}
               </FormLabel>
               <FormControl>
@@ -312,8 +311,8 @@ const MemberProfile = ({ profile, btnTitle, dict }: Props) => {
           control={form.control}
           name="phone"
           render={({ field }) => (
-            <FormItem className='flex w-full flex-col gap-3'>
-              <FormLabel className='text-base-semibold dark:text-light-2'>
+            <FormItem className="flex w-full flex-col gap-3">
+              <FormLabel className="text-base-semibold dark:text-light-2">
                 {dict.userSettings.profile.phone}
               </FormLabel>
               <FormControl>
@@ -332,8 +331,8 @@ const MemberProfile = ({ profile, btnTitle, dict }: Props) => {
           control={form.control}
           name="shortdescription"
           render={({ field }) => (
-            <FormItem className='flex w-full flex-col gap-3'>
-              <FormLabel className='text-base-semibold dark:ext-light-2'>
+            <FormItem className="flex w-full flex-col gap-3">
+              <FormLabel className="text-base-semibold dark:ext-light-2">
                 {dict.userSettings.profile.shortDescription}
               </FormLabel>
               <FormControl>
@@ -344,7 +343,7 @@ const MemberProfile = ({ profile, btnTitle, dict }: Props) => {
           )}
         />
 
-        <Button type='submit' className='dark:bg-primary-500 bg-stone-700'>
+        <Button type="submit" className="dark:bg-primary-500 bg-stone-700">
           {btnTitle}
         </Button>
       </form>

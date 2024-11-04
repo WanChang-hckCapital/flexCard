@@ -40,17 +40,16 @@ function CardEditorSidebar() {
             <TabsContent value="Components">
               {state.editor.selectedElement &&
               state.editor.selectedElement.type !== null ? (
-                (console.log("entire", state),
-                console.log("selectedElement", state.editor.selectedElement),
-                console.log(
-                  "selectedElementBubbleId",
-                  state.editor.selectedElementBubbleId
-                ),
-                console.log(
-                  "selectedElementSectionId",
-                  state.editor.selectedElementSectionId
-                ),
+                (console.log("selectedElement", state.editor.selectedElement),
                 (
+                  // console.log(
+                  //   "selectedElementBubbleId",
+                  //   state.editor.selectedElementBubbleId
+                  // ),
+                  // console.log(
+                  //   "selectedElementSectionId",
+                  //   state.editor.selectedElementSectionId
+                  // ),
                   <React.Fragment>
                     <SheetHeader className="text-left p-4">
                       <SheetTitle>

@@ -39,10 +39,11 @@ const GptDataItem: React.FC<{
         defaultValue={
           typeof value === "object" ? JSON.stringify(value) : String(value)
         }
+        readOnly
         className="w-full bg-gray-700 text-white border border-gray-600 rounded-md shadow-sm focus:ring focus:ring-opacity-50 p-2"
       />
     </div>
-    <div className="flex-shrink-0">
+    {/* <div className="flex-shrink-0">
       <AlertDialog>
         <AlertDialogTrigger>
           <Button
@@ -66,7 +67,7 @@ const GptDataItem: React.FC<{
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </div> */}
   </div>
 );
 

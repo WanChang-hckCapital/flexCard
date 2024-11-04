@@ -110,14 +110,15 @@ interface ImageCropperProps {
   onImageUpload: (uploadedImageUrl: string) => void;
   handleImageAnalyze: (
     image: File,
-    originalWidth: number
+    originalWidth: number,
+    originalHeight: number
   ) => Promise<{
     logoAnnotations: any[];
   }>;
   handleCropEdgeImg: (image: File) => Promise<CropEdgeImageResult>;
   handleChatGpt: (image: File) => Promise<any>;
   croppedImages: string[];
-  saveCard: () => void;
+  saveCard: (croppedImageWidth: number, croppedImageHeight: number) => void;
   element: EditorElement; // from Props
   sectionId: string; // from Props
   bubbleId: string; // from Props
@@ -175,9 +176,12 @@ const ImageCropper: React.FC<ImageCropperProps> = ({
 
   const [croppedFile, setCroppedFile] = useState<File | null>(null);
 
+  const [croppedImgWidth, setCroppedImgWidth] = useState<number>(50);
+  const [croppedImgHeight, setCroppedImgHeight] = useState<number>(50);
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const { state, dispatch } = useEditor();
+  const [croppedImageWidth, setCroppedImageWidth] = useState<number>(0);
 
   const handlePhotoChoice = () => {
     setShowChoosePhotoButton(!showChoosePhotoButton);
@@ -219,66 +223,11 @@ const ImageCropper: React.FC<ImageCropperProps> = ({
           setOriginalImageWidth(naturalWidth);
           //setOriginalImageHeight(naturalHeight);
 
-          console.log("Image width" + naturalWidth);
-          console.log("Image height" + naturalHeight);
+          // console.log("Image width" + naturalWidth);
+          // console.log("Image height" + naturalHeight);
 
           setUploadImgWidth(naturalWidth);
           setUploadImgHeight(naturalHeight);
-
-          // Call handleCropEdgeImg to get crop hints from Vision API
-          // const cropResult = await handleCropEdgeImg(file);
-
-          // let newCrop;
-          // if (
-          //   cropResult.objectAnnotations &&
-          //   cropResult.objectAnnotations.length > 0
-          // ) {
-          //   const boundingPoly = cropResult.objectAnnotations[0].boundingPoly;
-          //   if (boundingPoly) {
-          //     const vertices = boundingPoly.normalizedVertices;
-          //     const xMin = Math.min(...vertices.map((v) => v.x)) * naturalWidth;
-          //     const xMax = Math.max(...vertices.map((v) => v.x)) * naturalWidth;
-          //     const yMin =
-          //       Math.min(...vertices.map((v) => v.y)) * naturalHeight;
-          //     const yMax =
-          //       Math.max(...vertices.map((v) => v.y)) * naturalHeight;
-
-          //     const displayedWidth = imgRef.current?.width || naturalWidth;
-          //     const displayedHeight = imgRef.current?.height || naturalHeight;
-          //     const scaleX = displayedWidth / naturalWidth;
-          //     const scaleY = displayedHeight / naturalHeight;
-
-          //     let width = (xMax - xMin) * scaleX;
-          //     let height = width / ASPECT_RATIO;
-
-          //     if (height > (yMax - yMin) * scaleY) {
-          //       height = (yMax - yMin) * scaleY;
-          //       width = height * ASPECT_RATIO;
-          //     }
-
-          //     const centeredX =
-          //       xMin * scaleX + ((xMax - xMin) * scaleX - width) / 2;
-          //     const centeredY =
-          //       yMin * scaleY + ((yMax - yMin) * scaleY - height) / 2;
-
-          //     setCrop({
-          //       unit: "px",
-          //       x: centeredX,
-          //       y: centeredY,
-          //       width: (xMax - xMin) * scaleX * ASPECT_RATIO,
-          //       height: (yMax - yMin) * scaleY * ASPECT_RATIO,
-          //     });
-          //   }
-          // } else {
-          //   setCrop({
-          //     unit: "px",
-          //     x: 0,
-          //     y: 0,
-          //     width: naturalWidth * ASPECT_RATIO,
-          //     height: naturalHeight * ASPECT_RATIO,
-          //   });
-          // }
-
           setImgSrcLocal(imageUrl);
           setImageSrc(imageUrl);
         } catch (err) {
@@ -312,13 +261,26 @@ const ImageCropper: React.FC<ImageCropperProps> = ({
     }
   };
 
+  // used to crop image
   const handleCropImage = async () => {
     if (imgRef.current && previewCanvasRef.current && crop) {
+      // console.log("1");
       setCanvasPreview(
         imgRef.current,
         previewCanvasRef.current,
         convertToPixelCrop(crop, imgRef.current.width, imgRef.current.height)
       );
+
+      // const { croppedWidth, croppedHeight } = getCroppedImageDimensions(
+      //   crop,
+      //   imgRef.current.naturalWidth,
+      //   imgRef.current.naturalHeight
+      // );
+
+      // console.log(
+      //   `Cropped image dimensions: ${croppedWidth}x${croppedHeight}px`
+      // );
+
       previewCanvasRef.current.toBlob(async (blob) => {
         if (blob) {
           const croppedFile = new File([blob], "cropped_image.png", {
@@ -326,132 +288,33 @@ const ImageCropper: React.FC<ImageCropperProps> = ({
           });
 
           setCroppedFile(croppedFile);
-
-          console.log("handle crop image fn");
-          console.log(croppedFile);
-
-          // const formData = new FormData();
-          // formData.append("file", croppedFile);
-
-          // const response = await fetch("/api/uploadImage", {
-          //   method: "POST",
-          //   body: formData,
-          // });
-
-          // const data = await response.json();
-
-          // if (response.ok) {
-          //   const uploadedImageUrl = `/api/uploadImage/${data.fileId}`;
-          //   const uploadImageUrlWithHttp = `${process.env.NEXT_PUBLIC_BASE_URL}${uploadedImageUrl}`;
-          //   updateImage(uploadImageUrlWithHttp);
-          //   closeModal();
-          // } else {
-          //   setError(`Upload failed: ${data.message}`);
-          // }
         }
       }, "image/png");
     }
+    // console.log("2");
   };
 
-  const handleFullImageUpload = async () => {
-    if (fileInputRef.current?.files?.[0]) {
-      const file = fileInputRef.current.files[0];
-      const formData = new FormData();
-      formData.append("file", file);
+  // const handleFullImageUpload = async () => {
+  //   if (fileInputRef.current?.files?.[0]) {
+  //     const file = fileInputRef.current.files[0];
+  //     const formData = new FormData();
+  //     formData.append("file", file);
 
-      const response = await fetch("/api/uploadImage", {
-        method: "POST",
-        body: formData,
-      });
+  //     const response = await fetch("/api/uploadImage", {
+  //       method: "POST",
+  //       body: formData,
+  //     });
 
-      const data = await response.json();
+  //     const data = await response.json();
 
-      if (response.ok) {
-        const uploadedImageUrl = `/api/uploadImage/${data.fileId}`;
-        const uploadImageUrlWithHttp = `${process.env.NEXT_PUBLIC_BASE_URL}${uploadedImageUrl}`;
-        updateImage(uploadImageUrlWithHttp);
-        closeModal();
-      } else {
-        setError(`Upload failed: ${data.message}`);
-      }
-    }
-  };
-
-  // const handleCropAndOCR = async (onImageUpload: (url: string) => void) => {
-  //   if (loading) return;
-
-  //   if (imgRef.current && previewCanvasRef.current && crop) {
-  //     setLoading(true);
-  //     setCanvasPreview(
-  //       imgRef.current,
-  //       previewCanvasRef.current,
-  //       convertToPixelCrop(crop, imgRef.current.width, imgRef.current.height)
-  //     );
-
-  //     previewCanvasRef.current.toBlob(async (blob) => {
-  //       if (blob) {
-  //         const croppedFile = new File([blob], "cropped_image.png", {
-  //           type: "image/png",
-  //         });
-
-  //         const { width, height } = await getImageDimensions(croppedFile);
-  //         console.log(`Cropped image dimensions: ${width} x ${height}`);
-
-  //         const formData = new FormData();
-  //         formData.append("file", croppedFile);
-
-  //         const uploadResponse = await fetch("/api/uploadImage", {
-  //           method: "POST",
-  //           body: formData,
-  //         });
-
-  //         const uploadData = await uploadResponse.json();
-
-  //         if (uploadResponse.ok) {
-  //           const uploadedImageUrl = `/api/uploadImage/${uploadData.fileId}`;
-  //           const uploadImageUrlWithHttp = `${process.env.NEXT_PUBLIC_BASE_URL}${uploadedImageUrl}`;
-  //           updateImage(uploadImageUrlWithHttp);
-  //           onImageUpload(uploadImageUrlWithHttp);
-
-  //           const ocrFormData = new FormData();
-  //           ocrFormData.append("file", croppedFile); // Use the cropped file for OCR
-
-  //           const ocrResponse = await fetch("/api/ocr", {
-  //             method: "POST",
-  //             body: ocrFormData,
-  //           });
-
-  //           const ocrData = await ocrResponse.json();
-
-  //           if (ocrResponse.ok) {
-  //             handleOCRText(
-  //               ocrData.ocrData,
-  //               originalImageWidth,
-  //               uploadImageUrlWithHttp
-  //             );
-  //           } else {
-  //             setError(`OCR failed: ${ocrData.message}`);
-  //           }
-
-  //           const googleApiLabels = await handleImageAnalyze(
-  //             croppedFile,
-  //             originalImageWidth
-  //           );
-  //           console.log("Google API return:", googleApiLabels);
-
-  //           const chatgptRes = await handleChatGpt(croppedFile);
-
-  //           console.log("gpt");
-  //           console.log(chatgptRes);
-  //           setGptData(chatgptRes);
-
-  //           closeModal();
-  //         } else {
-  //           setError(`Upload failed: ${uploadData.message}`);
-  //         }
-  //       }
-  //       setLoading(false);
-  //     }, "image/png");
+  //     if (response.ok) {
+  //       const uploadedImageUrl = `/api/uploadImage/${data.fileId}`;
+  //       const uploadImageUrlWithHttp = `${process.env.NEXT_PUBLIC_BASE_URL}${uploadedImageUrl}`;
+  //       updateImage(uploadImageUrlWithHttp);
+  //       closeModal();
+  //     } else {
+  //       setError(`Upload failed: ${data.message}`);
+  //     }
   //   }
   // };
 
@@ -469,6 +332,19 @@ const ImageCropper: React.FC<ImageCropperProps> = ({
         convertToPixelCrop(crop, imgRef.current.width, imgRef.current.height)
       );
 
+      const { croppedWidth, croppedHeight } = getCroppedImageDimensions(
+        crop,
+        imgRef.current.naturalWidth,
+        imgRef.current.naturalHeight
+      );
+
+      setCroppedImgWidth(croppedWidth);
+      setCroppedImgHeight(croppedHeight);
+
+      // console.log(
+      //   `Cropped image dimensions: ${croppedWidth}x${croppedHeight}px`
+      // );
+
       previewCanvasRef.current.toBlob(async (blob) => {
         if (blob) {
           const croppedFile = new File([blob], "cropped_image.png", {
@@ -477,60 +353,84 @@ const ImageCropper: React.FC<ImageCropperProps> = ({
 
           setCroppedFile(croppedFile);
 
-          console.log("handleCropAndOCR");
-          console.log("1");
-          console.log("Cropped File:", croppedFile);
+          // console.log("Cropped File:", croppedFile);
 
           const googleApiLabels = await handleImageAnalyze(
             croppedFile,
-            originalImageWidth
+            // originalImageWidth
+            croppedWidth,
+            croppedHeight
           );
           console.log("Google API return:", googleApiLabels);
 
           const chatgptRes = await handleChatGpt(croppedFile);
 
-          console.log("gpt image cropper");
-          console.log(chatgptRes);
+          let parsedContent;
 
-          setGptData(chatgptRes);
-          setDataReturned(true);
-          // closeModal();
-          console.log("1 end");
+          try {
+            parsedContent =
+              typeof chatgptRes === "string"
+                ? JSON.parse(chatgptRes)
+                : chatgptRes;
+          } catch (parseError) {
+            setGptData([]);
+            setDataReturned(false);
+            setIsLoading(false);
+            console.log("Received non-JSON response from ChatGPT:", parseError);
+            return;
+          }
+          if (chatgptRes.labels) {
+            setGptData(chatgptRes.labels);
+            setDataReturned(true);
+          } else {
+            setGptData([]);
+          }
         }
         setLoading(false);
       }, "image/png");
     }
   };
 
-  const getImageDimensions = (
-    file: File
-  ): Promise<{ width: number; height: number }> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
+  const getCroppedImageDimensions = (
+    crop: Crop,
+    originalWidth: number,
+    originalHeight: number
+  ) => {
+    const croppedWidth = (crop.width / 100) * originalWidth;
+    const croppedHeight = (crop.height / 100) * originalHeight;
 
-      reader.onload = (event) => {
-        // const image = new Image();
-        const image = document.createElement("img");
-        image.onload = () => {
-          resolve({ width: image.width, height: image.height });
-        };
-        image.onerror = (error: any) => {
-          reject(error);
-        };
-        if (event.target && typeof event.target.result === "string") {
-          image.src = event.target.result;
-        } else {
-          reject(new Error("Failed to read file"));
-        }
-      };
-
-      reader.onerror = (error) => {
-        reject(error);
-      };
-
-      reader.readAsDataURL(file);
-    });
+    return { croppedWidth, croppedHeight };
   };
+
+  // const getImageDimensions = (
+  //   file: File
+  // ): Promise<{ width: number; height: number }> => {
+  //   return new Promise((resolve, reject) => {
+  //     const reader = new FileReader();
+
+  //     reader.onload = (event) => {
+  //       // const image = new Image();
+  //       const image = document.createElement("img");
+  //       image.onload = () => {
+  //         resolve({ width: image.width, height: image.height });
+  //       };
+  //       image.onerror = (error: any) => {
+  //         reject(error);
+  //       };
+  //       if (event.target && typeof event.target.result === "string") {
+  //         image.src = event.target.result;
+  //       } else {
+  //         reject(new Error("Failed to read file"));
+  //       }
+  //     };
+
+  //     reader.onerror = (error) => {
+  //       reject(error);
+  //     };
+
+  //     reader.readAsDataURL(file);
+  //   });
+  // };
 
   const openCamera = async () => {
     setIsCameraOpen(true);
@@ -613,7 +513,9 @@ const ImageCropper: React.FC<ImageCropperProps> = ({
       return;
     }
 
-    saveCard();
+    // console.log("save");
+    // console.log(croppedImageWidth);
+    saveCard(croppedImgWidth, croppedImgHeight);
     closeModal();
   };
 
@@ -834,7 +736,7 @@ const ImageCropper: React.FC<ImageCropperProps> = ({
             )}
             {isOcrButtonShow && (
               <div className="flex flex-row gap-4">
-                <Button
+                {/* <Button
                   variant="outline"
                   onClick={handleCropImage}
                   className="mt-4"
@@ -847,14 +749,16 @@ const ImageCropper: React.FC<ImageCropperProps> = ({
                   className="mt-4"
                 >
                   Full Image
-                </Button>
+                </Button> */}
 
                 <Button
                   variant="outline"
                   onClick={() => handleCropAndOCR(onImageUpload)}
+                  // onClick={handleCropImage}
                   className="mt-4"
                 >
-                  Crop & OCR
+                  {/* Crop & OCR */}
+                  Confirm
                 </Button>
               </div>
             )}

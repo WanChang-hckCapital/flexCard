@@ -168,14 +168,11 @@ const addElementToNestedElement = (
   }
 
   const { bubbleId, sectionId, targetId, elementDetails } = action.payload;
-  console.log("addElementToNestedElement");
-  console.log(bubbleId, sectionId, targetId, elementDetails);
 
   const updateComponent = (
     currentComponent: EditorComponent
   ): EditorComponent => {
     if (currentComponent.id === bubbleId) {
-      console.log("1 happens");
       return {
         ...currentComponent,
         header:
@@ -198,8 +195,6 @@ const addElementToNestedElement = (
     }
 
     if (currentComponent.type === "carousel") {
-      console.log("2 happens");
-
       const updatedContents = currentComponent.contents?.map((subComponent) => {
         if (subComponent.id === bubbleId) {
           return {
@@ -553,16 +548,13 @@ const editorReducer = (
         },
       };
 
+      console.log("editor provider");
+      console.log(newEditorState);
+
       return newEditorState;
 
     case "UPDATE_ELEMENT":
       // update function that used to update the element
-      // console.log("update");
-      // console.log(state.editor.component);
-      // console.log(action.payload.elementDetails);
-      // console.log(action.payload.sectionId);
-      // console.log(action.payload.bubbleId);
-
       const updatedComponentAfterUpdate = updateElementInSection(
         state.editor.component,
         action.payload.elementDetails,

@@ -237,18 +237,20 @@ const UploadForm: React.FC<UploadFormProps> = ({
             </button>
           </div>
         </div> */}
-      {showImageCropper && (
+      {/* {showImageCropper && (
         <ImageCropper
           updateImage={handleImageUpdate}
           handleOCRText={handleOCRText}
           setImageSrc={setImageSrc}
+          closeModal={() => setShowImageCropper(false)}
           onImageUpload={handleImageUpload}
           handleImageAnalyze={handleAnalyzeImage}
           handleCropEdgeImg={handleCropEdgeImage}
           handleChatGpt={callChatGpt}
-          closeModal={() => setShowImageCropper(false)}
+          croppedImages={}
+          saveCard={}
         />
-      )}
+      )} */}
     </div>
     // </div>
   );

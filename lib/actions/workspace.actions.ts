@@ -5,16 +5,17 @@ import Member from "../models/member";
 import Image from "../models/image";
 import { connectToDB } from "../mongodb";
 import { Card } from "@/types";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 import ComponentModel from "../models/component";
 import ProfileModel from "../models/profile";
-
 
 export async function fetchCardsByAccountId(accountId: string) {
   try {
     await connectToDB();
 
-    const Cards = await Member.find({ user: accountId }).populate('cards').exec();
+    const Cards = await Member.find({ user: accountId })
+      .populate("cards")
+      .exec();
 
     return Cards;
   } catch (error: any) {
@@ -29,38 +30,62 @@ export async function fetchCardDetails(cardId: string) {
 
     const card = await CardMongodb.findById(cardId);
     if (!card) {
-      throw new Error('Card not found');
+      throw new Error("Card not found");
     }
 
-    const creator = await ProfileModel.findOne({ _id: card.creator }).select('accountname image followers');
-    const creatorImage = await Image.findOne({ _id: creator?.image }).select('binaryCode');
+    const creator = await ProfileModel.findOne({ _id: card.creator }).select(
+      "accountname image followers"
+    );
+    const creatorImage = await Image.findOne({ _id: creator?.image }).select(
+      "binaryCode"
+    );
     const creatorData = {
       accountname: creator ? creator.accountname : "Unknown",
       image: creator && creatorImage ? creatorImage.binaryCode : undefined,
-      followers: creator.followers.length, 
+      followers: creator.followers.length,
     };
 
-    const lineComponents = await CardMongodb.findById(cardId).select('lineFormatComponent');
+    const lineComponents = await CardMongodb.findById(cardId).select(
+      "lineFormatComponent"
+    );
 
-    const likesDetails = await Promise.all(card.likes.map(async (likeId: any) => {
-      const likeUserProfile = await ProfileModel.findOne({ _id: likeId }).select('accountname image');
-      if (likeUserProfile && likeUserProfile.image) {
-        const imageDoc = await Image.findById(likeUserProfile.image).select('binaryCode');
+    const likesDetails = await Promise.all(
+      card.likes.map(async (likeId: any) => {
+        const likeUserProfile = await ProfileModel.findOne({
+          _id: likeId,
+        }).select("accountname image");
+        if (likeUserProfile && likeUserProfile.image) {
+          const imageDoc = await Image.findById(likeUserProfile.image).select(
+            "binaryCode"
+          );
+          return {
+            accountname: likeUserProfile.accountname,
+            binarycode: imageDoc ? imageDoc.binaryCode : undefined,
+          };
+        }
         return {
-          accountname: likeUserProfile.accountname,
-          binarycode: imageDoc ? imageDoc.binaryCode : undefined
+          accountname: likeUserProfile
+            ? likeUserProfile.accountname
+            : "Unknown",
+          binarycode: undefined,
         };
-      }
-      return {
-        accountname: likeUserProfile ? likeUserProfile.accountname : "Unknown",
-        binarycode: undefined
-      };
-    }));
+      })
+    );
 
-    const flexFormatHTML = await CardMongodb.findById(cardId).select('flexFormatHtml');
-    const followers = await Promise.all(card.followers.map((id: any) => ProfileModel.findOne({ _id: id }).select('accountname')));
-    const lineFormatComponent = await ComponentModel.findById(lineComponents.lineFormatComponent).select('content');
-    const flexFormatHTMLContent = await ComponentModel.findById(flexFormatHTML.flexFormatHtml).select('content');
+    const flexFormatHTML = await CardMongodb.findById(cardId).select(
+      "flexFormatHtml"
+    );
+    const followers = await Promise.all(
+      card.followers.map((id: any) =>
+        ProfileModel.findOne({ _id: id }).select("accountname")
+      )
+    );
+    const lineFormatComponent = await ComponentModel.findById(
+      lineComponents.lineFormatComponent
+    ).select("content");
+    const flexFormatHTMLContent = await ComponentModel.findById(
+      flexFormatHTML.flexFormatHtml
+    ).select("content");
 
     return {
       cardID: card._id.toString(),
@@ -70,13 +95,17 @@ export async function fetchCardDetails(cardId: string) {
       creator: creatorData,
       creatorID: card.creator,
       likes: likesDetails,
-      followers: followers.map(follower => ({ accountname: follower.accountname })),
+      followers: followers.map((follower) => ({
+        accountname: follower.accountname,
+      })),
       components: card.components,
       lineComponents: {
         content: lineFormatComponent ? lineFormatComponent.content : undefined,
       },
       flexHtml: {
-        content: flexFormatHTMLContent ? flexFormatHTMLContent.content : undefined,
+        content: flexFormatHTMLContent
+          ? flexFormatHTMLContent.content
+          : undefined,
       },
       updatedAt: card.updatedAt,
     };
@@ -91,67 +120,103 @@ export async function fetchSuggestedCards(currentCardId: string) {
   try {
     await connectToDB();
 
-    const topLikedCards = await CardMongodb.find({ _id: { $ne: currentCardId } })
+    const topLikedCards = await CardMongodb.find({
+      _id: { $ne: currentCardId },
+    })
       .sort({ likes: -1 })
       .limit(5)
       .lean()
       .exec();
 
-    const additionalCards = await CardMongodb.find({ _id: { $ne: currentCardId } })
+    const additionalCards = await CardMongodb.find({
+      _id: { $ne: currentCardId },
+    })
       .skip(5)
       .lean()
       .exec();
 
     const suggestedCards = [...topLikedCards, ...additionalCards];
 
-    const processedCards = await Promise.all(suggestedCards.map(async (card: any) => {
-      const creator = await ProfileModel.findOne({ _id: card.creator }).select('accountname image');
-      const creatorImage = await Image.findOne({ _id: creator?.image }).select('binaryCode');
-      const creatorData = {
-        accountname: creator ? creator.accountname : "Unknown",
-        image: creator && creatorImage ? creatorImage.binaryCode : undefined
-      };
-
-      const lineComponents = await CardMongodb.findById(card._id).select('lineFormatComponent');
-
-      const likesDetails = await Promise.all(card.likes.map(async (likeId: any) => {
-        const likeUserProfile = await ProfileModel.findOne({ _id: likeId }).select('accountname image');
-        if (likeUserProfile && likeUserProfile.image) {
-          const imageDoc = await Image.findById(likeUserProfile.image).select('binaryCode');
-          return {
-            accountname: likeUserProfile.accountname,
-            binarycode: imageDoc ? imageDoc.binaryCode : undefined
-          };
-        }
-        return {
-          accountname: likeUserProfile ? likeUserProfile.accountname : "Unknown",
-          binarycode: undefined
+    const processedCards = await Promise.all(
+      suggestedCards.map(async (card: any) => {
+        const creator = await ProfileModel.findOne({
+          _id: card.creator,
+        }).select("accountname image");
+        const creatorImage = await Image.findOne({
+          _id: creator?.image,
+        }).select("binaryCode");
+        const creatorData = {
+          accountname: creator ? creator.accountname : "Unknown",
+          image: creator && creatorImage ? creatorImage.binaryCode : undefined,
         };
-      }));
 
-      const flexFormatHTML = await CardMongodb.findById(card._id).select('flexFormatHtml');
+        const lineComponents = await CardMongodb.findById(card._id).select(
+          "lineFormatComponent"
+        );
 
-      const followers = await Promise.all(card.followers.map((id: any) => ProfileModel.findOne({ _id: id }).select('accountname')));
+        const likesDetails = await Promise.all(
+          card.likes.map(async (likeId: any) => {
+            const likeUserProfile = await ProfileModel.findOne({
+              _id: likeId,
+            }).select("accountname image");
+            if (likeUserProfile && likeUserProfile.image) {
+              const imageDoc = await Image.findById(
+                likeUserProfile.image
+              ).select("binaryCode");
+              return {
+                accountname: likeUserProfile.accountname,
+                binarycode: imageDoc ? imageDoc.binaryCode : undefined,
+              };
+            }
+            return {
+              accountname: likeUserProfile
+                ? likeUserProfile.accountname
+                : "Unknown",
+              binarycode: undefined,
+            };
+          })
+        );
 
-      const lineFormatComponent = await ComponentModel.findById(lineComponents.lineFormatComponent).select('content');
-      const flexFormatHTMLContent = await ComponentModel.findById(flexFormatHTML.flexFormatHtml).select('content');
+        const flexFormatHTML = await CardMongodb.findById(card._id).select(
+          "flexFormatHtml"
+        );
 
-      return {
-        cardId: card._id.toString(),
-        title: card.title,
-        description: card.description,
-        creator: creatorData,
-        creatorID: card.creator,
-        likes: likesDetails,
-        followers: followers.map(follower => ({ accountname: follower.accountname })),
-        lineComponents: {
-          content: lineFormatComponent ? lineFormatComponent.content : undefined,
-        },
-        flexHtml: {
-          content: flexFormatHTMLContent ? flexFormatHTMLContent.content : undefined,
-        }
-      };
-    }));
+        const followers = await Promise.all(
+          card.followers.map((id: any) =>
+            ProfileModel.findOne({ _id: id }).select("accountname")
+          )
+        );
+
+        const lineFormatComponent = await ComponentModel.findById(
+          lineComponents.lineFormatComponent
+        ).select("content");
+        const flexFormatHTMLContent = await ComponentModel.findById(
+          flexFormatHTML.flexFormatHtml
+        ).select("content");
+
+        return {
+          cardId: card._id.toString(),
+          title: card.title,
+          description: card.description,
+          creator: creatorData,
+          creatorID: card.creator,
+          likes: likesDetails,
+          followers: followers.map((follower) => ({
+            accountname: follower.accountname,
+          })),
+          lineComponents: {
+            content: lineFormatComponent
+              ? lineFormatComponent.content
+              : undefined,
+          },
+          flexHtml: {
+            content: flexFormatHTMLContent
+              ? flexFormatHTMLContent.content
+              : undefined,
+          },
+        };
+      })
+    );
 
     return processedCards;
   } catch (error) {
@@ -283,26 +348,37 @@ export async function checkDuplicateCard(
   try {
     await connectToDB();
 
-    const authenticatedProfile = await ProfileModel.findOne({ _id: authActiveProfileId });
+    const authenticatedProfile = await ProfileModel.findOne({
+      _id: authActiveProfileId,
+    });
 
     if (!authenticatedProfile) {
-      return { success: false, message: "You need to login before save the card" };
+      return {
+        success: false,
+        message: "You need to login before save the card",
+      };
     }
 
     const existingCard = await CardMongodb.findOne({ cardID: cardId });
 
     if (existingCard) {
-      return { success: false, message: "Opps, Card already exists, Please try again later."  };
+      return {
+        success: false,
+        message: "Opps, Card already exists, Please try again later.",
+      };
     } else {
       return { success: true };
     }
-  }
-  catch {
+  } catch {
     return { success: false };
   }
 }
 
-export async function updateCardTitle(authaccountId: string, cardId: string, newTitle: string) {
+export async function updateCardTitle(
+  authaccountId: string,
+  cardId: string,
+  newTitle: string
+) {
   try {
     await connectToDB();
 
@@ -318,8 +394,9 @@ export async function updateCardTitle(authaccountId: string, cardId: string, new
     const updatedCard = await CardMongodb.updateOne(
       { cardID: existingCard.cardID },
       {
-        $set: { title: newTitle }
-      });
+        $set: { title: newTitle },
+      }
+    );
 
     return updatedCard;
   } catch (error: any) {
