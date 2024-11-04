@@ -639,9 +639,9 @@ export default function TermsConditions() {
                 requested services.
                 <br />
                 <br />
-                You can navigate to "Ads" in your in-app settings to opt-out of
-                targeted advertising based on personal information about your
-                activity on nonaffiliated apps and websites.
+                You can navigate to &quot;Ads&quot; in your in-app settings to
+                opt-out of targeted advertising based on personal information
+                about your activity on nonaffiliated apps and websites.
                 <br />
                 <br />
                 You may be able to manage third-party advertising preferences
@@ -750,21 +750,21 @@ export default function TermsConditions() {
                 https://www.flxBubble.com/legal/report/feedback.
                 <br />
                 <br />
-                If you are a parent or guardian, our Guardian's Guide contains
-                information and resources to help you understand the Platform
-                and the tools and controls you can use. As a parent or guardian,
-                you can also request the deletion of the account of your
-                underage child or download the account data of your underage
-                child by contacting us at
+                If you are a parent or guardian, our Guardian&quot;s Guide
+                contains information and resources to help you understand the
+                Platform and the tools and controls you can use. As a parent or
+                guardian, you can also request the deletion of the account of
+                your underage child or download the account data of your
+                underage child by contacting us at
                 https://www.flxBubble.com/legal/report/privacy.
                 <br />
                 <br />
                 If you are a parent or guardian, depending on your state of
                 residence, you may have the ability to exercise certain rights
-                over your child's or teen's account. For example, you may
-                request the deletion of their accounts, download account data,
-                or exercise other rights in connection with your child or teen
-                by contacting us at
+                over your child&quot;s or teen&quot;s account. For example, you
+                may request the deletion of their accounts, download account
+                data, or exercise other rights in connection with your child or
+                teen by contacting us at
                 https://www.flxBubble.com/legal/report/privacy. We will address
                 these requests in accordance with applicable law.
               </p>
