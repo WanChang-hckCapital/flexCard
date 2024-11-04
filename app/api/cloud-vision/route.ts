@@ -2,44 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
 import { GoogleAuth } from "google-auth-library";
 
-const GOOGLE_AUTH_CONFIG = {
-  type: "service_account",
-  auth_uri: "https://accounts.google.com/o/oauth2/auth",
-  token_uri: "https://oauth2.googleapis.com/token",
-  auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
-  universe_domain: "googleapis.com",
-};
-
 const serviceAccount = {
-  ...GOOGLE_AUTH_CONFIG,
+  type: process.env.SERVICE_ACCOUNT_TYPE,
   project_id: process.env.SERVICE_ACCOUNT_PROJECT_ID,
   private_key_id: process.env.SERVICE_ACCOUNT_PRIVATE_KEY_ID,
-  private_key: [
-    process.env.SERVICE_ACCOUNT_PRIVATE_KEY_1,
-    process.env.SERVICE_ACCOUNT_PRIVATE_KEY_2,
-    process.env.SERVICE_ACCOUNT_PRIVATE_KEY_3,
-  ]
-    .join("")
-    ?.replace(/\\n/g, "\n"),
+  private_key: process.env.SERVICE_ACCOUNT_PRIVATE_KEY?.replace(/\\n/g, "\n"),
   client_email: process.env.SERVICE_ACCOUNT_CLIENT_EMAIL,
   client_id: process.env.SERVICE_ACCOUNT_CLIENT_ID,
+  auth_uri: process.env.SERVICE_ACCOUNT_AUTH_URI,
+  token_uri: process.env.SERVICE_ACCOUNT_TOKEN_URI,
+  auth_provider_x509_cert_url:
+    process.env.SERVICE_ACCOUNT_AUTH_PROVIDER_X509_CERT_URL,
   client_x509_cert_url: process.env.SERVICE_ACCOUNT_CLIENT_X509_CERT_URL,
+  universe_domain: process.env.SERVICE_ACCOUNT_UNIVERSE_DOMAIN,
 };
-
-// const serviceAccount = {
-//     type: process.env.SERVICE_ACCOUNT_TYPE,
-//     project_id: process.env.SERVICE_ACCOUNT_PROJECT_ID,
-//     private_key_id: process.env.SERVICE_ACCOUNT_PRIVATE_KEY_ID,
-//     private_key: process.env.SERVICE_ACCOUNT_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-//     client_email: process.env.SERVICE_ACCOUNT_CLIENT_EMAIL,
-//     client_id: process.env.SERVICE_ACCOUNT_CLIENT_ID,
-//     auth_uri: process.env.SERVICE_ACCOUNT_AUTH_URI,
-//     token_uri: process.env.SERVICE_ACCOUNT_TOKEN_URI,
-//     auth_provider_x509_cert_url:
-//     process.env.SERVICE_ACCOUNT_AUTH_PROVIDER_X509_CERT_URL,
-//     client_x509_cert_url: process.env.SERVICE_ACCOUNT_CLIENT_X509_CERT_URL,
-//     universe_domain: process.env.SERVICE_ACCOUNT_UNIVERSE_DOMAIN,
-// };
 
 async function getAccessToken() {
   const auth = new GoogleAuth({
