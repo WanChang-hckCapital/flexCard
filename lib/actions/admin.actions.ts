@@ -479,7 +479,6 @@ export async function fetchMember(userId: string) {
   }
 }
 
-// done convert to Profile Model but still need to check, something should wrong here
 export async function fetchMemberProfileDetails(
   profileId: string
 ): Promise<{ success: boolean; data?: any; message?: string }> {
@@ -492,8 +491,6 @@ export async function fetchMemberProfileDetails(
         path: "organization",
         options: { lean: true },
       });
-
-    console.log("Profile: ", profile);
 
     if (!profile) {
       return { success: false, message: "Profile not found" };
@@ -536,8 +533,6 @@ export async function fetchMemberProfileDetails(
   }
 }
 
-
-// done convert to Profile Model
 export async function verifyOrganizationStatus(
   authActiveProfileId: string,
   organizationId: string
@@ -571,8 +566,10 @@ export async function verifyOrganizationStatus(
     organization.verify.verifiedAt = new Date();
     organization.verify.verifiedBy = authActiveProfileId;
 
-    const returnOrganizationVerifyDetails = organization.verify;
-    returnOrganizationVerifyDetails.verifiedBy = profile.accountname;
+    const returnOrganizationVerifyDetails = {
+      ...organization.verify._doc,
+      verifiedBy: profile.accountname,
+    };
 
     await organization.save();
 

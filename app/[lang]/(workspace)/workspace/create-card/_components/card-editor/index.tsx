@@ -281,7 +281,7 @@ function CardEditor({ liveMode }: Props) {
   return (
     <div
       className={clsx(
-        "use-automation-zoom-in h-full overflow-auto flex space-x-4 p-5 bg-background transition-all",
+        "use-automation-zoom-in h-full overflow-auto flex space-x-4 p-5 bg-background transition-all justify-center",
         {
           "!p-0 !mr-0 justify-center items-center":
             state.editor.previewMode || state.editor.liveMode,

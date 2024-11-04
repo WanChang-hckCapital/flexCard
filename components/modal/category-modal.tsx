@@ -10,20 +10,33 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { saveProfilePreferences } from "@/lib/actions/user.actions";
 import { toast } from "sonner";
+import { Card } from "@/types";
+import { upsertCardContent } from "@/lib/actions/workspace.actions";
+import { useRouter } from "next/navigation";
 
-interface PreferencesModalProps {
+interface CategoryModalProps {
   profileId: string;
   categories: { label: string; emoji: string }[];
+  cardDetails: Card;
+  strFlexFormatHtml: string;
+  strLineFlexMessage: string;
+  htmlFormat: string;
+  onClose: () => void;
 }
 
-const PreferencesModal: React.FC<PreferencesModalProps> = ({
+const CategoryModal: React.FC<CategoryModalProps> = ({
   profileId,
   categories,
+  cardDetails,
+  strFlexFormatHtml,
+  strLineFlexMessage,
+  htmlFormat,
+  onClose,
 }) => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(true);
+  const router = useRouter();
 
   const toggleCategory = (category: string) => {
     setSelectedCategories((prevSelected) =>
@@ -34,29 +47,73 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({
   };
 
   const handleSubmit = async () => {
-    if (selectedCategories.length > 0) {
-      await saveProfilePreferences({
-        profileId,
-        categories: selectedCategories,
-      });
+    if (selectedCategories.length === 0) {
+      toast.error("Please select at least one category.");
+      return;
     }
 
-    toast.success("Preferences saved successfully, enjoy!");
-    setIsModalOpen(false);
+    const essentialCardDetails = {
+      cardID: cardDetails.cardID,
+      title: cardDetails.title,
+      status: cardDetails.status,
+      description: cardDetails.description,
+      categories: selectedCategories,
+    };
+
+    try {
+
+      const result = await upsertCardContent(
+        profileId,
+        essentialCardDetails,
+        strFlexFormatHtml,
+        strLineFlexMessage,
+        htmlFormat,
+        selectedCategories
+      );
+
+      if (result && result.message == "success") {
+        toast.success("Card and categories saved successfully!");
+        setIsModalOpen(false);
+        onClose();
+        router.push(`/profile/${profileId}`);
+      }
+    } catch (error) {
+      toast.error("Error saving card. Please try again.");
+    }
   };
 
   const handleSkip = async () => {
-    await saveProfilePreferences({ profileId, isSkip: true });
+    try {
+      const essentialCardDetails = {
+        cardID: cardDetails.cardID,
+        title: cardDetails.title,
+        status: cardDetails.status,
+        description: cardDetails.description,
+      };
+      const result = await upsertCardContent(
+        profileId,
+        essentialCardDetails,
+        strFlexFormatHtml,
+        strLineFlexMessage,
+        htmlFormat
+      );
 
-    toast.success("You may modify the preferences later in setting page, enjoy!");
-    setIsModalOpen(false);
+      if (result && result.message == "success") {
+        toast.success("You may modify categories later in the settings page.");
+        setIsModalOpen(false);
+        onClose();
+        router.push(`/profile/${profileId}`);
+      }
+    } catch (error) {
+      toast.error("Error saving card. Please try again.");
+    }
   };
 
   return (
     <Dialog open={isModalOpen} onOpenChange={() => setIsModalOpen(false)}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Select Your Interests</DialogTitle>
+          <DialogTitle>Select Your Categories</DialogTitle>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-4 p-4 max-h-96 overflow-y-auto">
           {categories.map(({ label, emoji }) => (
@@ -88,7 +145,7 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({
             onClick={handleSubmit}
             disabled={selectedCategories.length === 0}
           >
-            Save Preferences ({selectedCategories.length})
+            Save Categories ({selectedCategories.length})
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -96,4 +153,4 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({
   );
 };
 
-export default PreferencesModal;
+export default CategoryModal;

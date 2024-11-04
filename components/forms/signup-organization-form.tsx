@@ -168,10 +168,22 @@ const SignupOrganizationForm = ({ authActiveProfileId, organization, isEditMode 
     };
 
     const handleStepClick = async (clickedStep: number) => {
-        if (clickedStep === 2) {
-            await onReviewStep();
-        } else {
-            setStep(clickedStep + 1);
+        if (step === 1 && clickedStep === 1) {
+            await onNextStep();
+        } else if (step === 2 && clickedStep === 2) {
+            const validBank = await trigger([
+                "accountHolderName",
+                "bank",
+                "accountNumber",
+                "confirmAccountNumber",
+            ]);
+
+            if (validBank) {
+                setFormData(prevData => ({ ...prevData, ...getValues() }));
+                setStep(3);
+            } else {
+                setErrors([{ message: 'Please complete all required fields in bank information.', step: 2 }]);
+            }
         }
     };
 

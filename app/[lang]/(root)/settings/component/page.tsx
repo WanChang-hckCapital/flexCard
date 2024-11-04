@@ -40,6 +40,7 @@ import ThemeToggle from "@/components/theme-toogle";
 import LanguageSwitcher from "@/components/language-switcher";
 import PreferencesComponent from "@/components/root-settings/preferences";
 import TermsConditions from "@/components/root-settings/terms-conditions";
+import { categories } from "@/constants";
 
 interface Props {
   authUserId: string;
@@ -48,104 +49,6 @@ interface Props {
   profiles: any[];
   dict: any;
 }
-
-const categories = [
-  {
-    label: "Entertainment",
-    imageUrl:
-      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
-  },
-  {
-    label: "Daily Life",
-    imageUrl:
-      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
-  },
-  {
-    label: "Comedy",
-    imageUrl:
-      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
-  },
-  {
-    label: "Pets",
-    imageUrl:
-      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
-  },
-  {
-    label: "Learning",
-    imageUrl:
-      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
-  },
-  {
-    label: "Foods",
-    imageUrl:
-      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
-  },
-  {
-    label: "Sports",
-    imageUrl:
-      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
-  },
-  {
-    label: "Telent Show",
-    imageUrl:
-      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
-  },
-  {
-    label: "Fashion",
-    imageUrl:
-      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
-  },
-  {
-    label: "Car",
-    imageUrl:
-      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
-  },
-  {
-    label: "Drama",
-    imageUrl:
-      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
-  },
-  {
-    label: "DIY Life Tricks",
-    imageUrl:
-      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
-  },
-  {
-    label: "Family",
-    imageUrl:
-      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
-  },
-  {
-    label: "Healthcare",
-    imageUrl:
-      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
-  },
-  {
-    label: "Art & Design",
-    imageUrl:
-      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
-  },
-  {
-    label: "Dance",
-    imageUrl:
-      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
-  },
-  {
-    label: "Stress Relif",
-    imageUrl:
-      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
-  },
-  {
-    label: "Outdoor Sports",
-    imageUrl:
-      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
-  },
-  {
-    label: "Furniture & Garden",
-    imageUrl:
-      "https://i.pinimg.com/enabled_lo/564x/99/49/bc/9949bc1d81fc89fb31f930f2cc826475.jpg",
-  },
-];
 
 function RootSetting({
   authUserId,
@@ -329,7 +232,10 @@ function RootSetting({
 
       <main
         className={`py-6 mx-auto transition-all duration-300`}
-        style={{ width: activeSection === "terms" ? "70%" : "60%" }}
+        style={{ 
+          width: activeSection === "terms" ? "70%" : "60%",
+          alignContent: activeSection === "preferences" ? "center" : "flex-start",
+         }}
       >
         <div className="grid gap-6">
           {activeSection === "manage-account" && (

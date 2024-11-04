@@ -9,6 +9,7 @@ import { Card } from "@/types";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/utils/authOptions";
 import { fetchCurrentActiveProfileId } from "@/lib/actions/user.actions";
+import CardEditorRightSidebar from "./_components/card-editor-right-sidebar";
 
 type Props = {
   params: {
@@ -57,13 +58,13 @@ const Page = async ({ params }: Props) => {
           authActiveProfileId={authActiveProfileId}
           cardId={params.cardId}
         />
+        <CardEditorSidebar />
         <div
           style={{ backgroundImage: "url('../paper-dark.svg')" }}
           className="h-full flex justify-center">
           <CardEditor componentId={cardDetails.components} />
         </div>
-
-        <CardEditorSidebar />
+        <CardEditorRightSidebar />
       </EditorProvider>
     </div>
   );

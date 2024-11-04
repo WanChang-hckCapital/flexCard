@@ -95,3 +95,25 @@ export const NormalUserAllowedRoutes: Record<Usertype, string[]> = {
   FLEXACCOUNTANT: ["/dashboard", "/dashboard/products", "/dashboard/promotions", "/dashboard/transactions", "/dashboard/analytics"],
   FLEXHR: ["/dashboard", "/dashboard/members", "/dashboard/analytics", "/dashboard/settings"]
 };
+
+export const categories = [
+  { label: "Entertainment", emoji: "🎭" },
+  { label: "Daily Life", emoji: "🏡" },
+  { label: "Comedy", emoji: "😂" },
+  { label: "Pets", emoji: "🐶" },
+  { label: "Learning", emoji: "📚" },
+  { label: "Foods", emoji: "🍔" },
+  { label: "Sports", emoji: "⚽" },
+  { label: "Talent Show", emoji: "🎤" },
+  { label: "Fashion", emoji: "👗" },
+  { label: "Car", emoji: "🚗" },
+  { label: "Drama", emoji: "🎭" },
+  { label: "DIY Life Tricks", emoji: "🛠️" },
+  { label: "Family", emoji: "👨‍👩‍👧‍👦" },
+  { label: "Healthcare", emoji: "💪" },
+  { label: "Art & Design", emoji: "🎨" },
+  { label: "Dance", emoji: "💃" },
+  { label: "Stress Relief", emoji: "🧘‍♂️" },
+  { label: "Outdoor Sports", emoji: "🏞️" },
+  { label: "Furniture & Garden", emoji: "🏡" },
+];

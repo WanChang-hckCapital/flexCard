@@ -132,10 +132,6 @@ async function Dashboard() {
   profiles = profiles.map((profile) => {
     let plainProfile = profile.toJSON ? profile.toJSON() : profile;
   
-    // plainProfile = Object.fromEntries(
-    //   Object.entries(plainProfile).filter(([key, value]) => typeof value !== 'symbol')
-    // );
-  
     return plainProfile;
   });
 
@@ -159,11 +155,7 @@ async function Dashboard() {
     (profile.usertype === "ORGANIZATION" || profile.usertype === "BUSINESS" || profile.usertype === "ENTERPRISE"));
   const membersAdmin = membersWithSubscriptions.filter(profile => profile.usertype === "FLEXADMIN");
   const membersSuperUser = membersWithSubscriptions.filter(profile => profile.usertype === "SUPERUSER");
-
-  console.log("authActiveProfileId", authActiveProfileId);
-  console.log("str", strAuthActiveProfileId);
-  console.log("membersWithFreeVersion", membersWithFreeVersion);
-
+  
   return (
     <div className="flex min-h-screen w-full flex-col bg-neutral-900 gap-4 p-4 lg:gap-6 lg:p-6">
       <div className="flex flex-col sm:gap-4 max-md:px-4">

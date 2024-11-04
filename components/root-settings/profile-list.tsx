@@ -154,7 +154,7 @@ const ProfileList: React.FC<ProfileListProps> = ({
                         alt={profile.accountname || "Profile Image"}
                         width={96}
                         height={96}
-                        className="rounded-full object-cover"
+                        className="rounded-full object-cover h-24 w-24"
                       />
                     ) : (
                       <CircleUser className="w-24 h-24" />

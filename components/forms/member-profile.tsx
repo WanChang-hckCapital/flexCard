@@ -209,7 +209,7 @@ const MemberProfile = ({ profile, btnTitle, dict }: Props) => {
                       width={96}
                       height={96}
                       priority
-                      className="rounded-full object-contain"
+                      className="rounded-full object-contain h-24 w-24"
                     />
                   ) : (
                     <CircleUser
@@ -268,7 +268,7 @@ const MemberProfile = ({ profile, btnTitle, dict }: Props) => {
           )}
         />
 
-        {/* <FormField
+        <FormField
           control={form.control}
           name='password'
           render={({ field }) => (
@@ -306,7 +306,7 @@ const MemberProfile = ({ profile, btnTitle, dict }: Props) => {
               <FormMessage />
             </FormItem>
           )}
-        /> */}
+        />
 
         <FormField
           control={form.control}

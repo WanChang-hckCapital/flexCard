@@ -1941,6 +1941,10 @@ export async function fetchAllCards() {
           "lineFormatComponent"
         );
 
+        const flexCardComponents = await Card.findOne({ _id: card }).select(
+          "components"
+        );
+
         const likesDetails = await Promise.all(
           card.likes.map(async (likeId: any) => {
             const likeUser = await ProfileModel.findOne({ _id: likeId }).select(
@@ -1951,13 +1955,13 @@ export async function fetchAllCards() {
                 "binaryCode"
               );
               return {
-                // userId: likeUser.user.toString(),
+                profileId: likeId.toString(),
                 accountname: likeUser.accountname,
                 binarycode: imageDoc ? imageDoc.binaryCode : undefined,
               };
             }
             return {
-              // userId: likeUser.user.toString(),
+              profileId: likeId.user.toString(),
               accountname: likeUser ? likeUser.accountname : "Unknown",
               binarycode: undefined,
             };
@@ -1980,6 +1984,9 @@ export async function fetchAllCards() {
         const flexFormatHTMLContent = await ComponentModel.findOne({
           _id: flexFormatHTML.flexFormatHtml,
         }).select("content");
+        const flexCardWorkspaceContent = await ComponentModel.findOne({
+          _id: flexCardComponents.components,
+        }).select("content");
 
         return {
           cardId: card._id.toString(),
@@ -1989,6 +1996,11 @@ export async function fetchAllCards() {
           followers: followers.map((follower) => ({
             accountname: follower.accountname,
           })),
+          flexComponents: {
+            content: flexCardWorkspaceContent
+              ? flexCardWorkspaceContent.content
+              : undefined,
+          },
           lineComponents: {
             content: lineFormatComponent
               ? lineFormatComponent.content

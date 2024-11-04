@@ -7,12 +7,11 @@ import {
   saveProfilePreferences,
   fetchProfilePreferences,
 } from "@/lib/actions/user.actions";
-import Image from "next/image";
 import { toast } from "sonner";
 
 interface PreferencesComponentProps {
   profileId: string;
-  categories: { label: string; imageUrl: string }[];
+  categories: { label: string; emoji: string }[];
 }
 
 const PreferencesComponent: React.FC<PreferencesComponentProps> = ({
@@ -82,7 +81,7 @@ const PreferencesComponent: React.FC<PreferencesComponentProps> = ({
         Modify Your Interests
       </h2>
       <div className="grid grid-cols-3 gap-4 p-4 max-h-[500px] overflow-y-auto">
-        {categories.map(({ label, imageUrl }) => (
+        {categories.map(({ label, emoji }) => (
           <div
             key={label}
             className={`border rounded-lg p-4 flex flex-col items-center justify-between cursor-pointer ${
@@ -96,7 +95,8 @@ const PreferencesComponent: React.FC<PreferencesComponentProps> = ({
               checked={selectedCategories.includes(label)}
               onCheckedChange={() => toggleCategory(label)}
             />
-            <Image src={imageUrl} alt={label} width={60} height={60} />
+            <div className="text-[36px]">{emoji}</div>
+
             <div className="mt-2 text-center">
               <p>{label}</p>
             </div>

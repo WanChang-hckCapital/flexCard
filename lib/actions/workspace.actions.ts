@@ -177,108 +177,101 @@ function generateCustomID() {
 }
 
 // done convert to Profile Model but still need to check
-export async function upsertCardContent(authActiveProfileId: string, cardDetails: Card, cardContent: string, lineFormatCard: string, flexFormatHtml: string, cardId?: string) {
+async function saveComponent(componentType: string, content: string) {
+  const componentData = {
+    componentID: generateCustomID(),
+    componentType,
+    content,
+  };
+  const newComponent = new ComponentModel(componentData);
+  await newComponent.save();
+  return newComponent._id;
+}
+
+async function updateComponent(componentId: string, content: string) {
+  const existingComponent = await ComponentModel.findById(componentId);
+  if (!existingComponent) throw new Error("Component not found.");
+
+  existingComponent.content = content;
+  await existingComponent.save();
+  return existingComponent;
+}
+
+export async function upsertCardContent(
+  authActiveProfileId: string,
+  cardDetails: any,
+  cardContent: string,
+  lineFormatCard: string,
+  flexFormatHtml: string,
+  categories: string[] = []
+) {
   if (!authActiveProfileId) return;
 
   try {
     await connectToDB();
 
-    const existingCard = await CardMongodb.findOne({ _id: cardId });
-
-    if (!existingCard) {
-      const cardComponent = {
-        componentID: generateCustomID(),
-        componentType: "flexCard",
-        content: cardContent,
-      };
-
-      const newCardComponent = new ComponentModel(cardComponent);
-      await newCardComponent.save();
-
-      const lineFormatCardComponent = {
-        componentID: generateCustomID(),
-        componentType: "line",
-        content: lineFormatCard,
-      };
-
-      const newLineFormatCard = new ComponentModel(lineFormatCardComponent);
-      await newLineFormatCard.save();
-
-      const newFlexHtml = {
-        componentID: generateCustomID(),
-        componentType: "html",
-        content: flexFormatHtml,
-      };
-
-      const newFlexHtmlComponent = new ComponentModel(newFlexHtml);
-      await newFlexHtmlComponent.save();
-
-      const newCardContent = {
+    const cleanCardDetails = JSON.parse(
+      JSON.stringify({
         cardID: cardDetails.cardID,
-        creator: authActiveProfileId,
         title: cardDetails.title,
         status: cardDetails.status,
         description: cardDetails.description,
-        components: newCardComponent._id,
-        lineFormatComponent: newLineFormatCard._id,
-        flexFormatHtml: newFlexHtmlComponent._id,
-      };
+        categories,
+      })
+    );
 
-      const newCard = new CardMongodb(newCardContent);
+    const existingCard = cleanCardDetails.cardID
+      ? await CardMongodb.findOne({ cardID: cleanCardDetails.cardID })
+      : null;
+    
+      console.log("Card exists:", Boolean(existingCard));
+
+    if (!existingCard) {
+      const newCard = new CardMongodb({
+        ...cleanCardDetails,
+        creator: authActiveProfileId,
+        components: await saveComponent("flexCard", cardContent),
+        lineFormatComponent: await saveComponent("line", lineFormatCard),
+        flexFormatHtml: await saveComponent("html", flexFormatHtml),
+      });
+
+      console.log("newCard: ", newCard);
       await newCard.save();
 
-      const currentMemberProfile = await ProfileModel.findOne({ _id: authActiveProfileId });
+      console.log("saved new card");
 
-      if (currentMemberProfile) {
-        currentMemberProfile.cards.push(newCard);
-        await currentMemberProfile.save();
-      }
+      await ProfileModel.updateOne(
+        { _id: authActiveProfileId },
+        { $push: { cards: newCard._id } }
+      );
 
-      return newCard;
-    }
-    else {
-      const title = cardDetails.title;
-      const description = cardDetails.description;
+      console.log("updated profile");
 
-      const componentID = existingCard.components;
-      const lineFormatComponentID = existingCard.lineFormatComponent;
-      const flexFormatHtmlID = existingCard.flexFormatHtml;
+      return {
+        message: "success"
+      };
+    } else {
+      await updateComponent(existingCard.components, cardContent);
+      await updateComponent(existingCard.lineFormatComponent, lineFormatCard);
+      await updateComponent(existingCard.flexFormatHtml, flexFormatHtml);
 
-      const existingComponent = await ComponentModel.findOne({ _id: componentID });
-      if (!existingComponent) {
-        throw new Error("Component not found.");
-      }
-
-      existingComponent.content = cardContent;
-      await existingComponent.save();
-
-      const existingLineFormatComponent = await ComponentModel.findOne({ _id: lineFormatComponentID });
-      if (!existingLineFormatComponent) {
-        throw new Error("Line format component not found.");
-      }
-
-      existingLineFormatComponent.content = lineFormatCard;
-      await existingLineFormatComponent.save();
-
-      const existingFlexFormatHTML = await ComponentModel.findOne({ _id: flexFormatHtmlID });
-      if (!existingFlexFormatHTML) {
-        throw new Error("Flex format Html not found.");
-      }
-
-      existingFlexFormatHTML.content = flexFormatHtml;
-      await existingFlexFormatHTML.save();
-
-      const response = await CardMongodb.updateOne(
+      const updatedCard = await CardMongodb.updateOne(
         { cardID: existingCard.cardID },
-        {
-          $set: { title: title, description: description }
-        });
+        { $set: cleanCardDetails }
+      );
 
-      return response;
+      console.log("updated card");
+
+      return {
+        message: "success",
+        data: updatedCard
+      };
     }
-
   } catch (error: any) {
-    throw new Error(`Error upserting card content: ${error.message}`);
+    return {
+      message: "error",
+      error: (`Error upserting card content: ${error.message}`)
+    }
   }
 }
 

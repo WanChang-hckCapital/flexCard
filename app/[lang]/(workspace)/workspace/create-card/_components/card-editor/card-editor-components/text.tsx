@@ -77,6 +77,7 @@ const TextElement = (props: Props) => {
       className={clsx('relative text-[16px] transition-all', {
         '!border-blue-500': state.editor.selectedElement.id === props.element.id,
         '!border-solid': state.editor.selectedElement.id === props.element.id,
+        'border-[1px] border-dashed border-gray-300 rounded-md': mouseIsOver,
         'text-wrap': props.element.wrap === 'true',
         'text-nowrap': props.element.wrap === 'false',
       })}
@@ -96,10 +97,15 @@ const TextElement = (props: Props) => {
 
         </Badge>
       )} */}
-      <span
+     <span
         contentEditable={!state.editor.liveMode}
         onBlur={handleTextUpdate}
         suppressContentEditableWarning={true}
+        style={{
+          display: 'inline-block',
+          width: '100%',
+          height: '100%',
+        }}
       >
         {props.element.text}
       </span>

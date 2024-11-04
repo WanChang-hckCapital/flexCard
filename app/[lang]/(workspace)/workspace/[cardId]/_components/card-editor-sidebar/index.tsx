@@ -30,7 +30,7 @@ function CardEditorSidebar() {
       <Tabs className="w-full" defaultValue="Components">
         <SheetContent
           showX={false}
-          side="right"
+          side="left"
           style={{ backgroundColor: 'black' }}
           className={clsx(
             'mt-[97px] z-[40] shadow-none p-0 bg-background h-full transition-all overflow-hidden ',

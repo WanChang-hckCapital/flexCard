@@ -91,7 +91,6 @@ function CardEditorNavigation({ cardDetails, authActiveProfileId, cardId }: Prop
         strWorkspaceFormat,
         strLineFlexMessage,
         htmlFormat,
-        cardId
       )
 
       if(response) {

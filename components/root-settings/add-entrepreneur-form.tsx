@@ -86,12 +86,43 @@ const AddEntrepreneurForm = ({ authActiveProfileId, dict }: Props) => {
     const { control, handleSubmit, register, formState: { errors: formErrors }, trigger, getValues } = form;
 
     const onNextStep = async () => {
-        const valid = await trigger();
-        if (valid) {
+        let isValid = false;
+    
+        if (step === 1) {
+            isValid = await trigger([
+                "accountname",
+                "email",
+                "phone",
+                "shortdescription",
+                "profile_image"
+            ]);
+        } else if (step === 2) {
+            isValid = await trigger([
+                "businessLocation",
+                "businessType",
+                "legalBusinessName",
+                "companyRegistrationNumber",
+                "businessName",
+                "address1",
+                "businessPhoneNumber",
+                "industry",
+                "productDescription"
+            ]);
+        } else if (step === 3) {
+            isValid = await trigger([
+                "accountHolderName",
+                "bank",
+                "accountNumber",
+                "confirmAccountNumber"
+            ]);
+        }
+    
+        if (isValid) {
             setFormData(prevData => ({ ...prevData, ...getValues() }));
             setStep((prevStep) => prevStep + 1);
         }
     };
+    
 
     const onReviewStep = async () => {
         const validBusiness = await trigger([
@@ -192,10 +223,25 @@ const AddEntrepreneurForm = ({ authActiveProfileId, dict }: Props) => {
     };
 
     const handleStepClick = async (clickedStep: number) => {
-        if (clickedStep === 2) {
-            await onReviewStep();
-        } else {
+        if (clickedStep + 1 === step) return; 
+
+        if (clickedStep + 1 < step) {
             setStep(clickedStep + 1);
+        } else if (clickedStep === 1 && step === 1) {
+            await onNextStep(); 
+        } else if (clickedStep === 2 && step === 2) {
+            const validBusiness = await trigger([
+                "businessLocation",
+                "businessType",
+                "legalBusinessName",
+                "companyRegistrationNumber",
+                "businessName",
+                "address1",
+                "businessPhoneNumber",
+                "industry",
+                "productDescription",
+            ]);
+            if (validBusiness) setStep(3); 
         }
     };
 

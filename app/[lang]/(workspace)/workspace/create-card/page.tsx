@@ -16,6 +16,7 @@ import {
   callChatGpt,
 } from "@/lib/utils";
 import { fetchCurrentActiveProfileId } from "@/lib/actions/user.actions";
+import CardEditorRightSidebar from "./_components/card-editor-right-sidebar";
 
 type Props = {
   params: {
@@ -102,14 +103,14 @@ const Page = async ({ params }: Props) => {
           cardDetails={newCardData}
           authActiveProfileId={authActiveProfileId}
         />
+        <CardEditorSidebar />
         <div
           style={{ backgroundImage: "url('/assets/paper-dark.svg')" }}
           className="h-full flex justify-center dark:bg-black bg-stone-800"
         >
           <CardEditor />
         </div>
-
-        <CardEditorSidebar />
+        <CardEditorRightSidebar />
       </EditorProvider>
     </div>
   );
