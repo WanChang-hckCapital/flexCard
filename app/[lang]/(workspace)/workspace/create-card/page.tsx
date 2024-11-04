@@ -1,5 +1,3 @@
-// "use client"
-
 import { redirect } from "next/navigation";
 import React from "react";
 import CardEditorNavigation from "./_components/card-editor-navigation";
@@ -9,12 +7,7 @@ import EditorProvider from "@/lib/editor/editor-provider";
 import { Card } from "@/types";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/utils/authOptions";
-import {
-  generateCustomID,
-  analyzeImage,
-  autoCropEdgeImage,
-  callChatGpt,
-} from "@/lib/utils";
+import { generateCustomID } from "@/lib/utils";
 import { fetchCurrentActiveProfileId } from "@/lib/actions/user.actions";
 
 type Props = {
@@ -68,8 +61,6 @@ const Page = async ({ params }: Props) => {
 
   const authUserId = user.id.toString();
   const authActiveProfileId = await fetchCurrentActiveProfileId(authUserId);
-
-  console.log("authActiveProfileId: " + authActiveProfileId);
 
   const newCardData: Card = {
     cardID: generateCustomID(),
